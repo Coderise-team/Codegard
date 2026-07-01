@@ -13,6 +13,7 @@ class Submission(models.Model):
         WA = VerdictEnum.WA.value, "Wrong Answer"
         TLE = VerdictEnum.TLE.value, "Time Limit Exceeded"
         MLE = VerdictEnum.MLE.value, "Memory Limit Exceeded"
+        OLE = VerdictEnum.OLE.value, "Output Limit Exceeded"
         RE = VerdictEnum.RE.value, "Runtime Error"
         CE = VerdictEnum.CE.value, "Compilation Error"
 

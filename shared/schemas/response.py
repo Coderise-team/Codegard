@@ -8,6 +8,7 @@ class VerdictEnum(str, Enum):
     WA = "WA"
     TLE = "TLE"
     MLE = "MLE"
+    OLE = "OLE"
     RE = "RE"
     CE = "CE"
 
