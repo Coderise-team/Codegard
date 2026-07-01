@@ -1,7 +1,8 @@
-import socket as _socket
+import base64
 
 import docker.errors
 import pytest
+import requests
 
 from app.core.sandbox import run_in_sandbox
 
@@ -10,6 +11,12 @@ from .conftest import make_mock_docker_client
 
 def _patch(monkeypatch, client):
     monkeypatch.setattr("app.core.sandbox._get_docker_client", lambda: client)
+
+
+def _fail_wait(client):
+    client.containers.run.return_value.wait.side_effect = (
+        requests.exceptions.ReadTimeout
+    )
 
 
 class TestRunInSandbox:
@@ -45,7 +52,7 @@ class TestRunInSandbox:
 
     def test_timeout_sets_timed_out_flag(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
         result = run_in_sandbox("while True: pass", "", 100)
@@ -55,7 +62,7 @@ class TestRunInSandbox:
 
     def test_timeout_kills_container(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
         run_in_sandbox("while True: pass", "", 100)
@@ -64,7 +71,7 @@ class TestRunInSandbox:
 
     def test_container_removed_after_timeout(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
         run_in_sandbox("while True: pass", "", 100)
@@ -73,7 +80,7 @@ class TestRunInSandbox:
 
     def test_kill_api_error_swallowed_on_timeout(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         client.containers.run.return_value.kill.side_effect = docker.errors.APIError(
             "container already stopped"
         )
@@ -106,23 +113,16 @@ class TestRunInSandbox:
         assert kwargs["read_only"] is True
         assert kwargs["pids_limit"] == 20
 
-    def test_stdin_sent_to_container(self, monkeypatch):
+    def test_code_and_stdin_passed_as_base64(self, monkeypatch):
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
-        run_in_sandbox("x = input()", "hello", 1000)
+        run_in_sandbox("print('hi')", "hello", 1000)
 
-        raw_sock = client.api.exec_start.return_value._sock
-        raw_sock.sendall.assert_called_once_with(b"hello")
-
-    def test_empty_stdin_not_sent(self, monkeypatch):
-        client = make_mock_docker_client()
-        _patch(monkeypatch, client)
-
-        run_in_sandbox("pass", "", 1000)
-
-        raw_sock = client.api.exec_start.return_value._sock
-        raw_sock.sendall.assert_not_called()
+        script = client.containers.run.call_args.kwargs["command"][-1]
+        assert base64.b64encode(b"print('hi')").decode() in script
+        assert base64.b64encode(b"hello").decode() in script
+        assert "base64 -d" in script
 
     def test_unsupported_language_raises(self, monkeypatch):
         client = make_mock_docker_client()
