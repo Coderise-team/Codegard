@@ -1,4 +1,5 @@
 import base64
+import time
 
 import docker.errors
 import pytest
@@ -123,6 +124,23 @@ class TestRunInSandbox:
         assert base64.b64encode(b"print('hi')").decode() in script
         assert base64.b64encode(b"hello").decode() in script
         assert "base64 -d" in script
+
+    def test_soft_tle_when_elapsed_exceeds_limit(self, monkeypatch):
+        # Container finishes on its own (no hard timeout) but overruns the
+        # actual limit -> still TLE.
+        client = make_mock_docker_client()
+
+        def slow_wait(**kwargs):
+            time.sleep(0.05)
+            return {"StatusCode": 0}
+
+        client.containers.run.return_value.wait.side_effect = slow_wait
+        _patch(monkeypatch, client)
+
+        result = run_in_sandbox("pass", "", 1, 256)  # 1ms limit, ran ~50ms
+
+        assert result.timed_out
+        assert result.exit_code == -1
 
     def test_output_limit_exceeded_detected(self, monkeypatch):
         monkeypatch.setattr("app.core.sandbox._OUTPUT_LIMIT_BYTES", 10)

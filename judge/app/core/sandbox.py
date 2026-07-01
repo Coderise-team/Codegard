@@ -118,6 +118,12 @@ def run_in_sandbox(
                 pass
         elapsed_ms = int(time.monotonic() * 1000) - start_ms
 
+        # Soft TLE: the hard wait timeout (limit + buffer) only catches hangs;
+        # a run that finished within the buffer but still overran the actual
+        # limit is a Time Limit Exceeded too.
+        if not timed_out and elapsed_ms > time_limit_ms:
+            timed_out = True
+
         if timed_out:
             return SandboxResult(
                 stdout="",
