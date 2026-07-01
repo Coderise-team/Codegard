@@ -23,6 +23,7 @@ _PYTHON_IMAGE = "python:3.13-slim"
 _CPU_QUOTA = 100_000
 _CPU_PERIOD = 100_000
 _TIMEOUT_BUFFER_SEC = 2.0
+_OUTPUT_LIMIT_BYTES = 64 * 1024 * 1024
 
 
 @dataclass
@@ -33,6 +34,7 @@ class SandboxResult:
     timed_out: bool
     oom_killed: bool
     execution_time_ms: int
+    output_limit_exceeded: bool = False
 
 
 _docker_client: docker.DockerClient | None = None
@@ -50,14 +52,22 @@ def _build_command(code: str, stdin: str) -> list[str]:
     Shell command that decodes the base64 solution into a file, then runs it
     with the base64-decoded stdin piped in. base64 keeps the payload free of
     shell metacharacters, so code with any quotes passes through byte-for-byte.
+
+    Both stdout and stderr are truncated at _OUTPUT_LIMIT_BYTES (+1 so the cap
+    itself is detectable) by piping through `head -c`, which caps a runaway
+    output at the source instead of flooding the judge. `set -o pipefail` (bash)
+    keeps the solution's real exit code visible through the stdout pipe.
     """
     code_b64 = base64.b64encode(code.encode()).decode()
     input_b64 = base64.b64encode(stdin.encode()).decode()
+    cap = _OUTPUT_LIMIT_BYTES + 1
     script = (
-        f"echo {code_b64} | base64 -d > /tmp/solution.py && "
-        f"echo {input_b64} | base64 -d | python /tmp/solution.py"
+        "set -o pipefail\n"
+        f"echo {code_b64} | base64 -d > /tmp/solution.py\n"
+        f"echo {input_b64} | base64 -d | python /tmp/solution.py "
+        f"2> >(head -c {cap} >&2) | head -c {cap}"
     )
-    return ["sh", "-c", script]
+    return ["bash", "-c", script]
 
 
 def run_in_sandbox(
@@ -120,6 +130,10 @@ def run_in_sandbox(
 
         stdout_bytes = container.logs(stdout=True, stderr=False)
         stderr_bytes = container.logs(stdout=False, stderr=True)
+        output_limit_exceeded = (
+            len(stdout_bytes) > _OUTPUT_LIMIT_BYTES
+            or len(stderr_bytes) > _OUTPUT_LIMIT_BYTES
+        )
 
         container.reload()
         oom_killed = container.attrs["State"].get("OOMKilled", False)
@@ -131,6 +145,7 @@ def run_in_sandbox(
             timed_out=False,
             oom_killed=oom_killed,
             execution_time_ms=elapsed_ms,
+            output_limit_exceeded=output_limit_exceeded,
         )
 
     finally:

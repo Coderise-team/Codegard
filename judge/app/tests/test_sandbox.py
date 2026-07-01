@@ -124,6 +124,15 @@ class TestRunInSandbox:
         assert base64.b64encode(b"hello").decode() in script
         assert "base64 -d" in script
 
+    def test_output_limit_exceeded_detected(self, monkeypatch):
+        monkeypatch.setattr("app.core.sandbox._OUTPUT_LIMIT_BYTES", 10)
+        client = make_mock_docker_client(stdout=b"A" * 20)
+        _patch(monkeypatch, client)
+
+        result = run_in_sandbox("print('x' * 100)", "", 1000, 256)
+
+        assert result.output_limit_exceeded
+
     def test_unsupported_language_raises(self, monkeypatch):
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
