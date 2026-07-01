@@ -107,7 +107,7 @@ class TestRunInSandbox:
 
         kwargs = client.containers.run.call_args.kwargs
         assert kwargs["mem_limit"] == "200m"
-        assert kwargs["cpu_quota"] == 25_000
+        assert kwargs["cpu_quota"] == 100_000
         assert kwargs["cpu_period"] == 100_000
         assert kwargs["network_disabled"] is True
         assert kwargs["read_only"] is True

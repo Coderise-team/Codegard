@@ -20,7 +20,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 _PYTHON_IMAGE = "python:3.13-slim"
-_CPU_QUOTA = 25_000
+_CPU_QUOTA = 100_000
 _CPU_PERIOD = 100_000
 _TIMEOUT_BUFFER_SEC = 2.0
 
