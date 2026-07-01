@@ -75,3 +75,12 @@ def test_next_tier_top_is_null(client, django_user_model):
         "nextTier"
     ]
     assert nt is None
+
+
+@pytest.mark.django_db
+def test_joined_returns_registration_date(client, django_user_model):
+    user = django_user_model.objects.create_user(
+        username="j", email="j@test.com", password="pass"
+    )
+    body = client.get(reverse("users:user-detail", args=[user.username])).json()
+    assert body["joined"][:10] == user.date_joined.date().isoformat()
