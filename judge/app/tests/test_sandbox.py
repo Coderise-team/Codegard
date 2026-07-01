@@ -24,7 +24,7 @@ class TestRunInSandbox:
         client = make_mock_docker_client(stdout=b"42\n")
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("print(42)", "", 1000)
+        result = run_in_sandbox("print(42)", "", 1000, 256)
 
         assert result.stdout == "42\n"
         assert result.exit_code == 0
@@ -37,7 +37,7 @@ class TestRunInSandbox:
         )
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("1/0", "", 1000)
+        result = run_in_sandbox("1/0", "", 1000, 256)
 
         assert result.exit_code == 1
         assert "ZeroDivisionError" in result.stderr
@@ -46,7 +46,7 @@ class TestRunInSandbox:
         client = make_mock_docker_client(stdout=b"ok\n")
         _patch(monkeypatch, client)
 
-        run_in_sandbox("print('ok')", "", 1000)
+        run_in_sandbox("print('ok')", "", 1000, 256)
 
         client.containers.run.return_value.remove.assert_called_once_with(force=True)
 
@@ -55,7 +55,7 @@ class TestRunInSandbox:
         _fail_wait(client)
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("while True: pass", "", 100)
+        result = run_in_sandbox("while True: pass", "", 100, 256)
 
         assert result.timed_out
         assert result.exit_code == -1
@@ -65,7 +65,7 @@ class TestRunInSandbox:
         _fail_wait(client)
         _patch(monkeypatch, client)
 
-        run_in_sandbox("while True: pass", "", 100)
+        run_in_sandbox("while True: pass", "", 100, 256)
 
         client.containers.run.return_value.kill.assert_called_once()
 
@@ -74,7 +74,7 @@ class TestRunInSandbox:
         _fail_wait(client)
         _patch(monkeypatch, client)
 
-        run_in_sandbox("while True: pass", "", 100)
+        run_in_sandbox("while True: pass", "", 100, 256)
 
         client.containers.run.return_value.remove.assert_called_once_with(force=True)
 
@@ -86,7 +86,7 @@ class TestRunInSandbox:
         )
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("pass", "", 100)
+        result = run_in_sandbox("pass", "", 100, 256)
 
         assert result.timed_out  # Did not raise
 
@@ -94,7 +94,7 @@ class TestRunInSandbox:
         client = make_mock_docker_client(exit_code=137, oom_killed=True)
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("x = b'A' * (200 * 2**20)", "", 5000)
+        result = run_in_sandbox("x = b'A' * (200 * 2**20)", "", 5000, 256)
 
         assert result.oom_killed
         assert not result.timed_out
@@ -103,10 +103,10 @@ class TestRunInSandbox:
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
-        run_in_sandbox("pass", "", 1000)
+        run_in_sandbox("pass", "", 1000, 200)
 
         kwargs = client.containers.run.call_args.kwargs
-        assert kwargs["mem_limit"] == "128m"
+        assert kwargs["mem_limit"] == "200m"
         assert kwargs["cpu_quota"] == 25_000
         assert kwargs["cpu_period"] == 100_000
         assert kwargs["network_disabled"] is True
@@ -117,7 +117,7 @@ class TestRunInSandbox:
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
-        run_in_sandbox("print('hi')", "hello", 1000)
+        run_in_sandbox("print('hi')", "hello", 1000, 256)
 
         script = client.containers.run.call_args.kwargs["command"][-1]
         assert base64.b64encode(b"print('hi')").decode() in script
@@ -129,7 +129,7 @@ class TestRunInSandbox:
         _patch(monkeypatch, client)
 
         with pytest.raises(NotImplementedError):
-            run_in_sandbox("print(1)", "", 1000, language="cpp")
+            run_in_sandbox("print(1)", "", 1000, 256, language="cpp")
 
     def test_remove_api_error_is_logged_not_raised(self, monkeypatch):
         client = make_mock_docker_client()
@@ -138,4 +138,4 @@ class TestRunInSandbox:
         )
         _patch(monkeypatch, client)
 
-        run_in_sandbox("pass", "", 1000)  # Must not raise
+        run_in_sandbox("pass", "", 1000, 256)  # Must not raise

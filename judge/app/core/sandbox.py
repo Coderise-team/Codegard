@@ -20,7 +20,6 @@ import requests
 logger = logging.getLogger(__name__)
 
 _PYTHON_IMAGE = "python:3.13-slim"
-_MEM_LIMIT = "128m"
 _CPU_QUOTA = 25_000
 _CPU_PERIOD = 100_000
 _TIMEOUT_BUFFER_SEC = 2.0
@@ -65,6 +64,7 @@ def run_in_sandbox(
     code: str,
     stdin: str,
     time_limit_ms: int,
+    memory_limit_mb: int,
     language: str = "python",
 ) -> SandboxResult:
     """
@@ -82,7 +82,7 @@ def run_in_sandbox(
         container = client.containers.run(
             image=_PYTHON_IMAGE,
             command=_build_command(code, stdin),
-            mem_limit=_MEM_LIMIT,
+            mem_limit=f"{memory_limit_mb}m",
             cpu_quota=_CPU_QUOTA,
             cpu_period=_CPU_PERIOD,
             network_disabled=True,

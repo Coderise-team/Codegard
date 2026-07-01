@@ -15,6 +15,7 @@ def run_submission(request: SubmissionRequest) -> SubmissionResponse:
             code=request.code,
             stdin=tc.input,
             time_limit_ms=request.time_limit_ms,
+            memory_limit_mb=request.memory_limit_mb,
             language=request.language,
         )
         all_results.append(result)
