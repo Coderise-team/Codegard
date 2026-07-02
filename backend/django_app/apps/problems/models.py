@@ -19,6 +19,18 @@ class Problem(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField()
+    input_format = models.TextField(
+        default="",
+        help_text="Input format section of the statement.",
+    )
+    output_format = models.TextField(
+        default="",
+        help_text="Output format section of the statement.",
+    )
+    constraints = models.TextField(
+        default="",
+        help_text="One constraint per line; the frontend renders them as a list.",
+    )
     difficulty = models.CharField(
         max_length=10,
         choices=Difficulty.choices,
@@ -78,6 +90,12 @@ class TestCase(models.Model):
     )
     input = models.TextField()
     expected_output = models.TextField()
+    note = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional note shown under a sample example "
+        "(visible test cases only).",
+    )
     is_hidden = models.BooleanField(
         default=False,
         help_text="Hidden test cases are only used by the judge, not shown to users.",

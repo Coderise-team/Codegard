@@ -174,6 +174,9 @@ class TestProblemCreate:
         data = {
             "title": "New Problem",
             "description": "Some description",
+            "input_format": "Input format",
+            "output_format": "Output format",
+            "constraints": "Constraints",
             "difficulty": "medium",
             "time_limit": 2000,
             "memory_limit": 512,
@@ -188,6 +191,9 @@ class TestProblemCreate:
         data = {
             "title": "Problem with tests",
             "description": "desc",
+            "input_format": "Input format",
+            "output_format": "Output format",
+            "constraints": "Constraints",
             "difficulty": "easy",
             "time_limit": 1000,
             "memory_limit": 256,

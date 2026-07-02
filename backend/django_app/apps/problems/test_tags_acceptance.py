@@ -70,6 +70,9 @@ def test_admin_create_with_tags(admin_client):
     data = {
         "title": "Graph problem",
         "description": "d",
+        "input_format": "Input format",
+        "output_format": "Output format",
+        "constraints": "Constraints",
         "difficulty": "medium",
         "tags": ["DP", "Graphs"],
     }
@@ -85,6 +88,9 @@ def test_create_reuses_existing_tag(admin_client):
     data = {
         "title": "Another",
         "description": "d",
+        "input_format": "Input format",
+        "output_format": "Output format",
+        "constraints": "Constraints",
         "difficulty": "easy",
         "tags": ["DP"],
     }
@@ -102,14 +108,29 @@ def test_update_replaces_tags(admin_client, problem):
 
 @pytest.mark.django_db
 def test_create_without_tags_rejected(admin_client):
-    data = {"title": "No tags", "description": "d", "difficulty": "easy"}
+    data = {
+        "title": "No tags",
+        "description": "d",
+        "input_format": "Input format",
+        "output_format": "Output format",
+        "constraints": "Constraints",
+        "difficulty": "easy",
+    }
     resp = admin_client.post(reverse("problems-list"), data, format="json")
     assert resp.status_code == 400
 
 
 @pytest.mark.django_db
 def test_create_with_empty_tags_rejected(admin_client):
-    data = {"title": "Empty", "description": "d", "difficulty": "easy", "tags": []}
+    data = {
+        "title": "Empty",
+        "description": "d",
+        "input_format": "Input format",
+        "output_format": "Output format",
+        "constraints": "Constraints",
+        "difficulty": "easy",
+        "tags": [],
+    }
     resp = admin_client.post(reverse("problems-list"), data, format="json")
     assert resp.status_code == 400
 
