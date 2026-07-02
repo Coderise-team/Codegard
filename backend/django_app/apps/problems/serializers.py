@@ -36,6 +36,7 @@ class ProblemSerializer(serializers.ModelSerializer):
     test_cases = serializers.SerializerMethodField()
     tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
     acceptance = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
@@ -51,11 +52,16 @@ class ProblemSerializer(serializers.ModelSerializer):
             "memory_limit",
             "tags",
             "acceptance",
+            "status",
             "test_cases",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+    def get_status(self, obj) -> str:
+        # Injected by the view's user_status annotation; "todo" if absent.
+        return getattr(obj, "user_status", "todo")
 
     def get_test_cases(self, obj):
         request = self.context.get("request")

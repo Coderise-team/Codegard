@@ -126,10 +126,12 @@ class TestProblemList:
         results = response.data.get("results", response.data)
         assert all(p["difficulty"] == "hard" for p in results)
 
-    def test_invalid_difficulty_returns_all(self, api_client, problem):
+    def test_invalid_difficulty_rejected(self, api_client, problem):
+        # ChoiceFilter validates: an out-of-range difficulty is a 400 now
+        # (used to be silently ignored before django-filter).
         url = reverse("problems-list")
         response = api_client.get(url, {"difficulty": "invalid"})
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
 # ---------------------------------------------------------------------------

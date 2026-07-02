@@ -1,7 +1,19 @@
 from apps.submissions.models import Submission
-from django.db.models import Count, ProtectedError, Q
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    F,
+    FloatField,
+    OuterRef,
+    ProtectedError,
+    Q,
+    Value,
+    When,
+)
 from django.http import JsonResponse
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -11,6 +23,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
+from .filters import ProblemFilter
 from .models import DailyProblem, Problem
 from .serializers import (
     DailyProblemSerializer,
@@ -36,7 +49,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Problem.objects.prefetch_related("test_cases", "tags").all()
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_class = ProblemFilter
     search_fields = ["title"]
 
     def get_permissions(self):
@@ -54,10 +68,10 @@ class ProblemViewSet(viewsets.ModelViewSet):
         return ProblemSerializer
 
     def get_queryset(self):
+        # Filtering/ordering by ?difficulty/?tag/?status/?ordering is declarative
+        # now (ProblemFilter). Here we only annotate the fields those rely on.
         queryset = super().get_queryset()
-        difficulty = self.request.query_params.get("difficulty")
-        if difficulty in ["easy", "medium", "hard"]:
-            queryset = queryset.filter(difficulty=difficulty)
+
         # Acceptance counters in one pass - both counts over the same 'submissions'
         # relation, so it's a single JOIN with no fan-out (no distinct needed).
         queryset = queryset.annotate(
@@ -66,8 +80,45 @@ class ProblemViewSet(viewsets.ModelViewSet):
                 "submissions",
                 filter=Q(submissions__verdict=Submission.Verdict.AC),
             ),
+            # Numeric rank so ?ordering=difficulty is easy→medium→hard, not
+            # alphabetical (easy, hard, medium).
+            difficulty_rank=Case(
+                When(difficulty=Problem.Difficulty.EASY, then=Value(0)),
+                When(difficulty=Problem.Difficulty.MEDIUM, then=Value(1)),
+                When(difficulty=Problem.Difficulty.HARD, then=Value(2)),
+                default=Value(0),
+            ),
+            user_status=self._user_status_annotation(),
         )
-        return queryset
+        # acceptance_rate for ?ordering=acceptance (divide-by-zero → 0), built
+        # from the counters above. The serializer still computes the shown %.
+        queryset = queryset.annotate(
+            acceptance_rate=Case(
+                When(total_submissions=0, then=Value(0.0)),
+                default=1.0 * F("ac_submissions") / F("total_submissions"),
+                output_field=FloatField(),
+            )
+        )
+        # Default order (newest first); ?ordering overrides this via OrderingFilter.
+        return queryset.order_by("-created_at")
+
+    def _user_status_annotation(self):
+        """solved / attempted / todo for request.user, in one query (no N+1).
+
+        Anonymous users have no personal data → everything is "todo" (we never
+        hit the DB with an anonymous user).
+        """
+        user = self.request.user
+        if not user.is_authenticated:
+            return Value("todo")
+
+        my_subs = Submission.objects.filter(user=user, problem=OuterRef("pk"))
+        my_ac = my_subs.filter(verdict=Submission.Verdict.AC)
+        return Case(
+            When(Exists(my_ac), then=Value("solved")),
+            When(Exists(my_subs), then=Value("attempted")),
+            default=Value("todo"),
+        )
 
     def destroy(self, request, *args, **kwargs):
         # PROTECT on DailyProblem.problem raises ProtectedError for problems that
