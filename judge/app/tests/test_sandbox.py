@@ -1,7 +1,9 @@
-import socket as _socket
+import base64
+import time
 
 import docker.errors
 import pytest
+import requests
 
 from app.core.sandbox import run_in_sandbox
 
@@ -12,12 +14,18 @@ def _patch(monkeypatch, client):
     monkeypatch.setattr("app.core.sandbox._get_docker_client", lambda: client)
 
 
+def _fail_wait(client):
+    client.containers.run.return_value.wait.side_effect = (
+        requests.exceptions.ReadTimeout
+    )
+
+
 class TestRunInSandbox:
     def test_successful_execution_returns_stdout(self, monkeypatch):
         client = make_mock_docker_client(stdout=b"42\n")
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("print(42)", "", 1000)
+        result = run_in_sandbox("print(42)", "", 1000, 256)
 
         assert result.stdout == "42\n"
         assert result.exit_code == 0
@@ -30,7 +38,7 @@ class TestRunInSandbox:
         )
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("1/0", "", 1000)
+        result = run_in_sandbox("1/0", "", 1000, 256)
 
         assert result.exit_code == 1
         assert "ZeroDivisionError" in result.stderr
@@ -39,47 +47,47 @@ class TestRunInSandbox:
         client = make_mock_docker_client(stdout=b"ok\n")
         _patch(monkeypatch, client)
 
-        run_in_sandbox("print('ok')", "", 1000)
+        run_in_sandbox("print('ok')", "", 1000, 256)
 
         client.containers.run.return_value.remove.assert_called_once_with(force=True)
 
     def test_timeout_sets_timed_out_flag(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("while True: pass", "", 100)
+        result = run_in_sandbox("while True: pass", "", 100, 256)
 
         assert result.timed_out
         assert result.exit_code == -1
 
     def test_timeout_kills_container(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
-        run_in_sandbox("while True: pass", "", 100)
+        run_in_sandbox("while True: pass", "", 100, 256)
 
         client.containers.run.return_value.kill.assert_called_once()
 
     def test_container_removed_after_timeout(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         _patch(monkeypatch, client)
 
-        run_in_sandbox("while True: pass", "", 100)
+        run_in_sandbox("while True: pass", "", 100, 256)
 
         client.containers.run.return_value.remove.assert_called_once_with(force=True)
 
     def test_kill_api_error_swallowed_on_timeout(self, monkeypatch):
         client = make_mock_docker_client()
-        client.api.exec_start.return_value._sock.recv.side_effect = _socket.timeout
+        _fail_wait(client)
         client.containers.run.return_value.kill.side_effect = docker.errors.APIError(
             "container already stopped"
         )
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("pass", "", 100)
+        result = run_in_sandbox("pass", "", 100, 256)
 
         assert result.timed_out  # Did not raise
 
@@ -87,7 +95,7 @@ class TestRunInSandbox:
         client = make_mock_docker_client(exit_code=137, oom_killed=True)
         _patch(monkeypatch, client)
 
-        result = run_in_sandbox("x = b'A' * (200 * 2**20)", "", 5000)
+        result = run_in_sandbox("x = b'A' * (200 * 2**20)", "", 5000, 256)
 
         assert result.oom_killed
         assert not result.timed_out
@@ -96,40 +104,59 @@ class TestRunInSandbox:
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
-        run_in_sandbox("pass", "", 1000)
+        run_in_sandbox("pass", "", 1000, 200)
 
         kwargs = client.containers.run.call_args.kwargs
-        assert kwargs["mem_limit"] == "128m"
-        assert kwargs["cpu_quota"] == 25_000
+        assert kwargs["mem_limit"] == "200m"
+        assert kwargs["cpu_quota"] == 100_000
         assert kwargs["cpu_period"] == 100_000
         assert kwargs["network_disabled"] is True
         assert kwargs["read_only"] is True
         assert kwargs["pids_limit"] == 20
 
-    def test_stdin_sent_to_container(self, monkeypatch):
+    def test_code_and_stdin_passed_as_base64(self, monkeypatch):
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
-        run_in_sandbox("x = input()", "hello", 1000)
+        run_in_sandbox("print('hi')", "hello", 1000, 256)
 
-        raw_sock = client.api.exec_start.return_value._sock
-        raw_sock.sendall.assert_called_once_with(b"hello")
+        script = client.containers.run.call_args.kwargs["command"][-1]
+        assert base64.b64encode(b"print('hi')").decode() in script
+        assert base64.b64encode(b"hello").decode() in script
+        assert "base64 -d" in script
 
-    def test_empty_stdin_not_sent(self, monkeypatch):
+    def test_soft_tle_when_elapsed_exceeds_limit(self, monkeypatch):
+        # Container finishes on its own (no hard timeout) but overruns the
+        # actual limit -> still TLE.
         client = make_mock_docker_client()
+
+        def slow_wait(**kwargs):
+            time.sleep(0.05)
+            return {"StatusCode": 0}
+
+        client.containers.run.return_value.wait.side_effect = slow_wait
         _patch(monkeypatch, client)
 
-        run_in_sandbox("pass", "", 1000)
+        result = run_in_sandbox("pass", "", 1, 256)  # 1ms limit, ran ~50ms
 
-        raw_sock = client.api.exec_start.return_value._sock
-        raw_sock.sendall.assert_not_called()
+        assert result.timed_out
+        assert result.exit_code == -1
+
+    def test_output_limit_exceeded_detected(self, monkeypatch):
+        monkeypatch.setattr("app.core.sandbox._OUTPUT_LIMIT_BYTES", 10)
+        client = make_mock_docker_client(stdout=b"A" * 20)
+        _patch(monkeypatch, client)
+
+        result = run_in_sandbox("print('x' * 100)", "", 1000, 256)
+
+        assert result.output_limit_exceeded
 
     def test_unsupported_language_raises(self, monkeypatch):
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
 
         with pytest.raises(NotImplementedError):
-            run_in_sandbox("print(1)", "", 1000, language="cpp")
+            run_in_sandbox("print(1)", "", 1000, 256, language="cpp")
 
     def test_remove_api_error_is_logged_not_raised(self, monkeypatch):
         client = make_mock_docker_client()
@@ -138,4 +165,4 @@ class TestRunInSandbox:
         )
         _patch(monkeypatch, client)
 
-        run_in_sandbox("pass", "", 1000)  # Must not raise
+        run_in_sandbox("pass", "", 1000, 256)  # Must not raise

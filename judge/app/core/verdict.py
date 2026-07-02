@@ -12,6 +12,8 @@ def determine_verdict(result: SandboxResult, expected_output: str) -> VerdictEnu
         return VerdictEnum.TLE
     if result.oom_killed:
         return VerdictEnum.MLE
+    if result.output_limit_exceeded:
+        return VerdictEnum.OLE
     if result.exit_code != 0:
         return VerdictEnum.RE
     if _normalize(result.stdout) == _normalize(expected_output):

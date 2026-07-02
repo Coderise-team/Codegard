@@ -26,6 +26,10 @@ class TestDetermineVerdict:
         result = make_sandbox_result(exit_code=1)
         assert determine_verdict(result, "42") == VerdictEnum.RE
 
+    def test_ole_on_output_limit_exceeded(self):
+        result = make_sandbox_result(output_limit_exceeded=True)
+        assert determine_verdict(result, "42") == VerdictEnum.OLE
+
     def test_ac_ignores_trailing_newline(self):
         result = make_sandbox_result(stdout="42\n")
         assert determine_verdict(result, "42\n") == VerdictEnum.AC
@@ -45,3 +49,8 @@ class TestDetermineVerdict:
     def test_mle_takes_priority_over_re(self):
         result = make_sandbox_result(oom_killed=True, exit_code=137)
         assert determine_verdict(result, "42") == VerdictEnum.MLE
+
+    def test_ole_takes_priority_over_re(self):
+        # A flooding program dies with a broken pipe (non-zero exit); OLE must win.
+        result = make_sandbox_result(output_limit_exceeded=True, exit_code=1)
+        assert determine_verdict(result, "42") == VerdictEnum.OLE
