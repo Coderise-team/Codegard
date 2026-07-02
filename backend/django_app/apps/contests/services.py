@@ -136,11 +136,26 @@ def get_contest_history(user):
         .values("c")
     )
 
+    # Total problems in the row's contest — a scalar Subquery mirroring `rank`
+    # (NOT Count("contest__problems"), which is an aggregate and would force a
+    # GROUP BY over the select_related columns and collide with the rank
+    # subquery). .order_by() resets Contest's Meta ordering so start_time doesn't
+    # leak into the subquery's GROUP BY.
+    problems_count = (
+        Contest.objects.filter(pk=OuterRef("contest_id"))
+        .order_by()
+        .annotate(c=Count("problems"))
+        .values("c")
+    )
+
     return (
         ContestScore.objects.filter(user=user, contest__end_time__lt=timezone.now())
         .select_related("contest")
         .annotate(
-            rank=Coalesce(Subquery(higher, output_field=IntegerField()), Value(0)) + 1
+            rank=Coalesce(Subquery(higher, output_field=IntegerField()), Value(0)) + 1,
+            problems_count=Coalesce(
+                Subquery(problems_count, output_field=IntegerField()), Value(0)
+            ),
         )
         .order_by("-contest__end_time")
     )

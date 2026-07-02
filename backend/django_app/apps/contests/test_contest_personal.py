@@ -238,6 +238,9 @@ def test_history_fields(client, user):
     c = _finished_contest("Done")
     c.subtitle = "Round 2 · Div. 1"
     c.save()
+    c.problems.add(
+        _problem("A"), _problem("B"), _problem("C"), _problem("D"), _problem("E")
+    )
     ContestScore.objects.create(
         user=user, contest=c, solved_count=3, rating_delta=-42, rating_after=2147
     )
@@ -246,9 +249,43 @@ def test_history_fields(client, user):
     assert row["title"] == "Done"
     assert row["subtitle"] == "Round 2 · Div. 1"
     assert row["solved"] == 3
+    assert row["problems_count"] == 5  # "3/5" on the frontend
     assert row["rank"] == 1
     assert row["rating_delta"] == -42
     assert row["rating_after"] == 2147
+
+
+@pytest.mark.django_db
+def test_history_problems_count(client, user):
+    with_problems = _finished_contest("With", hours_ago=1)
+    with_problems.problems.add(_problem("A"), _problem("B"))
+    empty = _finished_contest("Empty", hours_ago=2)  # no problems
+    ContestScore.objects.create(user=user, contest=with_problems, solved_count=1)
+    ContestScore.objects.create(user=user, contest=empty, solved_count=0)
+
+    by_title = {
+        r["title"]: r["problems_count"]
+        for r in client.get(_history_url(user.username)).json()
+    }
+    assert by_title["With"] == 2
+    assert by_title["Empty"] == 0  # contest with no problems → 0
+
+
+@pytest.mark.django_db
+def test_history_no_n_plus_one(client, user, django_assert_num_queries):
+    # Query count must not grow with the number of history rows.
+    for i in range(5):
+        c = _finished_contest(f"C{i}", hours_ago=i + 1)
+        c.problems.add(_problem(f"P{i}a"), _problem(f"P{i}b"))
+        ContestScore.objects.create(user=user, contest=c, solved_count=1)
+
+    url = _history_url(user.username)
+    # Fixed regardless of row count: user lookup + the single history query
+    # (rank & problems_count are inline subqueries, not per-row queries).
+    with django_assert_num_queries(2):
+        resp = client.get(url)
+    assert len(resp.json()) == 5
+    assert all(row["problems_count"] == 2 for row in resp.json())
 
 
 @pytest.mark.django_db

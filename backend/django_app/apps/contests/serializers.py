@@ -136,6 +136,7 @@ class ContestHistorySerializer(serializers.ModelSerializer):
     end_time = serializers.DateTimeField(source="contest.end_time", read_only=True)
     solved = serializers.IntegerField(source="solved_count", read_only=True)
     rank = serializers.SerializerMethodField()
+    problems_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ContestScore
@@ -146,6 +147,7 @@ class ContestHistorySerializer(serializers.ModelSerializer):
             "end_time",
             "rank",
             "solved",
+            "problems_count",
             "rating_delta",
             "rating_after",
         ]
@@ -153,3 +155,7 @@ class ContestHistorySerializer(serializers.ModelSerializer):
     def get_rank(self, obj):
         # Rank is injected by the view (1-based position in the leaderboard).
         return getattr(obj, "rank", None)
+
+    def get_problems_count(self, obj) -> int:
+        # Total problems in the contest, injected by get_contest_history.
+        return getattr(obj, "problems_count", 0)
