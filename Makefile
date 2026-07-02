@@ -3,7 +3,7 @@ PROD := docker compose -f docker-compose.prod.yml
 DEV_TEST := $(DEV) --profile test
 
 .PHONY: help dev dev-build build down restart logs ps shell migrate makemigrations superuser \
-        test-backend test-judge test-frontend build-test-backend build-test-judge build-test-frontend \
+        test-backend test-judge test-schemas test-frontend build-test-backend build-test-judge build-test-frontend \
         prod-up prod-up-build prod-down prod-restart prod-logs prod-ps
 
 help:
@@ -33,6 +33,7 @@ help:
 	@echo "Tests:"
 	@echo "  make test-backend         Run backend tests"
 	@echo "  make test-judge           Run judge tests"
+	@echo "  make test-schemas         Run shared schema tests"
 	@echo "  make test-frontend        Run frontend tests"
 	@echo "  make build-test-backend   Rebuild backend test image"
 	@echo "  make build-test-judge     Rebuild judge test image"
@@ -75,6 +76,9 @@ test-backend:
 
 test-judge:
 	$(DEV_TEST) run --rm judge-test
+
+test-schemas:
+	$(DEV_TEST) run --rm judge-test pytest /shared/tests/ -v
 
 test-frontend:
 	$(DEV_TEST) run --rm frontend-test
