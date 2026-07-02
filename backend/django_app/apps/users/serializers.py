@@ -57,6 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
     maxRating = serializers.IntegerField(source="max_rating", read_only=True)
     globalRank = serializers.SerializerMethodField()
     nextTier = serializers.SerializerMethodField()
+    joined = serializers.DateTimeField(source="date_joined", read_only=True)
 
     class Meta:
         model = User
@@ -69,6 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
             "maxRating",
             "globalRank",
             "nextTier",
+            "joined",
         ]
 
     def get_rank(self, obj) -> str:
