@@ -72,9 +72,9 @@ class TestSubmissionResponse:
 
 
 class TestVerdictEnum:
-    def test_exactly_six_values(self):
-        assert len(VerdictEnum) == 6
+    def test_exactly_seven_values(self):
+        assert len(VerdictEnum) == 7
 
     def test_all_values_present(self):
         values = {v.value for v in VerdictEnum}
-        assert values == {"AC", "WA", "TLE", "MLE", "RE", "CE"}
+        assert values == {"AC", "WA", "TLE", "MLE", "OLE", "RE", "CE"}
