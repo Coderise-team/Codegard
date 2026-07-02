@@ -4,15 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('submissions', '0004_submission_error_message_submission_stderr'),
+        ("submissions", "0004_submission_error_message_submission_stderr"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='submission',
-            name='verdict',
-            field=models.CharField(blank=True, choices=[('AC', 'Accepted'), ('WA', 'Wrong Answer'), ('TLE', 'Time Limit Exceeded'), ('MLE', 'Memory Limit Exceeded'), ('OLE', 'Output Limit Exceeded'), ('RE', 'Runtime Error'), ('CE', 'Compilation Error')], default=None, help_text='Null until judge processes the submission.', max_length=3, null=True),
+            model_name="submission",
+            name="verdict",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("AC", "Accepted"),
+                    ("WA", "Wrong Answer"),
+                    ("TLE", "Time Limit Exceeded"),
+                    ("MLE", "Memory Limit Exceeded"),
+                    ("OLE", "Output Limit Exceeded"),
+                    ("RE", "Runtime Error"),
+                    ("CE", "Compilation Error"),
+                ],
+                default=None,
+                help_text="Null until judge processes the submission.",
+                max_length=3,
+                null=True,
+            ),
         ),
     ]
