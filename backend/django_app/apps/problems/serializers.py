@@ -19,7 +19,7 @@ def acceptance_from_annotations(obj) -> float:
 class TestCaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestCase
-        fields = ["id", "input", "expected_output", "is_hidden"]
+        fields = ["id", "input", "expected_output", "note", "is_hidden"]
 
 
 class TestCasePublicSerializer(serializers.ModelSerializer):
@@ -27,7 +27,7 @@ class TestCasePublicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TestCase
-        fields = ["id", "input", "expected_output", "note", "is_hidden"]
+        fields = ["id", "input", "expected_output", "note"]
 
 
 class ProblemSerializer(serializers.ModelSerializer):
