@@ -189,3 +189,14 @@ def test_admin_rejects_problem_without_tags(admin_client, tag):
     resp = admin_client.post(ADD_URL, _post_data(_FILLED, with_tag=False))
     assert resp.status_code == 200
     assert not Problem.objects.filter(title="Two Sum").exists()
+
+
+@pytest.mark.django_db
+def test_test_case_note_is_optional_and_saved(admin_client, tag):
+    # A test case with a note saves it; the note is optional (rows without one
+    # still save — the other rows above have no note and the problem is created).
+    row = [{"input": "1", "expected_output": "2", "is_hidden": "", "note": "sample"}]
+    resp = admin_client.post(ADD_URL, _post_data(row, tag_pk=tag.pk))
+    assert resp.status_code == 302
+    tc = Problem.objects.get(title="Two Sum").test_cases.get()
+    assert tc.note == "sample"

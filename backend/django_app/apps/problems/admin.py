@@ -50,7 +50,9 @@ class TestCaseInline(admin.TabularInline):
     model = TestCase
     formset = TestCaseInlineFormSet
     extra = 1
-    fields = ("input", "expected_output", "is_hidden")
+    # `note` is optional (blank=True); input/expected_output are the required
+    # ones that make a row "count".
+    fields = ("input", "expected_output", "is_hidden", "note")
 
 
 class ProblemAdminForm(forms.ModelForm):
