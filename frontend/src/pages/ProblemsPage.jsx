@@ -10,6 +10,7 @@ import ProgressCard from '../components/problems/ProgressCard';
 import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblems } from '../hooks/useProblems';
+import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
 import './ProblemsPage.css';
 
 const PAGE_SIZE = 20; // backend PageNumberPagination default
@@ -19,12 +20,7 @@ const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
 // sort column -> API ordering field (?ordering=, '-' prefix for descending)
 const ORDER_FIELD = { id: 'id', diff: 'difficulty', acc: 'acceptance' };
 
-// STUB: right rail + tag counts come from their own endpoints in later steps.
-const STUB_BYDIFF = {
-  Easy: { solved: 0, total: 0 },
-  Medium: { solved: 0, total: 0 },
-  Hard: { solved: 0, total: 0 },
-}; // step 7 — GET /api/users/{username}/difficulty/
+// STUB: tag counts + daily come from their own endpoints in later steps.
 const STUB_TAGS = []; // step 9 — GET /api/problems/tags/
 const STUB_TAG_COUNTS = {}; // step 9
 const STUB_DAILY = {
@@ -95,8 +91,15 @@ export default function ProblemsPage() {
   const from = total ? (page - 1) * PAGE_SIZE + 1 : 0;
   const to = (page - 1) * PAGE_SIZE + rows.length;
 
-  // STUB right-rail data (steps 7–9)
-  const byDiff = STUB_BYDIFF;
+  // solved/total per difficulty (rail progress + header totals). The endpoint's
+  // keys are lowercase; map to the { Easy, Medium, Hard } shape the cards use.
+  // Zeros while loading / until the endpoint is merged.
+  const { data: diffData } = useDifficultyBreakdown(user?.username);
+  const byDiff = useMemo(() => ({
+    Easy: diffData?.easy ?? { solved: 0, total: 0 },
+    Medium: diffData?.medium ?? { solved: 0, total: 0 },
+    Hard: diffData?.hard ?? { solved: 0, total: 0 },
+  }), [diffData]);
 
   // actions — navigation is wired later
   const openProblem = () => {};
