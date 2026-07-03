@@ -46,7 +46,7 @@ function TagDropdown({ tags, counts, active, onToggle }) {
  * Props:
  *   diff, onDiff       — difficulty filter ('all' | 'Easy' | 'Medium' | 'Hard')
  *   status, onStatus   — status filter ('all' | 'todo' | 'attempted' | 'solved')
- *   view, onView       — list view ('table' | 'cards')
+ *   view, onView       — list view ('list' | 'grid')
  *   tags, counts       — tag universe + per-tag counts
  *   tagsSel, onToggleTag — selected tags + toggle
  */
@@ -78,10 +78,10 @@ export default function Toolbar({ diff, onDiff, status, onStatus, view, onView, 
       <div className="spacer"></div>
 
       <div className="ps-vtoggle" role="radiogroup" aria-label="View">
-        <button role="radio" aria-checked={view === 'table'} className={view === 'table' ? 'on' : ''}
-          onClick={() => onView('table')} title="Table view"><I.list size={16} /></button>
-        <button role="radio" aria-checked={view === 'cards'} className={view === 'cards' ? 'on' : ''}
-          onClick={() => onView('cards')} title="Card view"><I.grid size={16} /></button>
+        <button role="radio" aria-checked={view === 'list'} className={view === 'list' ? 'on' : ''}
+          onClick={() => onView('list')} title="List view"><I.list size={16} /></button>
+        <button role="radio" aria-checked={view === 'grid'} className={view === 'grid' ? 'on' : ''}
+          onClick={() => onView('grid')} title="Grid view"><I.grid size={16} /></button>
       </div>
     </div>
   );

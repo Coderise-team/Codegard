@@ -3,7 +3,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
 import Toolbar, { SelectedTags } from '../components/problems/ProblemsToolbar';
-import ProblemTable from '../components/problems/ProblemTable';
+import ProblemList from '../components/problems/ProblemList';
 import ProblemCards from '../components/problems/ProblemCards';
 import Pagination from '../components/problems/Pagination';
 import ProgressCard from '../components/problems/ProgressCard';
@@ -20,7 +20,7 @@ const PAGE_SIZE = 20; // backend PageNumberPagination default
 // UI difficulty label -> API query value
 const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
 // sort column -> API ordering field (?ordering=, '-' prefix for descending)
-const ORDER_FIELD = { id: 'id', diff: 'difficulty', acc: 'acceptance' };
+const ORDER_FIELD = { name: 'name', diff: 'difficulty', acc: 'acceptance' };
 
 /**
  * ProblemsPage — the problemset catalog (filter, sort, paginate, table/cards).
@@ -34,14 +34,14 @@ export default function ProblemsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
 
-  // ---- view toggle ----
-  const [view, setView] = useState('table');
+  // ---- view toggle (list = row-cards, grid = thick cards) ----
+  const [view, setView] = useState('list');
 
   // ---- filter / sort / page state ----
   const [diff, setDiff] = useState('all');
   const [status, setStatus] = useState('all');
   const [tagsSel, setTagsSel] = useState([]);
-  const [sortCol, setSortCol] = useState(null); // null=newest | id | diff | acc
+  const [sortCol, setSortCol] = useState(null); // null=newest | name | diff | acc
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
 
@@ -57,10 +57,10 @@ export default function ProblemsPage() {
     setPage(1);
   };
 
-  // header-click sort cycle: col → desc → asc → off (back to newest)
+  // sort-bar click cycle: col → asc → desc → off (back to newest)
   const cycleSort = (col) => {
-    if (sortCol !== col) { setSortCol(col); setSortDir('desc'); }
-    else if (sortDir === 'desc') setSortDir('asc');
+    if (sortCol !== col) { setSortCol(col); setSortDir('asc'); }
+    else if (sortDir === 'asc') setSortDir('desc');
     else { setSortCol(null); setSortDir('desc'); }
     setPage(1);
   };
@@ -111,13 +111,13 @@ export default function ProblemsPage() {
     if (rows.length) openProblem(rows[Math.floor(Math.random() * rows.length)]);
   };
 
-  const list = view === 'cards'
+  const list = view === 'grid'
     ? <ProblemCards rows={rows} onOpen={openProblem} onTag={toggleTag} />
-    : <ProblemTable rows={rows} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
+    : <ProblemList rows={rows} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
         onOpen={openProblem} onTag={toggleTag} />;
 
   const empty = (
-    <div className="ptable-wrap"><div className="ps-empty">
+    <div className="ps-emptywrap"><div className="ps-empty">
       <div className="ei"><Icons.search size={22} /></div>
       <div className="et">No problems match these filters</div>
       <div className="es">Try clearing the difficulty, status or tags.</div>
