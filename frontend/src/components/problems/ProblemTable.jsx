@@ -62,7 +62,7 @@ export default function ProblemTable({ rows, sortCol, sortDir, onSortCol, onOpen
                 </div>
               </td>
               <td><span className={`df d-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span></td>
-              <td><div className="p-acc">{p.acc.toFixed(1)}<span className="pct">%</span></div></td>
+              <td><div className="p-acc">{p.acceptance.toFixed(1)}<span className="pct">%</span></div></td>
             </tr>
           ))}
         </tbody>

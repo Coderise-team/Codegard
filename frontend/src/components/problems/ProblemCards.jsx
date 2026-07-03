@@ -25,7 +25,7 @@ export default function ProblemCards({ rows, onOpen, onTag }) {
             ))}
           </div>
           <div className="pc-foot">
-            <span className="pc-acc">{p.acc.toFixed(1)}% AC</span>
+            <span className="pc-acc">{p.acceptance.toFixed(1)}% AC</span>
             <span className={`pc-st ${p.status}`}><StatusIcon status={p.status} size={13} /></span>
           </div>
         </div>

@@ -9,34 +9,41 @@ import Pagination from '../components/problems/Pagination';
 import ProgressCard from '../components/problems/ProgressCard';
 import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
-import problemsData from '../data/problemsData'; // STUB — replaced by useProblems (step 6)
+import { useProblems } from '../hooks/useProblems';
 import './ProblemsPage.css';
 
-const DIFF_RANK = { Easy: 0, Medium: 1, Hard: 2 };
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20; // backend PageNumberPagination default
 
-// STUB daily — replaced by useDailyChallenge (step 8)
+// UI difficulty label -> API query value
+const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
+// sort column -> API ordering field (?ordering=, '-' prefix for descending)
+const ORDER_FIELD = { id: 'id', diff: 'difficulty', acc: 'acceptance' };
+
+// STUB: right rail + tag counts come from their own endpoints in later steps.
+const STUB_BYDIFF = {
+  Easy: { solved: 0, total: 0 },
+  Medium: { solved: 0, total: 0 },
+  Hard: { solved: 0, total: 0 },
+}; // step 7 — GET /api/users/{username}/difficulty/
+const STUB_TAGS = []; // step 9 — GET /api/problems/tags/
+const STUB_TAG_COUNTS = {}; // step 9
 const STUB_DAILY = {
   title: 'Two Sum',
   difficulty: 'Easy',
   tags: ['Arrays', 'Hashing'],
   acceptance: 71.4,
-};
+}; // step 8 — useDailyChallenge
 
 /**
  * ProblemsPage — the problemset catalog (filter, sort, paginate, table/cards).
  *
- * STUB: the filter/sort/paginate logic below runs client-side on mock data.
- * Steps 6–9 replace it with server-driven hooks (useProblems / difficulty
- * breakdown / daily challenge); the shell (Sidebar/Navbar/user) is already real.
+ * The list is server-driven: filters/sort/page are mapped to query params and
+ * fetched via useProblems. The right rail (progress, daily) and tag counts are
+ * still STUB — wired in steps 7–9.
  */
 export default function ProblemsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
-
-  // ---- STUB data source (mock) ----
-  const ALL = problemsData.problems;
-  const TAGS = problemsData.tags;
 
   // ---- view toggle ----
   const [view, setView] = useState('table');
@@ -49,8 +56,8 @@ export default function ProblemsPage() {
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
 
-  // Any change to the filtered/sorted set resets to page 1. We do this inline in
-  // each handler (not in an effect) to avoid a cascading re-render.
+  // Any change to the filtered/sorted set resets to page 1 (inline in each
+  // handler, not in an effect, to avoid a cascading re-render).
   const changeDiff = (v) => { setDiff(v); setPage(1); };
   const changeStatus = (v) => { setStatus(v); setPage(1); };
   const changeView = (v) => { setView(v); setPage(1); };
@@ -69,58 +76,37 @@ export default function ProblemsPage() {
     setPage(1);
   };
 
-  // tag counts over the full catalog (for chip badges)
-  const tagCounts = useMemo(() => {
-    const c = {};
-    for (const p of ALL) for (const tg of p.tags) c[tg] = (c[tg] || 0) + 1;
-    return c;
-  }, [ALL]);
+  // UI state -> API query params (memoised so the hook only refetches on change)
+  const params = useMemo(() => {
+    const p = { page };
+    if (diff !== 'all') p.difficulty = DIFF_PARAM[diff];
+    if (status !== 'all') p.status = status;
+    if (tagsSel.length) p.tag = tagsSel;
+    if (sortCol) p.ordering = (sortDir === 'desc' ? '-' : '') + ORDER_FIELD[sortCol];
+    return p;
+  }, [diff, status, tagsSel, sortCol, sortDir, page]);
 
-  // solved-by-difficulty (rail progress)
-  const byDiff = useMemo(() => {
-    const m = { Easy: { solved: 0, total: 0 }, Medium: { solved: 0, total: 0 }, Hard: { solved: 0, total: 0 } };
-    for (const p of ALL) { m[p.difficulty].total++; if (p.status === 'solved') m[p.difficulty].solved++; }
-    return m;
-  }, [ALL]);
+  const { data } = useProblems(params);
+  const rows = data?.results ?? [];
+  const total = data?.count ?? 0;
 
-  // apply filters + sort
-  const filtered = useMemo(() => {
-    const rows = ALL.filter((p) => {
-      if (diff !== 'all' && p.difficulty !== diff) return false;
-      if (status !== 'all' && p.status !== status) return false;
-      if (tagsSel.length && !tagsSel.every((tg) => p.tags.includes(tg))) return false;
-      return true;
-    });
-    const key = {
-      id: (p) => p.id,
-      diff: (p) => DIFF_RANK[p.difficulty],
-      acc: (p) => p.acc,
-    }[sortCol];
-    if (!key) return [...rows].sort((a, b) => b.added - a.added); // newest
-    return [...rows].sort((a, b) => {
-      const d = (key(a) - key(b)) || (a.added - b.added);
-      return sortDir === 'desc' ? -d : d;
-    });
-  }, [ALL, diff, status, tagsSel, sortCol, sortDir]);
+  // pagination math from the server response
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total ? (page - 1) * PAGE_SIZE + 1 : 0;
+  const to = (page - 1) * PAGE_SIZE + rows.length;
 
-  // pagination
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount);
-  const start = (safePage - 1) * PAGE_SIZE;
-  const pageRows = filtered.slice(start, start + PAGE_SIZE);
-  const from = filtered.length ? start + 1 : 0;
-  const to = start + pageRows.length;
+  // STUB right-rail data (steps 7–9)
+  const byDiff = STUB_BYDIFF;
 
-  // actions — navigation is wired later (see step 6+)
+  // actions — navigation is wired later
   const openProblem = () => {};
   const pickRandom = () => {
-    const pool = filtered.length ? filtered : ALL;
-    openProblem(pool[Math.floor(Math.random() * pool.length)]);
+    if (rows.length) openProblem(rows[Math.floor(Math.random() * rows.length)]);
   };
 
   const list = view === 'cards'
-    ? <ProblemCards rows={pageRows} onOpen={openProblem} onTag={toggleTag} />
-    : <ProblemTable rows={pageRows} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
+    ? <ProblemCards rows={rows} onOpen={openProblem} onTag={toggleTag} />
+    : <ProblemTable rows={rows} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
         onOpen={openProblem} onTag={toggleTag} />;
 
   const empty = (
@@ -144,7 +130,7 @@ export default function ProblemsPage() {
           <div className="ps-canvas">
             <div className="ps-head">
               <h1>Problemset</h1>
-              <span className="ps-count"><b>{filtered.length}</b> of {ALL.length} problems</span>
+              <span className="ps-count"><b>{total}</b> problems</span>
               <div className="ps-diffsum">
                 {[['Easy', 'd-easy'], ['Medium', 'd-medium'], ['Hard', 'd-hard']].map(([d, c]) => (
                   <div key={d} className={`ds ${c}`}>
@@ -160,13 +146,13 @@ export default function ProblemsPage() {
                   diff={diff} onDiff={changeDiff}
                   status={status} onStatus={changeStatus}
                   view={view} onView={changeView}
-                  tags={TAGS} counts={tagCounts} tagsSel={tagsSel} onToggleTag={toggleTag} />
+                  tags={STUB_TAGS} counts={STUB_TAG_COUNTS} tagsSel={tagsSel} onToggleTag={toggleTag} />
 
                 <SelectedTags tagsSel={tagsSel} onToggle={toggleTag} onClear={clearTags} />
 
-                {filtered.length ? list : empty}
+                {rows.length ? list : empty}
 
-                <Pagination page={safePage} pageCount={pageCount} total={filtered.length}
+                <Pagination page={page} pageCount={pageCount} total={total}
                   from={from} to={to} onPage={setPage} />
               </div>
 
