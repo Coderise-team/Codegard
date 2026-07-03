@@ -45,7 +45,7 @@ export default function ProblemList({ rows, sortCol, sortDir, onSortCol, onOpen,
 
       <div className="prows">
         {rows.map((p, i) => (
-          <div key={p.id} className="prow" style={{ animationDelay: `${(i % 20) * 25}ms` }}
+          <div key={p.id} className="prow" style={{ animationDelay: `${(i % 20) * 40}ms` }}
             onClick={() => onOpen(p)}>
             <div className={`p-st ${p.status}`}><StatusIcon status={p.status} /></div>
             <span className="p-id">{p.id}</span>

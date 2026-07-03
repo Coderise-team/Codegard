@@ -12,7 +12,7 @@ export default function ProblemCards({ rows, onOpen, onTag }) {
   return (
     <div className="pcards">
       {rows.map((p, i) => (
-        <div key={p.id} className="pcard" style={{ animationDelay: `${(i % 20) * 25}ms` }}
+        <div key={p.id} className="pcard" style={{ animationDelay: `${(i % 20) * 40}ms` }}
           onClick={() => onOpen(p)}>
           <div className="pc-top">
             <span className="pc-id">{p.id}</span>
