@@ -45,7 +45,7 @@ export default function ProblemsPage() {
   const [diff, setDiff] = useState('all');
   const [status, setStatus] = useState('all');
   const [tagsSel, setTagsSel] = useState([]);
-  const [sortCol, setSortCol] = useState(null); // null=newest | id | diff | acc | freq
+  const [sortCol, setSortCol] = useState(null); // null=newest | id | diff | acc
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
 
@@ -95,7 +95,6 @@ export default function ProblemsPage() {
       id: (p) => p.id,
       diff: (p) => DIFF_RANK[p.difficulty],
       acc: (p) => p.acc,
-      freq: (p) => p.freq,
     }[sortCol];
     if (!key) return [...rows].sort((a, b) => b.added - a.added); // newest
     return [...rows].sort((a, b) => {

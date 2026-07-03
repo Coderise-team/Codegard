@@ -1,5 +1,5 @@
 import Icons from '../Icons';
-import { StatusIcon, FreqMeter } from './bits';
+import { StatusIcon } from './bits';
 
 const I = Icons;
 
@@ -25,7 +25,7 @@ function SortTh({ col, label, className, sortCol, sortDir, onSortCol }) {
  *
  * Props:
  *   rows                 — problems to render (current page)
- *   sortCol              — null | 'id' | 'diff' | 'acc' | 'freq'
+ *   sortCol              — null | 'id' | 'diff' | 'acc'
  *   sortDir              — 'desc' | 'asc'
  *   onSortCol(col)       — cycle sort on a column
  *   onOpen(problem)      — row click
@@ -43,7 +43,6 @@ export default function ProblemTable({ rows, sortCol, sortDir, onSortCol, onOpen
             <th>Problem</th>
             <SortTh col="diff" label="Difficulty" className="col-diff" {...sortProps} />
             <SortTh col="acc" label="Acceptance" className="col-acc" {...sortProps} />
-            <SortTh col="freq" label="Frequency" className="col-freq" {...sortProps} />
           </tr>
         </thead>
         <tbody>
@@ -64,7 +63,6 @@ export default function ProblemTable({ rows, sortCol, sortDir, onSortCol, onOpen
               </td>
               <td><span className={`df d-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span></td>
               <td><div className="p-acc">{p.acc.toFixed(1)}<span className="pct">%</span></div></td>
-              <td className="col-freq"><FreqMeter n={p.freq} /></td>
             </tr>
           ))}
         </tbody>

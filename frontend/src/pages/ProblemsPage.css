@@ -123,7 +123,6 @@
 .ptable th.col-id { width: 62px; }
 .ptable th.col-diff { width: 124px; }
 .ptable th.col-acc { width: 120px; text-align: right; }
-.ptable th.col-freq { width: 128px; }
 
 .ptable tbody tr { cursor: pointer; transition: background .1s; }
 .ptable tbody tr + tr td { border-top: 1px solid var(--border); }
@@ -153,14 +152,6 @@
 .p-acc { font-family: var(--mono); font-size: 12.5px; color: var(--fg); text-align: right;
   font-variant-numeric: tabular-nums; }
 .p-acc .pct { color: var(--fg3); font-size: 11px; }
-
-/* frequency meter (popularity) */
-.p-freq { display: flex; align-items: center; gap: 3px; }
-.p-freq i { width: 5px; border-radius: 1.5px; background: var(--border-2); }
-.p-freq i:nth-child(1) { height: 8px; }  .p-freq i:nth-child(2) { height: 11px; }
-.p-freq i:nth-child(3) { height: 14px; } .p-freq i:nth-child(4) { height: 17px; }
-.p-freq i:nth-child(5) { height: 20px; }
-.p-freq i.on { background: var(--gold); }
 
 /* ============================================================
    CARD GRID VIEW
@@ -250,7 +241,4 @@
   .ps-body { grid-template-columns: minmax(0, 1fr); }
   .ps-rail { flex-direction: row; flex-wrap: wrap; }
   .ps-rail > * { flex: 1; min-width: 260px; }
-}
-@media (max-width: 720px) {
-  .ptable th.col-freq, .ptable td.col-freq { display: none; }
 }
