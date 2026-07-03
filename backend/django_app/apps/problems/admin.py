@@ -54,15 +54,21 @@ class TestCaseInline(admin.TabularInline):
 
 
 class ProblemAdminForm(forms.ModelForm):
-    """Problem form that requires at least one tag.
+    """Problem form that requires at least one tag, with a clear message.
 
-    A required M2M can't be enforced by the admin or a field's `required` flag,
-    so we validate it here: `clean_tags` rejects an empty tag set.
+    We turn the field's own `required` off so `clean_tags` is the single gate:
+    otherwise the default "This field is required." fires first and shadows our
+    clearer "A problem must have at least one tag." message.
     """
 
     class Meta:
         model = Problem
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "tags" in self.fields:
+            self.fields["tags"].required = False
 
     def clean_tags(self):
         tags = self.cleaned_data.get("tags")

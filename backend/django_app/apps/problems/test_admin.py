@@ -90,6 +90,16 @@ def test_inline_one_test_case_is_valid():
     assert formset.is_valid(), formset.errors + [formset.non_form_errors()]
 
 
+@pytest.mark.django_db
+def test_inline_partial_row_shows_per_row_error_not_min():
+    # A half-filled row (missing expected_output) is a per-row error; clean()
+    # returns early and lets that surface instead of the "at least one" message.
+    formset = _inline_formset([{"input": "1", "expected_output": "", "is_hidden": ""}])
+    assert not formset.is_valid()
+    assert not formset.non_form_errors()  # min-error suppressed; row error shown
+    assert formset.errors[0]  # the row itself is invalid
+
+
 # --- model registration -----------------------------------------------------
 
 
@@ -112,6 +122,17 @@ def test_computed_columns(tag):
     ma = ProblemAdmin(Problem, AdminSite())
     assert ma.test_case_count(p) == 2
     assert ma.tag_list(p) == "dp"
+
+
+@pytest.mark.django_db
+def test_get_queryset_prefetches(tag):
+    p = Problem.objects.create(**_problem_data())
+    p.tags.add(tag)
+    ma = ProblemAdmin(Problem, AdminSite())
+    qs = ma.get_queryset(_admin_request())
+    assert p in list(qs)
+    # tags were prefetched, so reading them adds no extra query
+    assert "tags" in qs._prefetch_related_lookups
 
 
 @pytest.mark.django_db
