@@ -158,7 +158,7 @@
   background: linear-gradient(125deg, var(--btn-lo-h), var(--btn-hi-h));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.prow:hover .p-tags .tag {
+.prow .p-tags .tag:hover {
   color: #fff; border-color: transparent;
   background: linear-gradient(125deg, var(--btn-lo-h), var(--btn-hi-h));
 }
