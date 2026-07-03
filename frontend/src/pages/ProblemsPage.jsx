@@ -12,6 +12,7 @@ import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblems } from '../hooks/useProblems';
 import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
 import { useDaily } from '../hooks/useDaily';
+import { useTags } from '../hooks/useTags';
 import './ProblemsPage.css';
 
 const PAGE_SIZE = 20; // backend PageNumberPagination default
@@ -21,16 +22,13 @@ const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
 // sort column -> API ordering field (?ordering=, '-' prefix for descending)
 const ORDER_FIELD = { id: 'id', diff: 'difficulty', acc: 'acceptance' };
 
-// STUB: tag counts + daily come from their own endpoints in later steps.
-const STUB_TAGS = []; // step 9 — GET /api/problems/tags/
-const STUB_TAG_COUNTS = {}; // step 9
-
 /**
  * ProblemsPage — the problemset catalog (filter, sort, paginate, table/cards).
  *
- * The list is server-driven: filters/sort/page are mapped to query params and
- * fetched via useProblems. The right rail (progress, daily) and tag counts are
- * still STUB — wired in steps 7–9.
+ * Fully server-driven: the list (useProblems), the difficulty breakdown feeding
+ * the progress card and header totals (useDifficultyBreakdown), the daily
+ * challenge (useDaily) and the tag filter options (useTags) each fetch from the
+ * API. Filters/sort/page are mapped to query params.
  */
 export default function ProblemsPage() {
   const user = useCurrentUser();
@@ -99,6 +97,14 @@ export default function ProblemsPage() {
   // today's daily challenge (null while loading or when none is assigned)
   const { data: daily } = useDaily();
 
+  // all catalog tags with counts, for the filter dropdown
+  const { data: tagList } = useTags();
+  const tags = useMemo(() => (tagList ?? []).map((t) => t.name), [tagList]);
+  const tagCounts = useMemo(
+    () => Object.fromEntries((tagList ?? []).map((t) => [t.name, t.count])),
+    [tagList],
+  );
+
   // actions — navigation is wired later
   const openProblem = () => {};
   const pickRandom = () => {
@@ -147,7 +153,7 @@ export default function ProblemsPage() {
                   diff={diff} onDiff={changeDiff}
                   status={status} onStatus={changeStatus}
                   view={view} onView={changeView}
-                  tags={STUB_TAGS} counts={STUB_TAG_COUNTS} tagsSel={tagsSel} onToggleTag={toggleTag} />
+                  tags={tags} counts={tagCounts} tagsSel={tagsSel} onToggleTag={toggleTag} />
 
                 <SelectedTags tagsSel={tagsSel} onToggle={toggleTag} onClear={clearTags} />
 
