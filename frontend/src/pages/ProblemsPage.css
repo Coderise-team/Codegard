@@ -221,6 +221,17 @@
 .pcard .pc-st.attempted { color: var(--tle); background: var(--tle-soft); }
 .pcard .pc-st.todo { color: var(--fg3); border: 1.5px solid var(--border-2); width: 20px; height: 20px; }
 
+/* staggered entrance for cards (list + grid). `backwards` holds the start frame
+   during the per-item delay and reverts after the run, so the :hover transform
+   keeps working once the animation is done. */
+@media (prefers-reduced-motion: no-preference) {
+  .prow, .pcard { animation: cardIn .32s cubic-bezier(.2, .7, .3, 1) backwards; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
+
+/* infinite-scroll sentinel — invisible trigger at the end of the list */
+.ps-sentinel { height: 1px; }
+
 /* empty state */
 .ps-empty { padding: 56px 20px; text-align: center; color: var(--fg2); }
 .ps-empty .ei { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;

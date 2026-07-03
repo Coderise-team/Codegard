@@ -11,8 +11,9 @@ import { StatusIcon } from './bits';
 export default function ProblemCards({ rows, onOpen, onTag }) {
   return (
     <div className="pcards">
-      {rows.map((p) => (
-        <div key={p.id} className="pcard" onClick={() => onOpen(p)}>
+      {rows.map((p, i) => (
+        <div key={p.id} className="pcard" style={{ animationDelay: `${(i % 20) * 25}ms` }}
+          onClick={() => onOpen(p)}>
           <div className="pc-top">
             <span className="pc-id">{p.id}</span>
             <span className={`df d-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span>
