@@ -12,6 +12,13 @@ export async function getProblems(params) {
   return data;
 }
 
+// GET problems/tags/ -> all catalog tags with their problem counts
+// ([{ name, count }]), for the filter dropdown.
+export async function getTags() {
+  const { data } = await client.get('problems/tags/');
+  return data;
+}
+
 // GET problems/recommended/ -> up to 6 unsolved problems for the current user
 // ([{ id, title, difficulty, tags, acceptance }]), ordered easy -> hard.
 export async function getRecommended() {
