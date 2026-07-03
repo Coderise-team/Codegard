@@ -11,6 +11,7 @@ import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblems } from '../hooks/useProblems';
 import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
+import { useDaily } from '../hooks/useDaily';
 import './ProblemsPage.css';
 
 const PAGE_SIZE = 20; // backend PageNumberPagination default
@@ -23,12 +24,6 @@ const ORDER_FIELD = { id: 'id', diff: 'difficulty', acc: 'acceptance' };
 // STUB: tag counts + daily come from their own endpoints in later steps.
 const STUB_TAGS = []; // step 9 — GET /api/problems/tags/
 const STUB_TAG_COUNTS = {}; // step 9
-const STUB_DAILY = {
-  title: 'Two Sum',
-  difficulty: 'Easy',
-  tags: ['Arrays', 'Hashing'],
-  acceptance: 71.4,
-}; // step 8 — useDailyChallenge
 
 /**
  * ProblemsPage — the problemset catalog (filter, sort, paginate, table/cards).
@@ -101,6 +96,9 @@ export default function ProblemsPage() {
     Hard: diffData?.hard ?? { solved: 0, total: 0 },
   }), [diffData]);
 
+  // today's daily challenge (null while loading or when none is assigned)
+  const { data: daily } = useDaily();
+
   // actions — navigation is wired later
   const openProblem = () => {};
   const pickRandom = () => {
@@ -161,7 +159,7 @@ export default function ProblemsPage() {
 
               <aside className="ps-rail">
                 <ProgressCard byDiff={byDiff} />
-                <DailyRandomCard daily={STUB_DAILY} onRandom={pickRandom} />
+                {daily && <DailyRandomCard daily={daily} onRandom={pickRandom} />}
               </aside>
             </div>
           </div>
