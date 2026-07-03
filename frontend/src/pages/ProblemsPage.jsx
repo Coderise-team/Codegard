@@ -20,7 +20,7 @@ const PAGE_SIZE = 20; // backend PageNumberPagination default
 // UI difficulty label -> API query value
 const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
 // sort column -> API ordering field (?ordering=, '-' prefix for descending)
-const ORDER_FIELD = { name: 'name', diff: 'difficulty', acc: 'acceptance' };
+const ORDER_FIELD = { id: 'id', name: 'name', diff: 'difficulty', acc: 'acceptance' };
 
 /**
  * ProblemsPage — the problemset catalog (filter, sort, paginate, table/cards).
@@ -41,7 +41,7 @@ export default function ProblemsPage() {
   const [diff, setDiff] = useState('all');
   const [status, setStatus] = useState('all');
   const [tagsSel, setTagsSel] = useState([]);
-  const [sortCol, setSortCol] = useState(null); // null=newest | name | diff | acc
+  const [sortCol, setSortCol] = useState(null); // null=newest | id | name | diff | acc
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
 

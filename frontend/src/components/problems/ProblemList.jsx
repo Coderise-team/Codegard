@@ -5,6 +5,7 @@ const I = Icons;
 
 // Sortable columns; each label doubles as a column header in the sort bar.
 const COLS = [
+  { col: 'id', label: '#' },
   { col: 'name', label: 'Problem' },
   { col: 'diff', label: 'Difficulty' },
   { col: 'acc', label: 'Acceptance' },
