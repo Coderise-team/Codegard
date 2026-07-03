@@ -24,12 +24,13 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from .filters import ProblemFilter
-from .models import DailyProblem, Problem
+from .models import DailyProblem, Problem, Tag
 from .serializers import (
     DailyProblemSerializer,
     ProblemSerializer,
     ProblemWriteSerializer,
     RecommendedProblemSerializer,
+    TagSerializer,
 )
 
 RECOMMENDED_PER_DIFFICULTY = 2
@@ -215,3 +216,12 @@ class ProblemViewSet(viewsets.ModelViewSet):
         picked.sort(key=lambda p: difficulty_rank[p.difficulty])
         serializer = RecommendedProblemSerializer(picked, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def tags(self, request):
+        """GET /api/problems/tags/ — all tags with their problem counts.
+
+        Feeds the ProblemsPage filter dropdown. Public read (like the list).
+        """
+        qs = Tag.objects.annotate(count=Count("problems"))
+        return Response(TagSerializer(qs, many=True).data)

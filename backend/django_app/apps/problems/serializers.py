@@ -16,6 +16,19 @@ def acceptance_from_annotations(obj) -> float:
     return round(ac / total * 100, 1)
 
 
+class TagSerializer(serializers.ModelSerializer):
+    """Tag with how many problems use it, for the catalog filter dropdown.
+
+    `count` comes from the `count=Count("problems")` annotation the view adds.
+    """
+
+    count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Tag
+        fields = ["name", "count"]
+
+
 class TestCaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestCase
