@@ -1,0 +1,256 @@
+/* =============================================================
+   Codegard — ProblemsPage (problemset catalog)
+   Pulls the shared shell (sidebar, topbar, canvas) from Dashboard.css,
+   then adds the page header, filter toolbar, tag bar, problems table,
+   card grid, pagination, and right rail.
+
+   Base tokens + .card/.btn/.df/.tag/.chip live in styles/variables.css
+   + styles/global.css (imported once in main.jsx).
+   ============================================================= */
+@import './Dashboard.css';
+
+/* wider working area than the dashboard's 1320 — the table wants room */
+.ps-canvas { max-width: 1380px; margin: 0 auto; padding: 24px 22px 56px; }
+
+/* ---- page header ---- */
+.ps-head { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin: 0 0 18px; }
+.ps-head h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+.ps-head .ps-count { color: var(--fg2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ps-head .ps-count b { color: var(--fg); font-weight: 700; }
+.ps-head .ps-diffsum { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.ps-diffsum .ds { display: flex; align-items: baseline; gap: 7px; font-size: 12px; }
+.ps-diffsum .ds .n { font-family: var(--mono); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ps-diffsum .ds .k { color: var(--fg2); }
+.ps-diffsum .ds.d-easy .n { color: var(--ac); }
+.ps-diffsum .ds.d-medium .n { color: var(--tle); }
+.ps-diffsum .ds.d-hard .n { color: var(--wa); }
+
+/* ---- two-column body (list + rail) ---- */
+.ps-body { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr) 312px; align-items: start; }
+.ps-body.no-rail { grid-template-columns: minmax(0, 1fr); }
+.ps-main { min-width: 0; display: flex; flex-direction: column; gap: var(--gap); }
+.ps-rail { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+
+/* ============================================================
+   FILTER TOOLBAR
+   ============================================================ */
+.ps-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ps-toolbar .spacer { flex: 1; min-width: 0; }
+
+/* segmented difficulty / status pills */
+.ps-seg { display: flex; align-items: stretch; gap: 2px; padding: 3px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border); flex: 0 0 auto; }
+.ps-seg button {
+  background: none; border: 0; cursor: pointer; border-radius: 5px;
+  padding: 0 12px; height: 30px; color: var(--fg2);
+  font-family: var(--ui); font-size: 12.5px; font-weight: 600; transition: .12s;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.ps-seg button:hover { color: var(--fg); }
+.ps-seg button.on { background: var(--card-2); color: var(--fg); }
+.ps-seg button.on.d-easy { color: var(--ac); }
+.ps-seg button.on.d-medium { color: var(--tle); }
+.ps-seg button.on.d-hard { color: var(--wa); }
+.ps-seg button .sdot { width: 7px; height: 7px; border-radius: 50%; }
+.ps-seg button.d-easy .sdot { background: var(--ac); }
+.ps-seg button.d-medium .sdot { background: var(--tle); }
+.ps-seg button.d-hard .sdot { background: var(--wa); }
+
+/* tag dropdown */
+.ps-tagdd { position: relative; flex: 0 0 auto; }
+.ps-tagdd-btn { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px;
+  border-radius: var(--r-sm); background: var(--card); border: 1px solid var(--border);
+  color: var(--fg2); font-family: var(--ui); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: .12s; white-space: nowrap; }
+.ps-tagdd-btn:hover { color: var(--fg); border-color: var(--border-2); }
+.ps-tagdd-btn.on { color: var(--gold-hi); border-color: var(--gold-line); background: var(--gold-soft); }
+.ps-tagdd-btn .cnt { font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  color: var(--gold-hi); background: var(--gold-soft); border: 1px solid var(--gold-line);
+  border-radius: 20px; padding: 0 6px; line-height: 16px; }
+.ps-tagdd-btn.on .cnt { background: color-mix(in srgb, var(--gold) 24%, transparent); }
+.ps-tagdd-menu { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 230px;
+  max-height: 320px; overflow-y: auto; padding: 6px; border-radius: var(--r);
+  background: var(--card-2); border: 1px solid var(--border-2);
+  box-shadow: 0 16px 44px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 1px; }
+.tagdd-item { display: flex; align-items: center; gap: 10px; width: 100%; height: 32px;
+  padding: 0 9px; border: 0; border-radius: var(--r-sm); background: none; cursor: pointer;
+  color: var(--fg2); font-family: var(--ui); font-size: 12.5px; font-weight: 600; text-align: left; transition: .1s; }
+.tagdd-item:hover { background: var(--card); color: var(--fg); }
+.tagdd-item.on { color: var(--gold-hi); }
+.tagdd-item .box { width: 16px; height: 16px; flex: 0 0 auto; border-radius: 5px;
+  border: 1.5px solid var(--border-2); display: grid; place-items: center; color: var(--bg); }
+.tagdd-item.on .box { background: var(--gold); border-color: var(--gold); }
+.tagdd-item .nm { flex: 1; min-width: 0; }
+.tagdd-item .cnt { font-family: var(--mono); font-size: 11px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+
+/* selected-tag chips (below toolbar) */
+.ps-seltags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ps-seltags .lbl { font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--fg2); font-weight: 700; margin-right: 2px; }
+.ps-seltags .seltag { display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--ui); font-size: 12px; font-weight: 600;
+  color: var(--gold-hi); background: var(--gold-soft); border: 1px solid var(--gold-line);
+  border-radius: 20px; padding: 4px 8px 4px 11px; cursor: pointer; transition: .12s; }
+.ps-seltags .seltag:hover { background: color-mix(in srgb, var(--gold) 22%, transparent); }
+.ps-seltags .seltag svg { color: var(--gold); }
+.ps-seltags .seltag-clear { font-size: 12px; font-weight: 600; color: var(--fg2);
+  background: none; border: 0; cursor: pointer; padding: 4px 4px; border-radius: 6px; }
+.ps-seltags .seltag-clear:hover { color: var(--wa); }
+
+/* view toggle (table / cards) */
+.ps-vtoggle { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border); flex: 0 0 auto; }
+.ps-vtoggle button { width: 32px; height: 30px; display: grid; place-items: center;
+  background: none; border: 0; border-radius: 5px; color: var(--fg2); cursor: pointer; transition: .12s; }
+.ps-vtoggle button:hover { color: var(--fg); }
+.ps-vtoggle button.on { background: var(--card-2); color: var(--gold-hi); }
+
+/* ============================================================
+   PROBLEMS TABLE
+   ============================================================ */
+.ptable-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ptable { width: 100%; border-collapse: collapse; }
+.ptable thead th {
+  text-align: left; font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--fg2); font-weight: 700; padding: 12px var(--pad); border-bottom: 1px solid var(--border);
+  white-space: nowrap; user-select: none;
+}
+.ptable thead th.sortable { cursor: pointer; transition: color .12s; user-select: none; }
+.ptable thead th.sortable:hover { color: var(--fg); }
+.ptable thead th.sortable.active { color: var(--gold-hi); }
+.ptable thead th .sar { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--gold); }
+.ptable th.col-st { width: 46px; }
+.ptable th.col-id { width: 62px; }
+.ptable th.col-diff { width: 124px; }
+.ptable th.col-acc { width: 120px; text-align: right; }
+.ptable th.col-freq { width: 128px; }
+
+.ptable tbody tr { cursor: pointer; transition: background .1s; }
+.ptable tbody tr + tr td { border-top: 1px solid var(--border); }
+.ptable tbody tr:hover td { background: var(--card-2); }
+.ptable tbody td { padding: 11px var(--pad); vertical-align: middle; }
+[data-density="compact"] .ptable tbody td { padding: 9px var(--pad); }
+
+/* status cell */
+.p-st { display: grid; place-items: center; }
+.p-st .ic { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; }
+.p-st.solved .ic { color: var(--ac); background: var(--ac-soft); }
+.p-st.attempted .ic { color: var(--tle); background: var(--tle-soft); }
+.p-st.todo .ic { color: var(--fg3); border: 1.5px solid var(--border-2); width: 18px; height: 18px; }
+
+/* id */
+.ptable .p-id { font-family: var(--mono); font-size: 11.5px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+
+/* title + tags */
+.p-title { font-size: 13.5px; font-weight: 600; color: var(--fg); }
+.ptable tbody tr:hover .p-title { color: var(--gold-hi); }
+.p-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+[data-density="compact"] .p-tags { margin-top: 4px; }
+.p-tags .tag { cursor: pointer; transition: .12s; }
+.p-tags .tag:hover { color: var(--gold-hi); border-color: var(--gold-line); }
+
+/* acceptance */
+.p-acc { font-family: var(--mono); font-size: 12.5px; color: var(--fg); text-align: right;
+  font-variant-numeric: tabular-nums; }
+.p-acc .pct { color: var(--fg3); font-size: 11px; }
+
+/* frequency meter (popularity) */
+.p-freq { display: flex; align-items: center; gap: 3px; }
+.p-freq i { width: 5px; border-radius: 1.5px; background: var(--border-2); }
+.p-freq i:nth-child(1) { height: 8px; }  .p-freq i:nth-child(2) { height: 11px; }
+.p-freq i:nth-child(3) { height: 14px; } .p-freq i:nth-child(4) { height: 17px; }
+.p-freq i:nth-child(5) { height: 20px; }
+.p-freq i.on { background: var(--gold); }
+
+/* ============================================================
+   CARD GRID VIEW
+   ============================================================ */
+.pcards { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); }
+.pcard { position: relative; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px; cursor: pointer; transition: .14s;
+  display: flex; flex-direction: column; gap: 12px; min-height: 132px; }
+.pcard:hover { border-color: var(--border-2); transform: translateY(-2px); }
+.pcard .pc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pcard .pc-id { font-family: var(--mono); font-size: 11px; color: var(--fg3); font-variant-numeric: tabular-nums; }
+.pcard .pc-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
+.pcard:hover .pc-title { color: var(--gold-hi); }
+.pcard .pc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+.pcard .pc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-top: 12px; border-top: 1px solid var(--border); }
+.pcard .pc-acc { font-family: var(--mono); font-size: 12px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+.pcard .pc-st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex: 0 0 auto; }
+.pcard .pc-st.solved { color: var(--ac); background: var(--ac-soft); }
+.pcard .pc-st.attempted { color: var(--tle); background: var(--tle-soft); }
+.pcard .pc-st.todo { color: var(--fg3); border: 1.5px solid var(--border-2); width: 20px; height: 20px; }
+
+/* empty state */
+.ps-empty { padding: 56px 20px; text-align: center; color: var(--fg2); }
+.ps-empty .ei { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+  margin: 0 auto 14px; background: var(--card-2); color: var(--fg3); }
+.ps-empty .et { font-size: 14.5px; font-weight: 700; color: var(--fg); }
+.ps-empty .es { font-size: 12.5px; margin-top: 6px; }
+.ps-empty .btn { margin-top: 16px; }
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.ps-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ps-pager .pg-info { font-size: 12.5px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+.ps-pager .pg-info b { color: var(--fg); font-weight: 700; }
+.ps-pager .pg-nav { display: flex; align-items: center; gap: 5px; }
+.pg-btn { min-width: 34px; height: 34px; padding: 0 9px; border-radius: var(--r-sm);
+  background: var(--card); border: 1px solid var(--border); color: var(--fg2);
+  font-family: var(--mono); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: .12s;
+  display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.pg-btn:hover:not(:disabled) { color: var(--fg); border-color: var(--border-2); background: var(--card-2); }
+.pg-btn.on { color: var(--gold-hi); background: var(--gold-soft); border-color: var(--gold-line); }
+.pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+.pg-ellip { color: var(--fg3); padding: 0 2px; font-family: var(--mono); }
+
+/* ============================================================
+   RIGHT RAIL — solved-by-difficulty progress + daily / random CTA
+   ============================================================ */
+.ps-daily .dt-title { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.ps-daily .dt-sub { display: flex; align-items: center; gap: 8px; margin: 9px 0 12px; flex-wrap: wrap; }
+.ps-daily .dt-acc { font-size: 12px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+.ps-daily .dt-acc b { color: var(--fg); }
+.ps-random { display: flex; flex-direction: column; gap: 10px; }
+.ps-random .rd-note { font-size: 12.5px; color: var(--fg2); line-height: 1.5; }
+
+/* progress mini (solved by difficulty) at top of rail */
+.ps-prog .pp-row { display: flex; align-items: center; gap: 10px; }
+.ps-prog .pp-row + .pp-row { margin-top: 12px; }
+.ps-prog .pp-k { width: 58px; font-size: 12px; font-weight: 600; flex: 0 0 auto; }
+.ps-prog .pp-k.d-easy { color: var(--ac); } .ps-prog .pp-k.d-medium { color: var(--tle); }
+.ps-prog .pp-k.d-hard { color: var(--wa); }
+.ps-prog .pp-bar { flex: 1; height: 6px; border-radius: 4px; background: var(--card-2); overflow: hidden; }
+.ps-prog .pp-fill { height: 100%; border-radius: 4px; }
+.ps-prog .pp-fill.d-easy { background: var(--ac); } .ps-prog .pp-fill.d-medium { background: var(--tle); }
+.ps-prog .pp-fill.d-hard { background: var(--wa); }
+.ps-prog .pp-num { font-family: var(--mono); font-size: 11.5px; color: var(--fg2); flex: 0 0 auto;
+  font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
+
+/* the daily-card header sum (reuse dashboard's .act-sum visual) */
+.ps-prog .act-sum { margin-left: auto; font-size: 12px; color: var(--fg2); }
+.ps-prog .act-sum b { color: var(--fg); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* entrance — slide only (never opacity; preview/export freezes at frame 0) */
+@media (prefers-reduced-motion: no-preference) {
+  .ps-main > *, .ps-rail > * { animation: psIn .4s cubic-bezier(.2,.7,.3,1); }
+  @keyframes psIn { from { transform: translateY(8px); } to { transform: none; } }
+}
+
+/* brand-soft accent button (Pick random) */
+.btn.btn-accent { color: var(--gold-hi); background: var(--gold-soft); border: 1px solid var(--gold-line); }
+.btn.btn-accent:hover { background: color-mix(in srgb, var(--gold) 20%, transparent);
+  border-color: var(--gold); color: var(--gold-hi); }
+
+/* responsive: collapse rail under the list */
+@media (max-width: 1040px) {
+  .ps-body { grid-template-columns: minmax(0, 1fr); }
+  .ps-rail { flex-direction: row; flex-wrap: wrap; }
+  .ps-rail > * { flex: 1; min-width: 260px; }
+}
+@media (max-width: 720px) {
+  .ptable th.col-freq, .ptable td.col-freq { display: none; }
+}
