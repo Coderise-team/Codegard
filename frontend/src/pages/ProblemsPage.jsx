@@ -5,17 +5,15 @@ import Icons from '../components/Icons';
 import Toolbar, { SelectedTags } from '../components/problems/ProblemsToolbar';
 import ProblemList from '../components/problems/ProblemList';
 import ProblemCards from '../components/problems/ProblemCards';
-import Pagination from '../components/problems/Pagination';
 import ProgressCard from '../components/problems/ProgressCard';
 import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblems } from '../hooks/useProblems';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
 import { useDaily } from '../hooks/useDaily';
 import { useTags } from '../hooks/useTags';
 import './ProblemsPage.css';
-
-const PAGE_SIZE = 20; // backend PageNumberPagination default
 
 // UI difficulty label -> API query value
 const DIFF_PARAM = { Easy: 'easy', Medium: 'medium', Hard: 'hard' };
@@ -28,7 +26,8 @@ const ORDER_FIELD = { id: 'id', name: 'name', diff: 'difficulty', acc: 'acceptan
  * Fully server-driven: the list (useProblems), the difficulty breakdown feeding
  * the progress card and header totals (useDifficultyBreakdown), the daily
  * challenge (useDaily) and the tag filter options (useTags) each fetch from the
- * API. Filters/sort/page are mapped to query params.
+ * API. Filters/sort map to query params; the list itself loads more on scroll
+ * (useProblems accumulates pages, useInfiniteScroll triggers the next one).
  */
 export default function ProblemsPage() {
   const user = useCurrentUser();
@@ -37,52 +36,40 @@ export default function ProblemsPage() {
   // ---- view toggle (list = row-cards, grid = thick cards) ----
   const [view, setView] = useState('list');
 
-  // ---- filter / sort / page state ----
+  // ---- filter / sort state ----
   const [diff, setDiff] = useState('all');
   const [status, setStatus] = useState('all');
   const [tagsSel, setTagsSel] = useState([]);
   const [sortCol, setSortCol] = useState(null); // null=newest | id | name | diff | acc
   const [sortDir, setSortDir] = useState('desc');
-  const [page, setPage] = useState(1);
 
-  // Any change to the filtered/sorted set resets to page 1 (inline in each
-  // handler, not in an effect, to avoid a cascading re-render).
-  const changeDiff = (v) => { setDiff(v); setPage(1); };
-  const changeStatus = (v) => { setStatus(v); setPage(1); };
-  const changeView = (v) => { setView(v); setPage(1); };
-  const clearTags = () => { setTagsSel([]); setPage(1); };
-  const resetFilters = () => { setDiff('all'); setStatus('all'); setTagsSel([]); setPage(1); };
-  const toggleTag = (tg) => {
+  // Changing any filter/sort makes useProblems reload from page 1 (it keys off
+  // the memoised params below), so there's no page state to reset here.
+  const clearTags = () => setTagsSel([]);
+  const resetFilters = () => { setDiff('all'); setStatus('all'); setTagsSel([]); };
+  const toggleTag = (tg) =>
     setTagsSel((s) => s.includes(tg) ? s.filter((x) => x !== tg) : [...s, tg]);
-    setPage(1);
-  };
 
   // sort-bar click cycle: col → asc → desc → off (back to newest)
   const cycleSort = (col) => {
     if (sortCol !== col) { setSortCol(col); setSortDir('asc'); }
     else if (sortDir === 'asc') setSortDir('desc');
     else { setSortCol(null); setSortDir('desc'); }
-    setPage(1);
   };
 
-  // UI state -> API query params (memoised so the hook only refetches on change)
+  // UI state -> API query params (no page; the hook manages pagination).
+  // Memoised so useProblems only reloads when a filter/sort actually changes.
   const params = useMemo(() => {
-    const p = { page };
+    const p = {};
     if (diff !== 'all') p.difficulty = DIFF_PARAM[diff];
     if (status !== 'all') p.status = status;
     if (tagsSel.length) p.tag = tagsSel;
     if (sortCol) p.ordering = (sortDir === 'desc' ? '-' : '') + ORDER_FIELD[sortCol];
     return p;
-  }, [diff, status, tagsSel, sortCol, sortDir, page]);
+  }, [diff, status, tagsSel, sortCol, sortDir]);
 
-  const { data } = useProblems(params);
-  const rows = data?.results ?? [];
-  const total = data?.count ?? 0;
-
-  // pagination math from the server response
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const from = total ? (page - 1) * PAGE_SIZE + 1 : 0;
-  const to = (page - 1) * PAGE_SIZE + rows.length;
+  const { items, total, hasMore, loading, loadMore } = useProblems(params);
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // solved/total per difficulty (rail progress + header totals). The endpoint's
   // keys are lowercase; map to the { Easy, Medium, Hard } shape the cards use.
@@ -108,12 +95,12 @@ export default function ProblemsPage() {
   // actions — navigation is wired later
   const openProblem = () => {};
   const pickRandom = () => {
-    if (rows.length) openProblem(rows[Math.floor(Math.random() * rows.length)]);
+    if (items.length) openProblem(items[Math.floor(Math.random() * items.length)]);
   };
 
   const list = view === 'grid'
-    ? <ProblemCards rows={rows} onOpen={openProblem} onTag={toggleTag} />
-    : <ProblemList rows={rows} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
+    ? <ProblemCards rows={items} onOpen={openProblem} onTag={toggleTag} />
+    : <ProblemList rows={items} sortCol={sortCol} sortDir={sortDir} onSortCol={cycleSort}
         onOpen={openProblem} onTag={toggleTag} />;
 
   const empty = (
@@ -150,17 +137,16 @@ export default function ProblemsPage() {
             <div className="ps-body">
               <div className="ps-main">
                 <Toolbar
-                  diff={diff} onDiff={changeDiff}
-                  status={status} onStatus={changeStatus}
-                  view={view} onView={changeView}
+                  diff={diff} onDiff={setDiff}
+                  status={status} onStatus={setStatus}
+                  view={view} onView={setView}
                   tags={tags} counts={tagCounts} tagsSel={tagsSel} onToggleTag={toggleTag} />
 
                 <SelectedTags tagsSel={tagsSel} onToggle={toggleTag} onClear={clearTags} />
 
-                {rows.length ? list : empty}
+                {items.length ? list : (loading ? null : empty)}
 
-                <Pagination page={page} pageCount={pageCount} total={total}
-                  from={from} to={to} onPage={setPage} />
+                {hasMore && <div ref={sentinelRef} className="ps-sentinel" aria-hidden="true" />}
               </div>
 
               <aside className="ps-rail">
