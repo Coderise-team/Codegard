@@ -300,3 +300,27 @@
   .ps-rail { flex-direction: row; flex-wrap: wrap; }
   .ps-rail > * { flex: 1; min-width: 260px; }
 }
+
+/* phone: the off-canvas drawer / burger / topbar come from Dashboard.css;
+   here we only compress the catalog-specific bits to fit a narrow column. */
+@media (max-width: 640px) {
+  /* match the dashboard canvas gutter on phones */
+  .ps-canvas { padding: 16px 14px 40px; }
+
+  /* header: difficulty totals drop under the title, left-aligned */
+  .ps-head { margin-bottom: 14px; }
+  .ps-head h1 { font-size: 20px; }
+  .ps-head .ps-diffsum { margin-left: 0; gap: 14px; }
+
+  /* Keep all five columns so the sort bar stays aligned over the rows, but
+     shrink the fixed tracks and gap so the grid fits ~360px. The sort-bar
+     labels are wider than the numeric data below them, so drop their type a
+     step to keep the words inside the narrowed columns. */
+  .psort,
+  .prow {
+    grid-template-columns: 22px 24px minmax(0, 1fr) 60px 60px;
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .psort { font-size: 9px; letter-spacing: 0.04em; }
+}
