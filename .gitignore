@@ -212,3 +212,7 @@ __marimo__/
 
 # Databasus backups
 data/
+
+# Local working docs (task plans, design mocks) — not part of the app
+/plans/
+/mocks/

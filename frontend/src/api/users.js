@@ -40,3 +40,10 @@ export async function getContestHistory(username) {
   const { data } = await client.get(`users/${username}/contest-history/`);
   return data;
 }
+
+// GET users/{username}/difficulty/ -> solved/total per difficulty
+// { easy: { solved, total }, medium: { solved, total }, hard: { solved, total } }
+export async function getDifficultyBreakdown(username) {
+  const { data } = await client.get(`users/${username}/difficulty/`);
+  return data;
+}

@@ -1,0 +1,928 @@
+/* =============================================================
+   Codegard — ProblemsPage (problemset catalog)
+   Pulls the shared shell (sidebar, topbar, canvas) from Dashboard.css,
+   then adds the page header, filter toolbar, tag bar, problem row-cards,
+   card grid, and right rail.
+
+   Base tokens + .card/.btn/.df/.tag/.chip live in styles/variables.css
+   + styles/global.css (imported once in main.jsx).
+   ============================================================= */
+@import './Dashboard.css';
+
+/* wider working area than the dashboard's 1320 — the list wants room */
+.ps-canvas {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 24px 22px 56px;
+}
+
+/* ---- page header ---- */
+.ps-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+.ps-head h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.ps-head .ps-count {
+  color: var(--fg2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.ps-head .ps-count b {
+  color: var(--fg);
+  font-weight: 700;
+}
+.ps-head .ps-diffsum {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ps-diffsum .ds {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12px;
+}
+.ps-diffsum .ds .n {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.ps-diffsum .ds .k {
+  color: var(--fg2);
+}
+.ps-diffsum .ds.d-easy .n {
+  color: var(--ac);
+}
+.ps-diffsum .ds.d-medium .n {
+  color: var(--tle);
+}
+.ps-diffsum .ds.d-hard .n {
+  color: var(--wa);
+}
+
+/* ---- two-column body (list + rail) ---- */
+.ps-body {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: minmax(0, 1fr) 312px;
+  align-items: start;
+}
+.ps-body.no-rail {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ps-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.ps-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+/* ============================================================
+   FILTER TOOLBAR
+   ============================================================ */
+.ps-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ps-toolbar .spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* segmented difficulty / status pills */
+.ps-seg {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.ps-seg button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 0 12px;
+  height: 30px;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.ps-seg button:hover {
+  color: var(--fg);
+}
+.ps-seg button.on {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.ps-seg button.on.d-easy {
+  color: var(--ac);
+}
+.ps-seg button.on.d-medium {
+  color: var(--tle);
+}
+.ps-seg button.on.d-hard {
+  color: var(--wa);
+}
+.ps-seg button .sdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.ps-seg button.d-easy .sdot {
+  background: var(--ac);
+}
+.ps-seg button.d-medium .sdot {
+  background: var(--tle);
+}
+.ps-seg button.d-hard .sdot {
+  background: var(--wa);
+}
+
+/* tag dropdown */
+.ps-tagdd {
+  position: relative;
+  flex: 0 0 auto;
+}
+.ps-tagdd-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.12s;
+  white-space: nowrap;
+}
+.ps-tagdd-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-2);
+}
+.ps-tagdd-btn.on {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+}
+.ps-tagdd-btn .cnt {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  border-radius: 20px;
+  padding: 0 6px;
+  line-height: 16px;
+}
+.ps-tagdd-btn.on .cnt {
+  background: color-mix(in srgb, var(--gold) 24%, transparent);
+}
+.ps-tagdd-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 230px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  border-radius: var(--r);
+  background: var(--card-2);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.tagdd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  cursor: pointer;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  transition: 0.1s;
+}
+.tagdd-item:hover {
+  background: var(--card);
+  color: var(--fg);
+}
+.tagdd-item.on {
+  color: var(--gold-hi);
+}
+.tagdd-item .box {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-2);
+  display: grid;
+  place-items: center;
+  color: var(--bg);
+}
+.tagdd-item.on .box {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+.tagdd-item .nm {
+  flex: 1;
+  min-width: 0;
+}
+.tagdd-item .cnt {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* selected-tag chips (below toolbar) */
+.ps-seltags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ps-seltags .lbl {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  font-weight: 700;
+  margin-right: 2px;
+}
+.ps-seltags .seltag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  border-radius: 20px;
+  padding: 4px 8px 4px 11px;
+  cursor: pointer;
+  transition: 0.12s;
+}
+.ps-seltags .seltag:hover {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.ps-seltags .seltag svg {
+  color: var(--gold);
+}
+.ps-seltags .seltag-clear {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 4px;
+  border-radius: 6px;
+}
+.ps-seltags .seltag-clear:hover {
+  color: var(--wa);
+}
+
+/* view toggle (list / grid) */
+.ps-vtoggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.ps-vtoggle button {
+  width: 32px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  color: var(--fg2);
+  cursor: pointer;
+  transition: 0.12s;
+}
+.ps-vtoggle button:hover {
+  color: var(--fg);
+}
+.ps-vtoggle button.on {
+  background: var(--card-2);
+  color: var(--gold-hi);
+}
+
+/* ============================================================
+   LIST VIEW — sticky "Sort by" bar + full-width problem row-cards
+   ============================================================ */
+.plist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* the sort bar and every row-card share one column grid so the headers in the
+   bar line up exactly over the values in the cards */
+.psort,
+.prow {
+  display: grid;
+  grid-template-columns: 44px 56px minmax(0, 1fr) 120px 104px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 var(--pad);
+}
+
+/* sticky sort bar, styled as its own rounded card */
+.psort {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 42px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.psort .psort-lbl {
+  grid-column: 1;
+  color: var(--fg3);
+  white-space: nowrap;
+}
+.psort .psort-col {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--fg2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.12s;
+}
+.psort .psort-col:hover {
+  color: var(--fg);
+}
+.psort .psort-col.active {
+  color: var(--gold-hi);
+}
+.psort .col-id {
+  grid-column: 2;
+}
+.psort .col-name {
+  grid-column: 3;
+}
+.psort .col-diff {
+  grid-column: 4;
+}
+.psort .col-acc {
+  grid-column: 5;
+  justify-self: end;
+}
+.psort .sar {
+  display: inline-flex;
+  color: var(--gold);
+}
+
+/* row-cards */
+.prows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.prow {
+  min-height: 54px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition:
+    transform 0.14s,
+    border-color 0.14s,
+    background 0.14s;
+}
+[data-density='compact'] .prow {
+  min-height: 48px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+/* card hover — subtle gray lift */
+.prow:hover {
+  border-color: var(--border-2);
+  background: var(--card-2);
+  transform: translateY(-2px);
+}
+.prow:active {
+  transform: translateY(0) scale(0.997);
+}
+/* hover: title and tags shift to the brand violet */
+.prow:hover .p-title {
+  color: var(--gold-hi);
+}
+.prow .p-tags .tag:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+
+/* status glyph */
+.prow .p-st {
+  grid-column: 1;
+  display: grid;
+  place-items: center;
+}
+.p-st .ic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.p-st.solved .ic {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+.p-st.attempted .ic {
+  color: var(--tle);
+  background: var(--tle-soft);
+}
+.p-st.todo .ic {
+  color: var(--fg3);
+  border: 1.5px solid var(--border-2);
+  width: 18px;
+  height: 18px;
+}
+
+/* id */
+.prow .p-id {
+  grid-column: 2;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* title + tags */
+.prow .prow-main {
+  grid-column: 3;
+  min-width: 0;
+}
+.prow .p-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.prow .p-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+[data-density='compact'] .prow .p-tags {
+  margin-top: 4px;
+}
+.prow .p-tags .tag {
+  cursor: pointer;
+  transition: 0.12s;
+}
+
+/* difficulty + acceptance */
+.prow .df {
+  grid-column: 4;
+}
+/* acceptance number in brand violet */
+.prow .p-acc {
+  grid-column: 5;
+  justify-self: end;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--gold-hi);
+  font-variant-numeric: tabular-nums;
+}
+.prow .p-acc .pct {
+  color: var(--fg3);
+  font-size: 11px;
+}
+
+/* empty state wrapper */
+.ps-emptywrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+/* ============================================================
+   CARD GRID VIEW
+   ============================================================ */
+.pcards {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+}
+.pcard {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  cursor: pointer;
+  transition: 0.14s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 132px;
+}
+.pcard:hover {
+  border-color: var(--border-2);
+  background: var(--card-2);
+  transform: translateY(-2px);
+}
+.pcard .pc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pcard .pc-id {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+.pcard .pc-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--fg);
+}
+.pcard:hover .pc-title {
+  color: var(--gold-hi);
+}
+.pcard .pc-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.pcard .pc-tags .tag {
+  cursor: pointer;
+  transition: 0.12s;
+}
+.pcard .pc-tags .tag:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+.pcard .pc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.pcard .pc-acc {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold-hi);
+  font-variant-numeric: tabular-nums;
+}
+.pcard .pc-st {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.pcard .pc-st.solved {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+.pcard .pc-st.attempted {
+  color: var(--tle);
+  background: var(--tle-soft);
+}
+.pcard .pc-st.todo {
+  color: var(--fg3);
+  border: 1.5px solid var(--border-2);
+  width: 20px;
+  height: 20px;
+}
+
+/* staggered entrance for cards (list + grid). `backwards` holds the start frame
+   during the per-item delay and reverts after the run, so the :hover transform
+   keeps working once the animation is done. */
+@media (prefers-reduced-motion: no-preference) {
+  .prow,
+  .pcard {
+    animation: cardIn 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+  @keyframes cardIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* infinite-scroll sentinel — invisible trigger at the end of the list */
+.ps-sentinel {
+  height: 1px;
+}
+
+/* empty state */
+.ps-empty {
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--fg2);
+}
+.ps-empty .ei {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  background: var(--card-2);
+  color: var(--fg3);
+}
+.ps-empty .et {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.ps-empty .es {
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+.ps-empty .btn {
+  margin-top: 16px;
+}
+
+/* ============================================================
+   RIGHT RAIL — solved-by-difficulty progress + daily / random CTA
+   ============================================================ */
+.ps-daily .dt-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.ps-daily .dt-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0 12px;
+  flex-wrap: wrap;
+}
+.ps-daily .dt-acc {
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.ps-daily .dt-acc b {
+  color: var(--fg);
+}
+.ps-random {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ps-random .rd-note {
+  font-size: 12.5px;
+  color: var(--fg2);
+  line-height: 1.5;
+}
+
+/* progress mini (solved by difficulty) at top of rail */
+.ps-prog .pp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ps-prog .pp-row + .pp-row {
+  margin-top: 12px;
+}
+.ps-prog .pp-k {
+  width: 58px;
+  font-size: 12px;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.ps-prog .pp-k.d-easy {
+  color: var(--ac);
+}
+.ps-prog .pp-k.d-medium {
+  color: var(--tle);
+}
+.ps-prog .pp-k.d-hard {
+  color: var(--wa);
+}
+.ps-prog .pp-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 4px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.ps-prog .pp-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+.ps-prog .pp-fill.d-easy {
+  background: var(--ac);
+}
+.ps-prog .pp-fill.d-medium {
+  background: var(--tle);
+}
+.ps-prog .pp-fill.d-hard {
+  background: var(--wa);
+}
+.ps-prog .pp-num {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg2);
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+  text-align: right;
+}
+
+/* the daily-card header sum (reuse dashboard's .act-sum visual) */
+.ps-prog .act-sum {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--fg2);
+}
+.ps-prog .act-sum b {
+  color: var(--fg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* entrance — slide only (never opacity; preview/export freezes at frame 0) */
+@media (prefers-reduced-motion: no-preference) {
+  .ps-main > *,
+  .ps-rail > * {
+    animation: psIn 0.4s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  @keyframes psIn {
+    from {
+      transform: translateY(8px);
+    }
+    to {
+      transform: none;
+    }
+  }
+}
+
+/* brand-soft accent button (Pick random) */
+.btn.btn-accent {
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+}
+.btn.btn-accent:hover {
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  border-color: var(--gold);
+  color: var(--gold-hi);
+}
+
+/* responsive: collapse rail under the list */
+@media (max-width: 1040px) {
+  .ps-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ps-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .ps-rail > * {
+    flex: 1;
+    min-width: 260px;
+  }
+}
+
+/* phone: the off-canvas drawer / burger / topbar come from Dashboard.css;
+   here we only compress the catalog-specific bits to fit a narrow column. */
+@media (max-width: 640px) {
+  /* match the dashboard canvas gutter on phones */
+  .ps-canvas {
+    padding: 16px 14px 40px;
+  }
+
+  /* header: difficulty totals drop under the title, left-aligned */
+  .ps-head {
+    margin-bottom: 14px;
+  }
+  .ps-head h1 {
+    font-size: 20px;
+  }
+  .ps-head .ps-diffsum {
+    margin-left: 0;
+    gap: 14px;
+  }
+
+  /* rail (progress + daily) rides to the top, above the toolbar and list.
+     align-items: stretch overrides the base grid's `start` so the columns and
+     their cards fill the phone width instead of shrinking to content. */
+  .ps-body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ps-rail {
+    order: -1;
+    flex-direction: column;
+  }
+  .ps-rail > * {
+    flex: none;
+    min-width: 0;
+  }
+
+  /* pack the toolbar: drop the spacer and pull the view toggle up next to the
+     difficulty pills, so it reads Difficulty+Toggle / Status+Tags */
+  .ps-toolbar .spacer {
+    display: none;
+  }
+  .ps-vtoggle {
+    order: 1;
+  }
+  .ps-seg[aria-label='Status'] {
+    order: 2;
+  }
+  .ps-tagdd {
+    order: 3;
+  }
+
+  /* Keep all five columns so the sort bar stays aligned over the rows, but
+     shrink the fixed tracks and gap so the grid fits ~360px. The sort-bar
+     labels are wider than the numeric data below them, so drop their type a
+     step to keep the words inside the narrowed columns. */
+  .psort,
+  .prow {
+    grid-template-columns: 22px 24px minmax(0, 1fr) 60px 60px;
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .psort {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+}

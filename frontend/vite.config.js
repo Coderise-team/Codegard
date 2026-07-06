@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 5173,
       proxy,
+      watch: { usePolling: true }, // bind-mount on Windows needs polling for HMR
     },
     test: {
       globals: true,

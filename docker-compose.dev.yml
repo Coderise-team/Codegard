@@ -296,19 +296,13 @@ services:
     env_file: .env
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # keep the container's linux node_modules
     depends_on:
       - backend
     networks:
       - codegard_net
-    develop:
-      watch:
-        - action: sync
-          path: ./frontend
-          target: /app
-          ignore:
-            - node_modules/
-        - action: rebuild
-          path: ./frontend/package-lock.json
 
   frontend-test:
     build:
