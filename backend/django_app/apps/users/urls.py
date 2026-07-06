@@ -10,6 +10,7 @@ from .views import (
     UserActivityView,
     UserContestHistoryView,
     UserDetailView,
+    UserDifficultyView,
     UserEloHistoryView,
     UserStatsView,
     UserStreakView,
@@ -42,6 +43,11 @@ urlpatterns = [
         "<str:username>/contest-history/",
         UserContestHistoryView.as_view(),
         name="user-contest-history",
+    ),
+    path(
+        "<str:username>/difficulty/",
+        UserDifficultyView.as_view(),
+        name="user-difficulty",
     ),
     # Keep the bare detail route LAST so it doesn't shadow the more specific ones.
     path("<str:username>/", UserDetailView.as_view(), name="user-detail"),

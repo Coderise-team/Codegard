@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.db.models import Count
 from django.db.models.functions import TruncDate
@@ -24,6 +25,9 @@ from .serializers import (
     UserRegisterSerializer,
     UserSerializer,
 )
+
+# Difficulty buckets, in the order the breakdown endpoint returns them.
+DIFFICULTIES = ("easy", "medium", "hard")
 
 # Number of days included in a user's submission activity timeline.
 ACTIVITY_WINDOW_DAYS = 365
@@ -155,6 +159,46 @@ class UserStatsView(APIView):
                 "acceptance": acceptance,
             }
         )
+
+
+class UserDifficultyView(APIView):
+    """Solved/total problem counts per difficulty.
+
+    Feeds the ProfilePage 'Solved by difficulty' card and the ProblemsPage
+    progress card.
+
+    GET /api/users/{username}/difficulty/ ->
+        {"easy": {"solved": int, "total": int}, "medium": {...}, "hard": {...}}
+    Any authenticated user can view anyone's breakdown (like stats/streak).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, username: str):
+        user = get_object_or_404(User, username=username)
+
+        totals = {
+            row["difficulty"]: row["n"]
+            for row in Problem.objects.values("difficulty")
+            .annotate(n=Count("id"))
+            .order_by()
+        }
+
+        solved = {
+            row["problem__difficulty"]: row["n"]
+            for row in Submission.objects.filter(
+                user=user, verdict=Submission.Verdict.AC
+            )
+            .values("problem__difficulty")
+            .annotate(n=Count("problem", distinct=True))
+            .order_by()
+        }
+
+        data = {
+            d: {"solved": solved.get(d, 0), "total": totals.get(d, 0)}
+            for d in DIFFICULTIES
+        }
+        return Response(data)
 
 
 class UserEloHistoryView(APIView):
