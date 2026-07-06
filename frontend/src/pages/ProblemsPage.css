@@ -192,7 +192,7 @@
 .pcard { position: relative; background: var(--card); border: 1px solid var(--border);
   border-radius: var(--r); padding: 16px; cursor: pointer; transition: .14s;
   display: flex; flex-direction: column; gap: 12px; min-height: 132px; }
-.pcard:hover { border-color: var(--border-2); transform: translateY(-2px); }
+.pcard:hover { border-color: var(--border-2); background: var(--card-2); transform: translateY(-2px); }
 .pcard .pc-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .pcard .pc-id { font-family: var(--mono); font-size: 11px; color: var(--fg3); font-variant-numeric: tabular-nums; }
 .pcard .pc-title { font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3;

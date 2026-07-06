@@ -261,6 +261,16 @@ code,
   border-radius: 5px;
   padding: 2px 7px;
 }
+/* clickable tag (e.g. Daily-card tags linking into the problemset filter) */
+a.tag {
+  text-decoration: none;
+  cursor: pointer;
+  transition: 0.12s;
+}
+a.tag:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
 
 /* ── Card ───────────────────────────────────────────────────── */
 .card {

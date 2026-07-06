@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -32,6 +33,7 @@ const ORDER_FIELD = { id: 'id', name: 'name', diff: 'difficulty', acc: 'acceptan
 export default function ProblemsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ---- view toggle (list = row-cards, grid = thick cards) ----
   const [view, setView] = useState('list');
@@ -49,6 +51,17 @@ export default function ProblemsPage() {
   const resetFilters = () => { setDiff('all'); setStatus('all'); setTagsSel([]); };
   const toggleTag = (tg) =>
     setTagsSel((s) => s.includes(tg) ? s.filter((x) => x !== tg) : [...s, tg]);
+
+  // A tag clicked in the Daily card links here as ?tag=… (works from the
+  // Dashboard too). Merge it into the selection, then clear the param so the
+  // same tag can be clicked again.
+  const urlTagKey = searchParams.getAll('tag').join(',');
+  useEffect(() => {
+    if (!urlTagKey) return;
+    const incoming = urlTagKey.split(',');
+    setTagsSel((cur) => Array.from(new Set([...cur, ...incoming])));
+    setSearchParams({}, { replace: true });
+  }, [urlTagKey, setSearchParams]);
 
   // sort-bar click cycle: col → asc → desc → off (back to newest)
   const cycleSort = (col) => {

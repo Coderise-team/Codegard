@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 
 /**
@@ -18,7 +19,9 @@ export default function DailyRandomCard({ daily, onRandom }) {
         <div className="dt-title">{daily.title}</div>
         <div className="dt-sub">
           <span className={`df d-${daily.difficulty.toLowerCase()}`}>{daily.difficulty}</span>
-          {daily.tags.map((t) => <span key={t} className="tag">{t}</span>)}
+          {daily.tags.map((t) => (
+            <Link key={t} className="tag" to={`/problems?tag=${encodeURIComponent(t)}`}>{t}</Link>
+          ))}
         </div>
         <div className="dt-acc"><b>{daily.acceptance}%</b> acceptance</div>
         <div className="ps-random" style={{ marginTop: 16 }}>

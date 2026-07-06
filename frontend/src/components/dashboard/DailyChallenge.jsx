@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
 import { useAuthStore } from '../../store/authStore';
@@ -52,9 +53,9 @@ export default function DailyChallenge() {
                     {data.daily.difficulty}
                   </span>
                   {data.daily.tags.map((t) => (
-                    <span key={t} className="tag">
+                    <Link key={t} className="tag" to={`/problems?tag=${encodeURIComponent(t)}`}>
                       {t}
-                    </span>
+                    </Link>
                   ))}
                 </div>
                 <div className="dt-acc">{data.daily.acceptance}% AC</div>
