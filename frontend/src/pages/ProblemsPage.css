@@ -154,10 +154,7 @@
 .prow:hover { border-color: var(--border-2); background: var(--card-2); transform: translateY(-2px); }
 .prow:active { transform: translateY(0) scale(.997); }
 /* on hover the name and tags get the Solve Daily button treatment (violet→fuchsia) */
-.prow:hover .p-title {
-  background: linear-gradient(125deg, var(--btn-lo-h), var(--btn-hi-h));
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+.prow:hover .p-title { color: var(--gold-hi); }
 .prow .p-tags .tag:hover { color: var(--gold-hi); border-color: var(--gold-line); }
 
 /* status glyph */
