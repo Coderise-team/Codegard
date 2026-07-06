@@ -13,7 +13,7 @@ export function useInfiniteScroll(onLoadMore, enabled) {
       (entries) => {
         if (entries[0].isIntersecting) onLoadMore();
       },
-      { rootMargin: '300px' },
+      { rootMargin: '300px' }
     );
     observer.observe(node);
     return () => observer.disconnect();

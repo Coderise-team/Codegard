@@ -53,7 +53,11 @@ export default function DailyChallenge() {
                     {data.daily.difficulty}
                   </span>
                   {data.daily.tags.map((t) => (
-                    <Link key={t} className="tag" to={`/problems?tag=${encodeURIComponent(t)}`}>
+                    <Link
+                      key={t}
+                      className="tag"
+                      to={`/problems?tag=${encodeURIComponent(t)}`}
+                    >
                       {t}
                     </Link>
                   ))}
