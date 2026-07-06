@@ -60,7 +60,11 @@ export default function ProblemsPage() {
     if (!urlTagKey) return;
     const incoming = urlTagKey.split(',');
     setTagsSel((cur) => Array.from(new Set([...cur, ...incoming])));
-    setSearchParams({}, { replace: true });
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('tag');
+      return next;
+    }, { replace: true });
   }, [urlTagKey, setSearchParams]);
 
   // sort-bar click cycle: col → asc → desc → off (back to newest)

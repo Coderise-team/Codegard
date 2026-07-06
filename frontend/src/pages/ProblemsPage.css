@@ -1,15 +1,15 @@
 /* =============================================================
    Codegard — ProblemsPage (problemset catalog)
    Pulls the shared shell (sidebar, topbar, canvas) from Dashboard.css,
-   then adds the page header, filter toolbar, tag bar, problems table,
-   card grid, pagination, and right rail.
+   then adds the page header, filter toolbar, tag bar, problem row-cards,
+   card grid, and right rail.
 
    Base tokens + .card/.btn/.df/.tag/.chip live in styles/variables.css
    + styles/global.css (imported once in main.jsx).
    ============================================================= */
 @import './Dashboard.css';
 
-/* wider working area than the dashboard's 1320 — the table wants room */
+/* wider working area than the dashboard's 1320 — the list wants room */
 .ps-canvas { max-width: 1380px; margin: 0 auto; padding: 24px 22px 56px; }
 
 /* ---- page header ---- */
@@ -153,7 +153,7 @@
 /* card hover — subtle gray lift */
 .prow:hover { border-color: var(--border-2); background: var(--card-2); transform: translateY(-2px); }
 .prow:active { transform: translateY(0) scale(.997); }
-/* on hover the name and tags get the Solve Daily button treatment (violet→fuchsia) */
+/* hover: title and tags shift to the brand violet */
 .prow:hover .p-title { color: var(--gold-hi); }
 .prow .p-tags .tag:hover { color: var(--gold-hi); border-color: var(--gold-line); }
 
@@ -177,7 +177,7 @@
 
 /* difficulty + acceptance */
 .prow .df { grid-column: 4; }
-/* TEMP: acceptance number in brand violet (trying it out) */
+/* acceptance number in brand violet */
 .prow .p-acc { grid-column: 5; justify-self: end; font-family: var(--mono); font-size: 12.5px;
   color: var(--gold-hi); font-variant-numeric: tabular-nums; }
 .prow .p-acc .pct { color: var(--fg3); font-size: 11px; }
@@ -227,22 +227,6 @@
 .ps-empty .et { font-size: 14.5px; font-weight: 700; color: var(--fg); }
 .ps-empty .es { font-size: 12.5px; margin-top: 6px; }
 .ps-empty .btn { margin-top: 16px; }
-
-/* ============================================================
-   PAGINATION
-   ============================================================ */
-.ps-pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.ps-pager .pg-info { font-size: 12.5px; color: var(--fg2); font-variant-numeric: tabular-nums; }
-.ps-pager .pg-info b { color: var(--fg); font-weight: 700; }
-.ps-pager .pg-nav { display: flex; align-items: center; gap: 5px; }
-.pg-btn { min-width: 34px; height: 34px; padding: 0 9px; border-radius: var(--r-sm);
-  background: var(--card); border: 1px solid var(--border); color: var(--fg2);
-  font-family: var(--mono); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: .12s;
-  display: grid; place-items: center; font-variant-numeric: tabular-nums; }
-.pg-btn:hover:not(:disabled) { color: var(--fg); border-color: var(--border-2); background: var(--card-2); }
-.pg-btn.on { color: var(--gold-hi); background: var(--gold-soft); border-color: var(--gold-line); }
-.pg-btn:disabled { opacity: .4; cursor: not-allowed; }
-.pg-ellip { color: var(--fg3); padding: 0 2px; font-family: var(--mono); }
 
 /* ============================================================
    RIGHT RAIL — solved-by-difficulty progress + daily / random CTA
