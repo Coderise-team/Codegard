@@ -306,6 +306,13 @@
   .ps-head h1 { font-size: 20px; }
   .ps-head .ps-diffsum { margin-left: 0; gap: 14px; }
 
+  /* rail (progress + daily) rides to the top, above the toolbar and list.
+     align-items: stretch overrides the base grid's `start` so the columns and
+     their cards fill the phone width instead of shrinking to content. */
+  .ps-body { display: flex; flex-direction: column; align-items: stretch; }
+  .ps-rail { order: -1; flex-direction: column; }
+  .ps-rail > * { flex: none; min-width: 0; }
+
   /* Keep all five columns so the sort bar stays aligned over the rows, but
      shrink the fixed tracks and gap so the grid fits ~360px. The sort-bar
      labels are wider than the numeric data below them, so drop their type a
