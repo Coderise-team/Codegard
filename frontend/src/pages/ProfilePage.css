@@ -1,0 +1,543 @@
+/* =============================================================
+   Codegard — ProfilePage (viewing a user by username)
+   Pulls the shared shell (sidebar, topbar, canvas, stats3, subtab,
+   activity calendar, ELO ring, contest rows) from Dashboard.css, then
+   adds the profile-specific header, rank chip, rating chart, difficulty
+   breakdown, and the Overview layout.
+
+   Base tokens + .card/.btn/.vd/.chip/.tag/.logo/.avatar/.rowlist live in
+   styles/variables.css + styles/global.css (imported once in main.jsx).
+   ============================================================= */
+@import './Dashboard.css';
+
+/* ---- 4-up quick-stat strip (profile has 4 stats vs the dashboard's 3) ---- */
+.lay-overview .stats3 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ---- layout wrappers (Overview = main left, rail right) ---- */
+.lay-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.lay-overview .cols {
+  display: grid;
+  gap: var(--gap);
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+[data-density='compact'] .lay-overview .cols {
+  grid-template-columns: minmax(0, 1fr) 332px;
+}
+.lay-overview .col-main,
+.lay-overview .col-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+/* ============================================================
+   PROFILE HEADER
+   ============================================================ */
+.phead {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--rank-c) 22%, var(--card)) 0%,
+    color-mix(in srgb, var(--gold) 9%, var(--card)) 45%,
+    var(--card) 100%
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.phead-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: var(--pad) var(--pad) 18px;
+  flex-wrap: wrap;
+}
+
+.pavatar {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-family: var(--ui);
+  font-weight: 800;
+  font-size: 34px;
+  color: #fff;
+  background: linear-gradient(150deg, var(--rank-hi), var(--rank-c));
+  border: 3px solid var(--card);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--rank-c) 30%, transparent);
+}
+.pavatar .dot {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ac);
+  border: 3px solid var(--card);
+}
+
+.phead-id {
+  flex: 1;
+  min-width: 220px;
+  padding-bottom: 4px;
+}
+.phead-id .top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.phead-id .handle {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.rank-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--rank-c);
+  background: var(--rank-soft);
+  border: 1px solid var(--rank-line);
+}
+.rank-chip .rdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rank-c);
+}
+.phead-id .sub {
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.phead-id .sub .s {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.phead-id .sub .s b {
+  color: var(--fg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.phead-id .sub svg {
+  color: var(--fg3);
+}
+.phead-id .sub .sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border-2);
+}
+
+.phead-act {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 4px;
+}
+.follow-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: var(--r-sm);
+  font-family: var(--ui);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0;
+  color: #fff;
+  transition: 0.14s;
+  white-space: nowrap;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
+  box-shadow:
+    0 0 0 1px var(--accent-glow),
+    0 6px 20px var(--accent-glow-2);
+}
+.follow-btn:hover {
+  background: linear-gradient(125deg, var(--btn-lo-h), var(--btn-hi-h));
+}
+.follow-btn.following {
+  background: var(--card-2);
+  color: var(--fg);
+  border: 1px solid var(--border-2);
+  box-shadow: none;
+}
+.follow-btn.following:hover {
+  border-color: var(--wa);
+  color: var(--wa);
+  background: var(--wa-soft);
+}
+.follow-btn.following .lbl-hover {
+  display: none;
+}
+.follow-btn.following:hover .lbl-base {
+  display: none;
+}
+.follow-btn.following:hover .lbl-hover {
+  display: inline;
+}
+.icon-act {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  background: var(--card-2);
+  border: 1px solid var(--border-2);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: 0.14s;
+  position: relative;
+}
+.icon-act:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+}
+.copied-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ac);
+  background: var(--ac-soft);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 6px;
+  padding: 4px 9px;
+  animation: popIn 0.18s ease;
+}
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* rating / peak readout at the right edge of the header */
+.phead-rate {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-bottom: 4px;
+}
+.phead-rate .rblock {
+  text-align: right;
+}
+.phead-rate .rblock .k {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.phead-rate .rblock .v {
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.phead-rate .rblock .v.cur {
+  color: var(--rank-c);
+}
+.phead-rate .rblock .pdelta {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+.phead-rate .rblock .pdelta.up {
+  color: var(--ac);
+}
+.phead-rate .rblock .pdelta.down {
+  color: var(--wa);
+}
+
+@media (max-width: 720px) {
+  .phead-rate {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .phead-act {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+   RATING CHART (big)
+   ============================================================ */
+.chart-card .card-hd .cmeta {
+  margin-left: auto;
+  display: flex;
+  gap: 18px;
+}
+.chart-card .card-hd .cmeta .m {
+  text-align: right;
+}
+.chart-card .card-hd .cmeta .m .k {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.chart-card .card-hd .cmeta .m .v {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.rchart {
+  width: 100%;
+}
+.rchart svg {
+  display: block;
+  width: 100%;
+  height: 248px;
+  overflow: visible;
+}
+.rchart .band {
+  opacity: 0.9;
+}
+.rchart .grid-l {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.rchart .grid-t {
+  fill: var(--fg3);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.rchart .area {
+  fill: url(#rcFill);
+}
+.rchart .line {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.4;
+}
+.rchart .pt {
+  stroke: var(--card);
+  stroke-width: 2;
+}
+.rchart .pt-hi {
+  fill: var(--gold-hi);
+}
+.rchart .bandlab {
+  font-family: var(--ui);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.rchart-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--fg2);
+}
+.rchart-foot .legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.rchart-foot .lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rchart-foot .lg i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+/* ============================================================
+   DIFFICULTY BREAKDOWN
+   ============================================================ */
+.diff-total {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+.diff-total .n {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.diff-total .l {
+  font-size: 12px;
+  color: var(--fg2);
+}
+.diff-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.diff-row .top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.diff-row .top .lab {
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.diff-row .top .lab::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dc);
+}
+.diff-row .top .cnt {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg2);
+}
+.diff-row .top .cnt b {
+  color: var(--fg);
+  font-weight: 700;
+}
+.diff-row .bar {
+  height: 8px;
+  border-radius: 5px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.diff-row .bar .fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--dc);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--dc) 40%, transparent);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.diff-easy {
+  --dc: var(--ac);
+}
+.diff-medium {
+  --dc: var(--tle);
+}
+.diff-hard {
+  --dc: var(--wa);
+}
+
+/* ============================================================
+   SMALL PROFILE RING CARD (reuses .ring-wrap / .ring-center)
+   ============================================================ */
+.pring-card .card-bd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pring-card .ring-wrap {
+  margin: 4px 0 2px;
+}
+.pring-card .ring-center .rk {
+  color: var(--rank-c);
+}
+.pring-card .tier-line {
+  width: 100%;
+  margin-top: 4px;
+}
+.pring-card .tier-line .lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--fg2);
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.pring-card .tier-line .lbl b {
+  color: var(--rank-c);
+}
+.pring-card .tier-line .track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.pring-card .tier-line .fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--rank-c), var(--rank-hi));
+}
+.pring-card .ring-wrap .meter {
+  stroke: url(#pRingGrad);
+}
+
+/* entrance — slide only (never opacity; preview/export freezes at frame 0) */
+@media (prefers-reduced-motion: no-preference) {
+  .lay-overview > *,
+  .lay-overview .cols > * {
+    animation: pCardIn 0.42s cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  @keyframes pCardIn {
+    from {
+      transform: translateY(9px);
+    }
+    to {
+      transform: none;
+    }
+  }
+}
+
+/* activity heatmap: size to its own content here (Dashboard.css stretches it
+   to fill the column, which collapses it on this page) */
+.lay-overview .act-card {
+  flex: 0 0 auto;
+}
+.lay-overview .act-card .card-bd {
+  min-height: auto;
+}
+
+@media (max-width: 980px) {
+  .lay-overview .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
