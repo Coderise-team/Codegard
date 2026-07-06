@@ -169,6 +169,17 @@ def test_ordering_acceptance_and_zero_total(auth_client, user, other):
 
 
 @pytest.mark.django_db
+def test_ordering_by_name(auth_client):
+    _p("Banana")
+    _p("Apple")
+    _p("Cherry")
+    asc = [r["title"] for r in _rows(auth_client.get(LIST, {"ordering": "name"}))]
+    assert asc == ["Apple", "Banana", "Cherry"]
+    desc = [r["title"] for r in _rows(auth_client.get(LIST, {"ordering": "-name"}))]
+    assert desc == ["Cherry", "Banana", "Apple"]
+
+
+@pytest.mark.django_db
 def test_default_ordering_newest_first(auth_client):
     first = _p("First")
     second = _p("Second")

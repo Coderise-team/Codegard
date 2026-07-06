@@ -21,12 +21,14 @@ class ProblemFilter(django_filters.FilterSet):
         choices=[("solved", "solved"), ("attempted", "attempted"), ("todo", "todo")],
     )
 
-    # Public ?ordering names remapped to the annotations that sort correctly:
+    # Public ?ordering names remapped to the model field / annotation each sorts by:
+    #   name       -> title (plain text field, sorts directly)
     #   difficulty -> difficulty_rank (easy<medium<hard, not alphabetical)
     #   acceptance -> acceptance_rate (ac/total, not the raw CharField)
     ordering = django_filters.OrderingFilter(
         fields=(
             ("id", "id"),
+            ("title", "name"),
             ("difficulty_rank", "difficulty"),
             ("acceptance_rate", "acceptance"),
         )
