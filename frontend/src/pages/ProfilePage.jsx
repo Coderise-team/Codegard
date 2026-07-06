@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import StatsStrip from '../components/dashboard/StatsStrip';
@@ -23,6 +24,7 @@ import './ProfilePage.css';
  */
 export default function ProfilePage() {
   const user = useCurrentUser();
+  const { username } = useParams();
   const [navOpen, setNavOpen] = useState(false);
 
   const D = profileData; // STUB
@@ -43,7 +45,12 @@ export default function ProfilePage() {
       <div className="main">
         <Navbar
           user={user}
-          title="Profile"
+          title={
+            <>
+              <span className="dim">Users / </span>
+              {username}
+            </>
+          }
           onMenuClick={() => setNavOpen(true)}
         />
 
