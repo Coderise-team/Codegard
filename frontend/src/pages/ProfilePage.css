@@ -355,9 +355,6 @@
   stroke: var(--card);
   stroke-width: 2;
 }
-.rchart .pt-hi {
-  fill: var(--gold-hi);
-}
 .rchart .bandlab {
   font-family: var(--ui);
   font-size: 9.5px;
