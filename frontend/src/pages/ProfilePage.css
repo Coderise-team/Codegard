@@ -534,7 +534,28 @@
 }
 
 @media (max-width: 980px) {
-  .lay-overview .cols {
+  /* beat the compact [data-density] rule above (same page, higher specificity)
+     so the rail actually stacks instead of staying a 332px column */
+  .lay-overview .cols,
+  [data-density='compact'] .lay-overview .cols {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* phone: the shell drawer / single-column feed / vertical stat cards come
+   from Dashboard.css; only the profile-specific bits are tweaked here. */
+@media (max-width: 640px) {
+  /* four quick stats reflow to a 2×2 grid so labels aren't crushed */
+  .lay-overview .stats3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* the rating chart is wider than a phone — let it scroll sideways instead
+     of shrinking into an unreadable strip */
+  .rchart {
+    overflow-x: auto;
+  }
+  .rchart svg {
+    min-width: 560px;
   }
 }
