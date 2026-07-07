@@ -392,11 +392,20 @@
 .v-WA {
   color: var(--wa);
 }
-.v-TLE {
+.v-TLE,
+.v-MLE,
+.v-OLE {
   color: var(--tle);
 }
-.v-RE {
+.v-RE,
+.v-CE {
   color: var(--wa);
+}
+.v-pending {
+  color: var(--fg2);
+}
+.v-pending .pp-vd {
+  animation: pulse 1.6s ease-in-out infinite;
 }
 .pp-empty {
   text-align: center;

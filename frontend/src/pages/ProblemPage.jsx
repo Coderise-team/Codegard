@@ -6,35 +6,8 @@ import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblem } from '../hooks/useProblem';
 import { useLanguages } from '../hooks/useLanguages';
+import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
 import './ProblemPage.css';
-
-// STUB: replaced by GET submissions/?problem=id in plan step 7.
-const STUB_SUBMISSIONS = [
-  {
-    id: 412,
-    verdict: 'AC',
-    lang: 'Python 3',
-    runtime: '88 ms',
-    memory: '18 MB',
-    when: '2h ago',
-  },
-  {
-    id: 398,
-    verdict: 'WA',
-    lang: 'Python 3',
-    runtime: '61 ms',
-    memory: '18 MB',
-    when: '3h ago',
-  },
-  {
-    id: 371,
-    verdict: 'TLE',
-    lang: 'Python 3',
-    runtime: '—',
-    memory: '—',
-    when: '5h ago',
-  },
-];
 
 /**
  * ProblemPage — solo problem solving at /problems/:id.
@@ -47,6 +20,7 @@ export default function ProblemPage() {
   const [navOpen, setNavOpen] = useState(false);
   const { data: problem, loading } = useProblem(id);
   const { data: languages, loading: langsLoading } = useLanguages();
+  const { data: submissions } = useProblemSubmissions(id);
 
   // The workspace needs both the statement and the language templates
   // (the editor starts from the selected language's starter code).
@@ -63,7 +37,7 @@ export default function ProblemPage() {
       {ready ? (
         <ProblemWorkspace
           problem={problem}
-          submissions={STUB_SUBMISSIONS}
+          submissions={submissions ?? []}
           languages={languages}
           busy={null}
           onSubmit={() => {}} // STUB: wired to POST submissions/ in plan step 8

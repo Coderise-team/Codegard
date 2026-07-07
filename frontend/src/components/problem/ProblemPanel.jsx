@@ -1,5 +1,6 @@
 import Icons from '../Icons';
 import { Example } from './bits';
+import { timeAgo } from '../../utils/time';
 
 // Statement fields are plain TextFields on the backend: every non-empty
 // line is a paragraph (or a list item for constraints).
@@ -77,6 +78,8 @@ function StatementTab({ problem }) {
   );
 }
 
+const fmtMetric = (value, unit) => (value == null ? '—' : `${value} ${unit}`);
+
 function SubmissionsTab({ submissions }) {
   if (!submissions.length) {
     return (
@@ -103,15 +106,29 @@ function SubmissionsTab({ submissions }) {
             <tr key={s.id}>
               <td className="pp-sid">#{s.id}</td>
               <td>
-                <span className={`pp-v-pill v-${s.verdict}`}>
-                  <span className="pp-vd" />
-                  {s.verdict}
-                </span>
+                {s.verdict ? (
+                  <span
+                    className={`pp-v-pill v-${s.verdict}`}
+                    title={s.verdict_display}
+                  >
+                    <span className="pp-vd" />
+                    {s.verdict}
+                  </span>
+                ) : (
+                  <span className="pp-v-pill v-pending">
+                    <span className="pp-vd" />
+                    Pending
+                  </span>
+                )}
               </td>
-              <td>{s.lang}</td>
-              <td className="mono pp-fg2">{s.runtime}</td>
-              <td className="mono pp-fg2">{s.memory}</td>
-              <td className="pp-fg2">{s.when}</td>
+              <td>{s.language_display}</td>
+              <td className="mono pp-fg2">
+                {fmtMetric(s.execution_time_ms, 'ms')}
+              </td>
+              <td className="mono pp-fg2">
+                {fmtMetric(s.memory_used_mb, 'MB')}
+              </td>
+              <td className="pp-fg2">{timeAgo(s.created_at)}</td>
             </tr>
           ))}
         </tbody>
