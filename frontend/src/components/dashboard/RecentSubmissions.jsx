@@ -1,6 +1,6 @@
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
-import { useRecentSubmissions } from '../../hooks/useRecentSubmissions';
+import { useUserSubmissions } from '../../hooks/useUserSubmissions';
 import { timeAgo } from '../../utils/time';
 
 // Newest submissions shown on the dashboard card.
@@ -9,12 +9,12 @@ const MAX_ROWS = 6;
 const formatRuntime = (ms) => (ms == null ? '—' : `${ms} ms`);
 
 /**
- * RecentSubmissions — table of the authenticated user's latest submissions
- * (across all problems), newest first.
+ * RecentSubmissions — table of the given user's latest submissions (across all
+ * problems), newest first. The caller owns "whose data".
  */
-export default function RecentSubmissions() {
+export default function RecentSubmissions({ username }) {
   const I = Icons;
-  const { data, loading, error } = useRecentSubmissions();
+  const { data, loading, error } = useUserSubmissions(username);
 
   if (data && data.length === 0) {
     return (

@@ -64,7 +64,7 @@ export default function ProfilePage() {
                 <div className="col-main">
                   <RatingChart data={D} />
                   <ActivityHeatmap username={username} />
-                  <RecentSubmissions />
+                  <RecentSubmissions username={username} />
                 </div>
                 <div className="col-rail">
                   <ProfileRing data={D} />

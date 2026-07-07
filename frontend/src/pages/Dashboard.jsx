@@ -51,7 +51,7 @@ export default function Dashboard() {
               <div className="cols">
                 <div className="col-main">
                   <Recommended />
-                  <RecentSubmissions />
+                  <RecentSubmissions username={user?.username} />
                   <ActivityHeatmap username={user?.username} />
                 </div>
                 <div className="col-rail">
