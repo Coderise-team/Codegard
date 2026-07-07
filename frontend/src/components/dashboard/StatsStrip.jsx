@@ -1,5 +1,4 @@
 import Icons from '../Icons';
-import { useAuthStore } from '../../store/authStore';
 import { useUserStats } from '../../hooks/useUserStats';
 
 // Card layout is presentation, not data — labels/icons are fixed here,
@@ -26,16 +25,28 @@ const STATS = [
 ];
 
 /**
- * StatsStrip — 3-up row of quick stat cards for the authenticated user.
- * Shows "—" until the stats load (and on error), never fake numbers.
+ * StatsStrip — row of quick stat cards for the given user. The caller owns
+ * "whose data" (Dashboard passes the signed-in user, the profile the viewed
+ * one). `extraStats` appends pre-formatted cards ({ key, label, icon, value })
+ * after the three core stats — the profile uses it for Max streak.
+ * Shows "—" until the stats load (and on error).
  */
-export default function StatsStrip() {
-  const username = useAuthStore((s) => s.user?.username);
+export default function StatsStrip({ username, extraStats = [] }) {
   const { data } = useUserStats(username);
+
+  const stats = [
+    ...STATS.map(({ key, label, icon, format }) => ({
+      key,
+      label,
+      icon,
+      value: data ? format(data[key]) : '—',
+    })),
+    ...extraStats,
+  ];
 
   return (
     <div className="stats3">
-      {STATS.map(({ key, label, icon, format }) => {
+      {stats.map(({ key, label, icon, value }) => {
         const Icon = Icons[icon];
         return (
           <div className="stat" key={key}>
@@ -43,7 +54,7 @@ export default function StatsStrip() {
               <Icon size={18} />
             </div>
             <div>
-              <div className="sv">{data ? format(data[key]) : '—'}</div>
+              <div className="sv">{value}</div>
               <div className="sk">{label}</div>
             </div>
           </div>
