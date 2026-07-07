@@ -27,7 +27,7 @@ export default function ProfileHeader({ user, delta }) {
     setCopied(true);
     try {
       navigator.clipboard?.writeText(
-        `${window.location.origin}/u/${user.username}`
+        `${window.location.origin}/users/${user.username}`
       );
     } catch {
       /* clipboard unavailable */

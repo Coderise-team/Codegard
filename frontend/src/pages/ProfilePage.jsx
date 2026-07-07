@@ -65,12 +65,7 @@ export default function ProfilePage() {
       <div className="main">
         <Navbar
           user={viewer}
-          title={
-            <>
-              <span className="dim">Users / </span>
-              {username}
-            </>
-          }
+          title="Profile"
           onMenuClick={() => setNavOpen(true)}
         />
 
