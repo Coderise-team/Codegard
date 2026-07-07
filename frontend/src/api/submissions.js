@@ -1,9 +1,10 @@
 import client from './client';
 
 // GET submissions/ -> paginated list of the authenticated user's submissions,
-// newest first. Returns the results array.
-export async function getSubmissions() {
-  const { data } = await client.get('submissions/');
+// newest first. Returns the results array. Optional `params` narrow the list
+// (e.g. { problem: id }).
+export async function getSubmissions(params) {
+  const { data } = await client.get('submissions/', { params });
   return data.results;
 }
 
