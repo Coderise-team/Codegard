@@ -5,7 +5,7 @@ import Icons from '../Icons';
  * DailyRandomCard — daily challenge summary + "Pick random" CTA (right rail).
  *
  * Props:
- *   daily       — { title, difficulty, tags, acceptance }
+ *   daily       — { id, title, difficulty, tags, acceptance }
  *   onRandom()  — open a random problem from the current filter set
  */
 export default function DailyRandomCard({ daily, onRandom }) {
@@ -37,9 +37,12 @@ export default function DailyRandomCard({ daily, onRandom }) {
           <b>{daily.acceptance}%</b> acceptance
         </div>
         <div className="ps-random" style={{ marginTop: 16 }}>
-          <a className="btn btn-primary btn-block" href="#">
+          <Link
+            className="btn btn-primary btn-block"
+            to={`/problems/${daily.id}`}
+          >
             <I.bolt size={15} /> Solve daily
-          </a>
+          </Link>
           <button className="btn btn-accent btn-block" onClick={onRandom}>
             <I.sparkle size={15} /> Pick random
           </button>
