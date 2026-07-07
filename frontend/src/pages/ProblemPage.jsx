@@ -1,5 +1,6 @@
 import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
+import './ProblemPage.css';
 
 // STUB: inline mock data (the mock has no data file for this page);
 // replaced with real API data in plan steps 5-8.

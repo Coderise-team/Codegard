@@ -1,0 +1,535 @@
+/* ProblemPage.css — solo problem workspace styles */
+
+/* ── Shell ──────────────────────────────────────────────────── */
+.pp-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Topbar ─────────────────────────────────────────────────── */
+.pp-topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+.pp-tb-left,
+.pp-tb-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pp-tb-div {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+.pp-tb-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User chip */
+.pp-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pp-user-meta {
+  text-align: right;
+  line-height: 1.25;
+}
+.pp-user-handle {
+  font-size: 13px;
+  font-weight: 600;
+}
+.pp-user-rating {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Workspace ──────────────────────────────────────────────── */
+.pp-workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.pp-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pp-problem-pane {
+  background: var(--bg);
+}
+.pp-editor-pane {
+  background: var(--card);
+  border-left: 1px solid var(--border);
+}
+
+/* Draggable splitter */
+.pp-vsplit {
+  flex: 0 0 1px;
+  background: var(--border);
+  position: relative;
+  z-index: 5;
+  cursor: col-resize;
+}
+.pp-vsplit::after {
+  content: '';
+  position: absolute;
+  inset: 0 -4px;
+  cursor: col-resize;
+}
+.pp-vsplit:hover {
+  background: var(--gold-line);
+  box-shadow: 0 0 0 1px var(--gold-line);
+}
+
+/* ── Problem panel tabs ─────────────────────────────────────── */
+.pp-tabbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 var(--pad);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.pp-tab {
+  position: relative;
+  padding: 14px 4px;
+  margin-right: 18px;
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.14s;
+}
+.pp-tab:hover {
+  color: var(--fg);
+}
+.pp-tab.is-active {
+  color: var(--fg);
+}
+.pp-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px 2px 0 0;
+}
+.pp-tab-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: var(--card-2);
+  color: var(--fg2);
+}
+
+/* ── Problem content ────────────────────────────────────────── */
+.pp-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pad);
+}
+
+.pp-prob-head {
+  margin-bottom: 22px;
+}
+.pp-prob-title {
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.pp-prob-id {
+  color: var(--gold);
+  font-weight: 700;
+}
+.pp-prob-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pp-stmt {
+  font-size: 14.5px;
+  line-height: 1.72;
+  color: #c9cdda;
+}
+.pp-stmt h3 {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  font-weight: 700;
+  margin: 28px 0 10px;
+}
+.pp-stmt p {
+  margin: 0 0 13px;
+  text-wrap: pretty;
+}
+.pp-stmt ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pp-stmt ul li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.pp-stmt ul li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  transform: translateY(-3px);
+}
+
+/* Examples */
+.pp-example {
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--card);
+}
+.pp-example-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: var(--card-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.pp-example-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.pp-io-cell {
+  padding: 12px 14px;
+}
+.pp-io-cell + .pp-io-cell {
+  border-left: 1px solid var(--border);
+}
+.pp-io-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-bottom: 8px;
+}
+.pp-io-cell pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pp-example-note {
+  padding: 10px 14px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px;
+  color: var(--fg2);
+  line-height: 1.55;
+}
+.pp-copy-btn {
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  padding: 2px;
+  transition: 0.12s;
+}
+.pp-copy-btn:hover {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+/* Submissions */
+.pp-subs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pp-subs-table th {
+  text-align: left;
+  padding: 9px 12px;
+  color: var(--fg2);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.pp-subs-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.pp-subs-table tr:hover td {
+  background: var(--card);
+}
+.pp-sid {
+  font-family: var(--mono);
+  color: var(--fg2);
+  font-size: 12px;
+}
+.pp-fg2 {
+  color: var(--fg2);
+  font-size: 12.5px;
+}
+.pp-v-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.pp-vd {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.v-AC {
+  color: var(--ac);
+}
+.v-WA {
+  color: var(--wa);
+}
+.v-TLE {
+  color: var(--tle);
+}
+.v-RE {
+  color: var(--wa);
+}
+.pp-empty {
+  text-align: center;
+  color: var(--fg2);
+  padding: 48px 20px;
+  font-size: 13.5px;
+}
+
+/* ── Editor ─────────────────────────────────────────────────── */
+.pp-editor-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px var(--pad);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.pp-et-left,
+.pp-et-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-lang-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.14s;
+}
+.pp-lang-select:hover {
+  border-color: var(--border-2);
+}
+.pp-lang-ic {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #3776ab, #ffd43b);
+  flex-shrink: 0;
+}
+.pp-tool-link {
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.12s;
+}
+.pp-tool-link:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+
+/* Code surface — STUB: plain textarea until Monaco lands (plan step 6) */
+.pp-code-stub {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 14px 18px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  tab-size: 4;
+  white-space: pre;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: #0f121a;
+  color: #abb2bf;
+  caret-color: var(--gold-hi);
+}
+
+/* ── Action bar ─────────────────────────────────────────────── */
+.pp-actionbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px var(--pad);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+.pp-ab-status {
+  font-size: 12.5px;
+  color: var(--fg2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-ab-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Verdict toast ──────────────────────────────────────────── */
+.pp-toast-wrap {
+  position: fixed;
+  top: calc(var(--topbar-h) + 16px);
+  right: 18px;
+  z-index: 60;
+}
+.pp-toast {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  animation: toast-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+}
+.pp-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.pp-toast-big {
+  font-size: 15px;
+  font-weight: 800;
+}
+.pp-toast-sub {
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+.pp-toast.t-AC {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+.pp-toast.t-AC .pp-toast-icon {
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+.pp-toast.t-AC .pp-toast-big {
+  color: var(--ac);
+}
+.pp-toast.t-WA {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.pp-toast.t-WA .pp-toast-icon {
+  background: var(--wa-soft);
+  color: var(--wa);
+}
+.pp-toast.t-WA .pp-toast-big {
+  color: var(--wa);
+}
+.pp-toast.t-TLE {
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.pp-toast.t-TLE .pp-toast-icon {
+  background: var(--tle-soft);
+  color: var(--tle);
+}
+.pp-toast.t-TLE .pp-toast-big {
+  color: var(--tle);
+}
