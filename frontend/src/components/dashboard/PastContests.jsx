@@ -1,6 +1,5 @@
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
-import { useAuthStore } from '../../store/authStore';
 import { useContestHistory } from '../../hooks/useContestHistory';
 import { formatDate } from '../../utils/time';
 
@@ -8,14 +7,11 @@ import { formatDate } from '../../utils/time';
 const MAX_ROWS = 5;
 
 /**
- * PastContests — a user's finished contests, newest first (the signed-in user
- * by default, or the `username` given when viewing another profile).
- * rank / rating_delta can be null until ELO is applied; handled gracefully.
+ * PastContests — the given user's finished contests, newest first. The caller
+ * owns "whose data". rank / rating_delta can be null until ELO is applied.
  */
-export default function PastContests({ username: usernameProp }) {
+export default function PastContests({ username }) {
   const I = Icons;
-  const authUsername = useAuthStore((s) => s.user?.username);
-  const username = usernameProp ?? authUsername;
   const { data, loading, error } = useContestHistory(username);
 
   if (data && data.length === 0) {

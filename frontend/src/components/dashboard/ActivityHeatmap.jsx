@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import Icons from '../Icons';
-import { useAuthStore } from '../../store/authStore';
 import { useUserActivity } from '../../hooks/useUserActivity';
 import { buildHeatmap } from '../../utils/activity';
 
@@ -64,14 +63,11 @@ function Calendar({ activity }) {
 }
 
 /**
- * ActivityHeatmap — GitHub-style year calendar of a user's submissions per day
- * (the signed-in user by default, or the `username` given when viewing another
- * profile). Intensity = number of submissions that day.
+ * ActivityHeatmap — GitHub-style year calendar of the given user's submissions
+ * per day. The caller owns "whose data". Intensity = submissions that day.
  */
-export default function ActivityHeatmap({ username: usernameProp }) {
+export default function ActivityHeatmap({ username }) {
   const I = Icons;
-  const authUsername = useAuthStore((s) => s.user?.username);
-  const username = usernameProp ?? authUsername;
   const { data: counts, loading, error } = useUserActivity(username);
   const activity = useMemo(
     () => (counts ? buildHeatmap(counts) : null),

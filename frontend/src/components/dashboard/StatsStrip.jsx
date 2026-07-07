@@ -1,5 +1,4 @@
 import Icons from '../Icons';
-import { useAuthStore } from '../../store/authStore';
 import { useUserStats } from '../../hooks/useUserStats';
 
 // Card layout is presentation, not data — labels/icons are fixed here,
@@ -26,13 +25,11 @@ const STATS = [
 ];
 
 /**
- * StatsStrip — 3-up row of quick stat cards for a user (the signed-in user by
- * default, or the `username` given when viewing someone else's profile).
- * Shows "—" until the stats load (and on error), never fake numbers.
+ * StatsStrip — 3-up row of quick stat cards for the given user. The caller
+ * owns "whose data" (Dashboard passes the signed-in user, the profile passes
+ * the viewed one). Shows "—" until the stats load (and on error).
  */
-export default function StatsStrip({ username: usernameProp }) {
-  const authUsername = useAuthStore((s) => s.user?.username);
-  const username = usernameProp ?? authUsername;
+export default function StatsStrip({ username }) {
   const { data } = useUserStats(username);
 
   return (
