@@ -972,13 +972,21 @@
 .subtab tbody tr:hover {
   background: var(--card-2);
 }
+.subtab .st-prob {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
 .subtab .st-id {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--fg3);
+  flex: 0 0 auto;
+  min-width: 34px;
 }
 .subtab .st-title {
   font-weight: 600;
+  min-width: 0;
 }
 .subtab .mono {
   font-family: var(--mono);
