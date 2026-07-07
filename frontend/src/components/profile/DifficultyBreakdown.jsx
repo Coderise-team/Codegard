@@ -1,20 +1,28 @@
 import Icons from '../Icons';
+import { useDifficultyBreakdown } from '../../hooks/useDifficultyBreakdown';
+
+const ZERO = { solved: 0, total: 0 };
 
 /**
  * DifficultyBreakdown — solved-by-difficulty card with progress bars.
  *
  * Props:
- *   data — profile object ({ difficulty: { easy:{s,t}, medium:{s,t}, hard:{s,t} } })
+ *   username — whose breakdown to load (users/{username}/difficulty/)
  */
-export default function DifficultyBreakdown({ data }) {
+export default function DifficultyBreakdown({ username }) {
   const I = Icons;
-  const d = data.difficulty;
+  const { data } = useDifficultyBreakdown(username);
+  const d = {
+    easy: data?.easy ?? ZERO,
+    medium: data?.medium ?? ZERO,
+    hard: data?.hard ?? ZERO,
+  };
   const order = [
     ['easy', 'Easy'],
     ['medium', 'Medium'],
     ['hard', 'Hard'],
   ];
-  const total = d.easy.s + d.medium.s + d.hard.s;
+  const total = d.easy.solved + d.medium.solved + d.hard.solved;
 
   return (
     <section className="card">
@@ -31,13 +39,13 @@ export default function DifficultyBreakdown({ data }) {
         <div className="diff-rows">
           {order.map(([key, label]) => {
             const v = d[key];
-            const pct = Math.round((v.s / v.t) * 100);
+            const pct = v.total ? Math.round((v.solved / v.total) * 100) : 0;
             return (
               <div className={`diff-row diff-${key}`} key={key}>
                 <div className="top">
                   <span className="lab">{label}</span>
                   <span className="cnt">
-                    <b>{v.s}</b> / {v.t} · {pct}%
+                    <b>{v.solved}</b> / {v.total} · {pct}%
                   </span>
                 </div>
                 <div className="bar">

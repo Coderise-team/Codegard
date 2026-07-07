@@ -12,18 +12,14 @@ import RatingChart from '../components/profile/RatingChart';
 import DifficultyBreakdown from '../components/profile/DifficultyBreakdown';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProfile } from '../hooks/useProfile';
+import { useStreak } from '../hooks/useStreak';
 import { cgRankFor } from '../utils/ranks';
-import profileData from '../data/profileData';
 import './ProfilePage.css';
 
 /**
  * ProfilePage — a user's public profile viewed by username. The page fetches
- * the user + rating history once (useProfile) and hands them to the header
- * (and, later, the ring and chart). The other blocks fetch their own slice by
- * username.
- *
- * STUB: ProfileRing / RatingChart / DifficultyBreakdown still render from mock
- * profileData; they get wired to the API in the next steps.
+ * the user + rating history once (useProfile) and hands them to the header,
+ * ring and chart. The other blocks fetch their own slice by username.
  */
 export default function ProfilePage() {
   const viewer = useCurrentUser();
@@ -42,7 +38,16 @@ export default function ProfilePage() {
     );
   }, [history]);
 
-  const D = profileData; // STUB
+  // Fourth stat card (the profile has no Daily block to carry the streak).
+  const { data: streak } = useStreak(username);
+  const extraStats = [
+    {
+      key: 'streak',
+      label: 'Max streak',
+      icon: 'flame',
+      value: streak ? `${streak.longest_streak} d` : '—',
+    },
+  ];
 
   // Rank-tinted variables (header gradient, avatar, rank chip, ELO ring).
   const color = user ? cgRankFor(user.elo_rating).color : 'var(--fg3)';
@@ -77,7 +82,7 @@ export default function ProfilePage() {
             {user && (
               <div className="lay-overview">
                 <ProfileHeader user={user} delta={delta} />
-                <StatsStrip username={username} />
+                <StatsStrip username={username} extraStats={extraStats} />
 
                 <div className="cols">
                   <div className="col-main">
@@ -87,7 +92,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="col-rail">
                     <ProfileRing user={user} />
-                    <DifficultyBreakdown data={D} />
+                    <DifficultyBreakdown username={username} />
                     <PastContests username={username} />
                   </div>
                 </div>
