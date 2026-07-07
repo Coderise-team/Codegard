@@ -588,13 +588,36 @@
 .pp-toast.t-WA .pp-toast-big {
   color: var(--wa);
 }
-.pp-toast.t-TLE {
+.pp-toast.t-RE,
+.pp-toast.t-CE {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.pp-toast.t-RE .pp-toast-icon,
+.pp-toast.t-CE .pp-toast-icon {
+  background: var(--wa-soft);
+  color: var(--wa);
+}
+.pp-toast.t-RE .pp-toast-big,
+.pp-toast.t-CE .pp-toast-big {
+  color: var(--wa);
+}
+.pp-toast.t-TLE,
+.pp-toast.t-MLE,
+.pp-toast.t-OLE {
   border-color: rgba(249, 115, 22, 0.4);
 }
-.pp-toast.t-TLE .pp-toast-icon {
+.pp-toast.t-TLE .pp-toast-icon,
+.pp-toast.t-MLE .pp-toast-icon,
+.pp-toast.t-OLE .pp-toast-icon {
   background: var(--tle-soft);
   color: var(--tle);
 }
-.pp-toast.t-TLE .pp-toast-big {
+.pp-toast.t-TLE .pp-toast-big,
+.pp-toast.t-MLE .pp-toast-big,
+.pp-toast.t-OLE .pp-toast-big {
   color: var(--tle);
+}
+.pp-toast.t-ERR .pp-toast-icon {
+  background: var(--card-2);
+  color: var(--fg2);
 }

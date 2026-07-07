@@ -3,11 +3,30 @@ import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
+import VerdictToast from '../components/problem/VerdictToast';
+import { createSubmission, getSubmission } from '../api/submissions';
+import { waitForVerdict } from '../api/verdict';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblem } from '../hooks/useProblem';
 import { useLanguages } from '../hooks/useLanguages';
 import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
 import './ProblemPage.css';
+
+// Toast content for a judged submission: metrics for normal verdicts, the
+// first stderr line for RE/CE (that's what the user needs to see first).
+function toastFor(s) {
+  let detail = '';
+  if (s.verdict === 'RE' || s.verdict === 'CE') {
+    const text = s.stderr || s.error_message || '';
+    detail = text.split('\n').find((line) => line.trim()) ?? '';
+    if (detail.length > 140) detail = `${detail.slice(0, 140)}…`;
+  } else if (s.execution_time_ms != null) {
+    detail =
+      `${s.execution_time_ms} ms` +
+      (s.memory_used_mb != null ? ` · ${s.memory_used_mb} MB` : '');
+  }
+  return { verdict: s.verdict, label: s.verdict_display, detail };
+}
 
 /**
  * ProblemPage — solo problem solving at /problems/:id.
@@ -20,7 +39,50 @@ export default function ProblemPage() {
   const [navOpen, setNavOpen] = useState(false);
   const { data: problem, loading } = useProblem(id);
   const { data: languages, loading: langsLoading } = useLanguages();
-  const { data: submissions } = useProblemSubmissions(id);
+  const { data: submissions, reload } = useProblemSubmissions(id);
+  const [busy, setBusy] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const handleSubmit = async (code, language) => {
+    setBusy('submit');
+    setToast(null);
+
+    let created;
+    try {
+      created = await createSubmission({ problem: Number(id), code, language });
+    } catch {
+      setBusy(null);
+      setToast({
+        label: 'Submission failed',
+        detail: 'Could not send your solution — please try again.',
+      });
+      return;
+    }
+    if (created.status !== 'queued') {
+      setBusy(null);
+      setToast({
+        label: 'Submission failed',
+        detail: 'The judge queue is unavailable — please try again later.',
+      });
+      reload();
+      return;
+    }
+
+    reload(); // the new row shows up as Pending right away
+    try {
+      await waitForVerdict(created.id);
+      const judged = await getSubmission(created.id);
+      setToast(toastFor(judged));
+    } catch {
+      setToast({
+        label: 'Still judging…',
+        detail: 'The verdict will appear in the Submissions tab.',
+      });
+    } finally {
+      setBusy(null);
+      reload();
+    }
+  };
 
   // The workspace needs both the statement and the language templates
   // (the editor starts from the selected language's starter code).
@@ -39,14 +101,16 @@ export default function ProblemPage() {
           problem={problem}
           submissions={submissions ?? []}
           languages={languages}
-          busy={null}
-          onSubmit={() => {}} // STUB: wired to POST submissions/ in plan step 8
+          busy={busy}
+          statusText={busy ? 'Judging…' : undefined}
+          onSubmit={handleSubmit}
         />
       ) : (
         <div className="pp-empty">
           {loading || langsLoading ? 'Loading problem…' : 'Problem not found.'}
         </div>
       )}
+      {toast && <VerdictToast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 }
