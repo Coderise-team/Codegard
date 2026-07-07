@@ -19,7 +19,8 @@ export function CopyBtn({ text }) {
 }
 
 /**
- * Example — one sample test: input/output pair plus an optional note.
+ * Example — one visible test case rendered as a sample: input/expected
+ * output pair plus an optional note.
  */
 export function Example({ example, index }) {
   return (
@@ -38,9 +39,9 @@ export function Example({ example, index }) {
         <div className="pp-io-cell">
           <div className="pp-io-lbl">
             <span>Output</span>
-            <CopyBtn text={example.output} />
+            <CopyBtn text={example.expected_output} />
           </div>
-          <pre>{example.output}</pre>
+          <pre>{example.expected_output}</pre>
         </div>
       </div>
       {example.note && <div className="pp-example-note">{example.note}</div>}

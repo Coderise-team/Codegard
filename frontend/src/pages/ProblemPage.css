@@ -223,6 +223,12 @@
   gap: 8px;
   align-items: center;
 }
+/* the API sends lowercase difficulty values */
+.pp-prob-meta .chip.diff-easy,
+.pp-prob-meta .chip.diff-medium,
+.pp-prob-meta .chip.diff-hard {
+  text-transform: capitalize;
+}
 
 .pp-stmt {
   font-size: 14.5px;

@@ -1,6 +1,10 @@
 import Icons from '../Icons';
 import { Example } from './bits';
 
+// Statement fields are plain TextFields on the backend: every non-empty
+// line is a paragraph (or a list item for constraints).
+const lines = (text) => (text ?? '').split('\n').filter((s) => s.trim());
+
 function StatementTab({ problem }) {
   const p = problem;
   return (
@@ -10,18 +14,18 @@ function StatementTab({ problem }) {
           <span className="pp-prob-id">{p.id}.</span> {p.title}
         </h1>
         <div className="pp-prob-meta">
-          <span className={`chip diff-${p.difficulty.toLowerCase()}`}>
-            {p.difficulty}
-          </span>
+          <span className={`chip diff-${p.difficulty}`}>{p.difficulty}</span>
           <span className="chip">
             <span className="k">Acc.</span>{' '}
             <span className="v">{p.acceptance}%</span>
           </span>
           <span className="chip">
-            <Icons.clock size={12} /> <span className="v">{p.timeLimit}</span>
+            <Icons.clock size={12} />{' '}
+            <span className="v">{p.time_limit} ms</span>
           </span>
           <span className="chip">
-            <Icons.cpu size={12} /> <span className="v">{p.memoryLimit}</span>
+            <Icons.cpu size={12} />{' '}
+            <span className="v">{p.memory_limit} MB</span>
           </span>
           {p.tags.map((t) => (
             <span key={t} className="chip">
@@ -31,27 +35,43 @@ function StatementTab({ problem }) {
         </div>
       </div>
       <div className="pp-stmt">
-        {p.statement.map((text, i) => (
+        {lines(p.description).map((text, i) => (
           <p key={i}>{text}</p>
         ))}
-        <h3>Input</h3>
-        {p.inputFormat.map((text, i) => (
-          <p key={i}>{text}</p>
-        ))}
-        <h3>Output</h3>
-        {p.outputFormat.map((text, i) => (
-          <p key={i}>{text}</p>
-        ))}
-        <h3>Examples</h3>
-        {p.examples.map((ex, i) => (
-          <Example key={i} example={ex} index={i} />
-        ))}
-        <h3>Constraints</h3>
-        <ul>
-          {p.constraints.map((c, i) => (
-            <li key={i}>{c}</li>
-          ))}
-        </ul>
+        {p.input_format && (
+          <>
+            <h3>Input</h3>
+            {lines(p.input_format).map((text, i) => (
+              <p key={i}>{text}</p>
+            ))}
+          </>
+        )}
+        {p.output_format && (
+          <>
+            <h3>Output</h3>
+            {lines(p.output_format).map((text, i) => (
+              <p key={i}>{text}</p>
+            ))}
+          </>
+        )}
+        {p.test_cases.length > 0 && (
+          <>
+            <h3>Examples</h3>
+            {p.test_cases.map((tc, i) => (
+              <Example key={tc.id} example={tc} index={i} />
+            ))}
+          </>
+        )}
+        {p.constraints && (
+          <>
+            <h3>Constraints</h3>
+            <ul>
+              {lines(p.constraints).map((c, i) => (
+                <li key={i}>{c}</li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </div>
   );
