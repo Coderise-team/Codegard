@@ -77,16 +77,6 @@
   border: 3px solid var(--card);
   box-shadow: 0 8px 28px color-mix(in srgb, var(--rank-c) 30%, transparent);
 }
-.pavatar .dot {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--ac);
-  border: 3px solid var(--card);
-}
 
 .phead-id {
   flex: 1;
@@ -157,49 +147,6 @@
   align-items: center;
   gap: 9px;
   padding-bottom: 4px;
-}
-.follow-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 38px;
-  padding: 0 18px;
-  border-radius: var(--r-sm);
-  font-family: var(--ui);
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 0;
-  color: #fff;
-  transition: 0.14s;
-  white-space: nowrap;
-  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
-  box-shadow:
-    0 0 0 1px var(--accent-glow),
-    0 6px 20px var(--accent-glow-2);
-}
-.follow-btn:hover {
-  background: linear-gradient(125deg, var(--btn-lo-h), var(--btn-hi-h));
-}
-.follow-btn.following {
-  background: var(--card-2);
-  color: var(--fg);
-  border: 1px solid var(--border-2);
-  box-shadow: none;
-}
-.follow-btn.following:hover {
-  border-color: var(--wa);
-  color: var(--wa);
-  background: var(--wa-soft);
-}
-.follow-btn.following .lbl-hover {
-  display: none;
-}
-.follow-btn.following:hover .lbl-base {
-  display: none;
-}
-.follow-btn.following:hover .lbl-hover {
-  display: inline;
 }
 .icon-act {
   width: 38px;
