@@ -1,45 +1,11 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useProblem } from '../hooks/useProblem';
 import './ProblemPage.css';
-
-// STUB: inline mock data (the mock has no data file for this page);
-// replaced with real API data in plan steps 5-8.
-const STUB_PROBLEM = {
-  id: 1,
-  title: 'Two Sum',
-  difficulty: 'Easy',
-  acceptance: 47.3,
-  timeLimit: '1000 ms',
-  memoryLimit: '256 MB',
-  tags: ['arrays', 'hash-map'],
-  statement: [
-    'You are given an array of integers nums and an integer target. Return ' +
-      'the indices of the two numbers that add up to target.',
-    'Each input has exactly one solution, and you may not use the same ' +
-      'element twice. The answer can be returned in any order.',
-  ],
-  inputFormat: [
-    'The first line contains two integers n and target. The second line ' +
-      'contains n space-separated integers — the array nums.',
-  ],
-  outputFormat: ['Two space-separated indices i and j (i < j).'],
-  constraints: [
-    '2 ≤ n ≤ 10^5',
-    '-10^9 ≤ nums[i] ≤ 10^9',
-    'Exactly one valid answer exists.',
-  ],
-  examples: [
-    {
-      input: '4 9\n2 7 11 15',
-      output: '0 1',
-      note: 'nums[0] + nums[1] = 2 + 7 = 9.',
-    },
-    { input: '3 6\n3 2 4', output: '1 2', note: '' },
-  ],
-};
 
 // STUB: replaced by GET submissions/?problem=id in plan step 7.
 const STUB_SUBMISSIONS = [
@@ -79,25 +45,33 @@ const STUB_STARTER =
  * shared Sidebar is an off-canvas drawer here (burger in the topbar).
  */
 export default function ProblemPage() {
+  const { id } = useParams();
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
+  const { data: problem, loading } = useProblem(id);
 
   return (
     <div className="pp-app" data-density="compact">
       <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
       <SoloTopbar
-        title={STUB_PROBLEM.title}
+        title={problem?.title ?? ''}
         user={user}
         onMenuClick={() => setNavOpen(true)}
       />
-      <ProblemWorkspace
-        problem={STUB_PROBLEM}
-        submissions={STUB_SUBMISSIONS}
-        starterCode={STUB_STARTER}
-        busy={null}
-        statusText="Python 3 · ready"
-        onSubmit={() => {}} // STUB: wired to POST submissions/ in plan step 8
-      />
+      {problem ? (
+        <ProblemWorkspace
+          problem={problem}
+          submissions={STUB_SUBMISSIONS}
+          starterCode={STUB_STARTER}
+          busy={null}
+          statusText="Python 3 · ready"
+          onSubmit={() => {}} // STUB: wired to POST submissions/ in plan step 8
+        />
+      ) : (
+        <div className="pp-empty">
+          {loading ? 'Loading problem…' : 'Problem not found.'}
+        </div>
+      )}
     </div>
   );
 }
