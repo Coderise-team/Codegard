@@ -58,18 +58,18 @@ export default function ProfilePage() {
           <div className="canvas-in">
             <div className="lay-overview">
               <ProfileHeader data={D} />
-              <StatsStrip />
+              <StatsStrip username={username} />
 
               <div className="cols">
                 <div className="col-main">
                   <RatingChart data={D} />
-                  <ActivityHeatmap />
+                  <ActivityHeatmap username={username} />
                   <RecentSubmissions />
                 </div>
                 <div className="col-rail">
                   <ProfileRing data={D} />
                   <DifficultyBreakdown data={D} />
-                  <PastContests />
+                  <PastContests username={username} />
                 </div>
               </div>
             </div>

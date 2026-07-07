@@ -8,12 +8,14 @@ import { formatDate } from '../../utils/time';
 const MAX_ROWS = 5;
 
 /**
- * PastContests — the authenticated user's finished contests, newest first.
+ * PastContests — a user's finished contests, newest first (the signed-in user
+ * by default, or the `username` given when viewing another profile).
  * rank / rating_delta can be null until ELO is applied; handled gracefully.
  */
-export default function PastContests() {
+export default function PastContests({ username: usernameProp }) {
   const I = Icons;
-  const username = useAuthStore((s) => s.user?.username);
+  const authUsername = useAuthStore((s) => s.user?.username);
+  const username = usernameProp ?? authUsername;
   const { data, loading, error } = useContestHistory(username);
 
   if (data && data.length === 0) {

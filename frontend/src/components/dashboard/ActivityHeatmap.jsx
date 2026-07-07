@@ -64,12 +64,14 @@ function Calendar({ activity }) {
 }
 
 /**
- * ActivityHeatmap — GitHub-style year calendar of the user's submissions per day.
- * Intensity = number of submissions that day.
+ * ActivityHeatmap — GitHub-style year calendar of a user's submissions per day
+ * (the signed-in user by default, or the `username` given when viewing another
+ * profile). Intensity = number of submissions that day.
  */
-export default function ActivityHeatmap() {
+export default function ActivityHeatmap({ username: usernameProp }) {
   const I = Icons;
-  const username = useAuthStore((s) => s.user?.username);
+  const authUsername = useAuthStore((s) => s.user?.username);
+  const username = usernameProp ?? authUsername;
   const { data: counts, loading, error } = useUserActivity(username);
   const activity = useMemo(
     () => (counts ? buildHeatmap(counts) : null),

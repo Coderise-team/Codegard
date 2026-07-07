@@ -26,11 +26,13 @@ const STATS = [
 ];
 
 /**
- * StatsStrip — 3-up row of quick stat cards for the authenticated user.
+ * StatsStrip — 3-up row of quick stat cards for a user (the signed-in user by
+ * default, or the `username` given when viewing someone else's profile).
  * Shows "—" until the stats load (and on error), never fake numbers.
  */
-export default function StatsStrip() {
-  const username = useAuthStore((s) => s.user?.username);
+export default function StatsStrip({ username: usernameProp }) {
+  const authUsername = useAuthStore((s) => s.user?.username);
+  const username = usernameProp ?? authUsername;
   const { data } = useUserStats(username);
 
   return (
