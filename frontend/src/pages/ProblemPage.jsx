@@ -5,6 +5,7 @@ import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblem } from '../hooks/useProblem';
+import { useLanguages } from '../hooks/useLanguages';
 import './ProblemPage.css';
 
 // STUB: replaced by GET submissions/?problem=id in plan step 7.
@@ -35,10 +36,6 @@ const STUB_SUBMISSIONS = [
   },
 ];
 
-// STUB: starter template comes from GET languages/ in plan step 6.
-const STUB_STARTER =
-  'import sys\n\ndata = sys.stdin.read().split()\n# your code here\n';
-
 /**
  * ProblemPage — solo problem solving at /problems/:id.
  * Composes the mode-agnostic ProblemWorkspace with the solo topbar; the
@@ -49,6 +46,11 @@ export default function ProblemPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
   const { data: problem, loading } = useProblem(id);
+  const { data: languages, loading: langsLoading } = useLanguages();
+
+  // The workspace needs both the statement and the language templates
+  // (the editor starts from the selected language's starter code).
+  const ready = problem && languages?.length;
 
   return (
     <div className="pp-app" data-density="compact">
@@ -58,18 +60,17 @@ export default function ProblemPage() {
         user={user}
         onMenuClick={() => setNavOpen(true)}
       />
-      {problem ? (
+      {ready ? (
         <ProblemWorkspace
           problem={problem}
           submissions={STUB_SUBMISSIONS}
-          starterCode={STUB_STARTER}
+          languages={languages}
           busy={null}
-          statusText="Python 3 · ready"
           onSubmit={() => {}} // STUB: wired to POST submissions/ in plan step 8
         />
       ) : (
         <div className="pp-empty">
-          {loading ? 'Loading problem…' : 'Problem not found.'}
+          {loading || langsLoading ? 'Loading problem…' : 'Problem not found.'}
         </div>
       )}
     </div>

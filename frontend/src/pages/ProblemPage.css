@@ -440,6 +440,19 @@
 .pp-lang-select:hover {
   border-color: var(--border-2);
 }
+.pp-lang-select select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.pp-lang-select select option {
+  background: var(--card-2);
+  color: var(--fg);
+}
 .pp-lang-ic {
   width: 16px;
   height: 16px;
@@ -465,23 +478,19 @@
   background: var(--card-2);
 }
 
-/* Code surface — STUB: plain textarea until Monaco lands (plan step 6) */
-.pp-code-stub {
+/* Code surface — Monaco host fills the pane between toolbar and action bar */
+.pp-editor-host {
   flex: 1;
   min-height: 0;
-  margin: 0;
-  padding: 14px 18px;
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 21px;
-  tab-size: 4;
-  white-space: pre;
-  border: 0;
-  outline: 0;
-  resize: none;
   background: #0f121a;
-  color: #abb2bf;
-  caret-color: var(--gold-hi);
+}
+.pp-editor-loading {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  background: #0f121a;
+  color: var(--fg2);
+  font-size: 13px;
 }
 
 /* ── Action bar ─────────────────────────────────────────────── */

@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import Icons from '../Icons';
 import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
+
+// Monaco is heavy — load it (and its chunk) only when the workspace renders.
+const CodeEditor = lazy(() => import('./CodeEditor'));
 
 /**
  * ProblemWorkspace — the mode-agnostic core of the problem page:
@@ -12,23 +15,26 @@ import ActionBar from './ActionBar';
  * Props:
  *   problem     — statement object for the left pane
  *   submissions — rows for the Submissions tab
- *   starterCode — initial editor content (Reset returns to it)
+ *   languages   — [{ id, name, template }] from GET languages/
  *   busy        — falsy | 'submit', forwarded to the ActionBar
- *   statusText  — ActionBar status line
- *   onSubmit    — called with the current code
+ *   statusText  — optional ActionBar status override (defaults to
+ *                 "{language} · ready")
+ *   onSubmit    — called with (code, languageId)
  *   rail        — optional right-side slot (contest leaderboard later)
  */
 export default function ProblemWorkspace({
   problem,
   submissions,
-  starterCode,
+  languages,
   busy,
   statusText,
   onSubmit,
   rail,
 }) {
   const [tab, setTab] = useState('statement');
-  const [code, setCode] = useState(starterCode);
+  const [langId, setLangId] = useState(languages[0].id);
+  const lang = languages.find((l) => l.id === langId) ?? languages[0];
+  const [code, setCode] = useState(lang.template);
   const [problemW, setProblemW] = useState(44);
 
   const onSplitMouseDown = (e) => {
@@ -64,10 +70,21 @@ export default function ProblemWorkspace({
       <section className="pp-pane pp-editor-pane" style={{ flex: 1 }}>
         <div className="pp-editor-toolbar">
           <div className="pp-et-left">
-            <button className="pp-lang-select">
-              <span className="pp-lang-ic" /> Python 3
+            <label className="pp-lang-select">
+              <span className="pp-lang-ic" />
+              <select
+                value={langId}
+                onChange={(e) => setLangId(e.target.value)}
+                aria-label="Language"
+              >
+                {languages.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
               <Icons.chevDown size={14} style={{ color: 'var(--fg2)' }} />
-            </button>
+            </label>
           </div>
           <div className="pp-et-right">
             <button className="pp-tool-link">
@@ -76,21 +93,17 @@ export default function ProblemWorkspace({
           </div>
         </div>
 
-        {/* STUB: plain textarea stands in until Monaco lands (plan step 6) */}
-        <textarea
-          className="pp-code-stub scroll"
-          value={code}
-          spellCheck={false}
-          autoCapitalize="off"
-          autoCorrect="off"
-          onChange={(e) => setCode(e.target.value)}
-        />
+        <Suspense
+          fallback={<div className="pp-editor-loading">Loading editor…</div>}
+        >
+          <CodeEditor value={code} language={langId} onChange={setCode} />
+        </Suspense>
 
         <ActionBar
           busy={busy}
-          statusText={statusText}
-          onSubmit={() => onSubmit(code)}
-          onReset={() => setCode(starterCode)}
+          statusText={statusText ?? `${lang.name} · ready`}
+          onSubmit={() => onSubmit(code, langId)}
+          onReset={() => setCode(lang.template)}
         />
       </section>
 
