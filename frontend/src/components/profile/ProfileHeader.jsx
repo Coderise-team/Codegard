@@ -1,26 +1,34 @@
 import { useState } from 'react';
 import Icons from '../Icons';
+import { cgRankFor } from '../../utils/ranks';
 
 /**
  * ProfileHeader — top banner of the viewed profile: avatar, handle, rank,
- * meta row, rating/peak readout, and follow / share actions.
+ * meta row, rating/peak readout and a copy-link (share) action.
  *
  * Props:
- *   data — profile object ({ user: { handle, initials, rating, maxRating, … } })
+ *   user  — public user object (username, elo_rating, rank, maxRating,
+ *           globalRank, joined)
+ *   delta — rating change on the latest contest, or null when unknown
  */
-export default function ProfileHeader({ data }) {
+export default function ProfileHeader({ user, delta }) {
   const I = Icons;
-  const u = data.user;
-  const up = u.delta >= 0;
-
-  const [following, setFollowing] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const initials = user.username.slice(0, 2).toUpperCase();
+  const joined = new Date(user.joined).toLocaleDateString('en-US', {
+    month: 'short',
+    year: 'numeric',
+  });
+  const maxRank = cgRankFor(user.maxRating ?? user.elo_rating).name;
+  const up = (delta ?? 0) >= 0;
 
   const onShare = () => {
     setCopied(true);
     try {
-      navigator.clipboard &&
-        navigator.clipboard.writeText(`https://codegard.io/u/${u.handle}`);
+      navigator.clipboard?.writeText(
+        `${window.location.origin}/u/${user.username}`
+      );
     } catch {
       /* clipboard unavailable */
     }
@@ -30,38 +38,23 @@ export default function ProfileHeader({ data }) {
   return (
     <section className="phead">
       <div className="phead-main">
-        <div className="pavatar">
-          {u.initials}
-          {u.online && <span className="dot" title="Online now"></span>}
-        </div>
+        <div className="pavatar">{initials}</div>
 
         <div className="phead-id">
           <div className="top">
-            <span className="handle">{u.handle}</span>
+            <span className="handle">{user.username}</span>
             <span className="rank-chip">
-              <span className="rdot"></span> {u.rank.name}
+              <span className="rdot"></span> {user.rank}
             </span>
           </div>
           <div className="sub">
             <span className="s">
               <I.trophy size={14} /> Global rank{' '}
-              <b>#{u.globalRank.toLocaleString('en-US')}</b>
+              <b>#{user.globalRank.toLocaleString('en-US')}</b>
             </span>
             <span className="sep"></span>
             <span className="s">
-              <I.calendar size={14} /> Joined <b>{u.joined}</b>
-            </span>
-            <span className="sep"></span>
-            <span className="s">
-              {u.online ? (
-                <span style={{ color: 'var(--ac)', fontWeight: 700 }}>
-                  ● online now
-                </span>
-              ) : (
-                <>
-                  Active <b>{u.lastActive}</b>
-                </>
-              )}
+              <I.calendar size={14} /> Joined <b>{joined}</b>
             </span>
           </div>
         </div>
@@ -69,41 +62,27 @@ export default function ProfileHeader({ data }) {
         <div className="phead-rate">
           <div className="rblock">
             <div className="k">Rating</div>
-            <div className="v cur">{u.rating}</div>
-            <div className={`pdelta ${up ? 'up' : 'down'}`}>
-              {up ? <I.arrowUp size={11} /> : <I.arrowDown size={11} />}
-              {up ? '+' : ''}
-              {u.delta} last
-            </div>
+            <div className="v cur">{user.elo_rating}</div>
+            {delta != null && (
+              <div className={`pdelta ${up ? 'up' : 'down'}`}>
+                {up ? <I.arrowUp size={11} /> : <I.arrowDown size={11} />}
+                {up ? '+' : ''}
+                {delta} last
+              </div>
+            )}
           </div>
           <div className="rblock">
             <div className="k">Peak</div>
             <div className="v" style={{ color: 'var(--fg)' }}>
-              {u.maxRating}
+              {user.maxRating ?? '—'}
             </div>
             <div className="pdelta" style={{ color: 'var(--fg2)' }}>
-              {u.maxRank.name}
+              {maxRank}
             </div>
           </div>
         </div>
 
         <div className="phead-act">
-          <button
-            className={`follow-btn${following ? ' following' : ''}`}
-            onClick={() => setFollowing((v) => !v)}
-          >
-            {following ? (
-              <>
-                <I.checkBold size={15} className="lbl-base" />
-                <span className="lbl-base">Following</span>
-                <span className="lbl-hover">Unfollow</span>
-              </>
-            ) : (
-              <>
-                <I.plus size={15} /> Follow
-              </>
-            )}
-          </button>
           <button
             className="icon-act"
             title="Copy profile link"
