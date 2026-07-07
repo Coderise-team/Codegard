@@ -81,12 +81,12 @@ export default function ProfilePage() {
 
                 <div className="cols">
                   <div className="col-main">
-                    <RatingChart data={D} />
+                    <RatingChart user={user} history={history} />
                     <ActivityHeatmap username={username} />
                     <RecentSubmissions username={username} />
                   </div>
                   <div className="col-rail">
-                    <ProfileRing data={D} />
+                    <ProfileRing user={user} />
                     <DifficultyBreakdown data={D} />
                     <PastContests username={username} />
                   </div>

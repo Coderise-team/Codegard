@@ -1,22 +1,39 @@
 import Icons from '../Icons';
-import { CG_RANKS } from '../../data/profileData';
+import { CG_RANKS } from '../../utils/ranks';
+import { formatDate } from '../../utils/time';
 
 /**
  * RatingChart — large rating-over-time area chart with rank bands.
  *
  * Props:
- *   data — profile object ({ ratingHistory: [{ c, r, d }], user })
+ *   user    — { elo_rating, maxRating }
+ *   history — [{ rating, created_at }] oldest-first
  */
-export default function RatingChart({ data }) {
-  const hist = data.ratingHistory;
-  const u = data.user;
+export default function RatingChart({ user, history }) {
+  // Need at least two points to draw a line.
+  if (!history || history.length < 2) {
+    return (
+      <section className="card chart-card">
+        <div className="card-hd">
+          <span className="t">
+            <Icons.chart size={16} /> Rating progress
+          </span>
+        </div>
+        <div className="card-bd">
+          <div className="list-msg">Not enough rated contests yet.</div>
+        </div>
+      </section>
+    );
+  }
+
+  const hist = history;
   const W = 720,
     H = 248,
     padL = 46,
     padR = 14,
     padT = 16,
     padB = 26;
-  const rs = hist.map((h) => h.r);
+  const rs = hist.map((h) => h.rating);
   const dmin = Math.min(...rs),
     dmax = Math.max(...rs);
   const lo = Math.floor((dmin - 60) / 100) * 100;
@@ -25,7 +42,9 @@ export default function RatingChart({ data }) {
   const y = (r) => padT + (1 - (r - lo) / (hi - lo)) * (H - padT - padB);
 
   const line = hist
-    .map((h, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(h.r).toFixed(1)}`)
+    .map(
+      (h, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(h.rating).toFixed(1)}`
+    )
     .join(' ');
   const area = `${line} L${x(hist.length - 1).toFixed(1)} ${y(lo)} L${x(0).toFixed(1)} ${y(lo)} Z`;
 
@@ -55,12 +74,12 @@ export default function RatingChart({ data }) {
           <div className="m">
             <div className="k">Current</div>
             <div className="v" style={{ color: 'var(--rank-c)' }}>
-              {u.rating}
+              {user.elo_rating}
             </div>
           </div>
           <div className="m">
             <div className="k">Peak</div>
-            <div className="v">{u.maxRating}</div>
+            <div className="v">{user.maxRating ?? dmax}</div>
           </div>
           <div className="m">
             <div className="k">Contests</div>
@@ -126,15 +145,16 @@ export default function RatingChart({ data }) {
             {/* area + line */}
             <path className="area" d={area} />
             <path className="line" d={line} vectorEffect="non-scaling-stroke" />
-            {/* points */}
+            {/* points, colored by gain/drop */}
             {hist.map((h, i) => {
               const isLast = i === hist.length - 1;
               const isPeak = i === peakI;
+              const d = i === 0 ? null : h.rating - hist[i - 1].rating;
               const fill = isLast
                 ? 'var(--gold-hi)'
-                : h.d == null
+                : d == null
                   ? 'var(--fg2)'
-                  : h.d >= 0
+                  : d >= 0
                     ? 'var(--ac)'
                     : 'var(--wa)';
               return (
@@ -142,7 +162,7 @@ export default function RatingChart({ data }) {
                   key={i}
                   className="pt"
                   cx={x(i)}
-                  cy={y(h.r)}
+                  cy={y(h.rating)}
                   r={isLast || isPeak ? 4.6 : 3}
                   fill={fill}
                 />
@@ -162,7 +182,8 @@ export default function RatingChart({ data }) {
         </div>
         <div className="rchart-foot">
           <span>
-            {hist[0].c.split(' #')[0]} → {hist[hist.length - 1].c}
+            {formatDate(hist[0].created_at)} →{' '}
+            {formatDate(hist[hist.length - 1].created_at)}
           </span>
           <span className="legend">
             <span className="lg">

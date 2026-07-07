@@ -1,21 +1,24 @@
 import Icons from '../Icons';
 
 /**
- * ProfileRing — ELO ring card (rank-tinted) with progress to next tier.
+ * ProfileRing — ELO ring card (rank-tinted) with progress toward the next tier.
  *
  * Props:
- *   data — profile object ({ user: { rating, rank: { floor, ceil, name, nextName } } })
+ *   user — { elo_rating, rank, nextTier }, nextTier: { name, floor, ceil } | null
  */
-export default function ProfileRing({ data }) {
+export default function ProfileRing({ user }) {
   const I = Icons;
-  const u = data.user,
-    R = 84,
+  const R = 84,
     C = 2 * Math.PI * R;
-  const { floor, ceil, nextName, name } = u.rank;
-  const frac = Math.max(0, Math.min(1, (u.rating - floor) / (ceil - floor)));
+  const nt = user.nextTier;
+  const frac = nt
+    ? Math.max(
+        0,
+        Math.min(1, (user.elo_rating - nt.floor) / (nt.ceil - nt.floor))
+      )
+    : 1;
   const off = C * (1 - frac);
-  const toNext = Math.max(0, ceil - u.rating);
-  const isTop = nextName === name;
+  const toNext = nt ? Math.max(0, nt.ceil - user.elo_rating) : 0;
 
   return (
     <section className="card pring-card">
@@ -51,21 +54,21 @@ export default function ProfileRing({ data }) {
             />
           </svg>
           <div className="ring-center">
-            <div className="elo">{u.rating}</div>
+            <div className="elo">{user.elo_rating}</div>
             <div className="lab">ELO Rating</div>
-            <div className="rk">{name}</div>
+            <div className="rk">{user.rank}</div>
           </div>
         </div>
         <div className="tier-line">
           <div className="lbl">
-            <span>{name}</span>
+            <span>{user.rank}</span>
             <span>
-              {isTop ? (
-                'top tier'
-              ) : (
+              {nt ? (
                 <>
-                  {toNext} to <b>{nextName}</b>
+                  {toNext} to <b>{nt.name}</b>
                 </>
+              ) : (
+                'top tier'
               )}
             </span>
           </div>
