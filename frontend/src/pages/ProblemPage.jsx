@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import Sidebar from '../components/layout/Sidebar';
 import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
+import { useCurrentUser } from '../hooks/useCurrentUser';
 import './ProblemPage.css';
 
 // STUB: inline mock data (the mock has no data file for this page);
@@ -70,22 +73,23 @@ const STUB_SUBMISSIONS = [
 const STUB_STARTER =
   'import sys\n\ndata = sys.stdin.read().split()\n# your code here\n';
 
-// STUB: real viewer comes from useCurrentUser in plan step 4.
-const STUB_USER = {
-  handle: 'test',
-  rating: 1850,
-  rank: 'Master',
-  initials: 'TE',
-};
-
 /**
  * ProblemPage — solo problem solving at /problems/:id.
- * Composes the mode-agnostic ProblemWorkspace with the solo topbar.
+ * Composes the mode-agnostic ProblemWorkspace with the solo topbar; the
+ * shared Sidebar is an off-canvas drawer here (burger in the topbar).
  */
 export default function ProblemPage() {
+  const user = useCurrentUser();
+  const [navOpen, setNavOpen] = useState(false);
+
   return (
     <div className="pp-app" data-density="compact">
-      <SoloTopbar title={STUB_PROBLEM.title} user={STUB_USER} />
+      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
+      <SoloTopbar
+        title={STUB_PROBLEM.title}
+        user={user}
+        onMenuClick={() => setNavOpen(true)}
+      />
       <ProblemWorkspace
         problem={STUB_PROBLEM}
         submissions={STUB_SUBMISSIONS}

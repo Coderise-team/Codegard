@@ -1,16 +1,22 @@
 import { Link } from 'react-router-dom';
+import Icons from '../Icons';
+import UserMenu from '../layout/UserMenu';
 
 /**
  * SoloTopbar — workspace top bar for solo problem solving (no contest chrome).
  *
  * Props:
- *   title — problem title shown next to the logo
- *   user  — { handle, rating, rank, initials } for the user chip
+ *   title       — problem title shown next to the logo
+ *   user        — { username, initials } for the user menu
+ *   onMenuClick — open the sidebar drawer (burger button)
  */
-export default function SoloTopbar({ title, user }) {
+export default function SoloTopbar({ title, user, onMenuClick }) {
   return (
     <header className="pp-topbar">
       <div className="pp-tb-left">
+        <button className="icon-btn" title="Menu" onClick={onMenuClick}>
+          <Icons.menu size={18} />
+        </button>
         <Link to="/" className="logo">
           <span className="mark">C</span>
           <span>
@@ -23,15 +29,7 @@ export default function SoloTopbar({ title, user }) {
       </div>
 
       <div className="pp-tb-right">
-        <div className="pp-user-chip">
-          <div className="pp-user-meta">
-            <div className="pp-user-handle">{user.handle}</div>
-            <div className="pp-user-rating">
-              {user.rating} · {user.rank}
-            </div>
-          </div>
-          <div className="avatar">{user.initials}</div>
-        </div>
+        <UserMenu user={user} />
       </div>
     </header>
   );
