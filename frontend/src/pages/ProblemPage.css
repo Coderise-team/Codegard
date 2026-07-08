@@ -487,10 +487,14 @@
   background: var(--card-2);
 }
 
-/* Code surface — Monaco host fills the pane between toolbar and action bar */
+/* Code surface — Monaco host fills the pane between toolbar and action bar.
+   overflow+min-width keep Monaco's inline pixel width from widening the
+   layout: it must always resize to the host, never the other way around. */
 .pp-editor-host {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
   background: #0f121a;
 }
 .pp-editor-loading {
@@ -620,4 +624,88 @@
 .pp-toast.t-ERR .pp-toast-icon {
   background: var(--card-2);
   color: var(--fg2);
+}
+
+/* ---- phone: panes stack vertically, the page scrolls as a whole ---- */
+@media (max-width: 640px) {
+  .pp-app {
+    height: auto;
+    min-height: 100vh;
+    /* vertical page scroll, but nothing may widen the page sideways */
+    overflow: visible;
+    overflow-x: clip;
+  }
+  .pp-workspace,
+  .pp-pane {
+    max-width: 100%;
+  }
+  .pp-topbar {
+    position: sticky;
+    top: 0;
+  }
+  /* tighten the topbar: burger + logo mark + title + avatar */
+  .pp-tb-left {
+    flex: 1;
+    min-width: 0;
+    gap: 10px;
+  }
+  .pp-topbar .logo > span:last-child {
+    display: none;
+  }
+  .pp-topbar .user-chip .meta {
+    display: none;
+  }
+
+  .pp-workspace {
+    flex-direction: column;
+    overflow: visible;
+  }
+  .pp-vsplit {
+    display: none;
+  }
+  .pp-pane {
+    overflow: visible;
+  }
+  /* the splitter sets an inline flexBasis (a height in column direction) */
+  .pp-problem-pane {
+    flex-basis: auto !important;
+  }
+  .pp-pane-body {
+    flex: none;
+    overflow: visible;
+    overflow-x: auto;
+  }
+  /* the JSX sets an inline flex: 1 (basis 0) — pin the editor height */
+  .pp-editor-pane {
+    flex: none !important;
+    height: 70vh;
+    overflow: hidden;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* examples: input/output stack instead of two columns */
+  .pp-example-grid {
+    grid-template-columns: 1fr;
+  }
+  .pp-io-cell + .pp-io-cell {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* submissions table: tighter cells on a narrow screen */
+  .pp-subs-table th,
+  .pp-subs-table td {
+    padding: 8px 8px;
+  }
+  .pp-subs-table {
+    font-size: 12px;
+  }
+
+  .pp-toast-wrap {
+    left: 18px;
+  }
+  .pp-toast {
+    width: auto;
+  }
 }
