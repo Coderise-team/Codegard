@@ -81,10 +81,13 @@ export default function DailyChallenge() {
               ))}
             </div>
 
-            <button className="btn btn-primary btn-block">
+            <Link
+              className="btn btn-primary btn-block"
+              to={`/problems/${data.daily.id}`}
+            >
               <I.bolt size={15} />{' '}
               {data.daily.solved_today ? 'Solved today ✓' : 'Solve today'}
-            </button>
+            </Link>
           </>
         )}
       </div>

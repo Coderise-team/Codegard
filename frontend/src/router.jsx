@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ProblemsPage from './pages/ProblemsPage';
+import ProblemPage from './pages/ProblemPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivateRoute from './components/PrivateRoute';
 import GuestRoute from './components/GuestRoute';
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <Dashboard /> },
       { path: '/problems', element: <ProblemsPage /> },
+      { path: '/problems/:id', element: <ProblemPage /> },
       { path: '/users/:username', element: <ProfilePage /> },
     ],
   },

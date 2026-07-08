@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -37,6 +37,7 @@ const ORDER_FIELD = {
  */
 export default function ProblemsPage() {
   const user = useCurrentUser();
+  const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -126,8 +127,7 @@ export default function ProblemsPage() {
     [tagList]
   );
 
-  // actions — navigation is wired later
-  const openProblem = () => {};
+  const openProblem = (p) => navigate(`/problems/${p.id}`);
   const pickRandom = () => {
     if (items.length)
       openProblem(items[Math.floor(Math.random() * items.length)]);

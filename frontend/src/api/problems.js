@@ -12,6 +12,15 @@ export async function getProblems(params) {
   return data;
 }
 
+// GET problems/{id}/ -> full problem for the workspace: statement texts
+// (description, input_format, output_format, constraints), difficulty,
+// time_limit (ms), memory_limit (MB), tags, acceptance, status and the
+// visible test_cases ([{ id, input, expected_output, note }]).
+export async function getProblem(id) {
+  const { data } = await client.get(`problems/${id}/`);
+  return data;
+}
+
 // GET problems/tags/ -> all catalog tags with their problem counts
 // ([{ name, count }]), for the filter dropdown.
 export async function getTags() {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
 import { useRecommended } from '../../hooks/useRecommended';
@@ -41,7 +42,7 @@ export default function Recommended() {
         {data && data.length > 0 && (
           <div className="rowlist">
             {data.slice(0, MAX_ROWS).map((p) => (
-              <a key={p.id} className="lrow" href="#">
+              <Link key={p.id} className="lrow" to={`/problems/${p.id}`}>
                 <span className="lr-id">#{p.id}</span>
                 <div className="lr-main">
                   <div className="lr-title">{p.title}</div>
@@ -60,7 +61,7 @@ export default function Recommended() {
                   <span className="lr-num">{p.acceptance}%</span>
                   <I.chevRight size={16} className="chev" />
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         )}

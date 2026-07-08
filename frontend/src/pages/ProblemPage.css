@@ -1,0 +1,715 @@
+/* ProblemPage.css — solo problem workspace styles */
+
+/* ── Shell ──────────────────────────────────────────────────── */
+.pp-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Topbar ─────────────────────────────────────────────────── */
+.pp-topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+.pp-tb-left,
+.pp-tb-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pp-tb-div {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+.pp-tb-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User chip — mirrors the .tbar scoping from Dashboard.css, since the
+   shared UserMenu sits inside .pp-topbar here */
+.pp-topbar .user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  transition: 0.13s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp-topbar .user-chip:hover {
+  background: var(--card-2);
+}
+.pp-topbar .user-chip .meta {
+  text-align: right;
+  line-height: 1.3;
+}
+.pp-topbar .user-chip .handle {
+  font-size: 13px;
+  font-weight: 700;
+}
+.pp-topbar .user-chip .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+/* Sidebar — the shared shell Sidebar is an off-canvas drawer here on ALL
+   widths (the workspace has no room for a fixed column). Overrides the
+   Dashboard.css ≤960 icon-only collapse, hence the .pp-app scoping. */
+.pp-app .side {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 232px;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+}
+.pp-app .side.open {
+  transform: translateX(0);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+.pp-app .side .nav-link span,
+.pp-app .side .logo > span:last-child,
+.pp-app .nav-mini .mid {
+  display: block;
+}
+.pp-app .side-scrim.show {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* ── Workspace ──────────────────────────────────────────────── */
+.pp-workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.pp-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pp-problem-pane {
+  background: var(--bg);
+}
+.pp-editor-pane {
+  background: var(--card);
+  border-left: 1px solid var(--border);
+}
+
+/* Draggable splitter */
+.pp-vsplit {
+  flex: 0 0 1px;
+  background: var(--border);
+  position: relative;
+  z-index: 5;
+  cursor: col-resize;
+}
+.pp-vsplit::after {
+  content: '';
+  position: absolute;
+  inset: 0 -4px;
+  cursor: col-resize;
+}
+.pp-vsplit:hover {
+  background: var(--gold-line);
+  box-shadow: 0 0 0 1px var(--gold-line);
+}
+
+/* ── Problem panel tabs ─────────────────────────────────────── */
+.pp-tabbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 0 var(--pad);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.pp-tab {
+  position: relative;
+  padding: 14px 4px;
+  margin-right: 18px;
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.14s;
+}
+.pp-tab:hover {
+  color: var(--fg);
+}
+.pp-tab.is-active {
+  color: var(--fg);
+}
+.pp-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px 2px 0 0;
+}
+.pp-tab-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: var(--card-2);
+  color: var(--fg2);
+}
+
+/* ── Problem content ────────────────────────────────────────── */
+.pp-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--pad);
+}
+
+.pp-prob-head {
+  margin-bottom: 22px;
+}
+.pp-prob-title {
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.pp-prob-id {
+  color: var(--gold);
+  font-weight: 700;
+}
+.pp-prob-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+/* the API sends lowercase difficulty values */
+.pp-prob-meta .chip.diff-easy,
+.pp-prob-meta .chip.diff-medium,
+.pp-prob-meta .chip.diff-hard {
+  text-transform: capitalize;
+}
+
+.pp-stmt {
+  font-size: 14.5px;
+  line-height: 1.72;
+  color: #c9cdda;
+}
+.pp-stmt h3 {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  font-weight: 700;
+  margin: 28px 0 10px;
+}
+.pp-stmt p {
+  margin: 0 0 13px;
+  text-wrap: pretty;
+}
+.pp-stmt ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pp-stmt ul li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.pp-stmt ul li::before {
+  content: '';
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  transform: translateY(-3px);
+}
+
+/* Examples */
+.pp-example {
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--card);
+}
+.pp-example-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  background: var(--card-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.pp-example-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.pp-io-cell {
+  padding: 12px 14px;
+}
+.pp-io-cell + .pp-io-cell {
+  border-left: 1px solid var(--border);
+}
+.pp-io-lbl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-bottom: 8px;
+}
+.pp-io-cell pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pp-example-note {
+  padding: 10px 14px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px;
+  color: var(--fg2);
+  line-height: 1.55;
+}
+.pp-copy-btn {
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  padding: 2px;
+  transition: 0.12s;
+}
+.pp-copy-btn:hover {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+/* Submissions */
+.pp-subs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.pp-subs-table th {
+  text-align: left;
+  padding: 9px 12px;
+  color: var(--fg2);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.pp-subs-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.pp-subs-table tr:hover td {
+  background: var(--card);
+}
+.pp-sid {
+  font-family: var(--mono);
+  color: var(--fg2);
+  font-size: 12px;
+}
+.pp-fg2 {
+  color: var(--fg2);
+  font-size: 12.5px;
+}
+.pp-v-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.pp-vd {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.v-AC {
+  color: var(--ac);
+}
+.v-WA {
+  color: var(--wa);
+}
+.v-TLE,
+.v-MLE,
+.v-OLE {
+  color: var(--tle);
+}
+.v-RE,
+.v-CE {
+  color: var(--wa);
+}
+.v-pending {
+  color: var(--fg2);
+}
+.v-pending .pp-vd {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.pp-empty {
+  text-align: center;
+  color: var(--fg2);
+  padding: 48px 20px;
+  font-size: 13.5px;
+}
+
+/* ── Editor ─────────────────────────────────────────────────── */
+.pp-editor-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px var(--pad);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.pp-et-left,
+.pp-et-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-lang-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.14s;
+}
+.pp-lang-select:hover {
+  border-color: var(--border-2);
+}
+.pp-lang-select select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.pp-lang-select select option {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.pp-lang-ic {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #3776ab, #ffd43b);
+  flex-shrink: 0;
+}
+.pp-tool-link {
+  background: none;
+  border: 0;
+  color: var(--fg2);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.12s;
+}
+.pp-tool-link:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+
+/* Code surface — Monaco host fills the pane between toolbar and action bar.
+   overflow+min-width keep Monaco's inline pixel width from widening the
+   layout: it must always resize to the host, never the other way around. */
+.pp-editor-host {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: #0f121a;
+}
+.pp-editor-loading {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  background: #0f121a;
+  color: var(--fg2);
+  font-size: 13px;
+}
+
+/* ── Action bar ─────────────────────────────────────────────── */
+.pp-actionbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px var(--pad);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+.pp-ab-status {
+  font-size: 12.5px;
+  color: var(--fg2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pp-ab-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Verdict toast ──────────────────────────────────────────── */
+.pp-toast-wrap {
+  position: fixed;
+  top: calc(var(--topbar-h) + 16px);
+  right: 18px;
+  z-index: 60;
+}
+.pp-toast {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  animation: toast-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+}
+.pp-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.pp-toast-big {
+  font-size: 15px;
+  font-weight: 800;
+}
+.pp-toast-sub {
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+.pp-toast.t-AC {
+  border-color: rgba(34, 197, 94, 0.4);
+}
+.pp-toast.t-AC .pp-toast-icon {
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+.pp-toast.t-AC .pp-toast-big {
+  color: var(--ac);
+}
+.pp-toast.t-WA {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.pp-toast.t-WA .pp-toast-icon {
+  background: var(--wa-soft);
+  color: var(--wa);
+}
+.pp-toast.t-WA .pp-toast-big {
+  color: var(--wa);
+}
+.pp-toast.t-RE,
+.pp-toast.t-CE {
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.pp-toast.t-RE .pp-toast-icon,
+.pp-toast.t-CE .pp-toast-icon {
+  background: var(--wa-soft);
+  color: var(--wa);
+}
+.pp-toast.t-RE .pp-toast-big,
+.pp-toast.t-CE .pp-toast-big {
+  color: var(--wa);
+}
+.pp-toast.t-TLE,
+.pp-toast.t-MLE,
+.pp-toast.t-OLE {
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.pp-toast.t-TLE .pp-toast-icon,
+.pp-toast.t-MLE .pp-toast-icon,
+.pp-toast.t-OLE .pp-toast-icon {
+  background: var(--tle-soft);
+  color: var(--tle);
+}
+.pp-toast.t-TLE .pp-toast-big,
+.pp-toast.t-MLE .pp-toast-big,
+.pp-toast.t-OLE .pp-toast-big {
+  color: var(--tle);
+}
+.pp-toast.t-ERR .pp-toast-icon {
+  background: var(--card-2);
+  color: var(--fg2);
+}
+
+/* ---- phone: panes stack vertically, the whole page scrolls ---- */
+@media (max-width: 640px) {
+  /* body is overflow:hidden globally (global.css), so the app itself is
+     the scroll container; nothing may widen the page sideways */
+  .pp-app {
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: clip;
+  }
+  .pp-workspace,
+  .pp-pane {
+    max-width: 100%;
+  }
+  .pp-topbar {
+    position: sticky;
+    top: 0;
+  }
+  /* tighten the topbar: burger + logo mark + title + avatar */
+  .pp-tb-left {
+    flex: 1;
+    min-width: 0;
+    gap: 10px;
+  }
+  .pp-topbar .logo > span:last-child {
+    display: none;
+  }
+  .pp-topbar .user-chip .meta {
+    display: none;
+  }
+
+  /* the workspace grows with its content instead of filling the viewport;
+     the app container above provides the scroll */
+  .pp-workspace {
+    flex-direction: column;
+    flex: none;
+    overflow: visible;
+  }
+  .pp-vsplit {
+    display: none;
+  }
+  .pp-pane {
+    overflow: visible;
+  }
+  /* natural height for the statement; also overrides the splitter's inline
+     flexBasis (which would be a height in column direction) */
+  .pp-problem-pane {
+    flex: none !important;
+  }
+  .pp-pane-body {
+    flex: none;
+    overflow: visible;
+    overflow-x: auto;
+  }
+  /* the JSX sets an inline flex: 1 (basis 0) — pin the editor height */
+  .pp-editor-pane {
+    flex: none !important;
+    height: 70vh;
+    overflow: hidden;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* examples: input/output stack instead of two columns */
+  .pp-example-grid {
+    grid-template-columns: 1fr;
+  }
+  .pp-io-cell + .pp-io-cell {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* submissions table: tighter cells on a narrow screen */
+  .pp-subs-table th,
+  .pp-subs-table td {
+    padding: 8px 8px;
+  }
+  .pp-subs-table {
+    font-size: 12px;
+  }
+
+  .pp-toast-wrap {
+    left: 18px;
+  }
+  .pp-toast {
+    width: auto;
+  }
+}
