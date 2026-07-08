@@ -58,6 +58,28 @@ describe('useProblems', () => {
     expect(result.current.hasMore).toBe(false);
   });
 
+  it('ignores a second loadMore while the first is still in flight', async () => {
+    const nextPage = deferred();
+    getProblems
+      .mockResolvedValueOnce(page([{ id: 1 }], 'url?page=2'))
+      .mockReturnValueOnce(nextPage.promise);
+
+    const { result } = renderHook(() => useProblems(PARAMS));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      result.current.loadMore(); // takes the fetching latch
+      result.current.loadMore(); // blocked, must not fire a request
+    });
+    expect(getProblems).toHaveBeenCalledTimes(2); // page 1 + one page 2
+
+    // Latch releases once the page settles; a later loadMore works again.
+    await act(async () => {
+      nextPage.resolve(page([{ id: 2 }], 'url?page=3'));
+    });
+    expect(result.current.items).toEqual([{ id: 1 }, { id: 2 }]);
+  });
+
   it('does not loadMore when hasMore is false', async () => {
     getProblems.mockResolvedValue(page([{ id: 1 }], null));
 
