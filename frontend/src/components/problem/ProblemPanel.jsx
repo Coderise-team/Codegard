@@ -30,7 +30,7 @@ function StatementTab({ problem }) {
           </span>
           {p.tags.map((t) => (
             <span key={t} className="chip">
-              {t}
+              <span className="v">{t}</span>
             </span>
           ))}
         </div>
