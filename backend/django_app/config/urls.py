@@ -1,3 +1,4 @@
+from apps.realtime.views import WSTicketView
 from apps.submissions.views import LanguagesView
 from django.conf import settings
 from django.contrib import admin
@@ -10,6 +11,7 @@ urlpatterns = [
     path("api/contests/", include("apps.contests.urls")),
     path("api/submissions/", include("apps.submissions.urls")),
     path("api/languages/", LanguagesView.as_view(), name="languages"),
+    path("api/ws-ticket/", WSTicketView.as_view(), name="ws-ticket"),
 ]
 
 # Register the Django Debug Toolbar URLs only when it's actually enabled (dev),

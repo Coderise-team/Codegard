@@ -122,6 +122,17 @@ CELERY_TIMEZONE = TIME_ZONE
 # Redis (shared)
 REDIS_URL = env("REDIS_URL", default=CELERY_BROKER_URL)  # noqa: F405
 
+# Cache — backs the short-lived WebSocket auth tickets (see apps.realtime).
+# MUST be a shared backend (Redis), not the default LocMemCache: a ticket is
+# issued over HTTP and redeemed over WS, potentially in a different worker
+# process, so an in-process cache would silently fail under multiple workers.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+    },
+}
+
 from .storages import *  # noqa: F403,F401,E402,I001
 
 # Channels configuration.
