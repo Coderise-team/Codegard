@@ -38,7 +38,12 @@ function wsVerdict(submissionId, ticket, timeoutMs) {
     );
 
     socket.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
+      let msg;
+      try {
+        msg = JSON.parse(event.data);
+      } catch {
+        return; // ignore a malformed frame; the timeout still guards us
+      }
       // verdict is null until judged — keep waiting on the replayed state
       if (msg.type === 'submission_update' && msg.verdict) {
         finish(resolve, msg.verdict);

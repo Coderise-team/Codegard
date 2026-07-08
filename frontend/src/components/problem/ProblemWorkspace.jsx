@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import Icons from '../Icons';
 import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
@@ -37,15 +37,22 @@ export default function ProblemWorkspace({
   const [code, setCode] = useState(lang.template);
   const [problemW, setProblemW] = useState(44);
 
+  // The active drag's listener cleanup — also runs on unmount, so a drag
+  // interrupted by navigation doesn't leave window listeners behind.
+  const dragCleanup = useRef(null);
+  useEffect(() => () => dragCleanup.current?.(), []);
+
   const onSplitMouseDown = (e) => {
     e.preventDefault();
     const onMove = (ev) => {
       const pct = (ev.clientX / window.innerWidth) * 100;
       setProblemW(Math.max(24, Math.min(66, pct)));
     };
-    const onUp = () => {
+    const onUp = () => dragCleanup.current?.();
+    dragCleanup.current = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      dragCleanup.current = null;
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
