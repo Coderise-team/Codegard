@@ -626,13 +626,13 @@
   color: var(--fg2);
 }
 
-/* ---- phone: panes stack vertically, the page scrolls as a whole ---- */
+/* ---- phone: panes stack vertically, the whole page scrolls ---- */
 @media (max-width: 640px) {
+  /* body is overflow:hidden globally (global.css), so the app itself is
+     the scroll container; nothing may widen the page sideways */
   .pp-app {
-    height: auto;
-    min-height: 100vh;
-    /* vertical page scroll, but nothing may widen the page sideways */
-    overflow: visible;
+    height: 100dvh;
+    overflow-y: auto;
     overflow-x: clip;
   }
   .pp-workspace,
@@ -656,8 +656,11 @@
     display: none;
   }
 
+  /* the workspace grows with its content instead of filling the viewport;
+     the app container above provides the scroll */
   .pp-workspace {
     flex-direction: column;
+    flex: none;
     overflow: visible;
   }
   .pp-vsplit {
@@ -666,9 +669,10 @@
   .pp-pane {
     overflow: visible;
   }
-  /* the splitter sets an inline flexBasis (a height in column direction) */
+  /* natural height for the statement; also overrides the splitter's inline
+     flexBasis (which would be a height in column direction) */
   .pp-problem-pane {
-    flex-basis: auto !important;
+    flex: none !important;
   }
   .pp-pane-body {
     flex: none;
