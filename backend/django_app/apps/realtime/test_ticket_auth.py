@@ -136,6 +136,17 @@ async def test_garbage_ticket_is_rejected(submission):
     assert code == 4001
 
 
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_ticket_for_missing_user_is_rejected(submission):
+    # Ticket is valid in the cache but points at a user that no longer exists
+    # (e.g. deleted between minting and connecting) -> AnonymousUser -> 4001.
+    ticket = await _issue(999_999_999)
+    connected, code = await _connect(submission.pk, ticket).connect()
+    assert not connected
+    assert code == 4001
+
+
 # --- helpers (cache ops must be called off the async loop) -----------------
 
 
