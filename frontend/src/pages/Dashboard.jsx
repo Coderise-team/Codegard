@@ -46,18 +46,18 @@ export default function Dashboard() {
                 <ContestHero />
               </div>
 
-              <StatsStrip />
+              <StatsStrip username={user?.username} />
 
               <div className="cols">
                 <div className="col-main">
                   <Recommended />
-                  <RecentSubmissions />
-                  <ActivityHeatmap />
+                  <RecentSubmissions username={user?.username} />
+                  <ActivityHeatmap username={user?.username} />
                 </div>
                 <div className="col-rail">
                   <DailyChallenge />
                   <UpcomingContests />
-                  <PastContests />
+                  <PastContests username={user?.username} />
                 </div>
               </div>
             </div>

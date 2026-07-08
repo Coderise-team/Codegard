@@ -47,3 +47,11 @@ export async function getDifficultyBreakdown(username) {
   const { data } = await client.get(`users/${username}/difficulty/`);
   return data;
 }
+
+// GET users/{username}/submissions/ -> latest submissions (no source code),
+// newest first, capped. [{ id, problem, problem_title, verdict,
+// verdict_display, language_display, execution_time_ms, created_at }]
+export async function getUserSubmissions(username) {
+  const { data } = await client.get(`users/${username}/submissions/`);
+  return data;
+}

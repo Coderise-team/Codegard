@@ -1,6 +1,6 @@
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
-import { useRecentSubmissions } from '../../hooks/useRecentSubmissions';
+import { useUserSubmissions } from '../../hooks/useUserSubmissions';
 import { timeAgo } from '../../utils/time';
 
 // Newest submissions shown on the dashboard card.
@@ -9,12 +9,12 @@ const MAX_ROWS = 6;
 const formatRuntime = (ms) => (ms == null ? '—' : `${ms} ms`);
 
 /**
- * RecentSubmissions — table of the authenticated user's latest submissions
- * (across all problems), newest first.
+ * RecentSubmissions — table of the given user's latest submissions (across all
+ * problems), newest first. The caller owns "whose data".
  */
-export default function RecentSubmissions() {
+export default function RecentSubmissions({ username }) {
   const I = Icons;
-  const { data, loading, error } = useRecentSubmissions();
+  const { data, loading, error } = useUserSubmissions(username);
 
   if (data && data.length === 0) {
     return (
@@ -43,6 +43,7 @@ export default function RecentSubmissions() {
           <table className="subtab">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Problem</th>
                 <th>Verdict</th>
                 <th>Lang</th>
@@ -53,10 +54,8 @@ export default function RecentSubmissions() {
             <tbody>
               {data.slice(0, MAX_ROWS).map((s) => (
                 <tr key={s.id}>
-                  <td>
-                    <span className="st-id">#{s.id}</span> &nbsp;
-                    <span className="st-title">{s.problem_title}</span>
-                  </td>
+                  <td className="st-id">#{s.id}</td>
+                  <td className="st-title">{s.problem_title}</td>
                   <td>
                     {s.verdict ? (
                       <span className={`vd v-${s.verdict}`}>{s.verdict}</span>
