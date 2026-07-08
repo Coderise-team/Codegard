@@ -14,6 +14,14 @@ _redis_url = f"redis://:{env('REDIS_PASSWORD')}@redis:6379/0"
 CELERY_BROKER_URL = _redis_url
 CELERY_RESULT_BACKEND = _redis_url
 REDIS_URL = _redis_url
+# base.py built CACHES from the password-less REDIS_URL; rebuild it here so the
+# ticket cache uses the authenticated prod Redis URL.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": _redis_url,
+    },
+}
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",

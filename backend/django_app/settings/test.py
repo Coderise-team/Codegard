@@ -13,3 +13,11 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
+
+# Tests run in a single process, so an in-memory cache is enough for the
+# WebSocket ticket flow (keeps CI free of a Redis dependency).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
