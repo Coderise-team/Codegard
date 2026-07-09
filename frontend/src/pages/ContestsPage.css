@@ -93,6 +93,160 @@
 }
 
 /* ============================================================
+   UPCOMING — full-width row cards (one per row, like the catalog rows)
+   ============================================================ */
+.ct-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.ct-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px var(--pad);
+  transition: 0.14s;
+}
+.ct-row:hover {
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+}
+.ct-row.is-soon {
+  border-color: var(--gold-line);
+  background: radial-gradient(
+      130% 130% at 100% 0%,
+      var(--gold-soft),
+      transparent 60%
+    ),
+    var(--card);
+}
+
+/* calendar chip */
+.cr-cal {
+  width: 50px;
+  height: 50px;
+  border-radius: 11px;
+  flex: 0 0 auto;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.ct-row.is-soon .cr-cal {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+}
+.cr-cal .d {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.ct-row.is-soon .cr-cal .d {
+  color: var(--gold-hi);
+}
+.cr-cal .mo {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-top: 3px;
+}
+
+/* name + meta */
+.cr-main {
+  min-width: 0;
+  flex: 1;
+}
+.cr-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 7px;
+}
+.cr-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.cr-meta span svg {
+  color: var(--fg3);
+  flex: 0 0 auto;
+}
+
+/* starts-in countdown */
+.cr-count {
+  flex: 0 0 auto;
+  text-align: right;
+  line-height: 1.3;
+}
+.cr-count .k {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+.cr-count .v {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* actions */
+.cr-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cr-actions .reg-pill {
+  cursor: pointer;
+}
+.cr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+  transition: 0.12s;
+  white-space: nowrap;
+}
+.cr-link:hover {
+  color: var(--gold-hi);
+}
+.cr-link svg {
+  transition: 0.12s;
+}
+.cr-link:hover svg {
+  transform: translateX(2px);
+}
+
+/* ============================================================
    PAST — list rows
    ============================================================ */
 .ct-past {
