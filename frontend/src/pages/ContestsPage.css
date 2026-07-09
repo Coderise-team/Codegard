@@ -193,10 +193,10 @@
   flex: 0 0 auto;
 }
 
-/* starts-in countdown */
+/* starts-in countdown (centered in the row) */
 .cr-count {
   flex: 0 0 auto;
-  text-align: right;
+  text-align: center;
   line-height: 1.3;
 }
 .cr-count .k {
@@ -215,11 +215,12 @@
   letter-spacing: 0.01em;
 }
 
-/* actions */
+/* actions (pinned right so the countdown sits centered between name and actions) */
 .cr-actions {
-  flex: 0 0 auto;
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
 }
 .cr-actions .reg-pill {
