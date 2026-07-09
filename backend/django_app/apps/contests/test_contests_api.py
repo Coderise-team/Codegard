@@ -119,6 +119,18 @@ class TestContestList:
         results = response.data.get("results", response.data)
         assert any(c["status"] == "active" for c in results)
 
+    def test_ordering_by_start_time(self, db, api_client):
+        make_contest(db, title="Early", status_offset_hours=1)
+        make_contest(db, title="Late", status_offset_hours=5)
+        url = reverse("contests-list")
+
+        default_titles = [c["title"] for c in api_client.get(url).data["results"]]
+        assert default_titles.index("Late") < default_titles.index("Early")
+
+        asc = api_client.get(url, {"ordering": "start_time"}).data["results"]
+        asc_titles = [c["title"] for c in asc]
+        assert asc_titles.index("Early") < asc_titles.index("Late")
+
 
 # ---------------------------------------------------------------------------
 # Create tests
