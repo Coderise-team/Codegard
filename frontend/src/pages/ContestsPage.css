@@ -113,7 +113,14 @@
 }
 .ct-row:hover {
   border-color: var(--border-2);
+  background: var(--card-2);
   transform: translateY(-2px);
+}
+.ct-row:active {
+  transform: translateY(0) scale(0.997);
+}
+.ct-row:hover .cr-name {
+  color: var(--gold-hi);
 }
 .ct-row.is-soon {
   border-color: var(--gold-line);
@@ -174,6 +181,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.12s;
 }
 .cr-meta {
   display: flex;
