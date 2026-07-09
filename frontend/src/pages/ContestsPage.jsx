@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import { useCurrentUser } from '../hooks/useCurrentUser';
-import './Dashboard.css';
+import './ContestsPage.css';
 
 /**
  * ContestsPage — the contests hub (compact density, violet accent).
