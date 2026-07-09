@@ -34,11 +34,14 @@ export default function ContestsPage() {
   const { items, total, hasMore, loading, loadMore } = useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
-  // Re-render every second so the upcoming countdowns stay live.
-  const [, setTick] = useState(0);
+  // A ticking clock kept in state and passed down to the rows. The React
+  // Compiler memoises rows by their props, so a row reading Date.now() itself
+  // would be cached forever — the countdown has to depend on a prop that
+  // actually changes each second.
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (tab !== 'upcoming') return undefined;
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [tab]);
 
@@ -104,6 +107,7 @@ export default function ContestsPage() {
                       <ContestRow
                         key={c.id}
                         c={c}
+                        now={now}
                         registered={isRegistered(c)}
                         onToggle={toggleReg}
                         soon={i === 0}

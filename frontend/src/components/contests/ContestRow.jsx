@@ -1,5 +1,5 @@
 import Icons from '../Icons';
-import { secondsUntil, fmtCountdown, formatDuration } from '../../utils/time';
+import { fmtCountdown, formatDuration } from '../../utils/time';
 
 const I = Icons;
 
@@ -7,19 +7,19 @@ const I = Icons;
  * ContestRow — one full-width row-card in the upcoming-contests list.
  *
  * Keeps the mock card's elements (calendar chip, "starts in" timer, register
- * pill, details link) but lays them out as a single horizontal row. The
- * countdown reads the live clock on each render; the parent re-renders every
- * second to keep it ticking.
+ * pill, details link) but lays them out as a single horizontal row.
  *
  * Props:
  *   c          — pending contest { id, title, start_time, end_time,
  *                problems_count, participants_count }
+ *   now        — current time in ms, ticked by the parent (drives the countdown)
  *   registered — effective joined state (parent may override optimistically)
  *   onToggle   — register / unregister toggle
  *   soon       — highlight as the nearest contest
  */
-export default function ContestRow({ c, registered, onToggle, soon }) {
+export default function ContestRow({ c, now, registered, onToggle, soon }) {
   const start = new Date(c.start_time);
+  const startsIn = Math.max(0, Math.round((start.getTime() - now) / 1000));
   return (
     <article className={`ct-row${soon ? ' is-soon' : ''}`}>
       <div className="cr-cal">
@@ -46,7 +46,7 @@ export default function ContestRow({ c, registered, onToggle, soon }) {
 
       <div className="cr-count">
         <span className="k">Starts in</span>
-        <span className="v">{fmtCountdown(secondsUntil(c.start_time))}</span>
+        <span className="v">{fmtCountdown(startsIn)}</span>
       </div>
 
       <div className="cr-actions">
