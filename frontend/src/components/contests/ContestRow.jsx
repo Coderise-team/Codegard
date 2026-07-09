@@ -7,7 +7,7 @@ const I = Icons;
  * ContestRow — one full-width row-card in the upcoming-contests list.
  *
  * Keeps the mock card's elements (calendar chip, "starts in" timer, register
- * pill, details link) but lays them out as a single horizontal row.
+ * pill) but lays them out as a single horizontal row.
  *
  * The whole card is clickable (opens the contest); the register button stops
  * propagation so it only toggles registration.
