@@ -141,12 +141,10 @@ export default function ContestsPage() {
                   )}
                 </>
               ) : loading ? null : (
-                <div className="ct-past">
-                  <div className="ct-empty">
-                    <div className="et">No upcoming contests</div>
-                    <div className="es">
-                      New rounds will show up here once scheduled.
-                    </div>
+                <div className="ct-empty">
+                  <div className="et">No upcoming contests</div>
+                  <div className="es">
+                    New rounds will show up here once scheduled.
                   </div>
                 </div>
               ))}
@@ -154,9 +152,9 @@ export default function ContestsPage() {
             {tab === 'past' &&
               (items.length ? (
                 <>
-                  <div className="ct-past">
+                  <div className="ct-list">
                     {items.map((c) => (
-                      <PastRow key={c.id} c={c} />
+                      <PastRow key={c.id} c={c} onOpen={openContest} />
                     ))}
                   </div>
                   {hasMore && (
@@ -168,11 +166,9 @@ export default function ContestsPage() {
                   )}
                 </>
               ) : loading ? null : (
-                <div className="ct-past">
-                  <div className="ct-empty">
-                    <div className="et">No past contests yet</div>
-                    <div className="es">Finished rounds will show up here.</div>
-                  </div>
+                <div className="ct-empty">
+                  <div className="et">No past contests yet</div>
+                  <div className="es">Finished rounds will show up here.</div>
                 </div>
               ))}
           </div>

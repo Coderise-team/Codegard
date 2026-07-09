@@ -236,77 +236,8 @@
   cursor: pointer;
 }
 
-/* ============================================================
-   PAST — list rows
-   ============================================================ */
-.ct-past {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-.ct-prow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px var(--pad);
-  border-bottom: 1px solid var(--border);
-  text-decoration: none;
-  color: inherit;
-  transition: 0.12s;
-}
-.ct-prow:last-child {
-  border-bottom: 0;
-}
-.ct-prow:hover {
-  background: var(--card-2);
-}
-.pr-date {
-  width: 64px;
-  flex: 0 0 auto;
-  line-height: 1.2;
-}
-.pr-date .d {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-}
-.pr-date .y {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--fg3);
-  font-variant-numeric: tabular-nums;
-}
-.pr-main {
-  min-width: 0;
-  flex: 1;
-}
-.pr-name {
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pr-sub {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-.pr-dim {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-}
-.pr-dim svg {
-  color: var(--fg3);
-}
-.pr-results {
+/* PAST — "Results" affordance on the right of the shared row card */
+.cr-results {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -317,13 +248,13 @@
   transition: 0.12s;
   white-space: nowrap;
 }
-.ct-prow:hover .pr-results {
+.ct-row:hover .cr-results {
   color: var(--gold-hi);
 }
-.ct-prow:hover .pr-results svg {
+.ct-row:hover .cr-results svg {
   transform: translateX(2px);
 }
-.pr-results svg {
+.cr-results svg {
   transition: 0.12s;
 }
 
@@ -362,6 +293,9 @@
 
 /* empty */
 .ct-empty {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
   padding: 44px var(--pad);
   text-align: center;
   color: var(--fg2);

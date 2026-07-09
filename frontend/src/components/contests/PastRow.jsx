@@ -1,33 +1,44 @@
 import Icons from '../Icons';
-import { formatDate } from '../../utils/time';
 
 const I = Icons;
 
 /**
- * PastRow — one row in the past-contests results list.
+ * PastRow — one full-width row-card in the past-contests list. Reuses the same
+ * card shell, styles and hover as the upcoming ContestRow; the whole card is
+ * clickable. Keeps the past-specific elements: date + year, participants,
+ * problem count and the "Results" affordance.
  *
  * Props:
- *   c — finished contest { id, title, end_time, participants_count, problems_count }
+ *   c      — finished contest { id, title, end_time, participants_count, problems_count }
+ *   onOpen — open the contest results
  */
-export default function PastRow({ c }) {
+export default function PastRow({ c, onOpen }) {
+  const end = new Date(c.end_time);
   return (
-    <a className="ct-prow" href="#">
-      <div className="pr-date">
-        <span className="d">{formatDate(c.end_time)}</span>
-        <span className="y">{new Date(c.end_time).getFullYear()}</span>
+    <article className="ct-row" onClick={() => onOpen(c)}>
+      <div className="cr-cal">
+        <span className="d">{end.getDate()}</span>
+        <span className="mo">
+          {end.toLocaleString('en', { month: 'short' })}
+        </span>
       </div>
-      <div className="pr-main">
-        <div className="pr-name">{c.title}</div>
-        <div className="pr-sub">
-          <span className="pr-dim">
-            <I.users size={13} /> {c.participants_count.toLocaleString()}
+
+      <div className="cr-main">
+        <div className="cr-name">{c.title}</div>
+        <div className="cr-meta">
+          <span>{end.getFullYear()}</span>
+          <span>
+            <I.users size={14} /> {c.participants_count.toLocaleString()}
           </span>
-          <span className="pr-dim">{c.problems_count} problems</span>
+          <span>
+            <I.grid size={13} /> {c.problems_count} problems
+          </span>
         </div>
       </div>
-      <span className="pr-results">
+
+      <span className="cr-results">
         Results <I.chevRight size={15} />
       </span>
-    </a>
+    </article>
   );
 }
