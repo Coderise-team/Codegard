@@ -309,3 +309,32 @@
   font-size: 12.5px;
   margin-top: 6px;
 }
+
+/* ============================================================
+   Responsive — phones (≤640): the row card wraps its right cluster
+   (timer / register / results) onto a second line.
+   ============================================================ */
+@media (max-width: 640px) {
+  .ct-hub {
+    padding: 16px 14px 40px;
+  }
+  .ct-bar {
+    margin: 18px 0 14px;
+  }
+
+  .ct-row {
+    flex-wrap: wrap;
+    gap: 12px 14px;
+  }
+  /* calendar chip + name/meta fill the first line; the rest wraps below */
+  .cr-main {
+    flex-basis: calc(100% - 64px);
+  }
+  .cr-count {
+    text-align: left;
+  }
+  .cr-actions {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+  }
+}
