@@ -2,17 +2,20 @@ import { useEffect, useState } from 'react';
 import Icons from '../Icons';
 import { useContestHero } from '../../hooks/useContestHero';
 import { joinContest, leaveContest } from '../../api/contests';
-import { secondsUntil, formatDuration, fmtCountdown } from '../../utils/time';
+import { formatDuration, fmtCountdown } from '../../utils/time';
 
-// Forces a re-render every second so countdowns derived from a timestamp stay
-// live. Off when there's no contest to count down to.
-function useTick(active) {
-  const [, setTick] = useState(0);
+// Ticks the current time (ms) every second so countdowns stay live. The value
+// is passed down as a prop — the React Compiler memoises the hero subcomponents
+// by their props, so reading Date.now() inside them would be cached and freeze.
+// Off when there's no contest to count down to.
+function useNow(active) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return undefined;
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [active]);
+  return now;
 }
 
 // Contest problems are labelled by position: A, B, C, …
@@ -25,7 +28,7 @@ const STATUS_COLOR = { solved: 'var(--ac)', attempted: 'var(--tle)' };
 // can lift the hook (e.g. to know which contest is featured) and still render
 // the same hero without fetching twice.
 export function ContestHeroView({ state, data, loading, error, reload }) {
-  useTick(state === 'live' || state === 'soon');
+  const now = useNow(state === 'live' || state === 'soon');
 
   if (loading) {
     return (
@@ -44,9 +47,9 @@ export function ContestHeroView({ state, data, loading, error, reload }) {
   if (state === 'none') return <NoContest />;
 
   return state === 'live' ? (
-    <LiveHero contest={data.contest} standing={data.standing} />
+    <LiveHero contest={data.contest} standing={data.standing} now={now} />
   ) : (
-    <SoonHero contest={data.contest} onChanged={reload} />
+    <SoonHero contest={data.contest} onChanged={reload} now={now} />
   );
 }
 
@@ -55,9 +58,12 @@ export default function ContestHero() {
   return <ContestHeroView {...hero} />;
 }
 
-function LiveHero({ contest, standing }) {
+function LiveHero({ contest, standing, now }) {
   const I = Icons;
-  const remaining = secondsUntil(contest.end_time);
+  const remaining = Math.max(
+    0,
+    Math.round((new Date(contest.end_time).getTime() - now) / 1000)
+  );
   const urgent = remaining < 5 * 60;
 
   const statusById = Object.fromEntries(
@@ -155,9 +161,12 @@ function LiveHero({ contest, standing }) {
   );
 }
 
-function SoonHero({ contest, onChanged }) {
+function SoonHero({ contest, onChanged, now }) {
   const I = Icons;
-  const startsIn = secondsUntil(contest.start_time);
+  const startsIn = Math.max(
+    0,
+    Math.round((new Date(contest.start_time).getTime() - now) / 1000)
+  );
 
   const register = async () => {
     try {
