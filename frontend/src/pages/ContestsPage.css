@@ -124,11 +124,8 @@
 }
 .ct-row.is-soon {
   border-color: var(--gold-line);
-  background: radial-gradient(
-      130% 130% at 100% 0%,
-      var(--gold-soft),
-      transparent 60%
-    ),
+  background:
+    radial-gradient(130% 130% at 100% 0%, var(--gold-soft), transparent 60%),
     var(--card);
 }
 

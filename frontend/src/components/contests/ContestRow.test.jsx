@@ -42,7 +42,9 @@ describe('ContestRow', () => {
   it('shows the "starts in" countdown derived from the now prop', () => {
     const { container } = renderRow();
     // 2h ahead of `now`
-    expect(container.querySelector('.cr-count .v').textContent).toBe('02:00:00');
+    expect(container.querySelector('.cr-count .v').textContent).toBe(
+      '02:00:00'
+    );
   });
 
   it('highlights the nearest contest with the is-soon class', () => {
