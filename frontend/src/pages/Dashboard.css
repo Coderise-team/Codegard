@@ -667,6 +667,12 @@
   display: flex;
   gap: 9px;
 }
+/* The registered pill sits next to a .btn here — match the button height. */
+.hero-cta .reg-pill {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 13.5px;
+}
 
 /* soon/none preview strip */
 .hero-preview {
