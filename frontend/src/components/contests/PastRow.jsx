@@ -15,7 +15,7 @@ const I = Icons;
 export default function PastRow({ c, onOpen }) {
   const end = new Date(c.end_time);
   return (
-    <article className="ct-row" onClick={() => onOpen(c)}>
+    <article className="ct-row is-past" onClick={() => onOpen(c)}>
       <div className="cr-cal">
         <span className="d">{end.getDate()}</span>
         <span className="mo">

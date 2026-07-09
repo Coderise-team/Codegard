@@ -326,15 +326,14 @@
     flex-wrap: wrap;
     gap: 12px 14px;
   }
-  /* calendar chip + name/meta fill the first line; the rest wraps below */
-  .cr-main {
+  /* Upcoming: name/meta fill the first line, so the timer + register wrap to a
+     second line — timer pinned left, register right (cr-actions keeps flex: 1). */
+  .ct-row:not(.is-past) .cr-main {
     flex-basis: calc(100% - 64px);
   }
   .cr-count {
     text-align: left;
   }
-  .cr-actions {
-    flex: 0 0 auto;
-    justify-content: flex-start;
-  }
+  /* Past has no timer/register — Results stays on the first line, pushed right
+     by cr-main (flex: 1), so the row reads name (left) · Results (right). */
 }
