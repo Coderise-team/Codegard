@@ -14,6 +14,7 @@ import './ContestsPage.css';
 export default function ContestsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
+  const [tab, setTab] = useState('upcoming'); // upcoming | past
 
   return (
     <div className="dash" data-density="compact">
@@ -36,6 +37,23 @@ export default function ContestsPage() {
             </div>
 
             <ContestHero />
+
+            <div className="ct-bar">
+              <div className="ct-tabs">
+                <button
+                  className={`ct-tab${tab === 'upcoming' ? ' is-active' : ''}`}
+                  onClick={() => setTab('upcoming')}
+                >
+                  Upcoming
+                </button>
+                <button
+                  className={`ct-tab${tab === 'past' ? ' is-active' : ''}`}
+                  onClick={() => setTab('past')}
+                >
+                  Past
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
