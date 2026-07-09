@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
+import ContestHero from '../components/dashboard/ContestHero';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import './ContestsPage.css';
 
@@ -33,6 +34,8 @@ export default function ContestsPage() {
                 Compete in rated rounds · climb the rating
               </span>
             </div>
+
+            <ContestHero />
           </div>
         </div>
       </div>
