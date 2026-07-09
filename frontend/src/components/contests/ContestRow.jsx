@@ -9,19 +9,33 @@ const I = Icons;
  * Keeps the mock card's elements (calendar chip, "starts in" timer, register
  * pill, details link) but lays them out as a single horizontal row.
  *
+ * The whole card is clickable (opens the contest); the register button stops
+ * propagation so it only toggles registration.
+ *
  * Props:
  *   c          — pending contest { id, title, start_time, end_time,
  *                problems_count, participants_count }
  *   now        — current time in ms, ticked by the parent (drives the countdown)
  *   registered — effective joined state (parent may override optimistically)
  *   onToggle   — register / unregister toggle
+ *   onOpen     — open the contest
  *   soon       — highlight as the nearest contest
  */
-export default function ContestRow({ c, now, registered, onToggle, soon }) {
+export default function ContestRow({
+  c,
+  now,
+  registered,
+  onToggle,
+  onOpen,
+  soon,
+}) {
   const start = new Date(c.start_time);
   const startsIn = Math.max(0, Math.round((start.getTime() - now) / 1000));
   return (
-    <article className={`ct-row${soon ? ' is-soon' : ''}`}>
+    <article
+      className={`ct-row${soon ? ' is-soon' : ''}`}
+      onClick={() => onOpen(c)}
+    >
       <div className="cr-cal">
         <span className="d">{start.getDate()}</span>
         <span className="mo">
@@ -51,17 +65,26 @@ export default function ContestRow({ c, now, registered, onToggle, soon }) {
 
       <div className="cr-actions">
         {registered ? (
-          <button className="reg-pill done" onClick={() => onToggle(c)}>
+          <button
+            className="reg-pill done"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(c);
+            }}
+          >
             <I.checkBold size={13} /> Registered
           </button>
         ) : (
-          <button className="reg-pill go" onClick={() => onToggle(c)}>
+          <button
+            className="reg-pill go"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(c);
+            }}
+          >
             <I.flag size={13} /> Register
           </button>
         )}
-        <a className="cr-link" href="#">
-          Details <I.chevRight size={14} />
-        </a>
       </div>
     </article>
   );

@@ -108,6 +108,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 16px var(--pad);
+  cursor: pointer;
   transition: 0.14s;
 }
 .ct-row:hover {
@@ -225,26 +226,6 @@
 }
 .cr-actions .reg-pill {
   cursor: pointer;
-}
-.cr-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  text-decoration: none;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--fg2);
-  transition: 0.12s;
-  white-space: nowrap;
-}
-.cr-link:hover {
-  color: var(--gold-hi);
-}
-.cr-link svg {
-  transition: 0.12s;
-}
-.cr-link:hover svg {
-  transform: translateX(2px);
 }
 
 /* ============================================================

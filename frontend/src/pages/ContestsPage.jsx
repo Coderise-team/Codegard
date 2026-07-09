@@ -45,6 +45,10 @@ export default function ContestsPage() {
     return () => clearInterval(id);
   }, [tab]);
 
+  // The contest page doesn't exist yet; the card is clickable so the affordance
+  // is in place — wire the navigation once that route lands.
+  const openContest = () => {};
+
   // Optimistic registration: flip locally, call the API, revert on failure.
   const [regOverride, setRegOverride] = useState({}); // contest id -> joined
   const isRegistered = (c) => regOverride[c.id] ?? c.is_joined;
@@ -110,6 +114,7 @@ export default function ContestsPage() {
                         now={now}
                         registered={isRegistered(c)}
                         onToggle={toggleReg}
+                        onOpen={openContest}
                         soon={i === 0}
                       />
                     ))}
