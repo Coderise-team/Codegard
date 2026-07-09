@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import ContestHero from '../components/dashboard/ContestHero';
+import ContestRow from '../components/contests/ContestRow';
 import PastRow from '../components/contests/PastRow';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContests } from '../hooks/useContests';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { joinContest, leaveContest } from '../api/contests';
 import './ContestsPage.css';
 
 /**
@@ -20,14 +22,38 @@ export default function ContestsPage() {
   const [tab, setTab] = useState('upcoming'); // upcoming | past
 
   // Each tab is a status slice of the same endpoint. Past keeps the server's
-  // default -start_time order (freshest first); Upcoming's ascending order is
-  // wired in a later step.
+  // default -start_time order (freshest first); Upcoming asks for ascending
+  // start_time (nearest first).
   const params = useMemo(
-    () => ({ status: tab === 'past' ? 'finished' : 'pending' }),
+    () =>
+      tab === 'past'
+        ? { status: 'finished' }
+        : { status: 'pending', ordering: 'start_time' },
     [tab]
   );
   const { items, total, hasMore, loading, loadMore } = useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
+
+  // Re-render every second so the upcoming countdowns stay live.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (tab !== 'upcoming') return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [tab]);
+
+  // Optimistic registration: flip locally, call the API, revert on failure.
+  const [regOverride, setRegOverride] = useState({}); // contest id -> joined
+  const isRegistered = (c) => regOverride[c.id] ?? c.is_joined;
+  const toggleReg = async (c) => {
+    const joined = isRegistered(c);
+    setRegOverride((m) => ({ ...m, [c.id]: !joined }));
+    try {
+      await (joined ? leaveContest(c.id) : joinContest(c.id));
+    } catch {
+      setRegOverride((m) => ({ ...m, [c.id]: joined }));
+    }
+  };
 
   return (
     <div className="dash" data-density="compact">
@@ -69,6 +95,39 @@ export default function ContestsPage() {
                 </button>
               </div>
             </div>
+
+            {tab === 'upcoming' &&
+              (items.length ? (
+                <>
+                  <div className="ct-list">
+                    {items.map((c, i) => (
+                      <ContestRow
+                        key={c.id}
+                        c={c}
+                        registered={isRegistered(c)}
+                        onToggle={toggleReg}
+                        soon={i === 0}
+                      />
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <div
+                      ref={sentinelRef}
+                      className="ct-sentinel"
+                      aria-hidden="true"
+                    />
+                  )}
+                </>
+              ) : loading ? null : (
+                <div className="ct-past">
+                  <div className="ct-empty">
+                    <div className="et">No upcoming contests</div>
+                    <div className="es">
+                      New rounds will show up here once scheduled.
+                    </div>
+                  </div>
+                </div>
+              ))}
 
             {tab === 'past' &&
               (items.length ? (
