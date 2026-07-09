@@ -6,6 +6,13 @@ export async function getContests(params = {}) {
   return data.results;
 }
 
+// GET contests/?status=...&page=... -> the full paginated payload
+// { results, count, next } (for the hub's infinite scroll).
+export async function getContestsPage(params = {}) {
+  const { data } = await client.get('contests/', { params });
+  return data;
+}
+
 // GET contests/{id}/ -> contest detail incl. its problems.
 export async function getContest(id) {
   const { data } = await client.get(`contests/${id}/`);

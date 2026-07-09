@@ -1,0 +1,336 @@
+/* ============================================================
+   Codegard — ContestsPage (hub) styles
+   Reuses tokens (styles/variables.css) + primitives (styles/global.css)
+   and the app shell / topbar / ContestHero / .reg-pill from Dashboard.css.
+   Upcoming is a full-width row list (see ContestRow) — not a card grid.
+   ============================================================ */
+@import './Dashboard.css';
+
+/* hub canvas width */
+.ct-hub {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px 22px 64px;
+}
+
+.ct-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+.ct-head h1 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.ct-head .sub {
+  color: var(--fg2);
+  font-size: 13.5px;
+}
+
+/* hero spacing (ContestHero reused as-is) */
+.ct-hub .hero {
+  margin-bottom: var(--gap);
+}
+
+/* ============================================================
+   SECTION: tabs + body
+   ============================================================ */
+.ct-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 26px 0 16px;
+}
+.ct-tabs {
+  display: flex;
+  gap: 4px;
+}
+.ct-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 15px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: 0.13s;
+}
+.ct-tab:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+.ct-tab.is-active {
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+}
+.ct-tab .cnt {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg2);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 7px;
+}
+.ct-tab.is-active .cnt {
+  color: var(--gold-hi);
+  background: transparent;
+  border-color: var(--gold-line);
+}
+
+/* ============================================================
+   UPCOMING — full-width row cards (one per row, like the catalog rows)
+   ============================================================ */
+.ct-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.ct-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px var(--pad);
+  cursor: pointer;
+  transition: 0.14s;
+}
+.ct-row:hover {
+  border-color: var(--border-2);
+  background: var(--card-2);
+  transform: translateY(-2px);
+}
+.ct-row:active {
+  transform: translateY(0) scale(0.997);
+}
+.ct-row:hover .cr-name {
+  color: var(--gold-hi);
+}
+.ct-row.is-soon {
+  border-color: var(--gold-line);
+  background:
+    radial-gradient(130% 130% at 100% 0%, var(--gold-soft), transparent 60%),
+    var(--card);
+}
+
+/* calendar chip */
+.cr-cal {
+  width: 50px;
+  height: 50px;
+  border-radius: 11px;
+  flex: 0 0 auto;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.ct-row.is-soon .cr-cal {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+}
+.cr-cal .d {
+  font-family: var(--mono);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.ct-row.is-soon .cr-cal .d {
+  color: var(--gold-hi);
+}
+.cr-cal .mo {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-top: 3px;
+}
+
+/* name + meta */
+.cr-main {
+  min-width: 0;
+  flex: 1;
+}
+.cr-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.12s;
+}
+.cr-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 7px;
+}
+.cr-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.cr-meta span svg {
+  color: var(--fg3);
+  flex: 0 0 auto;
+}
+
+/* starts-in countdown (centered in the row) */
+.cr-count {
+  flex: 0 0 auto;
+  text-align: center;
+  line-height: 1.3;
+}
+.cr-count .k {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+.cr-count .v {
+  font-family: var(--mono);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* actions (pinned right so the countdown sits centered between name and actions) */
+.cr-actions {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.cr-actions .reg-pill {
+  cursor: pointer;
+}
+
+/* PAST — "Results" affordance on the right of the shared row card */
+.cr-results {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg2);
+  transition: 0.12s;
+  white-space: nowrap;
+}
+.ct-row:hover .cr-results {
+  color: var(--gold-hi);
+}
+.ct-row:hover .cr-results svg {
+  transform: translateX(2px);
+}
+.cr-results svg {
+  transition: 0.12s;
+}
+
+/* infinite-scroll sentinel / loader */
+.ct-sentinel {
+  height: 1px;
+}
+.ct-loadmore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px;
+  color: var(--fg2);
+  font-size: 12.5px;
+}
+.ct-loadmore .spin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--gold);
+  animation: ctspin 0.7s linear infinite;
+}
+.ct-end {
+  text-align: center;
+  padding: 22px;
+  color: var(--fg3);
+  font-size: 12px;
+}
+@keyframes ctspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* empty */
+.ct-empty {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 44px var(--pad);
+  text-align: center;
+  color: var(--fg2);
+}
+.ct-empty .et {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.ct-empty .es {
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+
+/* ============================================================
+   Responsive — phones (≤640): the row card wraps its right cluster
+   (timer / register / results) onto a second line.
+   ============================================================ */
+@media (max-width: 640px) {
+  .ct-hub {
+    padding: 16px 14px 40px;
+  }
+  .ct-bar {
+    margin: 18px 0 14px;
+  }
+
+  .ct-row {
+    flex-wrap: wrap;
+    gap: 12px 14px;
+  }
+  /* Upcoming: name/meta fill the first line, so the timer + register wrap to a
+     second line — timer pinned left, register right (cr-actions keeps flex: 1). */
+  .ct-row:not(.is-past) .cr-main {
+    flex-basis: calc(100% - 64px);
+  }
+  .cr-count {
+    text-align: left;
+  }
+  /* Past has no timer/register — Results stays on the first line, pushed right
+     by cr-main (flex: 1), so the row reads name (left) · Results (right). */
+}
