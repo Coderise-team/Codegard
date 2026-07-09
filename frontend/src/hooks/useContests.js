@@ -17,6 +17,19 @@ export function useContests(params) {
   const genRef = useRef(0); // bumped on every params change; guards stale responses
   const fetchingRef = useRef(false);
 
+  // Reset to a loading state the instant `params` change (e.g. a tab switch) so
+  // the list never flashes the previous filter's rows while the new page loads.
+  // React's "adjust state during render" pattern — resolves before paint.
+  const [shownParams, setShownParams] = useState(params);
+  if (params !== shownParams) {
+    setShownParams(params);
+    setItems([]);
+    setTotal(0);
+    setHasMore(false);
+    setLoading(true);
+    setError(null);
+  }
+
   // reload from page 1 whenever the filters change
   useEffect(() => {
     genRef.current += 1;
