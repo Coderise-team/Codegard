@@ -249,7 +249,7 @@ function SoonHero({ contest, onChanged, now }) {
             </button>
           )}
           <a className="btn" href="#">
-            Problems
+            Details
           </a>
         </div>
       </div>
