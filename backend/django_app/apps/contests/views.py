@@ -44,8 +44,10 @@ class ContestViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Contest.objects.prefetch_related("problems").all()
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["title"]
+    ordering_fields = ["start_time"]
+    ordering = ["-start_time"]
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -86,7 +88,8 @@ class ContestViewSet(viewsets.ModelViewSet):
             )
             queryset = queryset.annotate(is_joined_annotated=Exists(user_joined))
 
-        return queryset.order_by("-start_time")
+        # Ordering is left to OrderingFilter (default -start_time above).
+        return queryset
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def join(self, request, pk=None):
