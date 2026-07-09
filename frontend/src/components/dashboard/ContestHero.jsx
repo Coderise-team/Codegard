@@ -21,8 +21,10 @@ const pip = (i) => String.fromCharCode(65 + i);
 const STATUS_ICON = { solved: 'checkBold', attempted: 'bolt' };
 const STATUS_COLOR = { solved: 'var(--ac)', attempted: 'var(--tle)' };
 
-export default function ContestHero() {
-  const { state, data, loading, error, reload } = useContestHero();
+// Presentational hero — takes the useContestHero result. Split out so a page
+// can lift the hook (e.g. to know which contest is featured) and still render
+// the same hero without fetching twice.
+export function ContestHeroView({ state, data, loading, error, reload }) {
   useTick(state === 'live' || state === 'soon');
 
   if (loading) {
@@ -46,6 +48,11 @@ export default function ContestHero() {
   ) : (
     <SoonHero contest={data.contest} onChanged={reload} />
   );
+}
+
+export default function ContestHero() {
+  const hero = useContestHero();
+  return <ContestHeroView {...hero} />;
 }
 
 function LiveHero({ contest, standing }) {

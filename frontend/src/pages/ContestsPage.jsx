@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
-import ContestHero from '../components/dashboard/ContestHero';
+import { ContestHeroView } from '../components/dashboard/ContestHero';
 import ContestRow from '../components/contests/ContestRow';
 import PastRow from '../components/contests/PastRow';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useContestHero } from '../hooks/useContestHero';
 import { useContests } from '../hooks/useContests';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { joinContest, leaveContest } from '../api/contests';
@@ -33,6 +34,16 @@ export default function ContestsPage() {
   );
   const { items, total, hasMore, loading, loadMore } = useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
+
+  // The featured hero (when "soon") is the nearest pending contest — the same
+  // one that would head the Upcoming list. Lift the hook here so we can render
+  // the hero AND drop that contest from the list to avoid the duplicate.
+  const hero = useContestHero();
+  const featuredId =
+    hero.state === 'soon' ? (hero.data?.contest?.id ?? null) : null;
+  const upcoming =
+    featuredId == null ? items : items.filter((c) => c.id !== featuredId);
+  const upcomingCount = Math.max(0, total - (featuredId == null ? 0 : 1));
 
   // A ticking clock kept in state and passed down to the rows. The React
   // Compiler memoises rows by their props, so a row reading Date.now() itself
@@ -82,7 +93,7 @@ export default function ContestsPage() {
               </span>
             </div>
 
-            <ContestHero />
+            <ContestHeroView {...hero} />
 
             <div className="ct-bar">
               <div className="ct-tabs">
@@ -91,7 +102,9 @@ export default function ContestsPage() {
                   onClick={() => setTab('upcoming')}
                 >
                   Upcoming
-                  {tab === 'upcoming' && <span className="cnt">{total}</span>}
+                  {tab === 'upcoming' && (
+                    <span className="cnt">{upcomingCount}</span>
+                  )}
                 </button>
                 <button
                   className={`ct-tab${tab === 'past' ? ' is-active' : ''}`}
@@ -104,10 +117,10 @@ export default function ContestsPage() {
             </div>
 
             {tab === 'upcoming' &&
-              (items.length ? (
+              (upcoming.length ? (
                 <>
                   <div className="ct-list">
-                    {items.map((c, i) => (
+                    {upcoming.map((c, i) => (
                       <ContestRow
                         key={c.id}
                         c={c}
@@ -115,7 +128,7 @@ export default function ContestsPage() {
                         registered={isRegistered(c)}
                         onToggle={toggleReg}
                         onOpen={openContest}
-                        soon={i === 0}
+                        soon={featuredId == null && i === 0}
                       />
                     ))}
                   </div>
