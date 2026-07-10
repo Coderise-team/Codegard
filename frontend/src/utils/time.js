@@ -1,7 +1,9 @@
-// Human-friendly "time ago" label for an ISO timestamp.
-export function timeAgo(iso) {
+// Human-friendly "time ago" label for an ISO timestamp. Pass `nowMs` when the
+// label must follow a ticking clock kept in state (React Compiler caches
+// render-time Date.now() reads).
+export function timeAgo(iso, nowMs = Date.now()) {
   const then = new Date(iso);
-  const seconds = Math.floor((Date.now() - then.getTime()) / 1000);
+  const seconds = Math.floor((nowMs - then.getTime()) / 1000);
 
   if (seconds < 60) return 'just now';
 
