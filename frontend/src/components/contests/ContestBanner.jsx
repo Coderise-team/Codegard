@@ -85,93 +85,97 @@ export default function ContestBanner({
   return (
     <div className="cp-content">
       <div className="cp-c-in">
-        <div className="cp-hd">
-          {badge}
-          <span className="reg-chip">
-            <I.users size={14} />{' '}
-            <b>{c.registeredCount.toLocaleString('en-US')}</b> {chipVerb}
-          </span>
+        <div className="cp-top">
+          <div className="cp-hd">
+            {badge}
+            <span className="reg-chip">
+              <I.users size={14} />{' '}
+              <b>{c.registeredCount.toLocaleString('en-US')}</b> {chipVerb}
+            </span>
+          </div>
+
+          <h1 className="cp-title">{c.name}</h1>
+
+          <div className="cp-metarow">
+            <span>
+              <I.calendar size={14} /> {c.date}
+            </span>
+            <span>
+              <I.clock size={14} /> {c.time}
+            </span>
+            <span>
+              <I.grid size={13} /> {D.problems.length} problems
+            </span>
+            <span>
+              <I.hourglass size={14} /> {c.duration}
+            </span>
+          </div>
         </div>
 
-        <h1 className="cp-title">{c.name}</h1>
-
-        <div className="cp-metarow">
-          <span>
-            <I.calendar size={14} /> {c.date}
-          </span>
-          <span>
-            <I.clock size={14} /> {c.time}
-          </span>
-          <span>
-            <I.grid size={13} /> {D.problems.length} problems
-          </span>
-          <span>{c.duration}</span>
-        </div>
-
-        <div className="cp-timerrow">
+        <div className="cp-bottom">
           <div className="cc-count cp-count">
             <span className="k">{timerLabel}</span>
             <span className={`v${urgent ? ' urgent' : ''}`}>{timerVal}</span>
           </div>
           <div className="cp-cta">{cta}</div>
-        </div>
 
-        <div className="cp-probs">
-          <span className="cp-probs-k">Problems</span>
-          <div className="hero-probs">
-            {D.problems.map((p, i) => {
-              if (state === 'soon') {
+          <div className="cp-probs">
+            <span className="cp-probs-k">Problems</span>
+            <div className="hero-probs">
+              {D.problems.map((p, i) => {
+                if (state === 'soon') {
+                  return (
+                    <span key={p.id} className="hpip s-locked">
+                      <span className="lid">{p.id}</span>
+                      <span className="ld">
+                        <span className="nm">Locked</span>
+                        <span className="pt">reveals at start</span>
+                      </span>
+                      <span className="stx">
+                        <I.clock size={14} />
+                      </span>
+                    </span>
+                  );
+                }
+                const st = your[i] || 'open';
+                const St =
+                  st === 'solved'
+                    ? I.checkBold
+                    : st === 'attempted'
+                      ? I.bolt
+                      : st === 'locked'
+                        ? null
+                        : I.chevRight;
+                const href = st === 'locked' ? undefined : '#';
+                const Tag = href ? 'a' : 'span';
                 return (
-                  <span key={p.id} className="hpip s-locked">
+                  <Tag key={p.id} className={`hpip s-${st}`} href={href}>
                     <span className="lid">{p.id}</span>
                     <span className="ld">
-                      <span className="nm">Locked</span>
-                      <span className="pt">reveals at start</span>
+                      <span className="nm">{p.title}</span>
+                      {p.solvedBy != null && (
+                        <span className="pt">
+                          {p.solvedBy.toLocaleString('en-US')} solved
+                        </span>
+                      )}
                     </span>
-                    <span className="stx">
-                      <I.clock size={14} />
+                    <span
+                      className="stx"
+                      style={{
+                        color:
+                          st === 'solved'
+                            ? 'var(--ac)'
+                            : st === 'attempted'
+                              ? 'var(--tle)'
+                              : 'var(--fg3)',
+                      }}
+                    >
+                      {St && <St size={15} />}
                     </span>
-                  </span>
+                  </Tag>
                 );
-              }
-              const st = your[i] || 'open';
-              const St =
-                st === 'solved'
-                  ? I.checkBold
-                  : st === 'attempted'
-                    ? I.bolt
-                    : st === 'locked'
-                      ? null
-                      : I.chevRight;
-              const href = st === 'locked' ? undefined : '#';
-              const Tag = href ? 'a' : 'span';
-              return (
-                <Tag key={p.id} className={`hpip s-${st}`} href={href}>
-                  <span className="lid">{p.id}</span>
-                  <span className="ld">
-                    <span className="nm">{p.title}</span>
-                    {p.solvedBy != null && (
-                      <span className="pt">
-                        {p.solvedBy.toLocaleString('en-US')} solved
-                      </span>
-                    )}
-                  </span>
-                  <span
-                    className="stx"
-                    style={{
-                      color:
-                        st === 'solved'
-                          ? 'var(--ac)'
-                          : st === 'attempted'
-                            ? 'var(--tle)'
-                            : 'var(--fg3)',
-                    }}
-                  >
-                    {St && <St size={15} />}
-                  </span>
-                </Tag>
-              );
-            })}
+              })}
+            </div>
           </div>
         </div>
       </div>
