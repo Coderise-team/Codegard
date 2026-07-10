@@ -150,9 +150,11 @@ export default function ContestBanner({
                   <span className="lid">{p.id}</span>
                   <span className="ld">
                     <span className="nm">{p.title}</span>
-                    <span className="pt">
-                      {p.solvedBy.toLocaleString('en-US')} solved
-                    </span>
+                    {p.solvedBy != null && (
+                      <span className="pt">
+                        {p.solvedBy.toLocaleString('en-US')} solved
+                      </span>
+                    )}
                   </span>
                   <span
                     className="stx"
