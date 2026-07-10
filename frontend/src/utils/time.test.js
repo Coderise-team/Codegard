@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   timeAgo,
   formatDate,
+  formatFullDate,
+  formatTimeOfDay,
   secondsUntil,
   fmtCountdown,
   formatDuration,
@@ -45,6 +47,24 @@ describe('timeAgo', () => {
 describe('formatDate', () => {
   it('formats a short month + day', () => {
     expect(formatDate('2026-05-28T12:00:00Z')).toBe('May 28');
+  });
+});
+
+describe('formatFullDate', () => {
+  it('formats a short month + day + year', () => {
+    // Timezone-less ISO → parsed as local time, so the calendar day is stable
+    // in every timezone.
+    expect(formatFullDate('2026-06-06T17:00:00')).toBe('Jun 6, 2026');
+  });
+});
+
+describe('formatTimeOfDay', () => {
+  it('formats a 24h clock time', () => {
+    expect(formatTimeOfDay('2026-06-06T17:00:00')).toBe('17:00');
+  });
+
+  it('keeps midnight as 00', () => {
+    expect(formatTimeOfDay('2026-06-06T00:05:00')).toBe('00:05');
   });
 });
 
