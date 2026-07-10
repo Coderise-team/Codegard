@@ -38,6 +38,11 @@ describe('timeAgo', () => {
     expect(timeAgo('2026-07-04T12:00:00Z')).toBe('3d ago');
   });
 
+  it('follows an explicit now instead of the wall clock', () => {
+    const nowMs = new Date('2026-07-07T15:00:00Z').getTime();
+    expect(timeAgo('2026-07-07T12:00:00Z', nowMs)).toBe('3h ago');
+  });
+
   it('falls back to an absolute date at a week or older', () => {
     // 10 days ago → no "Nd ago", a "Mon D" date instead.
     expect(timeAgo('2026-06-27T12:00:00Z')).toMatch(/^[A-Z][a-z]{2} \d{1,2}$/);
