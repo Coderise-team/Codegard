@@ -26,6 +26,24 @@ export function formatDate(iso) {
   });
 }
 
+// Full date label with the year, e.g. "Jun 6, 2026".
+export function formatFullDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+// Clock time of an ISO timestamp, e.g. "17:00".
+export function formatTimeOfDay(iso) {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+}
+
 // Seconds remaining until an ISO timestamp (never negative).
 export function secondsUntil(iso) {
   return Math.max(0, Math.floor((new Date(iso).getTime() - Date.now()) / 1000));
