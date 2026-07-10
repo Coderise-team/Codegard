@@ -63,6 +63,27 @@ describe('useContest', () => {
     await waitFor(() => expect(getContest).toHaveBeenCalledTimes(2));
   });
 
+  it('resets loading when the id changes', async () => {
+    getContest.mockResolvedValue({ id: 5 });
+    const { result, rerender } = renderHook(({ id }) => useContest(id), {
+      initialProps: { id: 5 },
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resolve;
+    getContest.mockImplementation(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        })
+    );
+    rerender({ id: 6 });
+    expect(result.current.loading).toBe(true);
+
+    resolve({ id: 6 });
+    await waitFor(() => expect(result.current.contest).toEqual({ id: 6 }));
+  });
+
   it('does not fetch without an id', () => {
     renderHook(() => useContest(undefined));
     expect(getContest).not.toHaveBeenCalled();
