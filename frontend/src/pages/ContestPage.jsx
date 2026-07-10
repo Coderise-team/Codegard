@@ -48,8 +48,11 @@ export default function ContestPage() {
   const standing = useMyStanding(id, state === 'live' || state === 'finished');
 
   // Optimistic registration: flip locally, call the API, revert on failure.
+  // The participants count follows the flip (±1 against the server value).
   const [regOverride, setRegOverride] = useState(null);
-  const registered = regOverride ?? contest?.is_joined ?? false;
+  const serverJoined = contest?.is_joined ?? false;
+  const registered = regOverride ?? serverJoined;
+  const countDelta = registered === serverJoined ? 0 : registered ? 1 : -1;
   const toggleReg = async () => {
     const joined = registered;
     setRegOverride(!joined);
@@ -78,7 +81,7 @@ export default function ContestPage() {
       date: formatFullDate(contest.start_time),
       time: formatTimeOfDay(contest.start_time),
       duration: formatDuration(contest.start_time, contest.end_time),
-      registeredCount: contest.participants_count,
+      registeredCount: contest.participants_count + countDelta,
     },
     problems: contest.problems.map((p, i) => ({
       id: pip(i),
