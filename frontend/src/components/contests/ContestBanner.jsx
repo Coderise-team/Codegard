@@ -45,12 +45,8 @@ export default function ContestBanner({
         ? 'competed'
         : 'registered';
   const timerLabel =
-    state === 'live'
-      ? 'Ends in'
-      : state === 'finished'
-        ? 'Result'
-        : 'Starts in';
-  const timerVal = state === 'finished' ? 'Final' : fmtCountdown(seconds);
+    state === 'live' ? 'Ends in' : state === 'finished' ? 'Ended' : 'Starts in';
+  const timerVal = state === 'finished' ? c.endedAgo : fmtCountdown(seconds);
   const urgent = state === 'live' && seconds < 5 * 60;
 
   const your = D.yourProbs[state] || [];

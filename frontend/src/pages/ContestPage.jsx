@@ -9,7 +9,12 @@ import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContest, contestState } from '../hooks/useContest';
 import { useMyStanding } from '../hooks/useMyStanding';
 import { joinContest, leaveContest } from '../api/contests';
-import { formatDuration, formatFullDate, formatTimeOfDay } from '../utils/time';
+import {
+  formatDuration,
+  formatFullDate,
+  formatTimeOfDay,
+  timeAgo,
+} from '../utils/time';
 import contestData from '../data/contestData';
 import './ContestPage.css';
 
@@ -82,6 +87,7 @@ export default function ContestPage() {
       time: formatTimeOfDay(contest.start_time),
       duration: formatDuration(contest.start_time, contest.end_time),
       registeredCount: contest.participants_count + countDelta,
+      endedAgo: state === 'finished' ? timeAgo(contest.end_time, now) : null,
     },
     problems: contest.problems.map((p, i) => ({
       id: pip(i),
