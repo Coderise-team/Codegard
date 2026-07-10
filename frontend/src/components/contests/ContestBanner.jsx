@@ -13,14 +13,14 @@ import { fmtCountdown } from '../../utils/time';
  *   state      — 'soon' | 'live' | 'finished'
  *   seconds    — countdown seconds for the current state
  *   registered — boolean (soon state)
- *   onRegister — () => void
+ *   onToggle   — () => void; registers or unregisters
  */
 export default function ContestBanner({
   D,
   state,
   seconds,
   registered,
-  onRegister,
+  onToggle,
 }) {
   const I = Icons;
   const c = D.contest;
@@ -70,13 +70,13 @@ export default function ContestBanner({
     );
   } else if (registered) {
     cta = (
-      <span className="reg-pill done">
+      <button className="reg-pill done" onClick={onToggle}>
         <I.checkBold size={14} /> Registered
-      </span>
+      </button>
     );
   } else {
     cta = (
-      <button className="reg-pill go" onClick={onRegister}>
+      <button className="reg-pill go" onClick={onToggle}>
         <I.flag size={13} /> Register
       </button>
     );

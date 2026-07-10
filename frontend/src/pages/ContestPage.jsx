@@ -8,7 +8,7 @@ import ContestAside from '../components/contests/ContestAside';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContest, contestState } from '../hooks/useContest';
 import { useMyStanding } from '../hooks/useMyStanding';
-import { joinContest } from '../api/contests';
+import { joinContest, leaveContest } from '../api/contests';
 import { formatDuration, formatFullDate, formatTimeOfDay } from '../utils/time';
 import contestData from '../data/contestData';
 import './ContestPage.css';
@@ -50,12 +50,13 @@ export default function ContestPage() {
   // Optimistic registration: flip locally, call the API, revert on failure.
   const [regOverride, setRegOverride] = useState(null);
   const registered = regOverride ?? contest?.is_joined ?? false;
-  const register = async () => {
-    setRegOverride(true);
+  const toggleReg = async () => {
+    const joined = registered;
+    setRegOverride(!joined);
     try {
-      await joinContest(id);
+      await (joined ? leaveContest(id) : joinContest(id));
     } catch {
-      setRegOverride(null);
+      setRegOverride(joined);
     }
   };
 
@@ -121,7 +122,7 @@ export default function ContestPage() {
                 state={state}
                 seconds={seconds}
                 registered={registered}
-                onRegister={register}
+                onToggle={toggleReg}
               />
               <ContestAside
                 D={D}
