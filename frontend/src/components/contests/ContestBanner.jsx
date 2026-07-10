@@ -63,11 +63,7 @@ export default function ContestBanner({
       </a>
     );
   } else if (state === 'finished') {
-    cta = (
-      <a className="btn btn-primary" href="#">
-        <I.doc size={16} /> View editorial
-      </a>
-    );
+    cta = null;
   } else if (registered) {
     cta = (
       <button className="reg-pill done" onClick={onToggle}>
@@ -117,7 +113,7 @@ export default function ContestBanner({
             <span className="k">{timerLabel}</span>
             <span className={`v${urgent ? ' urgent' : ''}`}>{timerVal}</span>
           </div>
-          <div className="cp-cta">{cta}</div>
+          {cta && <div className="cp-cta">{cta}</div>}
 
           <div className="cp-probs">
             <span className="cp-probs-k">Problems</span>
