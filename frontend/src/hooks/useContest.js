@@ -20,6 +20,14 @@ export function useContest(id) {
   const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  // Adjust-during-render: switching to another contest must show its loading
+  // state, not flash the previous contest's data (no remount on param change).
+  const [prevId, setPrevId] = useState(id);
+  if (prevId !== id) {
+    setPrevId(id);
+    setLoading(true);
+  }
+
   useEffect(() => {
     if (!id) return undefined;
     let active = true;
