@@ -84,13 +84,20 @@
   position: relative;
   z-index: 1;
 }
+/* Three grid rows: header / guaranteed empty middle / timer block. The
+   middle never collapses below its minimum, so a long problem list can't
+   push the header — extra rows overflow downward into the stage scroll. */
 .cp-c-in {
   width: 100%;
   flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 48px;
+  display: grid;
+  grid-template-rows: auto minmax(140px, 1fr) auto;
+}
+.cp-top {
+  grid-row: 1;
+}
+.cp-bottom {
+  grid-row: 3;
 }
 
 .cp-hd {
