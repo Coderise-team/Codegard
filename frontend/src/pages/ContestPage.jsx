@@ -55,6 +55,15 @@ export default function ContestPage() {
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
   const [regOverride, setRegOverride] = useState(null);
+
+  // Adjust-during-render: a flip made on one contest must not leak into
+  // another when only the :id param changes (the component isn't remounted).
+  const [prevId, setPrevId] = useState(id);
+  if (prevId !== id) {
+    setPrevId(id);
+    setRegOverride(null);
+  }
+
   const serverJoined = contest?.is_joined ?? false;
   const registered = regOverride ?? serverJoined;
   const countDelta = registered === serverJoined ? 0 : registered ? 1 : -1;
