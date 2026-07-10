@@ -83,6 +83,10 @@
   padding: 54px 22px 54px 66px;
   position: relative;
   z-index: 1;
+  scrollbar-width: none;
+}
+.cp-content::-webkit-scrollbar {
+  display: none;
 }
 /* Three grid rows: header / guaranteed empty middle / timer block. The
    middle never collapses below its minimum, so a long problem list can't
