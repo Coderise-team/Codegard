@@ -153,8 +153,12 @@ function LiveHero({ contest, standing, now }) {
           </div>
         </div>
         <div className="hero-cta">
-          <Link className="btn btn-primary" to={`/contests/${contest.id}`}>
+          {/* Points into the round workspace once contest mode exists. */}
+          <a className="btn btn-primary" href="#">
             <I.play size={15} /> Enter round
+          </a>
+          <Link className="btn" to={`/contests/${contest.id}`}>
+            Details
           </Link>
         </div>
       </div>
