@@ -11,6 +11,17 @@ logger = logging.getLogger(__name__)
 
 
 class ContestConsumer(AsyncJsonWebsocketConsumer):
+    """Live leaderboard + activity feed for a single contest.
+
+    A participant connects to ``ws/contests/<id>/`` to follow the standings in
+    real time. Access requires an authenticated participant — the socket closes
+    with 4001 (not authenticated), 4003 (not a participant), or 4004 (no such
+    contest). Once accepted the consumer joins the ``contest_<id>`` group and
+    relays ``leaderboard_update`` / ``problem_solved`` / ``contest_ended``
+    events; the current leaderboard is pushed immediately, and if the contest
+    has already ended it sends ``contest_ended`` and closes.
+    """
+
     async def connect(self):
         user = self.scope["user"]
         if not user.is_authenticated:
