@@ -91,6 +91,7 @@ def calculate_score(user, contest: Contest) -> ContestScore:
 
     return contest_score
 
+
 def get_leaderboard(contest: Contest):
     """
     Return leaderboard queryset for a contest.
@@ -101,7 +102,6 @@ def get_leaderboard(contest: Contest):
         .select_related("user")
         .order_by("-score", "penalty", "last_ac_at", "id")
     )
-
 
 
 def get_contest_history(user):
