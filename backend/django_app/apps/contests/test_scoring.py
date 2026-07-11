@@ -330,7 +330,6 @@ class TestLeaderboardAPI:
         assert response.data["results"][0]["rank"] == 1
 
 
-
 # ---------------------------------------------------------------------------
 # Submission -> score recalculation hook tests
 # ---------------------------------------------------------------------------
@@ -427,4 +426,3 @@ class TestLeaderboardPagination:
         api_client.force_authenticate(user=user)
         response = api_client.get(_leaderboard_url(active_contest))
         assert response.data["results"][0]["rating_delta"] == 48
-

@@ -4,12 +4,12 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAdminUser,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .models import Contest, ContestScore
@@ -208,9 +208,7 @@ class ContestViewSet(viewsets.ModelViewSet):
         contest = self.get_object()
 
         paginator = ContestLeaderboardPagination()
-        page = paginator.paginate_queryset(
-            get_leaderboard(contest), request, view=self
-        )
+        page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
 
         start = paginator.page.start_index()
         for offset, entry in enumerate(page):
