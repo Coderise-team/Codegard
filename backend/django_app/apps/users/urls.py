@@ -6,6 +6,7 @@ from .views import (
     LoginView,
     LogoutView,
     MeView,
+    PasswordChangeView,
     RegisterView,
     UserActivityView,
     UserContestHistoryView,
@@ -26,6 +27,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("avatar/", AvatarUploadView.as_view(), name="avatar-upload"),
     path("me/", MeView.as_view(), name="me"),
+    path("me/password/", PasswordChangeView.as_view(), name="me-password"),
     path("<str:username>/activity/", UserActivityView.as_view(), name="user-activity"),
     path("<str:username>/stats/", UserStatsView.as_view(), name="user-stats"),
     path(
