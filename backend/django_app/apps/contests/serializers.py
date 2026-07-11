@@ -117,6 +117,7 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
             "penalty",
             "solved_count",
             "last_ac_at",
+            "rating_delta",
         ]
 
     def get_rank(self, obj):
