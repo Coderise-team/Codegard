@@ -39,7 +39,20 @@ export default function StandingsPage() {
         : { key, dir: key === 'rank' ? 'asc' : 'desc' }
     );
 
-  const podium = items.filter((u) => u.globalRank <= PODIUM_PLACES);
+  // One tile per PLACE, holding everyone who shares it.
+  const podium = useMemo(() => {
+    const byPlace = new Map();
+    for (const u of items) {
+      if (u.globalRank > PODIUM_PLACES) continue;
+      const group = byPlace.get(u.globalRank) ?? [];
+      group.push(u);
+      byPlace.set(u.globalRank, group);
+    }
+    return [...byPlace.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([place, users]) => ({ place, users }));
+  }, [items]);
+
   const rows = items.filter((u) => u.globalRank > PODIUM_PLACES);
   const isYou = (u) => u.username === user?.username;
 
@@ -102,8 +115,13 @@ export default function StandingsPage() {
 
             {podium.length > 0 && (
               <div className="podium">
-                {podium.map((u) => (
-                  <PodiumCard key={u.username} u={u} isYou={isYou(u)} />
+                {podium.map(({ place, users }) => (
+                  <PodiumCard
+                    key={place}
+                    place={place}
+                    users={users}
+                    youUsername={user?.username}
+                  />
                 ))}
               </div>
             )}

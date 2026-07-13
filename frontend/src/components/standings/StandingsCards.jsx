@@ -5,6 +5,10 @@ import { CG_RANKS, cgRankFor } from '../../utils/ranks';
 // Avatar badge fallback: first two letters of the username.
 const initialsOf = (username) => username.slice(0, 2).toUpperCase();
 
+// How long a podium tile holds one coder before rotating to the next one
+// sharing that place.
+const PODIUM_ROTATE_MS = 4000;
+
 export function TierSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -129,9 +133,30 @@ export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
   );
 });
 
-export function PodiumCard({ u, isYou }) {
-  const place = u.globalRank;
+/**
+ * One podium tile. A tile is a PLACE, not a person: ties share a place, so
+ * `users` can hold several coders. When it does, the tile cycles through them
+ * on a timer and offers arrows to page through by hand.
+ */
+export function PodiumCard({ place, users, youUsername }) {
+  const [idx, setIdx] = useState(0);
+  const many = users.length > 1;
+
+  // Pages load in as you scroll, so the group can grow — never index past it.
+  const pos = idx % users.length;
+  const u = users[pos];
+
+  useEffect(() => {
+    if (!many) return undefined;
+    // `idx` in the deps restarts the timer after a manual arrow click, so the
+    // card doesn't jump on immediately after you paged it yourself.
+    const timer = setInterval(() => setIdx((i) => i + 1), PODIUM_ROTATE_MS);
+    return () => clearInterval(timer);
+  }, [many, idx]);
+
+  const isYou = u.username === youUsername;
   const tier = cgRankFor(u.elo_rating);
+
   return (
     <div className={`pod pod-${place}${isYou ? ' you' : ''}`}>
       <div className="pod-medal">{place}</div>
@@ -148,6 +173,28 @@ export function PodiumCard({ u, isYou }) {
           max <b>{u.maxRating}</b>
         </span>
       </div>
+
+      {many && (
+        <div className="pod-rev">
+          <button
+            className="pod-arw prev"
+            aria-label="Previous coder"
+            onClick={() => setIdx((i) => i + users.length - 1)}
+          >
+            <Icons.chevRight size={14} />
+          </button>
+          <span className="pod-rev-n">
+            {pos + 1}/{users.length}
+          </span>
+          <button
+            className="pod-arw"
+            aria-label="Next coder"
+            onClick={() => setIdx((i) => i + 1)}
+          >
+            <Icons.chevRight size={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

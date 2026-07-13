@@ -367,6 +367,42 @@
   font-weight: 600;
 }
 
+/* revolver — shown only when several coders share the place */
+.pod-rev {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.pod-arw {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: 0.12s;
+}
+.pod-arw:hover {
+  border-color: var(--border-2);
+  color: var(--fg);
+}
+.pod-arw.prev {
+  transform: rotate(180deg);
+}
+.pod-rev-n {
+  min-width: 34px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ============================================================
    LEADERBOARD — card rows aligned by a shared grid
    ============================================================ */
