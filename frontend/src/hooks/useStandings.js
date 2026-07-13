@@ -10,9 +10,11 @@ import { getStandings } from '../api/standings';
 // and `you` the signed-in user's own row (the API returns it on every page, so
 // the floating "Your standing" bar works even when the user is not in view).
 export function useStandings(params) {
+  // count/total stay null until a page actually answers, so the header can keep
+  // quiet instead of flashing a zero it does not know yet.
   const [items, setItems] = useState([]);
-  const [count, setCount] = useState(0);
-  const [total, setTotal] = useState(0);
+  const [count, setCount] = useState(null);
+  const [total, setTotal] = useState(null);
   const [you, setYou] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -30,9 +32,9 @@ export function useStandings(params) {
     getStandings({ ...params, page: 1 })
       .then((res) => {
         if (gen !== genRef.current) return;
-        setItems(res.results);
-        setCount(res.count);
-        setTotal(res.total);
+        setItems(res.results ?? []);
+        setCount(res.count ?? null);
+        setTotal(res.total ?? null);
         setYou(res.you ?? null);
         setHasMore(Boolean(res.next));
         setLoading(false);
@@ -54,7 +56,7 @@ export function useStandings(params) {
       .then((res) => {
         if (gen !== genRef.current) return; // params changed mid-flight -> drop
         pageRef.current = nextPage;
-        setItems((prev) => [...prev, ...res.results]);
+        setItems((prev) => [...prev, ...(res.results ?? [])]);
         setHasMore(Boolean(res.next));
       })
       .catch((err) => {

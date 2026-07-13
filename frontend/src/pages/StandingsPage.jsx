@@ -42,7 +42,7 @@ export default function StandingsPage() {
     }),
     [sort, tier]
   );
-  const { items, count, total, you, hasMore, loading, loadMore } =
+  const { items, count, total, you, hasMore, loading, error, loadMore } =
     useStandings(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
@@ -78,7 +78,8 @@ export default function StandingsPage() {
     : items;
   const isYou = (u) => u.username === user?.username;
 
-  const fmt = (n) => n.toLocaleString('en-US');
+  // A count we don't have yet is simply not shown — never a placeholder zero.
+  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : null);
 
   return (
     <div className="dash st-page" data-density="compact">
@@ -95,16 +96,20 @@ export default function StandingsPage() {
           <div className="canvas-in">
             <div className="st-head">
               <h1>Global Standings</h1>
-              <span className="sub">
-                <b>{fmt(total)}</b> coders
-              </span>
+              {total != null && (
+                <span className="sub">
+                  <b>{fmt(total)}</b> coders
+                </span>
+              )}
             </div>
 
             <div className="st-controls">
               <TierSelect value={tier} onChange={setTier} />
-              <div className="st-count">
-                <b>{fmt(count)}</b> shown
-              </div>
+              {count != null && (
+                <div className="st-count">
+                  <b>{fmt(count)}</b> shown
+                </div>
+              )}
             </div>
 
             {showPodium && podium.length > 0 && (
@@ -120,7 +125,17 @@ export default function StandingsPage() {
               </div>
             )}
 
-            {!loading && items.length === 0 ? (
+            {error ? (
+              <div className="st-empty">
+                <div className="ei">
+                  <Icons.x size={20} />
+                </div>
+                <div className="et">Standings unavailable</div>
+                <div className="es">
+                  The leaderboard could not be loaded. Try again later.
+                </div>
+              </div>
+            ) : !loading && items.length === 0 ? (
               <div className="st-empty">
                 <div className="ei">
                   <Icons.search size={20} />

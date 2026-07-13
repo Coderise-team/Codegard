@@ -128,7 +128,7 @@ export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
       <div className="st-c num">
         <Delta d={u.delta} />
       </div>
-      <div className="st-c num st-max">{u.maxRating}</div>
+      <div className="st-c num st-max">{u.maxRating ?? '—'}</div>
     </div>
   );
 });
@@ -170,7 +170,7 @@ export function PodiumCard({ place, users, youUsername }) {
       <div className="pod-sub">
         <Delta d={u.delta} />
         <span className="pod-max">
-          max <b>{u.maxRating}</b>
+          max <b>{u.maxRating ?? '—'}</b>
         </span>
       </div>
 
