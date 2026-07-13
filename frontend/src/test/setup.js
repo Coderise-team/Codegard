@@ -24,9 +24,11 @@ class IntersectionObserverStub {
     this.observed.clear();
   }
 
-  // Test helper: pretend the observed target crossed the threshold.
-  emit(isIntersecting = true) {
-    this.callback([{ isIntersecting }], this);
+  // Test helper: pretend the observed target crossed the threshold. `entry`
+  // carries the rest of the IntersectionObserverEntry (boundingClientRect,
+  // rootBounds) for callers that read which edge the target went past.
+  emit(isIntersecting = true, entry = {}) {
+    this.callback([{ isIntersecting, ...entry }], this);
   }
 }
 IntersectionObserverStub.instances = [];
