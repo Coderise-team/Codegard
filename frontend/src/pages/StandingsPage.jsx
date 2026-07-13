@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -11,6 +11,7 @@ import {
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useStandings } from '../hooks/useStandings';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { useRowPosition } from '../hooks/useRowPosition';
 import './StandingsPage.css';
 
 // The podium holds the first three PLACES, not the first three people: dense
@@ -27,10 +28,10 @@ export default function StandingsPage() {
 
   const [tier, setTier] = useState('All');
   const [sort, setSort] = useState({ key: 'rating', dir: 'desc' });
-  const [youVis, setYouVis] = useState('below'); // above | visible | below
 
   const canvasRef = useRef(null);
-  const youRowRef = useRef(null);
+  // The floating bar docks to whichever edge your own row went past.
+  const [youVis, youRowRef] = useRowPosition(canvasRef);
 
   // "All" means no tier param at all; the server maps a tier name to its rating
   // band itself (the ladder lives in RANK_THRESHOLDS there, in CG_RANKS here).
@@ -77,27 +78,6 @@ export default function StandingsPage() {
     : items;
   const isYou = (u) => u.username === user?.username;
 
-  // ---- "your standing" position relative to the viewport ----
-  const updateYou = useCallback(() => {
-    const canvas = canvasRef.current;
-    const row = youRowRef.current;
-    if (!canvas || !row) {
-      setYouVis('below');
-      return;
-    }
-    const cr = canvas.getBoundingClientRect();
-    const rr = row.getBoundingClientRect();
-    const pad = 56;
-    if (rr.bottom < cr.top + pad) setYouVis('above');
-    else if (rr.top > cr.bottom - pad) setYouVis('below');
-    else setYouVis('visible');
-  }, []);
-
-  // recompute the "your standing" position whenever the rendered list changes
-  useEffect(() => {
-    updateYou();
-  }, [items, updateYou]);
-
   const fmt = (n) => n.toLocaleString('en-US');
 
   return (
@@ -111,7 +91,7 @@ export default function StandingsPage() {
           onMenuClick={() => setNavOpen(true)}
         />
 
-        <div className="canvas scroll" ref={canvasRef} onScroll={updateYou}>
+        <div className="canvas scroll" ref={canvasRef}>
           <div className="canvas-in">
             <div className="st-head">
               <h1>Global Standings</h1>
