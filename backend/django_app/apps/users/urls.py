@@ -6,6 +6,9 @@ from .views import (
     LoginView,
     LogoutView,
     MeView,
+    OAuthCallbackView,
+    OAuthRedeemView,
+    OAuthStartView,
     RegisterView,
     UserActivityView,
     UserContestHistoryView,
@@ -15,9 +18,6 @@ from .views import (
     UserStatsView,
     UserStreakView,
     UserSubmissionsView,
-    OAuthRedeemView,
-    OAuthStartView,
-    OAuthCallbackView,
 )
 
 app_name = "users"

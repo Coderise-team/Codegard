@@ -82,7 +82,7 @@ def redeem_login_ticket(ticket: str | None) -> int | None:
     user_id = cache.get(key)
     if user_id is None:
         return None
-    cache.delete(key) # single-use
+    cache.delete(key)  # single-use
     return user_id
 
 
@@ -201,13 +201,13 @@ def find_or_create_user(provider: str, identity: dict) -> User:
 
 def _unique_username(hint: str) -> str:
     """Derive a free username from the provider hint."""
-    base = re.sub(r"<sup>[\[a-z0-9_-\]](#fn-a-z0-9_-)</sup>", "", hint.lower()) or "user"
+    base = re.sub(r"[^a-z0-9_-]", "", hint.lower()) or "user"
     candidate = base
     counter = 2
 
     while (
-            candidate in settings.RESERVED_USERNAMES
-            or User.objects.filter(username=candidate).exists()
+        candidate in settings.RESERVED_USERNAMES
+        or User.objects.filter(username__iexact=candidate).exists()
     ):
         candidate = f"{base}{counter}"
         counter += 1

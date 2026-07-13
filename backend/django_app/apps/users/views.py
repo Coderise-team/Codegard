@@ -4,7 +4,7 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.db.models import Count
 from django.db.models.functions import TruncDate
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView
@@ -15,11 +15,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from sorl.thumbnail import get_thumbnail
-from django.shortcuts import get_objects_or_404, redirect
-from . import oauth
-from .oauth import OAuthError
 
+from . import oauth
 from .models import EloHistory, User
+from .oauth import OAuthError
 from .serializers import (
     AvatarUploadSerializer,
     EloHistorySerializer,

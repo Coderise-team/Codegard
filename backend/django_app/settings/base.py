@@ -19,7 +19,7 @@ OAUTH_PROVIDERS = {
     "github": {
         "client_id": env("GITHUB_OAUTH_CLIENT_ID"),
         "client_secret": env("GITHUB_OAUTH_CLIENT_SECRET"),
-    }
+    },
 }
 
 # Browser-facing origin the OAuth redirect_url is built on.

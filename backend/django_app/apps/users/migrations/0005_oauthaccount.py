@@ -6,23 +6,48 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0004_merge_20260625_1128'),
+        ("users", "0004_merge_20260625_1128"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='OAuthAccount',
+            name="OAuthAccount",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('provider', models.CharField(choices=[('google', 'Google'), ('github', 'GitHub')], max_length=16)),
-                ('provider_uid', models.CharField(max_length=191)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='oauth_accounts', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "provider",
+                    models.CharField(
+                        choices=[("google", "Google"), ("github", "GitHub")],
+                        max_length=16,
+                    ),
+                ),
+                ("provider_uid", models.CharField(max_length=191)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="oauth_accounts",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'constraints': [models.UniqueConstraint(fields=('provider', 'provider_uid'), name='uniq_oauth_provider_uid')],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("provider", "provider_uid"),
+                        name="uniq_oauth_provider_uid",
+                    )
+                ],
             },
         ),
     ]
