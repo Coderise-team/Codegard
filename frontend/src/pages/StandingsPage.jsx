@@ -16,28 +16,41 @@ import './StandingsPage.css';
 // ranking lets several coders share a place.
 const PODIUM_PLACES = 3;
 
+// Sort column -> API ordering field ('-' prefix for descending).
+const ORDER_FIELD = { rating: 'elo_rating', max: 'max_rating' };
+
 /** StandingsPage — the global ELO leaderboard. */
 export default function StandingsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
 
   const [tier, setTier] = useState('All');
-  const [sort, setSort] = useState({ key: 'rank', dir: 'asc' });
+  const [sort, setSort] = useState({ key: 'rating', dir: 'desc' });
   const [youVis, setYouVis] = useState('below'); // above | visible | below
 
   const canvasRef = useRef(null);
   const youRowRef = useRef(null);
 
-  const params = useMemo(() => ({}), []);
+  const params = useMemo(
+    () => ({
+      ordering: `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`,
+    }),
+    [sort]
+  );
   const { items, count, total, you, hasMore, loading, loadMore } =
     useStandings(params);
 
+  // A new column starts descending — best first is what you want to see.
   const onSort = (key) =>
     setSort((s) =>
       s.key === key
-        ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' }
-        : { key, dir: key === 'rank' ? 'asc' : 'desc' }
+        ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' }
+        : { key, dir: 'desc' }
     );
+
+  // Ascending order drags the top places to the very end of the list, where the
+  // podium would sit empty until you scrolled all the way down — so hide it.
+  const showPodium = sort.dir === 'desc';
 
   // One tile per PLACE, holding everyone who shares it.
   const podium = useMemo(() => {
@@ -53,7 +66,10 @@ export default function StandingsPage() {
       .map(([place, users]) => ({ place, users }));
   }, [items]);
 
-  const rows = items.filter((u) => u.globalRank > PODIUM_PLACES);
+  // The podium consumes the top places; without it they stay in the list.
+  const rows = showPodium
+    ? items.filter((u) => u.globalRank > PODIUM_PLACES)
+    : items;
   const isYou = (u) => u.username === user?.username;
 
   // ---- "your standing" position relative to the viewport ----
@@ -113,7 +129,7 @@ export default function StandingsPage() {
               </div>
             </div>
 
-            {podium.length > 0 && (
+            {showPodium && podium.length > 0 && (
               <div className="podium">
                 {podium.map(({ place, users }) => (
                   <PodiumCard

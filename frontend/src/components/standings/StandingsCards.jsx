@@ -199,15 +199,20 @@ export function PodiumCard({ place, users, youUsername }) {
   );
 }
 
+/**
+ * Column headers. Only Rating and Max are sortable — the server orders by
+ * those two fields alone. Rank is not a sort key of its own (it IS the order
+ * of the active field), and there is no ordering by Last Δ.
+ */
 export function StHead({ sort, onSort }) {
   const arrow = (key) =>
     sort.key === key ? (
       <span className="ar">{sort.dir === 'asc' ? '↑' : '↓'}</span>
     ) : null;
 
-  const Btn = (key, label, num) => (
+  const Btn = (key, label) => (
     <button
-      className={`sth${num ? ' num' : ''}${sort.key === key ? ' active' : ''}`}
+      className={`sth num${sort.key === key ? ' active' : ''}`}
       onClick={() => onSort(key)}
     >
       {label}
@@ -217,12 +222,12 @@ export function StHead({ sort, onSort }) {
 
   return (
     <div className="st-headrow">
-      {Btn('rank', 'Rank')}
+      <span className="sth-static">Rank</span>
       <span className="sth-static">User</span>
       <span className="sth-static">Tier</span>
-      {Btn('rating', 'Rating', true)}
-      {Btn('delta', 'Last Δ', true)}
-      {Btn('max', 'Max', true)}
+      {Btn('rating', 'Rating')}
+      <span className="sth-static num">Last Δ</span>
+      {Btn('max', 'Max')}
     </div>
   );
 }
