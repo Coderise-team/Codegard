@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -11,8 +12,10 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from .models import Contest, ContestScore
+from .pagination import ContestListPagination, ContestPanelPagination
 from .serializers import (
     ContestDetailSerializer,
+    ContestRegistrantSerializer,
     ContestSerializer,
     ContestWriteSerializer,
     LeaderboardEntrySerializer,
@@ -44,6 +47,7 @@ class ContestViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Contest.objects.prefetch_related("problems").all()
+    pagination_class = ContestListPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["title"]
     ordering_fields = ["start_time"]
@@ -64,7 +68,7 @@ class ContestViewSet(viewsets.ModelViewSet):
         return ContestSerializer
 
     def get_queryset(self):
-        from django.db.models import Count, Exists, OuterRef
+        from django.db.models import Count, Exists, OuterRef, Prefetch, Q
 
         queryset = super().get_queryset()
 
@@ -87,6 +91,36 @@ class ContestViewSet(viewsets.ModelViewSet):
                 contest_id=OuterRef("pk"), user_id=user.pk
             )
             queryset = queryset.annotate(is_joined_annotated=Exists(user_joined))
+
+        # "My contests" filter for the dashboard. Reuses the is_joined annotation
+        # (only present for authenticated users). Any value other than "true" is
+        # ignored, same pattern as `status`; an anonymous user gets nothing.
+        if self.request.query_params.get("joined") == "true":
+            if user and user.is_authenticated:
+                queryset = queryset.filter(is_joined_annotated=True)
+            else:
+                queryset = queryset.none()
+
+        # Retrieve only: attach `solved_count` (unique solvers of each problem IN
+        # THIS contest) via an annotated prefetch — one JOIN, no N+1, and the
+        # hub list never pays for it. The contest pk is known from the URL.
+        if self.action == "retrieve":
+            solved_count = Count(
+                "submissions__user",
+                filter=Q(
+                    submissions__contest_id=self.kwargs.get("pk"),
+                    submissions__verdict=Submission.Verdict.AC,
+                ),
+                distinct=True,
+            )
+            # Replace the base `prefetch_related("problems")` rather than adding a
+            # second lookup for the same relation (Django rejects that).
+            queryset = queryset.prefetch_related(None).prefetch_related(
+                Prefetch(
+                    "problems",
+                    queryset=Problem.objects.annotate(solved_count=solved_count),
+                )
+            )
 
         # Ordering is left to OrderingFilter (default -start_time above).
         return queryset
@@ -137,6 +171,27 @@ class ContestViewSet(viewsets.ModelViewSet):
             {"detail": "Successfully left the contest."},
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        permission_classes=[IsAuthenticatedOrReadOnly],
+    )
+    def registrants(self, request, pk=None):
+        """GET /api/contests/{id}/registrants/ — paginated, rating desc.
+
+        Powers the "Registered" panel before a contest starts. Sorted by
+        `-elo_rating`, then `id` as a tiebreak — without it, rows with the same
+        (very common) default rating reshuffle between pages.
+        """
+        contest = self.get_object()
+        participants = contest.participants.order_by("-elo_rating", "id").only(
+            "id", "username", "elo_rating"
+        )
+        paginator = ContestPanelPagination()
+        page = paginator.paginate_queryset(participants, request, view=self)
+        serializer = ContestRegistrantSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(
         detail=True,

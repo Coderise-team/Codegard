@@ -236,7 +236,9 @@ class UserStreakView(APIView):
 class UserContestHistoryView(APIView):
     """Finished-contest history for a user, for the ProfilePage PastContests block.
 
-    GET /api/users/{username}/contest-history/ -> list, newest first.
+    GET /api/users/{username}/contest-history/ -> paginated, newest first.
+    Response is the standard {count, next, previous, results} envelope; the page
+    size defaults to 20 and can be set with ?page_size= (dashboard asks for 5).
     Any authenticated user can view anyone's history (like stats/streak).
     """
 
@@ -246,9 +248,16 @@ class UserContestHistoryView(APIView):
         from apps.contests.serializers import ContestHistorySerializer
         from apps.contests.services import get_contest_history
 
+        from .pagination import ContestHistoryPagination
+
         user = get_object_or_404(User, username=username)
         history = get_contest_history(user)
-        return Response(ContestHistorySerializer(history, many=True).data)
+
+        # APIView has no built-in pagination, so drive the paginator by hand.
+        paginator = ContestHistoryPagination()
+        page = paginator.paginate_queryset(history, request, view=self)
+        serializer = ContestHistorySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class UserSubmissionsView(APIView):
