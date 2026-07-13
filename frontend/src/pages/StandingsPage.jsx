@@ -31,11 +31,14 @@ export default function StandingsPage() {
   const canvasRef = useRef(null);
   const youRowRef = useRef(null);
 
+  // "All" means no tier param at all; the server maps a tier name to its rating
+  // band itself (the ladder lives in RANK_THRESHOLDS there, in CG_RANKS here).
   const params = useMemo(
     () => ({
       ordering: `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`,
+      ...(tier !== 'All' && { tier }),
     }),
-    [sort]
+    [sort, tier]
   );
   const { items, count, total, you, hasMore, loading, loadMore } =
     useStandings(params);
