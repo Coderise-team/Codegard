@@ -7,11 +7,15 @@ from django.db.models.functions import TruncDate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from sorl.thumbnail import get_thumbnail
@@ -21,7 +25,9 @@ from .serializers import (
     AvatarUploadSerializer,
     EloHistorySerializer,
     EmailOrUsernameTokenObtainSerializer,
+    PasswordChangeSerializer,
     UserMeSerializer,
+    UserProfileUpdateSerializer,
     UserRegisterSerializer,
     UserSerializer,
 )
@@ -292,11 +298,48 @@ class UserDetailView(RetrieveAPIView):
     lookup_url_kwarg = "username"
 
 
-class MeView(RetrieveAPIView):
-    """Return the authenticated user's profile."""
+class MeView(RetrieveUpdateAPIView):
+    """Read (GET) or partially update (PATCH) the authenticated user's profile.
 
-    serializer_class = UserMeSerializer
+    PUT is intentionally disabled — only partial updates of the three editable
+    fields (bio / first_name / last_name) are allowed; read and write use
+    different serializers.
+    """
+
     permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch", "head", "options"]
 
     def get_object(self):
         return self.request.user
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return UserProfileUpdateSerializer
+        return UserMeSerializer
+
+
+class PasswordChangeView(APIView):
+    """POST /api/users/me/password/ — change the authenticated user's password.
+
+    On success every existing refresh token is revoked (a stolen-password
+    session is kicked out) and a fresh {access, refresh} pair is issued so the
+    caller stays logged in without re-authenticating.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Revoke all outstanding refresh tokens FIRST, then mint the new pair —
+        # otherwise the fresh refresh would be blacklisted too. get_or_create
+        # guards against tokens that are already blacklisted.
+        for token in OutstandingToken.objects.filter(user=request.user):
+            BlacklistedToken.objects.get_or_create(token=token)
+
+        refresh = RefreshToken.for_user(request.user)
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh)})

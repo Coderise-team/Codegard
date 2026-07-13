@@ -171,8 +171,57 @@ class EmailOrUsernameTokenObtainSerializer(TokenObtainPairSerializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
-    """Minimal representation of the authenticated user."""
+    """The authenticated user's own profile (read) — also feeds the settings form."""
 
     class Meta:
         model = User
-        fields = ["username", "avatar"]
+        fields = ["username", "avatar", "bio", "first_name", "last_name"]
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """PATCH /api/users/me/ — the ONLY editable profile fields.
+
+    A strict allow-list: username / email / elo_rating sent in the payload are
+    silently ignored simply because they are not declared here. username stays
+    fixed (public URLs & history depend on it); email stays fixed (an honest
+    change needs email confirmation, which we don't have yet).
+    """
+
+    class Meta:
+        model = User
+        fields = ["bio", "first_name", "last_name"]
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """POST /api/users/me/password/ — old_password + new_password."""
+
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+
+        # 1. OAuth accounts (unusable password) can't change a password they
+        # never had — they'll set one later via "forgot password".
+        if not user.has_usable_password():
+            raise serializers.ValidationError(
+                {"old_password": "This account has no password set."}
+            )
+
+        # 2. Proving identity with the current password is required: an open
+        # stolen tab must not be enough to take over the account.
+        if not user.check_password(attrs["old_password"]):
+            raise serializers.ValidationError(
+                {"old_password": "Current password is incorrect."}
+            )
+
+        # 3. Same Django validators as registration, but WITH the user so the
+        # similarity-to-username/email validator can run.
+        dj_validate_password(attrs["new_password"], user=user)
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context["request"].user
+        user.set_password(self.validated_data["new_password"])
+        user.save(update_fields=["password"])
+        return user
