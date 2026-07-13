@@ -1,7 +1,11 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import Icons from '../Icons';
+import { CG_RANKS, cgRankFor } from '../../utils/ranks';
 
-export function TierSelect({ ranks, value, onChange }) {
+// Avatar badge fallback: first two letters of the username.
+const initialsOf = (username) => username.slice(0, 2).toUpperCase();
+
+export function TierSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -14,7 +18,8 @@ export function TierSelect({ ranks, value, onChange }) {
     return () => document.removeEventListener('mousedown', onDocDown);
   }, [open]);
 
-  const opts = [{ name: 'All', color: null }, ...ranks.slice().reverse()];
+  // Highest tier first, with "All" on top.
+  const opts = [{ name: 'All', color: null }, ...CG_RANKS.slice().reverse()];
   const cur = opts.find((o) => o.name === value) || opts[0];
 
   return (
@@ -75,6 +80,7 @@ export function TierBadge({ name, color }) {
   );
 }
 
+/** Last rating change; null (no rated contest yet) renders as a dash. */
 export function Delta({ d }) {
   if (!d) return <span className="st-delta flat">·</span>;
   const up = d > 0;
@@ -86,32 +92,35 @@ export function Delta({ d }) {
   );
 }
 
-function Medal({ rank }) {
-  if (rank <= 3) return <span className={`medal m${rank}`}>{rank}</span>;
-  return <span className="rn">{rank}</span>;
+// Places are dense-ranked, so ties share a place and a medal: three tied
+// leaders all wear gold, and then place 3 may simply not exist.
+function Medal({ place }) {
+  if (place <= 3) return <span className={`medal m${place}`}>{place}</span>;
+  return <span className="rn">{place}</span>;
 }
 
-export const StandingRow = memo(function StandingRow({ u, rowRef }) {
+export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
+  const tier = cgRankFor(u.elo_rating);
   return (
-    <div ref={rowRef || null} className={`st-row${u.you ? ' you' : ''}`}>
+    <div ref={rowRef || null} className={`st-row${isYou ? ' you' : ''}`}>
       <div className="st-rank">
-        <Medal rank={u.rank} />
+        <Medal place={u.globalRank} />
       </div>
 
       <div className="st-user">
-        <div className="st-av">{u.initials}</div>
+        <div className="st-av">{initialsOf(u.username)}</div>
         <div className="st-id">
           <div className="st-h">
-            <span className="nm">{u.handle}</span>
-            {u.you && <span className="you-tag">YOU</span>}
+            <span className="nm">{u.username}</span>
+            {isYou && <span className="you-tag">YOU</span>}
           </div>
         </div>
       </div>
 
       <div className="st-c st-tier-c">
-        <TierBadge name={u.tier} color={u.tierColor} />
+        <TierBadge name={tier.name} color={tier.color} />
       </div>
-      <div className="st-c num st-rating">{u.rating}</div>
+      <div className="st-c num st-rating">{u.elo_rating}</div>
       <div className="st-c num">
         <Delta d={u.delta} />
       </div>
@@ -120,17 +129,19 @@ export const StandingRow = memo(function StandingRow({ u, rowRef }) {
   );
 });
 
-export function PodiumCard({ u, place }) {
+export function PodiumCard({ u, isYou }) {
+  const place = u.globalRank;
+  const tier = cgRankFor(u.elo_rating);
   return (
-    <div className={`pod pod-${place}${u.you ? ' you' : ''}`}>
+    <div className={`pod pod-${place}${isYou ? ' you' : ''}`}>
       <div className="pod-medal">{place}</div>
-      <div className="pod-av">{u.initials}</div>
+      <div className="pod-av">{initialsOf(u.username)}</div>
       <div className="pod-h">
-        <span className="nm">{u.handle}</span>
-        {u.you && <span className="you-tag">YOU</span>}
+        <span className="nm">{u.username}</span>
+        {isYou && <span className="you-tag">YOU</span>}
       </div>
-      <TierBadge name={u.tier} color={u.tierColor} />
-      <div className="pod-rating">{u.rating}</div>
+      <TierBadge name={tier.name} color={tier.color} />
+      <div className="pod-rating">{u.elo_rating}</div>
       <div className="pod-sub">
         <Delta d={u.delta} />
         <span className="pod-max">

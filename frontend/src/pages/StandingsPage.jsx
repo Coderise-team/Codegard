@@ -9,25 +9,28 @@ import {
   StHead,
 } from '../components/standings/StandingsCards';
 import { useCurrentUser } from '../hooks/useCurrentUser';
-import standingsData from '../data/standingsData';
+import { useStandings } from '../hooks/useStandings';
 import './StandingsPage.css';
 
-const PAGE = 20; // infinite-scroll batch size
+// The podium holds the first three PLACES, not the first three people: dense
+// ranking lets several coders share a place.
+const PODIUM_PLACES = 3;
 
 /** StandingsPage — the global ELO leaderboard. */
 export default function StandingsPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
 
-  const DATA = standingsData;
-
   const [tier, setTier] = useState('All');
   const [sort, setSort] = useState({ key: 'rank', dir: 'asc' });
-  const [visible, setVisible] = useState(PAGE);
   const [youVis, setYouVis] = useState('below'); // above | visible | below
 
   const canvasRef = useRef(null);
   const youRowRef = useRef(null);
+
+  const params = useMemo(() => ({}), []);
+  const { items, count, total, you, hasMore, loading, loadMore } =
+    useStandings(params);
 
   const onSort = (key) =>
     setSort((s) =>
@@ -36,31 +39,9 @@ export default function StandingsPage() {
         : { key, dir: key === 'rank' ? 'asc' : 'desc' }
     );
 
-  // ---- filter + sort ----
-  const filtered = useMemo(() => {
-    const list = DATA.users.filter((u) => tier === 'All' || u.tier === tier);
-    const { key, dir } = sort;
-    const val = (u) =>
-      key === 'rank'
-        ? u.rank
-        : key === 'rating'
-          ? u.rating
-          : key === 'delta'
-            ? u.delta
-            : u.maxRating;
-    return [...list].sort((a, b) =>
-      dir === 'asc' ? val(a) - val(b) : val(b) - val(a)
-    );
-  }, [DATA.users, tier, sort]);
-
-  const isDefault = sort.key === 'rank' && sort.dir === 'asc';
-  const filtersOn = tier !== 'All' || !isDefault;
-  const showPodium = !filtersOn && filtered.length >= 3;
-
-  // the podium consumes the top 3 when shown
-  const listSource = showPodium ? filtered.slice(3) : filtered;
-  const shown = listSource.slice(0, visible);
-  const hasMore = visible < listSource.length;
+  const podium = items.filter((u) => u.globalRank <= PODIUM_PLACES);
+  const rows = items.filter((u) => u.globalRank > PODIUM_PLACES);
+  const isYou = (u) => u.username === user?.username;
 
   // ---- "your standing" position relative to the viewport ----
   const updateYou = useCallback(() => {
@@ -82,20 +63,13 @@ export default function StandingsPage() {
     updateYou();
     const el = canvasRef.current;
     if (!el || !hasMore) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 220) {
-      setVisible((v) => Math.min(v + PAGE, listSource.length));
-    }
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 220) loadMore();
   };
-
-  // reset paging when the result set changes
-  useEffect(() => {
-    setVisible(PAGE);
-  }, [tier, sort]);
 
   // recompute the "your standing" position whenever the rendered list changes
   useEffect(() => {
     updateYou();
-  }, [visible, showPodium, tier, sort, updateYou]);
+  }, [items, updateYou]);
 
   const fmt = (n) => n.toLocaleString('en-US');
 
@@ -115,26 +89,26 @@ export default function StandingsPage() {
             <div className="st-head">
               <h1>Global Standings</h1>
               <span className="sub">
-                <b>{fmt(DATA.total)}</b> coders
+                <b>{fmt(total)}</b> coders
               </span>
             </div>
 
             <div className="st-controls">
-              <TierSelect ranks={DATA.ranks} value={tier} onChange={setTier} />
+              <TierSelect value={tier} onChange={setTier} />
               <div className="st-count">
-                <b>{fmt(filtered.length)}</b> shown
+                <b>{fmt(count)}</b> shown
               </div>
             </div>
 
-            {showPodium && (
+            {podium.length > 0 && (
               <div className="podium">
-                <PodiumCard u={filtered[0]} place={1} />
-                <PodiumCard u={filtered[1]} place={2} />
-                <PodiumCard u={filtered[2]} place={3} />
+                {podium.map((u) => (
+                  <PodiumCard key={u.username} u={u} isYou={isYou(u)} />
+                ))}
               </div>
             )}
 
-            {filtered.length === 0 ? (
+            {!loading && items.length === 0 ? (
               <div className="st-empty">
                 <div className="ei">
                   <Icons.search size={20} />
@@ -146,11 +120,12 @@ export default function StandingsPage() {
               <>
                 <StHead sort={sort} onSort={onSort} />
                 <div className="st-list">
-                  {shown.map((u) => (
+                  {rows.map((u) => (
                     <StandingRow
-                      key={u.handle}
+                      key={u.username}
                       u={u}
-                      rowRef={u.you ? youRowRef : null}
+                      isYou={isYou(u)}
+                      rowRef={isYou(u) ? youRowRef : null}
                     />
                   ))}
                 </div>
@@ -166,11 +141,11 @@ export default function StandingsPage() {
         </div>
 
         {/* "your standing" — overlay, position tracks your row */}
-        {DATA.you && youVis !== 'visible' && (
+        {you && youVis !== 'visible' && (
           <div className={`st-youbar ${youVis}`}>
             <div className="st-youbar-in">
               <div className="lbl">Your standing</div>
-              <StandingRow u={DATA.you} />
+              <StandingRow u={you} isYou />
             </div>
           </div>
         )}
