@@ -225,3 +225,36 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save(update_fields=["password"])
         return user
+
+
+class StandingsRowSerializer(serializers.ModelSerializer):
+    """One row of the global ELO standings table.
+
+    ``globalRank`` (dense rank) and ``delta`` (last rated-contest change) are
+    injected as annotations by the view. The rank (Master/Expert/…) is not
+    returned — the frontend derives it from the rating, same as ``registrants``.
+    """
+
+    maxRating = serializers.IntegerField(source="max_rating", read_only=True)
+    globalRank = serializers.IntegerField(source="global_rank", read_only=True)
+    delta = serializers.IntegerField(read_only=True, allow_null=True)
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "username",
+            "avatar",
+            "elo_rating",
+            "maxRating",
+            "globalRank",
+            "delta",
+        ]
+
+    def get_avatar(self, obj):
+        # Absolute URL (needs request in context) or null; no thumbnails here —
+        # sorl.thumbnail would fire a query per row.
+        if not obj.avatar:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
