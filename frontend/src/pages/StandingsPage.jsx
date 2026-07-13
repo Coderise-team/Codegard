@@ -10,6 +10,7 @@ import {
 } from '../components/standings/StandingsCards';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useStandings } from '../hooks/useStandings';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import './StandingsPage.css';
 
 // The podium holds the first three PLACES, not the first three people: dense
@@ -42,6 +43,7 @@ export default function StandingsPage() {
   );
   const { items, count, total, you, hasMore, loading, loadMore } =
     useStandings(params);
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // A new column starts descending — best first is what you want to see.
   const onSort = (key) =>
@@ -91,13 +93,6 @@ export default function StandingsPage() {
     else setYouVis('visible');
   }, []);
 
-  const onScroll = () => {
-    updateYou();
-    const el = canvasRef.current;
-    if (!el || !hasMore) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 220) loadMore();
-  };
-
   // recompute the "your standing" position whenever the rendered list changes
   useEffect(() => {
     updateYou();
@@ -116,7 +111,7 @@ export default function StandingsPage() {
           onMenuClick={() => setNavOpen(true)}
         />
 
-        <div className="canvas scroll" ref={canvasRef} onScroll={onScroll}>
+        <div className="canvas scroll" ref={canvasRef} onScroll={updateYou}>
           <div className="canvas-in">
             <div className="st-head">
               <h1>Global Standings</h1>
@@ -167,7 +162,7 @@ export default function StandingsPage() {
                   ))}
                 </div>
                 {hasMore && (
-                  <div className="st-more">
+                  <div className="st-more" ref={sentinelRef}>
                     <span className="sp" />
                     Loading more…
                   </div>
