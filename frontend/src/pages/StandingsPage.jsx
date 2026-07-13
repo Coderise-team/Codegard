@@ -100,7 +100,7 @@ export default function StandingsPage() {
   const fmt = (n) => n.toLocaleString('en-US');
 
   return (
-    <div className="dash" data-density="compact">
+    <div className="dash st-page" data-density="compact">
       <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
 
       <div className="main">
