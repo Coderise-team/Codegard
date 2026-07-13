@@ -130,6 +130,8 @@ def apply_finished_contest_ratings(self) -> dict:
 
 
 def _broadcast_contest_ended(contest_ids: list[int]) -> None:
+    """Push a ``contest_ended`` event to each contest's ``contest_<id>`` group so
+    viewers' live pages close out. No-op if the channel layer isn't configured."""
     from apps.realtime.events import ContestEvents
     from asgiref.sync import async_to_sync
     from channels.layers import get_channel_layer

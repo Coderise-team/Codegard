@@ -11,6 +11,9 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "problem", "contest", "code", "language"]
 
     def validate(self, attrs):
+        """Enforce the contest submission rules: when a contest is given, the
+        problem must belong to it and the contest must currently be active
+        (status is refreshed from the clock before the check)."""
         contest = attrs.get("contest")
         problem = attrs.get("problem")
 
