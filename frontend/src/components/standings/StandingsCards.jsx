@@ -125,7 +125,7 @@ export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
         <TierBadge name={tier.name} color={tier.color} />
       </div>
       <div className="st-c num st-rating">{u.elo_rating}</div>
-      <div className="st-c num">
+      <div className="st-c num st-delta-c">
         <Delta d={u.delta} />
       </div>
       <div className="st-c num st-max">{u.maxRating ?? '—'}</div>

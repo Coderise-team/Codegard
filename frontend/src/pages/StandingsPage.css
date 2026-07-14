@@ -807,3 +807,101 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============================================================
+   RESPONSIVE
+   The shell (drawer, burger, collapsed sidebar) comes from Dashboard.css;
+   here only the leaderboard's own grid is reworked. No column is ever
+   dropped — every number stays on screen, it just moves.
+   ============================================================ */
+
+/* tablet: squeeze the fixed tracks before the row has to break */
+@media (max-width: 900px) {
+  .st-list,
+  .st-headrow,
+  .st-youbar,
+  [data-density='compact'] .st-list,
+  [data-density='compact'] .st-headrow,
+  [data-density='compact'] .st-youbar {
+    --st-cols: 40px minmax(0, 1fr) 124px 80px 74px 68px;
+  }
+  .st-headrow,
+  .st-row {
+    gap: 10px;
+  }
+}
+
+/* phone: the row breaks in two — identity on top, the numbers underneath */
+@media (max-width: 640px) {
+  .st-head h1 {
+    font-size: 20px;
+  }
+
+  /* the tier dropdown takes the full width, the count drops under it */
+  .st-tsel,
+  .st-tsel-btn {
+    width: 100%;
+    min-width: 0;
+  }
+  .st-count {
+    margin-left: 0;
+  }
+
+  /* podium stacks, gold first — the raised centre tile makes no sense in a
+     single column */
+  .podium {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pod-1,
+  .pod-2,
+  .pod-3 {
+    order: 0;
+    transform: none;
+  }
+
+  /* the column labels can no longer sit over a two-line row, so only the two
+     sort buttons stay */
+  .st-page .st-headrow {
+    grid-template-columns: auto auto;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 4px 4px 10px;
+  }
+  .st-headrow .sth-static {
+    display: none;
+  }
+
+  .st-page .st-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'rank user user rating'
+      'rank tier delta max';
+    row-gap: 8px;
+    column-gap: 10px;
+    padding: 10px 12px;
+  }
+  .st-rank {
+    grid-area: rank;
+    align-items: flex-start;
+    padding-top: 2px;
+  }
+  .st-user {
+    grid-area: user;
+  }
+  .st-rating {
+    grid-area: rating;
+  }
+  .st-tier-c {
+    grid-area: tier;
+  }
+  .st-delta-c {
+    grid-area: delta;
+  }
+  .st-max {
+    grid-area: max;
+  }
+
+  .st-youbar {
+    padding: 0 12px;
+  }
+}
