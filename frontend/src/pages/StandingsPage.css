@@ -196,8 +196,17 @@
   text-align: center;
   gap: 10px;
   cursor: pointer;
+  transition:
+    background 0.16s,
+    border-color 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
 }
+
+/* Each tile carries its own metal, so hover has one rule instead of three:
+   the card just gets more of the colour it already is. */
 .pod-1 {
+  --metal: var(--metal-gold);
   order: 2;
   transform: translateY(-14px);
   border-color: color-mix(in srgb, var(--metal-gold) 55%, transparent);
@@ -213,6 +222,7 @@
     0 16px 44px color-mix(in srgb, var(--metal-gold) 20%, transparent);
 }
 .pod-2 {
+  --metal: var(--metal-silver);
   order: 1;
   border-color: color-mix(in srgb, var(--metal-silver) 42%, transparent);
   background:
@@ -227,6 +237,7 @@
     0 16px 44px color-mix(in srgb, var(--metal-silver) 20%, transparent);
 }
 .pod-3 {
+  --metal: var(--metal-bronze);
   order: 3;
   border-color: color-mix(in srgb, var(--metal-bronze) 42%, transparent);
   background:
@@ -242,6 +253,27 @@
 }
 .pod.you {
   border-color: var(--gold-line);
+}
+
+/* hover — the same recipe, just more of it: brighter rim, deeper wash, wider
+   glow, all in the tile's own metal */
+.pod:hover {
+  border-color: color-mix(in srgb, var(--metal) 78%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal) 26%, transparent),
+      transparent 66%
+    ),
+    var(--card-2);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal) 65%, transparent),
+    0 22px 60px color-mix(in srgb, var(--metal) 34%, transparent);
+  transform: translateY(-3px);
+}
+/* the gold tile already rides high; keep it there and lift from where it is */
+.pod-1:hover {
+  transform: translateY(-17px);
 }
 
 .pod-medal {
