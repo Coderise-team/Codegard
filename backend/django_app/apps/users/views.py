@@ -2,10 +2,9 @@ from datetime import timedelta
 
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
-from django.db.models import Count
-from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import (
