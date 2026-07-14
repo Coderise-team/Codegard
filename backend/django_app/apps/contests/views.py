@@ -4,7 +4,6 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAdminUser,
     IsAuthenticated,
@@ -31,10 +30,6 @@ def _leaderboard_rank(contest, user_id):
         return user_ids.index(user_id) + 1
     except ValueError:
         return None
-
-
-class ContestLeaderboardPagination(PageNumberPagination):
-    page_size = 10
 
 
 class ContestViewSet(viewsets.ModelViewSet):
@@ -207,7 +202,7 @@ class ContestViewSet(viewsets.ModelViewSet):
         """GET /api/contests/{id}/leaderboard/ — standings, 10 rows per page."""
         contest = self.get_object()
 
-        paginator = ContestLeaderboardPagination()
+        paginator = ContestPanelPagination()
         page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
 
         start = paginator.page.start_index()
