@@ -2,6 +2,10 @@ import { memo, useEffect, useRef, useState } from 'react';
 import Icons from '../Icons';
 import { CG_RANKS, cgRankFor } from '../../utils/ranks';
 
+// How many places the podium covers. A place, not a person: dense ranking lets
+// several coders share one, so the podium can hold more than three of them.
+export const PODIUM_PLACES = 3;
+
 // Avatar badge fallback: first two letters of the username.
 const initialsOf = (username) => username.slice(0, 2).toUpperCase();
 
@@ -111,9 +115,13 @@ export function TierBadge({ name, color }) {
   );
 }
 
-/** Last rating change; null (no rated contest yet) renders as a dash. */
+/**
+ * Last rating change. A dash means the API sent null — no rated contest yet.
+ * A plain 0 means a contest that moved nothing: different fact, different mark.
+ */
 export function Delta({ d }) {
-  if (!d) return <span className="st-delta flat">·</span>;
+  if (d == null) return <span className="st-delta flat">·</span>;
+  if (d === 0) return <span className="st-delta flat">0</span>;
   const up = d > 0;
   return (
     <span className={`st-delta ${up ? 'up' : 'down'}`}>
@@ -123,10 +131,13 @@ export function Delta({ d }) {
   );
 }
 
-// Places are dense-ranked, so ties share a place and a medal: three tied
-// leaders all wear gold, and then place 3 may simply not exist.
+// A medal for every place the podium covers, plain digits below it. Places are
+// dense-ranked, so ties share a place AND its medal: three tied leaders all wear
+// gold, and place 3 may then simply not exist.
 function Medal({ place }) {
-  if (place <= 3) return <span className={`medal m${place}`}>{place}</span>;
+  if (place <= PODIUM_PLACES) {
+    return <span className={`medal m${place}`}>{place}</span>;
+  }
   return <span className="rn">{place}</span>;
 }
 
