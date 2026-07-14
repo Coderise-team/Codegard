@@ -498,3 +498,69 @@
     font-size: 42px;
   }
 }
+
+/* tablet: tighter insets, slimmer aside */
+@media (max-width: 960px) {
+  .cp-content {
+    padding: 32px 20px 32px 30px;
+  }
+  .cp-aside {
+    flex-basis: 280px;
+    width: 280px;
+  }
+}
+
+/* phone: the stage stacks — banner first, panel below it, one page scroll */
+@media (max-width: 640px) {
+  .cp-stage {
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .cp-stage::-webkit-scrollbar {
+    display: none;
+  }
+  .cp-content {
+    flex: 0 0 auto;
+    overflow: visible;
+    padding: 22px 16px;
+  }
+  /* no bottom edge to pin to — plain flow with a fixed gap instead */
+  .cp-c-in {
+    display: block;
+  }
+  .cp-bottom {
+    margin-top: 40px;
+  }
+
+  .cp-title {
+    font-size: 34px;
+  }
+  .cp-count .v {
+    font-size: 36px;
+  }
+
+  .cp-aside {
+    flex: 0 0 auto;
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .cp-aside-body {
+    overflow: visible;
+  }
+
+  /* collapsed edge tab becomes a horizontal bar under the banner */
+  .cp-aside-tab {
+    flex-direction: row;
+    width: auto;
+    height: 48px;
+    gap: 10px;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .cp-aside-tab .lbl {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+}
