@@ -10,6 +10,21 @@ _env_file = BASE_DIR.parent / ".env"
 if _env_file.exists():
     environ.Env.read_env(_env_file)
 
+# Empty credentials disable the provider.
+OAUTH_PROVIDERS = {
+    "google": {
+        "client_id": env("GOOGLE_OAUTH_CLIENT_ID"),
+        "client_secret": env("GOOGLE_OAUTH_CLIENT_SECRET"),
+    },
+    "github": {
+        "client_id": env("GITHUB_OAUTH_CLIENT_ID"),
+        "client_secret": env("GITHUB_OAUTH_CLIENT_SECRET"),
+    },
+}
+
+# Browser-facing origin the OAuth redirect_url is built on.
+OAUTH_REDIRECT_BASE = env("OAUTH_REDIRECT_BASE")
+
 INSTALLED_APPS = [
     "daphne",
     "django.contrib.admin",
@@ -158,5 +173,6 @@ RESERVED_USERNAMES = {
     "logout",
     "avatar",
     "token",
+    "oauth",
     "standings",
 }

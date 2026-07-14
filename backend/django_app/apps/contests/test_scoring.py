@@ -310,12 +310,13 @@ class TestLeaderboardAPI:
         response = api_client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        entry = response.data[0]
+        entry = response.data["results"][0]
         assert "rank" in entry
         assert "username" in entry
         assert "score" in entry
         assert "penalty" in entry
         assert "solved_count" in entry
+        assert "rating_delta" in entry
 
     def test_leaderboard_rank_starts_at_1(
         self, api_client, user, problem, active_contest
@@ -326,7 +327,7 @@ class TestLeaderboardAPI:
 
         url = reverse("contests-leaderboard", args=[active_contest.pk])
         response = api_client.get(url)
-        assert response.data[0]["rank"] == 1
+        assert response.data["results"][0]["rank"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -368,3 +369,60 @@ def test_contest_score_str_contains_fields(user, active_contest):
     text = str(score)
     assert "score=123" in text
     assert "penalty=45" in text
+
+
+# ---------------------------------------------------------------------------
+# Leaderboard pagination + rating_delta tests
+# ---------------------------------------------------------------------------
+
+
+def _leaderboard_url(contest, page=None):
+    url = reverse("contests-leaderboard", args=[contest.pk])
+    return f"{url}?page={page}" if page else url
+
+
+def fill_scores(contest, django_user_model, n):
+    for i in range(n):
+        participant = django_user_model.objects.create_user(
+            username=f"p{i}", email=f"p{i}@test.com", password="pass"
+        )
+        ContestScore.objects.create(
+            user=participant, contest=contest, score=100 * (n - i), penalty=i
+        )
+
+
+@pytest.mark.django_db
+class TestLeaderboardPagination:
+    def test_first_page_has_10_rows(
+        self, api_client, user, active_contest, django_user_model
+    ):
+        fill_scores(active_contest, django_user_model, 12)
+        api_client.force_authenticate(user=user)
+        response = api_client.get(_leaderboard_url(active_contest))
+        assert response.data["count"] == 12
+        assert len(response.data["results"]) == 10
+        assert response.data["next"] is not None
+
+    def test_second_page_rank_continues(
+        self, api_client, user, active_contest, django_user_model
+    ):
+        fill_scores(active_contest, django_user_model, 12)
+        api_client.force_authenticate(user=user)
+        response = api_client.get(_leaderboard_url(active_contest, page=2))
+        assert [row["rank"] for row in response.data["results"]] == [11, 12]
+
+    def test_full_tie_is_ordered_by_id(self, api_client, user, user2, active_contest):
+        ContestScore.objects.create(user=user, contest=active_contest)
+        ContestScore.objects.create(user=user2, contest=active_contest)
+        api_client.force_authenticate(user=user)
+        response = api_client.get(_leaderboard_url(active_contest))
+        usernames = [row["username"] for row in response.data["results"]]
+        assert usernames == [user.username, user2.username]
+
+    def test_rating_delta_in_response(self, api_client, user, active_contest):
+        ContestScore.objects.create(
+            user=user, contest=active_contest, score=100, rating_delta=48
+        )
+        api_client.force_authenticate(user=user)
+        response = api_client.get(_leaderboard_url(active_contest))
+        assert response.data["results"][0]["rating_delta"] == 48

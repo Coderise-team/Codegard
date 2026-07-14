@@ -1,0 +1,80 @@
+/* ============================================================
+   ERROR BOUNDARY — full-screen crash fallback (no app shell)
+   ============================================================ */
+/* body is overflow:hidden app-wide, so this screen carries its own scroll.
+   The card is centred with auto margins rather than by alignment: when it
+   outgrows the viewport the margins collapse and it stays scrollable from the
+   top, while centring would push its head above the scroll origin. */
+.eb {
+  height: 100dvh;
+  overflow-y: auto;
+  display: flex;
+  padding: var(--pad);
+  background: var(--bg);
+}
+
+.eb-card {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+  padding: 28px var(--pad);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--card);
+  text-align: center;
+}
+
+.eb-mark {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--wa);
+  background: var(--wa-soft);
+}
+
+.eb-t {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.eb-s {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg2);
+}
+
+.eb-dev {
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--wa);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.eb-cta {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap);
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .eb-cta {
+    flex-direction: column;
+  }
+}

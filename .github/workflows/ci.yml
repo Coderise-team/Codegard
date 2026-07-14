@@ -91,6 +91,11 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/codegard
           REDIS_URL: redis://localhost:6379/0
           CELERY_BROKER_URL: redis://localhost:6379/0
+          GOOGLE_OAUTH_CLIENT_ID: ""
+          GOOGLE_OAUTH_CLIENT_SECRET: ""
+          GITHUB_OAUTH_CLIENT_ID: ""
+          GITHUB_OAUTH_CLIENT_SECRET: ""
+          OAUTH_REDIRECT_BASE: http://localhost:5173
         run: uv run pytest --cov=django_app --cov-report=xml
 
       - name: Upload coverage to Codecov

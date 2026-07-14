@@ -6,6 +6,9 @@ from .views import (
     LoginView,
     LogoutView,
     MeView,
+    OAuthCallbackView,
+    OAuthRedeemView,
+    OAuthStartView,
     PasswordChangeView,
     RegisterView,
     StandingsView,
@@ -52,6 +55,13 @@ urlpatterns = [
         "<str:username>/difficulty/",
         UserDifficultyView.as_view(),
         name="user-difficulty",
+    ),
+    path("oauth/redeem/", OAuthRedeemView.as_view(), name="oauth-redeem"),
+    path("oauth/<str:provider>/start/", OAuthStartView.as_view(), name="oauth-start"),
+    path(
+        "oauth/<str:provider>/callback/",
+        OAuthCallbackView.as_view(),
+        name="oauth-callback",
     ),
     # Keep the bare detail route LAST so it doesn't shadow the more specific ones.
     path("<str:username>/", UserDetailView.as_view(), name="user-detail"),

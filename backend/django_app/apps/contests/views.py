@@ -199,18 +199,17 @@ class ContestViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticatedOrReadOnly],
     )
     def leaderboard(self, request, pk=None):
-        """GET /api/contests/{id}/leaderboard/"""
+        """GET /api/contests/{id}/leaderboard/ — standings, 10 rows per page."""
         contest = self.get_object()
-        entries = get_leaderboard(contest)
 
-        # Inject rank number
-        data = []
-        for rank, entry in enumerate(entries, start=1):
-            entry.rank = rank
-            data.append(entry)
+        paginator = ContestPanelPagination()
+        page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
+        start = paginator.page.start_index()
+        for offset, entry in enumerate(page):
+            entry.rank = start + offset
 
-        serializer = LeaderboardEntrySerializer(data, many=True)
-        return Response(serializer.data)
+        serializer = LeaderboardEntrySerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(
         detail=True,

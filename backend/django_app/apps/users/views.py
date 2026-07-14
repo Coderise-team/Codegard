@@ -4,7 +4,7 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.generics import (
@@ -24,7 +24,9 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from sorl.thumbnail import get_thumbnail
 
+from . import oauth
 from .models import EloHistory, User
+from .oauth import OAuthError
 from .pagination import StandingsPagination
 from .serializers import (
     AvatarUploadSerializer,
@@ -121,6 +123,55 @@ class LoginView(TokenObtainPairView):
     """Issue JWT tokens using either username or email credentials."""
 
     serializer_class = EmailOrUsernameTokenObtainSerializer
+
+
+class OAuthStartView(APIView):
+    """Hand the SPA a provider authorize URL with a fresh one-time state."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, provider: str):
+        try:
+            url = oauth.build_authorize_url(provider, oauth.issue_state(provider))
+        except OAuthError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"authorize_url": url})
+
+
+class OAuthCallbackView(APIView):
+    """Provider redirect target: verify state, resolve the user and send
+    the browser to the SPA with a one-time login ticket."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, provider: str):
+        code = request.query_params.get("code")
+        state = request.query_params.get("state")
+        if not code or not oauth.redeem_state(provider, state):
+            return redirect("/login?oauth_error=state")
+        try:
+            token = oauth.exchange_code(provider, code)
+            identity = oauth.fetch_identity(provider, token)
+            user = oauth.find_or_create_user(provider, identity)
+        except OAuthError as exc:
+            return redirect(f"/login?oauth_error={exc}")
+        return redirect(f"/oauth/callback?ticket={oauth.issue_login_ticket(user.id)}")
+
+
+class OAuthRedeemView(APIView):
+    """Exchange a one-time login ticket for the usual JWT pair."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        user_id = oauth.redeem_login_ticket(request.data.get("ticket"))
+        user = User.objects.filter(id=user_id).first() if user_id else None
+        if user is None:
+            return Response(
+                {"error": "Invalid ticket"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        refresh = RefreshToken.for_user(user)
+        return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
 class UserActivityView(APIView):
