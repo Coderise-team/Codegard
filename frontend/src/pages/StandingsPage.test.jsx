@@ -8,8 +8,15 @@ const IO = globalThis.IntersectionObserver;
 // The page owns the query mapping (sort column -> ?ordering, tier -> ?tier),
 // the podium grouping by PLACE, and the rule that hides the podium when the
 // order is reversed. Stub the data layer and assert on those.
-const { useStandings } = vi.hoisted(() => ({ useStandings: vi.fn() }));
+const { useStandings, navigate } = vi.hoisted(() => ({
+  useStandings: vi.fn(),
+  navigate: vi.fn(),
+}));
 vi.mock('../hooks/useStandings', () => ({ useStandings }));
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal()),
+  useNavigate: () => navigate,
+}));
 vi.mock('../hooks/useCurrentUser', () => ({
   useCurrentUser: () => ({ username: 'me', initials: 'ME' }),
 }));
@@ -46,6 +53,7 @@ const renderPage = () =>
 
 beforeEach(() => {
   useStandings.mockReset();
+  navigate.mockReset();
   IO.instances.length = 0;
   // Below the podium, so the column headers render and no tile gets in the way.
   useStandings.mockReturnValue(result([coder('ann', 4)]));
@@ -176,6 +184,44 @@ describe('StandingsPage podium', () => {
 
     act(() => observer.emit(true)); // your tile scrolled into view
     expect(container.querySelector('.st-youbar')).toBeNull();
+  });
+});
+
+describe('StandingsPage navigation', () => {
+  it('opens a coder profile from a list row', () => {
+    useStandings.mockReturnValue(result([coder('ann', 4)]));
+    const { container } = renderPage();
+
+    fireEvent.click(container.querySelector('.st-list .st-row'));
+    expect(navigate).toHaveBeenCalledWith('/users/ann');
+  });
+
+  it('sends your own name to your own profile instead', () => {
+    useStandings.mockReturnValue({
+      ...result([coder('me', 4)]),
+      you: coder('me', 4),
+    });
+    const { container } = renderPage();
+
+    fireEvent.click(container.querySelector('.st-youbar .st-row'));
+    expect(navigate).toHaveBeenCalledWith('/me');
+  });
+
+  it('opens the coder the podium tile is currently showing', () => {
+    useStandings.mockReturnValue(result([coder('ann', 1), coder('bob', 1)]));
+    const { container } = renderPage();
+
+    fireEvent.click(container.querySelector('.pod'));
+    expect(navigate).toHaveBeenCalledWith('/users/ann');
+  });
+
+  it('does not navigate when you page the tile with an arrow', () => {
+    useStandings.mockReturnValue(result([coder('ann', 1), coder('bob', 1)]));
+    const { container } = renderPage();
+
+    fireEvent.click(container.querySelector('.pod-arw.next'));
+    expect(navigate).not.toHaveBeenCalled();
+    expect(screen.getByText('bob')).toBeTruthy();
   });
 });
 
