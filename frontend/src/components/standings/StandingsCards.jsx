@@ -281,9 +281,11 @@ export function StHead({ sort, onSort }) {
       <span className="ar">{sort.dir === 'asc' ? '↑' : '↓'}</span>
     ) : null;
 
+  // The modifier class lets the phone layout park each button over the column
+  // it orders, once the labels around it are gone.
   const Btn = (key, label) => (
     <button
-      className={`sth num${sort?.key === key ? ' active' : ''}`}
+      className={`sth num sth-${key}${sort?.key === key ? ' active' : ''}`}
       onClick={() => onSort(key)}
     >
       {label}

@@ -929,46 +929,89 @@
     transform: none;
   }
 
-  /* the column labels can no longer sit over a two-line row, so only the two
-     sort buttons stay */
+  /* One line, same reading order as the wide layout: rank, coder, tier, rating,
+     peak. Only the delta steps down, under the rating it belongs to. Tracks are
+     shaved hard so all five still fit a 360px screen. */
+  .st-page .st-row,
   .st-page .st-headrow {
-    grid-template-columns: auto auto;
-    justify-content: flex-end;
-    gap: 16px;
-    padding: 4px 4px 10px;
+    grid-template-columns: 22px minmax(0, 1fr) auto 44px 40px;
+    column-gap: 8px;
   }
-  .st-headrow .sth-static {
-    display: none;
-  }
-
   .st-page .st-row {
-    grid-template-columns: 34px minmax(0, 1fr) auto auto;
     grid-template-areas:
-      'rank user user rating'
-      'rank tier delta max';
-    row-gap: 8px;
-    column-gap: 10px;
+      'rank user tier rating max'
+      'rank user tier delta  max';
+    row-gap: 2px;
     padding: 10px 12px;
   }
   .st-rank {
     grid-area: rank;
-    align-items: flex-start;
-    padding-top: 2px;
   }
   .st-user {
     grid-area: user;
-  }
-  .st-rating {
-    grid-area: rating;
+    gap: 8px;
   }
   .st-tier-c {
     grid-area: tier;
+  }
+  .st-rating {
+    grid-area: rating;
   }
   .st-delta-c {
     grid-area: delta;
   }
   .st-max {
     grid-area: max;
+  }
+
+  /* the labels have no room; the two sort buttons stay, each over its column */
+  .st-page .st-headrow {
+    padding: 4px 12px 10px;
+  }
+  .st-headrow .sth-static {
+    display: none;
+  }
+  .sth-rating {
+    grid-column: 4;
+  }
+  .sth-max {
+    grid-column: 5;
+  }
+  .sth,
+  .sth-static {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  /* shrink the pieces that would otherwise eat the coder's name */
+  .st-av {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+  .st-tier {
+    height: 20px;
+    padding: 0 7px;
+    gap: 5px;
+    font-size: 10.5px;
+  }
+  .st-rank .rn {
+    padding-left: 0;
+    font-size: 13px;
+  }
+  .medal {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    font-size: 11px;
+  }
+  .st-rating {
+    font-size: 15px;
+  }
+  .st-max,
+  .st-delta {
+    font-size: 12px;
   }
 
   .st-youbar {
