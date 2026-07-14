@@ -32,6 +32,7 @@ def _leaderboard_rank(contest, user_id):
         return None
 
 
+
 class ContestViewSet(viewsets.ModelViewSet):
     """
     CRUD for Contests + join action.
@@ -205,6 +206,12 @@ class ContestViewSet(viewsets.ModelViewSet):
         paginator = ContestPanelPagination()
         page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
 
+    def leaderboard(self, request, pk=None):
+        """GET /api/contests/{id}/leaderboard/ — standings, 10 rows per page."""
+        contest = self.get_object()
+
+        paginator = ContestLeaderboardPagination()
+        page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
         start = paginator.page.start_index()
         for offset, entry in enumerate(page):
             entry.rank = start + offset
