@@ -1,0 +1,54 @@
+/* ============================================================
+   NOT FOUND — 404 screen (dashboard shell + centered card)
+   ============================================================ */
+@import './Dashboard.css';
+
+.nf {
+  max-width: 420px;
+  margin: 12vh auto 0;
+  padding: 0 var(--pad);
+  text-align: center;
+}
+
+.nf-code {
+  font-family: var(--mono);
+  font-size: 66px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-shadow: 0 0 26px var(--accent-glow-2);
+}
+
+.nf-t {
+  margin-top: 18px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.nf-s {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg2);
+}
+
+.nf-cta {
+  display: flex;
+  justify-content: center;
+  gap: var(--gap);
+  margin-top: 22px;
+}
+
+@media (max-width: 640px) {
+  .nf {
+    margin-top: 8vh;
+  }
+  .nf-code {
+    font-size: 54px;
+  }
+  .nf-cta {
+    flex-direction: column;
+  }
+}
