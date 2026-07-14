@@ -60,30 +60,34 @@ beforeEach(() => {
 });
 
 describe('StandingsPage query', () => {
-  it('sends nothing at all by default and lets the server decide', () => {
-    renderPage();
-    expect(lastParams()).toEqual({});
-  });
+  it('asks for the best coders first, and says so in the header', () => {
+    const { container } = renderPage();
 
-  it('cycles a column through descending, ascending and back to default', () => {
-    renderPage();
-    const rating = () => screen.getByText('Rating');
-
-    fireEvent.click(rating()); // best first
+    // The ordering is always explicit — we never lean on the server's default.
     expect(lastParams()).toEqual({ ordering: '-elo_rating' });
-
-    fireEvent.click(rating()); // reversed
-    expect(lastParams()).toEqual({ ordering: 'elo_rating' });
-
-    fireEvent.click(rating()); // off — the server's default order again
-    expect(lastParams()).toEqual({});
+    // A board is always sorted by something, so the column is lit from the off.
+    expect(container.querySelector('.sth-rating.active')).toBeTruthy();
   });
 
-  it('starts a newly picked column descending', () => {
+  it('cycles a column through descending, ascending and back to the default', () => {
+    renderPage();
+    const max = () => screen.getByText('Max');
+
+    fireEvent.click(max()); // best peak first
+    expect(lastParams()).toEqual({ ordering: '-max_rating' });
+
+    fireEvent.click(max()); // reversed
+    expect(lastParams()).toEqual({ ordering: 'max_rating' });
+
+    fireEvent.click(max()); // third click hands the board back to the default
+    expect(lastParams()).toEqual({ ordering: '-elo_rating' });
+  });
+
+  it('flips the column the board already sits on', () => {
     renderPage();
 
-    fireEvent.click(screen.getByText('Max'));
-    expect(lastParams()).toEqual({ ordering: '-max_rating' });
+    fireEvent.click(screen.getByText('Rating'));
+    expect(lastParams()).toEqual({ ordering: 'elo_rating' });
   });
 
   it('sends the tier only once one is picked', () => {
@@ -91,7 +95,7 @@ describe('StandingsPage query', () => {
 
     fireEvent.click(screen.getByText('Filter by tier'));
     fireEvent.click(screen.getByText('Expert'));
-    expect(lastParams()).toEqual({ tier: 'Expert' });
+    expect(lastParams()).toEqual({ ordering: '-elo_rating', tier: 'Expert' });
   });
 
   it('leads with the peak rating once the table is sorted by it', () => {
@@ -140,7 +144,6 @@ describe('StandingsPage podium', () => {
     useStandings.mockReturnValue(result(tied));
     const { container } = renderPage();
 
-    fireEvent.click(screen.getByText('Rating')); // default -> desc
     fireEvent.click(screen.getByText('Rating')); // desc -> asc
 
     // Ascending drags the top places to the far end of the list, so a podium

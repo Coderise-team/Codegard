@@ -179,10 +179,13 @@ describe('StHead', () => {
     expect(onSort).toHaveBeenCalledWith('max');
   });
 
-  it('marks no column while the list sits in the default order', () => {
-    const { container } = render(<StHead sort={null} onSort={vi.fn()} />);
+  it('lights exactly the column the board is sorted by', () => {
+    const { container } = render(
+      <StHead sort={{ key: 'max', dir: 'asc' }} onSort={vi.fn()} />
+    );
 
-    expect(container.querySelector('.sth.active')).toBeNull();
-    expect(container.querySelector('.ar')).toBeNull();
+    expect(container.querySelector('.sth-max.active')).toBeTruthy();
+    expect(container.querySelector('.sth-rating.active')).toBeNull();
+    expect(container.querySelector('.sth-max .ar').textContent).toBe('↑');
   });
 });
