@@ -141,6 +141,25 @@ describe('StandingsPage podium', () => {
     expect(container.querySelectorAll('.st-list .st-row')).toHaveLength(5);
   });
 
+  it('drops the podium and the floating bar under a tier filter', () => {
+    // The world's top three happen to be in this tier, but a filtered board is
+    // a search: everyone shows as an ordinary row, and nothing floats.
+    useStandings.mockReturnValue({
+      ...result(tied),
+      you: coder('me', 9),
+    });
+    const { container } = renderPage();
+    expect(container.querySelectorAll('.pod').length).toBeGreaterThan(0);
+    expect(container.querySelector('.st-youbar')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Filter by tier'));
+    fireEvent.click(screen.getByText('Kernel'));
+
+    expect(container.querySelectorAll('.pod')).toHaveLength(0);
+    expect(container.querySelector('.st-youbar')).toBeNull();
+    expect(container.querySelectorAll('.st-list .st-row')).toHaveLength(5);
+  });
+
   it('hides the floating bar once your own podium tile is on screen', () => {
     // 'me' shares 1st place, so there is no row of mine in the list at all —
     // the tracker has to ride the tile, or the bar would never let go.

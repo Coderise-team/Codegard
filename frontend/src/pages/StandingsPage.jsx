@@ -60,9 +60,14 @@ export default function StandingsPage() {
   // Which number the table is ranked by right now; it gets the loud styling.
   const metric = sort?.key === 'max' ? 'max' : 'rating';
 
-  // Ascending order drags the top places to the very end of the list, where the
-  // podium would sit empty until you scrolled all the way down — so hide it.
-  const showPodium = !sort || sort.dir === 'desc';
+  const filtered = tier !== 'All';
+
+  // The podium is a view of the top of the WORLD, so it only belongs on the
+  // unfiltered board. Filter by tier and it goes away entirely — even when the
+  // world's top three happen to sit in that tier, they show as ordinary rows.
+  // Ascending order kills it too: the top places would land at the far end of
+  // the list, leaving the podium empty until you scrolled all the way down.
+  const showPodium = !filtered && (!sort || sort.dir === 'desc');
 
   // One tile per PLACE, holding everyone who shares it.
   const podium = useMemo(() => {
@@ -184,8 +189,10 @@ export default function StandingsPage() {
           </div>
         </div>
 
-        {/* "your standing" — overlay, position tracks your row */}
-        {you && youVis !== 'visible' && (
+        {/* "your standing" — overlay, position tracks your row. A tier filter is
+            a deliberate search, not a look at where you stand, so the bar stays
+            out of it. */}
+        {you && !filtered && youVis !== 'visible' && (
           <div className={`st-youbar ${youVis}`}>
             <div className="st-youbar-in">
               <div className="lbl">Your standing</div>
