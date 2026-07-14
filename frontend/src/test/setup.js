@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
 
-// jsdom has no IntersectionObserver, but useInfiniteScroll constructs one, so a
-// mounting test would crash without a stand-in. This stub records each instance
-// so a test can fire its callback (simulate the sentinel scrolling into view);
-// tests that don't care just get harmless no-ops.
+// jsdom has no IntersectionObserver, but useInfiniteScroll and useRowPosition
+// both construct one, so a mounting test would crash without a stand-in. This
+// stub records each instance so a test can fire its callback (simulate the node
+// crossing into view); tests that don't care just get harmless no-ops.
 class IntersectionObserverStub {
   constructor(callback, options = {}) {
     this.callback = callback;

@@ -279,16 +279,14 @@ export function PodiumCard({
 }
 
 /**
- * Column headers. Only Rating and Max are sortable — the server orders by
- * those two fields alone. Rank is not a sort key of its own (it IS the order
- * of the active field), and there is no ordering by Last Δ.
- *
- * `sort` is null while the list sits in the server's default order, which is
- * what a third click on a column returns it to.
+ * Column headers. Only Rating and Max are sortable — the server orders by those
+ * two fields alone. Rank is not a sort key of its own (it IS the order of the
+ * active field), and there is no ordering by Last Δ. A board is always sorted by
+ * something, so one column is always lit.
  */
 export function StHead({ sort, onSort }) {
   const arrow = (key) =>
-    sort?.key === key ? (
+    sort.key === key ? (
       <span className="ar">{sort.dir === 'asc' ? '↑' : '↓'}</span>
     ) : null;
 
@@ -296,7 +294,7 @@ export function StHead({ sort, onSort }) {
   // it orders, once the labels around it are gone.
   const Btn = (key, label) => (
     <button
-      className={`sth num sth-${key}${sort?.key === key ? ' active' : ''}`}
+      className={`sth num sth-${key}${sort.key === key ? ' active' : ''}`}
       onClick={() => onSort(key)}
     >
       {label}

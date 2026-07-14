@@ -19,6 +19,11 @@ import './StandingsPage.css';
 // Sort column -> API ordering field ('-' prefix for descending).
 const ORDER_FIELD = { rating: 'elo_rating', max: 'max_rating' };
 
+// Best rating first. Also where a column returns the board to once you have
+// cycled it through — a leaderboard is never "unsorted", so this is the reset,
+// and the header says so instead of leaving every column unlit.
+const DEFAULT_SORT = { key: 'rating', dir: 'desc' };
+
 /** StandingsPage — the global ELO leaderboard. */
 export default function StandingsPage() {
   const user = useCurrentUser();
@@ -26,21 +31,20 @@ export default function StandingsPage() {
   const [navOpen, setNavOpen] = useState(false);
 
   const [tier, setTier] = useState('All');
-  // null = the server's own default order (best rating first).
-  const [sort, setSort] = useState(null);
+  const [sort, setSort] = useState(DEFAULT_SORT);
 
   const canvasRef = useRef(null);
   // The floating bar docks to whichever edge your own row went past.
   const [youVis, youRowRef] = useRowPosition(canvasRef);
 
-  // Params the server does not need are left out entirely: no sort means no
-  // `ordering` (it falls back to its own default), "All" means no `tier`. The
-  // server maps a tier name to its rating band itself (the ladder lives in
-  // RANK_THRESHOLDS there, in CG_RANKS here).
+  // "All" means no `tier` param at all; the server maps a tier name to its
+  // rating band itself (the ladder lives in RANK_THRESHOLDS there, in CG_RANKS
+  // here). The ordering is always explicit — we never lean on the server's
+  // default, so the two can never drift apart.
   const params = useMemo(() => {
-    const p = {};
-    if (sort)
-      p.ordering = `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`;
+    const p = {
+      ordering: `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`,
+    };
     if (tier !== 'All') p.tier = tier;
     return p;
   }, [sort, tier]);
@@ -49,15 +53,15 @@ export default function StandingsPage() {
     useStandings(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
-  // Click cycle: descending (best first) -> ascending -> off, back to default.
+  // Click cycle: descending (best first) -> ascending -> back to the default.
   const onSort = (key) =>
     setSort((s) => {
-      if (s?.key !== key) return { key, dir: 'desc' };
-      return s.dir === 'desc' ? { key, dir: 'asc' } : null;
+      if (s.key !== key) return { key, dir: 'desc' };
+      return s.dir === 'desc' ? { key, dir: 'asc' } : DEFAULT_SORT;
     });
 
   // Which number the table is ranked by right now; it gets the loud styling.
-  const metric = sort?.key === 'max' ? 'max' : 'rating';
+  const metric = sort.key;
 
   const filtered = tier !== 'All';
 
@@ -66,7 +70,7 @@ export default function StandingsPage() {
   // world's top three happen to sit in that tier, they show as ordinary rows.
   // Ascending order kills it too: the top places would land at the far end of
   // the list, leaving the podium empty until you scrolled all the way down.
-  const showPodium = !filtered && (!sort || sort.dir === 'desc');
+  const showPodium = !filtered && sort.dir === 'desc';
 
   // One tile per PLACE, holding everyone who shares it.
   const podium = useMemo(() => {
