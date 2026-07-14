@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
@@ -8,16 +8,13 @@ import {
   StandingRow,
   PodiumCard,
   StHead,
+  PODIUM_PLACES,
 } from '../components/standings/StandingsCards';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useStandings } from '../hooks/useStandings';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useRowPosition } from '../hooks/useRowPosition';
 import './StandingsPage.css';
-
-// The podium holds the first three PLACES, not the first three people: dense
-// ranking lets several coders share a place.
-const PODIUM_PLACES = 3;
 
 // Sort column -> API ordering field ('-' prefix for descending).
 const ORDER_FIELD = { rating: 'elo_rating', max: 'max_rating' };
@@ -93,8 +90,13 @@ export default function StandingsPage() {
 
   // Your own name goes to your own profile — a page that does not exist yet, so
   // the link is dead on purpose and will start working the day /me lands.
-  const openUser = (username) =>
-    navigate(username === user?.username ? '/me' : `/users/${username}`);
+  // Memoised: StandingRow is memo()'d, and a fresh handler on every render would
+  // re-render every row on the board for nothing.
+  const openUser = useCallback(
+    (username) =>
+      navigate(username === user?.username ? '/me' : `/users/${username}`),
+    [navigate, user?.username]
+  );
 
   // Your own entry lives either on the podium or in the list, never both — and
   // the floating bar has to hide once EITHER of them is on screen, so the
@@ -104,8 +106,7 @@ export default function StandingsPage() {
     ? podium.find(({ users }) => users.some(isYou))?.place
     : undefined;
 
-  // A count we don't have yet is simply not shown — never a placeholder zero.
-  const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : null);
+  const fmt = (n) => n.toLocaleString('en-US');
 
   return (
     <div className="dash st-page" data-density="compact">
