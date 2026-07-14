@@ -53,11 +53,13 @@ export default function ProfilePage() {
 
   // An unknown username is a 404, not a failure — any other error (server down,
   // connection dropped) has to say so instead of blaming the nickname.
+  // The nickname itself is never echoed back: it comes straight from the URL,
+  // so a crafted link could put any text on a page that looks like ours.
   if (isNotFound(error)) {
     return (
       <NotFoundPage
         title="User not found"
-        sub={`Nobody goes by “${username}” here — check the spelling.`}
+        sub="This user doesn’t exist, or the profile was removed."
       />
     );
   }
