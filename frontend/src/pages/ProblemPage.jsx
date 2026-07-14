@@ -4,8 +4,10 @@ import Sidebar from '../components/layout/Sidebar';
 import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import VerdictToast from '../components/problem/VerdictToast';
+import NotFoundPage from './NotFoundPage';
 import { createSubmission, getSubmission } from '../api/submissions';
 import { waitForVerdict } from '../api/verdict';
+import { isNotFound } from '../utils/errors';
 import { toastFor } from '../utils/submissionToast';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblem } from '../hooks/useProblem';
@@ -22,7 +24,7 @@ export default function ProblemPage() {
   const { id } = useParams();
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
-  const { data: problem, loading } = useProblem(id);
+  const { data: problem, loading, error } = useProblem(id);
   const { data: languages, loading: langsLoading } = useLanguages();
   const { data: submissions, reload } = useProblemSubmissions(id);
   const [busy, setBusy] = useState(null);
@@ -69,6 +71,17 @@ export default function ProblemPage() {
     }
   };
 
+  // A problem that isn't there is a 404, not a failure — anything else (server
+  // down, connection dropped) has to say so instead of blaming the URL.
+  if (isNotFound(error)) {
+    return (
+      <NotFoundPage
+        title="Problem not found"
+        sub="This problem doesn’t exist, or the link is out of date."
+      />
+    );
+  }
+
   // The workspace needs both the statement and the language templates
   // (the editor starts from the selected language's starter code).
   const ready = problem && languages?.length;
@@ -92,7 +105,9 @@ export default function ProblemPage() {
         />
       ) : (
         <div className="pp-empty">
-          {loading || langsLoading ? 'Loading problem…' : 'Problem not found.'}
+          {loading || langsLoading
+            ? 'Loading problem…'
+            : 'Couldn’t load the problem — please try again.'}
         </div>
       )}
       {toast && <VerdictToast {...toast} onClose={() => setToast(null)} />}
