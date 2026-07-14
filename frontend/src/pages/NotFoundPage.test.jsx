@@ -22,10 +22,9 @@ describe('NotFoundPage', () => {
 
     expect(screen.getByText('404')).toBeInTheDocument();
     expect(screen.getByText('Page not found')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Go to dashboard' })).toHaveAttribute(
-      'href',
-      '/'
-    );
+    expect(
+      screen.getByRole('link', { name: 'Go to dashboard' })
+    ).toHaveAttribute('href', '/');
   });
 
   it('takes over the copy when a page reuses it for a missing resource', () => {

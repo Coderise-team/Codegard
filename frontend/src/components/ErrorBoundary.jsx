@@ -26,7 +26,9 @@ export default function ErrorBoundary() {
           try again in a minute.
         </p>
 
-        {import.meta.env.DEV && detail && <pre className="eb-dev">{detail}</pre>}
+        {import.meta.env.DEV && detail && (
+          <pre className="eb-dev">{detail}</pre>
+        )}
 
         <div className="eb-cta">
           <button
