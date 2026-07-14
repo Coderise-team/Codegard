@@ -182,7 +182,12 @@ export default function StandingsPage() {
                   <Icons.search size={20} />
                 </div>
                 <div className="et">No coders found</div>
-                <div className="es">Try a different tier filter.</div>
+                {/* Don't send anyone off to change a filter they never set. */}
+                <div className="es">
+                  {filtered
+                    ? 'No one holds this tier yet. Try another one.'
+                    : 'The board is empty — nobody is ranked yet.'}
+                </div>
               </div>
             ) : (
               <>
