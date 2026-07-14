@@ -4,6 +4,14 @@ from django.utils import timezone
 
 
 class Contest(models.Model):
+    """A timed competitive round with its own problem set and participants.
+
+    ``status`` is a cached mirror of the clock (pending/active/finished): it is
+    recomputed from ``start_time``/``end_time`` on every save, so it can lag
+    until the next write — time-sensitive logic should compare timestamps
+    directly rather than trust the stored ``status``.
+    """
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         ACTIVE = "active", "Active"
@@ -48,6 +56,7 @@ class Contest(models.Model):
         return f"{self.title} ({self.status})"
 
     def _compute_status(self, now):
+        """Return the status implied by ``now`` vs the start/end window."""
         if now < self.start_time:
             return self.Status.PENDING
         if self.start_time <= now <= self.end_time:
@@ -55,6 +64,11 @@ class Contest(models.Model):
         return self.Status.FINISHED
 
     def save(self, *args, **kwargs):
+        """Persist the contest, refreshing ``status`` from the clock first.
+
+        Side effect worth knowing: any save recomputes ``status`` from
+        start/end times, so it can flip pending↔active↔finished implicitly.
+        """
         # Ensure status is consistent at creation/update time.
         if self.start_time and self.end_time:
             self.status = self._compute_status(timezone.now())

@@ -2,6 +2,8 @@ from django.db import models
 
 
 class Tag(models.Model):
+    """A topic label (e.g. "dp", "graphs") attached to problems for filtering."""
+
     name = models.CharField(max_length=50, unique=True)
 
     class Meta:
@@ -12,6 +14,9 @@ class Tag(models.Model):
 
 
 class Problem(models.Model):
+    """A single algorithmic task: statement, limits, difficulty, tags, and the
+    test cases the judge runs a submission against."""
+
     class Difficulty(models.TextChoices):
         EASY = "easy", "Easy"
         MEDIUM = "medium", "Medium"
@@ -81,6 +86,9 @@ class DailyProblem(models.Model):
 
 
 class TestCase(models.Model):
+    """One input/expected-output pair for a problem. Visible cases are shown as
+    examples in the statement; hidden ones are used only by the judge."""
+
     __test__ = False
 
     problem = models.ForeignKey(

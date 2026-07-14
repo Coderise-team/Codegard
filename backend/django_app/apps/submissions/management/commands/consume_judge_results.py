@@ -138,6 +138,13 @@ class Command(BaseCommand):
     help = "Consume judge results from Redis and apply verdicts to submissions."
 
     def handle(self, *args, **options):
+        """Run the blocking drain loop until SIGTERM/SIGINT.
+
+        Recovers orphaned results on startup, then repeatedly ``BLMOVE``s one
+        result from the queue into a processing list and applies it, touching a
+        heartbeat file each pass for the docker healthcheck and shutting down
+        cleanly on a signal boundary.
+        """
         # Surface this command's INFO logs even without a project-wide LOGGING
         # config: setting the level alone is not enough — there's no handler, so
         # records propagate to root where the default handler drops < WARNING.

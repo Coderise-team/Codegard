@@ -10,9 +10,11 @@ import ProfileHeader from '../components/profile/ProfileHeader';
 import ProfileRing from '../components/profile/ProfileRing';
 import RatingChart from '../components/profile/RatingChart';
 import DifficultyBreakdown from '../components/profile/DifficultyBreakdown';
+import NotFoundPage from './NotFoundPage';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProfile } from '../hooks/useProfile';
 import { useStreak } from '../hooks/useStreak';
+import { isNotFound } from '../utils/errors';
 import { cgRankFor } from '../utils/ranks';
 import './ProfilePage.css';
 
@@ -49,6 +51,19 @@ export default function ProfilePage() {
     },
   ];
 
+  // An unknown username is a 404, not a failure — any other error (server down,
+  // connection dropped) has to say so instead of blaming the nickname.
+  // The nickname itself is never echoed back: it comes straight from the URL,
+  // so a crafted link could put any text on a page that looks like ours.
+  if (isNotFound(error)) {
+    return (
+      <NotFoundPage
+        title="User not found"
+        sub="This user does not exist, or the profile was removed."
+      />
+    );
+  }
+
   // Rank-tinted variables (header gradient, avatar, rank chip, ELO ring).
   const color = user ? cgRankFor(user.elo_rating).color : 'var(--fg3)';
   const rankVars = {
@@ -72,7 +87,11 @@ export default function ProfilePage() {
         <div className="canvas scroll">
           <div className="canvas-in">
             {loading && <div className="list-msg">Loading…</div>}
-            {error && <div className="list-msg">Couldn’t load profile.</div>}
+            {error && (
+              <div className="list-msg">
+                Could not load this profile. Please try again.
+              </div>
+            )}
 
             {user && (
               <div className="lay-overview">

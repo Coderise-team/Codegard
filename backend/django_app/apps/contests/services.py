@@ -95,12 +95,12 @@ def calculate_score(user, contest: Contest) -> ContestScore:
 def get_leaderboard(contest: Contest):
     """
     Return leaderboard queryset for a contest.
-    Sorted by: score DESC → penalty ASC → last_ac_at ASC
+    Sorted by: score DESC → penalty ASC → last_ac_at ASC → id ASC
     """
     return (
         ContestScore.objects.filter(contest=contest)
         .select_related("user")
-        .order_by("-score", "penalty", "last_ac_at")
+        .order_by("-score", "penalty", "last_ac_at", "id")
     )
 
 
@@ -157,7 +157,10 @@ def get_contest_history(user):
                 Subquery(problems_count, output_field=IntegerField()), Value(0)
             ),
         )
-        .order_by("-contest__end_time")
+        # `-id` tiebreak: contests can share an end_time, and the DB doesn't
+        # guarantee row order for equal sort keys — without it, pagination
+        # pages would reshuffle (duplicates / gaps at page boundaries).
+        .order_by("-contest__end_time", "-id")
     )
 
 

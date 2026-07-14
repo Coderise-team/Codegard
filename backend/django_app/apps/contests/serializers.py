@@ -1,7 +1,10 @@
 from apps.problems.models import Problem
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import Contest, ContestScore
+
+User = get_user_model()
 
 
 class ContestProblemSerializer(serializers.ModelSerializer):
@@ -10,6 +13,10 @@ class ContestProblemSerializer(serializers.ModelSerializer):
 
     Important: does NOT include test cases (hidden or visible).
     """
+
+    # Unique solvers of this problem IN THIS contest, injected as an annotation
+    # by the retrieve view's prefetch (0 when the annotation is absent).
+    solved_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Problem
@@ -20,7 +27,20 @@ class ContestProblemSerializer(serializers.ModelSerializer):
             "difficulty",
             "time_limit",
             "memory_limit",
+            "solved_count",
         ]
+
+
+class ContestRegistrantSerializer(serializers.ModelSerializer):
+    """A single registered participant for the contest's "Registered" panel.
+
+    Only username + rating — the frontend derives the rank/title from the rating
+    (ranks.js), the backend neither knows nor should know titles.
+    """
+
+    class Meta:
+        model = User
+        fields = ["username", "elo_rating"]
 
 
 class ContestSerializer(serializers.ModelSerializer):
@@ -68,12 +88,23 @@ class ContestSerializer(serializers.ModelSerializer):
 
 
 class ContestDetailSerializer(ContestSerializer):
-    """Retrieve serializer — includes full problem list."""
+    """Retrieve serializer — includes the problem list once the contest starts."""
 
-    problems = ContestProblemSerializer(many=True, read_only=True)
+    problems = serializers.SerializerMethodField()
 
     class Meta(ContestSerializer.Meta):
         fields = ContestSerializer.Meta.fields + ["problems"]
+
+    def get_problems(self, obj):
+        # Don't leak problem statements before the round begins. Gate by the
+        # clock (start_time), not the cached `status`, which can lag. Once live
+        # (and after finish) the full list is served, with `solved_count` from
+        # the view's annotated prefetch. `problems_count` stays honest either way.
+        from django.utils import timezone
+
+        if obj.start_time and obj.start_time > timezone.now():
+            return []
+        return ContestProblemSerializer(obj.problems.all(), many=True).data
 
 
 class ContestWriteSerializer(serializers.ModelSerializer):
@@ -117,6 +148,7 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
             "penalty",
             "solved_count",
             "last_ac_at",
+            "rating_delta",
         ]
 
     def get_rank(self, obj):
