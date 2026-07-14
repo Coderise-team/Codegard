@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -24,6 +25,7 @@ const ORDER_FIELD = { rating: 'elo_rating', max: 'max_rating' };
 /** StandingsPage — the global ELO leaderboard. */
 export default function StandingsPage() {
   const user = useCurrentUser();
+  const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
 
   const [tier, setTier] = useState('All');
@@ -89,6 +91,11 @@ export default function StandingsPage() {
     : items;
   const isYou = (u) => u.username === user?.username;
 
+  // Your own name goes to your own profile — a page that does not exist yet, so
+  // the link is dead on purpose and will start working the day /me lands.
+  const openUser = (username) =>
+    navigate(username === user?.username ? '/me' : `/users/${username}`);
+
   // Your own entry lives either on the podium or in the list, never both — and
   // the floating bar has to hide once EITHER of them is on screen, so the
   // tracker follows whichever one holds you. On the podium that's the tile for
@@ -146,6 +153,7 @@ export default function StandingsPage() {
                     metric={metric}
                     youUsername={user?.username}
                     cardRef={place === youPlace ? youRowRef : null}
+                    onOpen={openUser}
                   />
                 ))}
               </div>
@@ -180,6 +188,7 @@ export default function StandingsPage() {
                       metric={metric}
                       isYou={isYou(u)}
                       rowRef={isYou(u) && !youPlace ? youRowRef : null}
+                      onOpen={openUser}
                     />
                   ))}
                 </div>
@@ -201,7 +210,7 @@ export default function StandingsPage() {
           <div className={`st-youbar ${youVis}`}>
             <div className="st-youbar-in">
               <div className="lbl">Your standing</div>
-              <StandingRow u={you} metric={metric} isYou />
+              <StandingRow u={you} metric={metric} isYou onOpen={openUser} />
             </div>
           </div>
         )}

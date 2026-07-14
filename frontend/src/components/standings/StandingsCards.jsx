@@ -135,13 +135,18 @@ export const StandingRow = memo(function StandingRow({
   metric = 'rating',
   isYou,
   rowRef,
+  onOpen,
 }) {
   const tier = cgRankFor(u.elo_rating);
   // Cells keep their place; `by-max` only swaps which number is loud, so the
   // column you sorted by is the one you read.
   const cls = `st-row${isYou ? ' you' : ''}${metric === 'max' ? ' by-max' : ''}`;
   return (
-    <div ref={rowRef || null} className={cls}>
+    <div
+      ref={rowRef || null}
+      className={cls}
+      onClick={() => onOpen?.(u.username)}
+    >
       <div className="st-rank">
         <Medal place={u.globalRank} />
       </div>
@@ -179,6 +184,7 @@ export function PodiumCard({
   metric = 'rating',
   youUsername,
   cardRef,
+  onOpen,
 }) {
   const [idx, setIdx] = useState(0);
   const many = users.length > 1;
@@ -207,7 +213,11 @@ export function PodiumCard({
   const cls = `pod pod-${place}${isYou ? ' you' : ''}${many ? ' has-rev' : ''}`;
 
   return (
-    <div ref={cardRef || null} className={cls}>
+    <div
+      ref={cardRef || null}
+      className={cls}
+      onClick={() => onOpen?.(u.username)}
+    >
       <div className="pod-medal">{place}</div>
       <div className="pod-av">{initialsOf(u.username)}</div>
       <div className="pod-h">
@@ -225,17 +235,24 @@ export function PodiumCard({
 
       {many && (
         <>
+          {/* the tile itself opens a profile, so paging must not bubble up */}
           <button
             className="pod-arw prev"
             aria-label="Previous coder"
-            onClick={() => setIdx((i) => i + users.length - 1)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIdx((i) => i + users.length - 1);
+            }}
           >
             <RevolverChevron />
           </button>
           <button
             className="pod-arw next"
             aria-label="Next coder"
-            onClick={() => setIdx((i) => i + 1)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIdx((i) => i + 1);
+            }}
           >
             <RevolverChevron />
           </button>
