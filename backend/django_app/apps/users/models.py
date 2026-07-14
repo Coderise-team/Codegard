@@ -43,3 +43,35 @@ class EloHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username}: {self.rating} ({self.created_at:%Y-%m-%d})"
+
+
+class OAuthAccount(models.Model):
+    """Link between a local user and an external OAuth identity.
+
+    One row per (provider, provider_uid): the same Google/GitHub account
+    always resolves to the same local user, no matter which email it shows.
+    """
+
+    class Provider(models.TextChoices):
+        GOOGLE = "google", "Google"
+        GITHUB = "github", "GitHub"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="oauth_accounts",
+    )
+    provider = models.CharField(max_length=16, choices=Provider.choices)
+    provider_uid = models.CharField(max_length=191)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "provider_uid"],
+                name="uniq_oauth_provider_uid",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username}: {self.provider}"
