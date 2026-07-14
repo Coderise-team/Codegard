@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+
+// The stub from src/test/setup.js; the page observes whichever node holds you.
+const IO = globalThis.IntersectionObserver;
 
 // The page owns the query mapping (sort column -> ?ordering, tier -> ?tier),
 // the podium grouping by PLACE, and the rule that hides the podium when the
@@ -43,21 +46,29 @@ const renderPage = () =>
 
 beforeEach(() => {
   useStandings.mockReset();
+  IO.instances.length = 0;
   // Below the podium, so the column headers render and no tile gets in the way.
   useStandings.mockReturnValue(result([coder('ann', 4)]));
 });
 
 describe('StandingsPage query', () => {
-  it('asks for the best coders first and no tier filter by default', () => {
+  it('sends nothing at all by default and lets the server decide', () => {
     renderPage();
-    expect(lastParams()).toEqual({ ordering: '-elo_rating' });
+    expect(lastParams()).toEqual({});
   });
 
-  it('flips the ordering when the same column is clicked again', () => {
+  it('cycles a column through descending, ascending and back to default', () => {
     renderPage();
+    const rating = () => screen.getByText('Rating');
 
-    fireEvent.click(screen.getByText('Rating'));
+    fireEvent.click(rating()); // best first
+    expect(lastParams()).toEqual({ ordering: '-elo_rating' });
+
+    fireEvent.click(rating()); // reversed
     expect(lastParams()).toEqual({ ordering: 'elo_rating' });
+
+    fireEvent.click(rating()); // off — the server's default order again
+    expect(lastParams()).toEqual({});
   });
 
   it('starts a newly picked column descending', () => {
@@ -72,7 +83,17 @@ describe('StandingsPage query', () => {
 
     fireEvent.click(screen.getByText('Filter by tier'));
     fireEvent.click(screen.getByText('Expert'));
-    expect(lastParams()).toEqual({ ordering: '-elo_rating', tier: 'Expert' });
+    expect(lastParams()).toEqual({ tier: 'Expert' });
+  });
+
+  it('leads with the peak rating once the table is sorted by it', () => {
+    useStandings.mockReturnValue(result([coder('ann', 4)]));
+    const { container } = renderPage();
+
+    expect(container.querySelector('.st-row.by-max')).toBeNull();
+
+    fireEvent.click(screen.getByText('Max'));
+    expect(container.querySelector('.st-row.by-max')).toBeTruthy();
   });
 });
 
@@ -111,12 +132,31 @@ describe('StandingsPage podium', () => {
     useStandings.mockReturnValue(result(tied));
     const { container } = renderPage();
 
+    fireEvent.click(screen.getByText('Rating')); // default -> desc
     fireEvent.click(screen.getByText('Rating')); // desc -> asc
 
     // Ascending drags the top places to the far end of the list, so a podium
     // would sit empty; the top places go back into the list instead.
     expect(container.querySelectorAll('.pod')).toHaveLength(0);
     expect(container.querySelectorAll('.st-list .st-row')).toHaveLength(5);
+  });
+
+  it('hides the floating bar once your own podium tile is on screen', () => {
+    // 'me' shares 1st place, so there is no row of mine in the list at all —
+    // the tracker has to ride the tile, or the bar would never let go.
+    useStandings.mockReturnValue({
+      ...result([coder('ann', 1), coder('me', 1), coder('cid', 2)]),
+      you: coder('me', 1),
+    });
+    const { container } = renderPage();
+
+    expect(container.querySelector('.st-youbar')).toBeTruthy();
+
+    const observer = IO.instances[IO.instances.length - 1];
+    expect([...observer.observed][0].className).toContain('pod');
+
+    act(() => observer.emit(true)); // your tile scrolled into view
+    expect(container.querySelector('.st-youbar')).toBeNull();
   });
 });
 

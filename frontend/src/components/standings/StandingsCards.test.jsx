@@ -125,8 +125,25 @@ describe('PodiumCard', () => {
     expect(screen.getByText('cid')).toBeTruthy();
 
     // Forward from the last wraps around to the first.
-    fireEvent.click(container.querySelector('.pod-arw:not(.prev)'));
+    fireEvent.click(container.querySelector('.pod-arw.next'));
     expect(screen.getByText('ann')).toBeTruthy();
+  });
+
+  it('leads with the peak and drops the current rating below it when sorted by peak', () => {
+    const u = coder({ elo_rating: 2050, maxRating: 2300 });
+
+    const { container: byRating } = render(
+      <PodiumCard place={1} users={[u]} metric="rating" />
+    );
+    expect(byRating.querySelector('.pod-rating').textContent).toBe('2050');
+    expect(byRating.querySelector('.pod-max').textContent).toContain('max');
+
+    const { container: byMax } = render(
+      <PodiumCard place={1} users={[u]} metric="max" />
+    );
+    expect(byMax.querySelector('.pod-rating').textContent).toBe('2300');
+    expect(byMax.querySelector('.pod-max').textContent).toContain('rating');
+    expect(byMax.querySelector('.pod-max b').textContent).toBe('2050');
   });
 
   it('marks the tile as yours only while your own row is showing', () => {
@@ -155,5 +172,12 @@ describe('StHead', () => {
 
     fireEvent.click(screen.getByText('Max'));
     expect(onSort).toHaveBeenCalledWith('max');
+  });
+
+  it('marks no column while the list sits in the default order', () => {
+    const { container } = render(<StHead sort={null} onSort={vi.fn()} />);
+
+    expect(container.querySelector('.sth.active')).toBeNull();
+    expect(container.querySelector('.ar')).toBeNull();
   });
 });

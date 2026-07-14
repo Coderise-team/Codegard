@@ -347,9 +347,16 @@
   font-variant-numeric: tabular-nums;
   color: var(--fg);
 }
+/* the ranked number wears the tile's metal */
 .pod-1 .pod-rating {
   font-size: 34px;
   color: var(--metal-gold-hi);
+}
+.pod-2 .pod-rating {
+  color: var(--metal-silver-hi);
+}
+.pod-3 .pod-rating {
+  color: var(--metal-bronze-hi);
 }
 .pod-sub {
   display: flex;
@@ -367,16 +374,17 @@
   font-weight: 600;
 }
 
-/* revolver — shown only when several coders share the place */
-.pod-rev {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
+/* revolver — only when several coders share the place. The arrows are tall
+   rails pinned to the sides of the tile; the counter stays under the card. */
+.pod.has-rev {
+  padding-left: 40px;
+  padding-right: 40px;
 }
 .pod-arw {
-  width: 24px;
-  height: 24px;
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  width: 22px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -388,18 +396,27 @@
   transition: 0.12s;
 }
 .pod-arw:hover {
+  background: var(--card);
   border-color: var(--border-2);
   color: var(--fg);
 }
 .pod-arw.prev {
+  left: 8px;
   transform: rotate(180deg);
 }
+.pod-arw.next {
+  right: 8px;
+}
+.pod-rev {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
 .pod-rev-n {
-  min-width: 34px;
-  text-align: center;
   font-family: var(--mono);
-  font-size: 11px;
-  color: var(--fg3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -660,6 +677,25 @@
   font-size: 13px;
   color: var(--fg2);
   font-variant-numeric: tabular-nums;
+}
+
+/* Sorted by peak: the two numbers keep their columns but trade emphasis, so
+   the one the table is ranked by is the one that reads loud. */
+.st-row.by-max .st-rating {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg2);
+}
+.st-row.by-max .st-max {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.st-row.by-max.you .st-rating {
+  color: var(--fg2);
+}
+.st-row.by-max.you .st-max {
+  color: var(--gold-hi);
 }
 .st-delta {
   display: inline-flex;

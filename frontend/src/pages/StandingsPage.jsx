@@ -27,36 +27,42 @@ export default function StandingsPage() {
   const [navOpen, setNavOpen] = useState(false);
 
   const [tier, setTier] = useState('All');
-  const [sort, setSort] = useState({ key: 'rating', dir: 'desc' });
+  // null = the server's own default order (best rating first).
+  const [sort, setSort] = useState(null);
 
   const canvasRef = useRef(null);
   // The floating bar docks to whichever edge your own row went past.
   const [youVis, youRowRef] = useRowPosition(canvasRef);
 
-  // "All" means no tier param at all; the server maps a tier name to its rating
-  // band itself (the ladder lives in RANK_THRESHOLDS there, in CG_RANKS here).
-  const params = useMemo(
-    () => ({
-      ordering: `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`,
-      ...(tier !== 'All' && { tier }),
-    }),
-    [sort, tier]
-  );
+  // Params the server does not need are left out entirely: no sort means no
+  // `ordering` (it falls back to its own default), "All" means no `tier`. The
+  // server maps a tier name to its rating band itself (the ladder lives in
+  // RANK_THRESHOLDS there, in CG_RANKS here).
+  const params = useMemo(() => {
+    const p = {};
+    if (sort)
+      p.ordering = `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`;
+    if (tier !== 'All') p.tier = tier;
+    return p;
+  }, [sort, tier]);
+
   const { items, count, total, you, hasMore, loading, error, loadMore } =
     useStandings(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
-  // A new column starts descending — best first is what you want to see.
+  // Click cycle: descending (best first) -> ascending -> off, back to default.
   const onSort = (key) =>
-    setSort((s) =>
-      s.key === key
-        ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' }
-        : { key, dir: 'desc' }
-    );
+    setSort((s) => {
+      if (s?.key !== key) return { key, dir: 'desc' };
+      return s.dir === 'desc' ? { key, dir: 'asc' } : null;
+    });
+
+  // Which number the table is ranked by right now; it gets the loud styling.
+  const metric = sort?.key === 'max' ? 'max' : 'rating';
 
   // Ascending order drags the top places to the very end of the list, where the
   // podium would sit empty until you scrolled all the way down — so hide it.
-  const showPodium = sort.dir === 'desc';
+  const showPodium = !sort || sort.dir === 'desc';
 
   // One tile per PLACE, holding everyone who shares it.
   const podium = useMemo(() => {
@@ -127,6 +133,7 @@ export default function StandingsPage() {
                     key={place}
                     place={place}
                     users={users}
+                    metric={metric}
                     youUsername={user?.username}
                     cardRef={place === youPlace ? youRowRef : null}
                   />
@@ -160,8 +167,9 @@ export default function StandingsPage() {
                     <StandingRow
                       key={u.username}
                       u={u}
+                      metric={metric}
                       isYou={isYou(u)}
-                      rowRef={isYou(u) ? youRowRef : null}
+                      rowRef={isYou(u) && !youPlace ? youRowRef : null}
                     />
                   ))}
                 </div>
@@ -181,7 +189,7 @@ export default function StandingsPage() {
           <div className={`st-youbar ${youVis}`}>
             <div className="st-youbar-in">
               <div className="lbl">Your standing</div>
-              <StandingRow u={you} isYou />
+              <StandingRow u={you} metric={metric} isYou />
             </div>
           </div>
         )}

@@ -103,10 +103,18 @@ function Medal({ place }) {
   return <span className="rn">{place}</span>;
 }
 
-export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
+export const StandingRow = memo(function StandingRow({
+  u,
+  metric = 'rating',
+  isYou,
+  rowRef,
+}) {
   const tier = cgRankFor(u.elo_rating);
+  // Cells keep their place; `by-max` only swaps which number is loud, so the
+  // column you sorted by is the one you read.
+  const cls = `st-row${isYou ? ' you' : ''}${metric === 'max' ? ' by-max' : ''}`;
   return (
-    <div ref={rowRef || null} className={`st-row${isYou ? ' you' : ''}`}>
+    <div ref={rowRef || null} className={cls}>
       <div className="st-rank">
         <Medal place={u.globalRank} />
       </div>
@@ -138,7 +146,13 @@ export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
  * `users` can hold several coders. When it does, the tile cycles through them
  * on a timer and offers arrows to page through by hand.
  */
-export function PodiumCard({ place, users, youUsername, cardRef }) {
+export function PodiumCard({
+  place,
+  users,
+  metric = 'rating',
+  youUsername,
+  cardRef,
+}) {
   const [idx, setIdx] = useState(0);
   const many = users.length > 1;
 
@@ -157,11 +171,16 @@ export function PodiumCard({ place, users, youUsername, cardRef }) {
   const isYou = u.username === youUsername;
   const tier = cgRankFor(u.elo_rating);
 
+  // The number the table is ranked by takes the big slot; the other one drops
+  // to the sub-line under it, so the tile always leads with what you sorted on.
+  const byMax = metric === 'max';
+  const lead = byMax ? u.maxRating : u.elo_rating;
+  const trail = byMax ? u.elo_rating : u.maxRating;
+
+  const cls = `pod pod-${place}${isYou ? ' you' : ''}${many ? ' has-rev' : ''}`;
+
   return (
-    <div
-      ref={cardRef || null}
-      className={`pod pod-${place}${isYou ? ' you' : ''}`}
-    >
+    <div ref={cardRef || null} className={cls}>
       <div className="pod-medal">{place}</div>
       <div className="pod-av">{initialsOf(u.username)}</div>
       <div className="pod-h">
@@ -169,34 +188,36 @@ export function PodiumCard({ place, users, youUsername, cardRef }) {
         {isYou && <span className="you-tag">YOU</span>}
       </div>
       <TierBadge name={tier.name} color={tier.color} />
-      <div className="pod-rating">{u.elo_rating}</div>
+      <div className="pod-rating">{lead ?? '—'}</div>
       <div className="pod-sub">
         <Delta d={u.delta} />
         <span className="pod-max">
-          max <b>{u.maxRating ?? '—'}</b>
+          {byMax ? 'rating' : 'max'} <b>{trail ?? '—'}</b>
         </span>
       </div>
 
       {many && (
-        <div className="pod-rev">
+        <>
           <button
             className="pod-arw prev"
             aria-label="Previous coder"
             onClick={() => setIdx((i) => i + users.length - 1)}
           >
-            <Icons.chevRight size={14} />
+            <Icons.chevRight size={18} />
           </button>
-          <span className="pod-rev-n">
-            {pos + 1}/{users.length}
-          </span>
           <button
-            className="pod-arw"
+            className="pod-arw next"
             aria-label="Next coder"
             onClick={() => setIdx((i) => i + 1)}
           >
-            <Icons.chevRight size={14} />
+            <Icons.chevRight size={18} />
           </button>
-        </div>
+          <div className="pod-rev">
+            <span className="pod-rev-n">
+              {pos + 1}/{users.length}
+            </span>
+          </div>
+        </>
       )}
     </div>
   );
@@ -206,16 +227,19 @@ export function PodiumCard({ place, users, youUsername, cardRef }) {
  * Column headers. Only Rating and Max are sortable — the server orders by
  * those two fields alone. Rank is not a sort key of its own (it IS the order
  * of the active field), and there is no ordering by Last Δ.
+ *
+ * `sort` is null while the list sits in the server's default order, which is
+ * what a third click on a column returns it to.
  */
 export function StHead({ sort, onSort }) {
   const arrow = (key) =>
-    sort.key === key ? (
+    sort?.key === key ? (
       <span className="ar">{sort.dir === 'asc' ? '↑' : '↓'}</span>
     ) : null;
 
   const Btn = (key, label) => (
     <button
-      className={`sth num${sort.key === key ? ' active' : ''}`}
+      className={`sth num${sort?.key === key ? ' active' : ''}`}
       onClick={() => onSort(key)}
     >
       {label}
