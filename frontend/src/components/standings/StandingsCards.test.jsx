@@ -13,7 +13,7 @@ const coder = (over = {}) => ({
 });
 
 describe('StandingRow', () => {
-  it('medals the top three places and prints the rest as plain numbers', () => {
+  it('medals a podium place and prints anything below it as a plain number', () => {
     const { container: second } = render(
       <StandingRow u={coder({ globalRank: 2 })} />
     );
@@ -53,7 +53,7 @@ describe('StandingRow', () => {
     expect(screen.getByText('Expert')).toBeTruthy();
   });
 
-  it('renders the rating delta up, down, or as a dash when unknown', () => {
+  it('tells a rise, a fall, a standstill and a blank apart', () => {
     const { container: up } = render(<StandingRow u={coder({ delta: 12 })} />);
     expect(up.querySelector('.st-delta.up').textContent).toContain('12');
 
