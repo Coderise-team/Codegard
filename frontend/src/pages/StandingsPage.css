@@ -380,32 +380,41 @@
   padding-left: 40px;
   padding-right: 40px;
 }
+/* no chrome — just the chevron, stretched to the full height of its rail. The
+   grey pad only appears under the cursor. */
+/* no chrome — just the chevron. It fills its rail, so the rail's height IS the
+   length of the arms; a third of the tile keeps the glyph short and wide. */
 .pod-arw {
   position: absolute;
-  top: 16px;
-  bottom: 16px;
-  width: 22px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--border);
+  top: 50%;
+  height: 32%;
+  width: 26px;
+  padding: 3px 5px;
+  border: 0;
   border-radius: var(--r-sm);
-  background: var(--card-2);
-  color: var(--fg2);
+  background: none;
+  color: var(--fg3);
   cursor: pointer;
-  transition: 0.12s;
+  transform: translateY(-50%);
+  transition:
+    color 0.14s,
+    background 0.14s;
+}
+.pod-arw svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .pod-arw:hover {
-  background: var(--card);
-  border-color: var(--border-2);
-  color: var(--fg);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
 }
 .pod-arw.prev {
-  left: 8px;
-  transform: rotate(180deg);
+  left: 6px;
+  transform: translateY(-50%) rotate(180deg);
 }
 .pod-arw.next {
-  right: 8px;
+  right: 6px;
 }
 .pod-rev {
   display: flex;

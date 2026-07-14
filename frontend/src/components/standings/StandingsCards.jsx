@@ -9,6 +9,33 @@ const initialsOf = (username) => username.slice(0, 2).toUpperCase();
 // sharing that place.
 const PODIUM_ROTATE_MS = 4000;
 
+/**
+ * The revolver chevron. Drawn rather than taken from Icons because it has to
+ * stretch: `preserveAspectRatio="none"` lets it fill its tall, narrow rail, so
+ * the arms reach the corners and the angle opens up. The stroke is kept even
+ * by `vectorEffect`, which the stretch would otherwise squash.
+ */
+function RevolverChevron() {
+  return (
+    <svg
+      viewBox="0 0 10 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <polyline
+        points="1.5,2 8.5,50 1.5,98"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
 export function TierSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -203,14 +230,14 @@ export function PodiumCard({
             aria-label="Previous coder"
             onClick={() => setIdx((i) => i + users.length - 1)}
           >
-            <Icons.chevRight size={18} />
+            <RevolverChevron />
           </button>
           <button
             className="pod-arw next"
             aria-label="Next coder"
             onClick={() => setIdx((i) => i + 1)}
           >
-            <Icons.chevRight size={18} />
+            <RevolverChevron />
           </button>
           <div className="pod-rev">
             <span className="pod-rev-n">
