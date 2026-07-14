@@ -242,6 +242,19 @@ describe('StandingsPage when data is missing', () => {
     expect(screen.queryByText('No coders found')).toBeNull();
   });
 
+  it('does not send you off to change a tier filter you never set', () => {
+    useStandings.mockReturnValue({ ...result([]), total: 0 });
+    renderPage();
+
+    expect(screen.getByText('No coders found')).toBeTruthy();
+    expect(screen.getByText(/nobody is ranked yet/)).toBeTruthy();
+
+    // With a tier picked, the advice becomes worth taking.
+    fireEvent.click(screen.getByText('Filter by tier'));
+    fireEvent.click(screen.getByText('Kernel'));
+    expect(screen.getByText(/No one holds this tier yet/)).toBeTruthy();
+  });
+
   it('keeps showing the rows it has when an extra page fails to load', () => {
     useStandings.mockReturnValue({
       ...result([coder('ann', 4)]),
