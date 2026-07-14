@@ -13,14 +13,20 @@ def user_avatar_upload_to(_instance, filename: str) -> str:
 
 
 class User(AbstractUser):
+    """Platform account: auth plus the competitive-profile fields (avatar, bio,
+    current and peak ELO rating)."""
+
     email = models.EmailField(unique=True)
     avatar = models.ImageField(upload_to=user_avatar_upload_to, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
-    elo_rating = models.IntegerField(default=1200)
-    max_rating = models.IntegerField(default=1200)
+    elo_rating = models.IntegerField(default=1200, db_index=True)
+    max_rating = models.IntegerField(default=1200, db_index=True)
 
 
 class EloHistory(models.Model):
+    """One point in a user's rating timeline — a rating snapshot at a moment,
+    used to plot the ELO sparkline."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -9,7 +9,9 @@ from .views import (
     OAuthCallbackView,
     OAuthRedeemView,
     OAuthStartView,
+    PasswordChangeView,
     RegisterView,
+    StandingsView,
     UserActivityView,
     UserContestHistoryView,
     UserDetailView,
@@ -29,6 +31,8 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("avatar/", AvatarUploadView.as_view(), name="avatar-upload"),
     path("me/", MeView.as_view(), name="me"),
+    path("me/password/", PasswordChangeView.as_view(), name="me-password"),
+    path("standings/", StandingsView.as_view(), name="standings"),
     path("<str:username>/activity/", UserActivityView.as_view(), name="user-activity"),
     path("<str:username>/stats/", UserStatsView.as_view(), name="user-stats"),
     path(

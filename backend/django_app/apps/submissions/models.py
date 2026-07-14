@@ -5,6 +5,13 @@ from schemas.response import VerdictEnum
 
 
 class Submission(models.Model):
+    """One code submission to a problem (optionally within a contest).
+
+    Created with an empty ``verdict``; the judge fills the verdict and run
+    metrics later, and the ``post_save`` signals fan that out (score recalc +
+    realtime updates).
+    """
+
     class Language(models.TextChoices):
         PYTHON = LanguageEnum.PYTHON.value, "Python"
 

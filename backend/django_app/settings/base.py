@@ -166,4 +166,13 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Usernames reserved for API routes.
-RESERVED_USERNAMES = {"me", "login", "register", "logout", "avatar", "token", "oauth"}
+RESERVED_USERNAMES = {
+    "me",
+    "login",
+    "register",
+    "logout",
+    "avatar",
+    "token",
+    "oauth",
+    "standings",
+}

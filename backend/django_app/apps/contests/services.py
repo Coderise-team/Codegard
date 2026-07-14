@@ -157,7 +157,10 @@ def get_contest_history(user):
                 Subquery(problems_count, output_field=IntegerField()), Value(0)
             ),
         )
-        .order_by("-contest__end_time")
+        # `-id` tiebreak: contests can share an end_time, and the DB doesn't
+        # guarantee row order for equal sort keys — without it, pagination
+        # pages would reshuffle (duplicates / gaps at page boundaries).
+        .order_by("-contest__end_time", "-id")
     )
 
 
