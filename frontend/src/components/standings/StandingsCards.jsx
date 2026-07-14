@@ -138,7 +138,7 @@ export const StandingRow = memo(function StandingRow({ u, isYou, rowRef }) {
  * `users` can hold several coders. When it does, the tile cycles through them
  * on a timer and offers arrows to page through by hand.
  */
-export function PodiumCard({ place, users, youUsername }) {
+export function PodiumCard({ place, users, youUsername, cardRef }) {
   const [idx, setIdx] = useState(0);
   const many = users.length > 1;
 
@@ -158,7 +158,10 @@ export function PodiumCard({ place, users, youUsername }) {
   const tier = cgRankFor(u.elo_rating);
 
   return (
-    <div className={`pod pod-${place}${isYou ? ' you' : ''}`}>
+    <div
+      ref={cardRef || null}
+      className={`pod pod-${place}${isYou ? ' you' : ''}`}
+    >
       <div className="pod-medal">{place}</div>
       <div className="pod-av">{initialsOf(u.username)}</div>
       <div className="pod-h">

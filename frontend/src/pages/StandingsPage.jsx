@@ -78,6 +78,14 @@ export default function StandingsPage() {
     : items;
   const isYou = (u) => u.username === user?.username;
 
+  // Your own entry lives either on the podium or in the list, never both — and
+  // the floating bar has to hide once EITHER of them is on screen, so the
+  // tracker follows whichever one holds you. On the podium that's the tile for
+  // your place, even while it is revolving through someone else.
+  const youPlace = showPodium
+    ? podium.find(({ users }) => users.some(isYou))?.place
+    : undefined;
+
   // A count we don't have yet is simply not shown — never a placeholder zero.
   const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : null);
 
@@ -120,6 +128,7 @@ export default function StandingsPage() {
                     place={place}
                     users={users}
                     youUsername={user?.username}
+                    cardRef={place === youPlace ? youRowRef : null}
                   />
                 ))}
               </div>
