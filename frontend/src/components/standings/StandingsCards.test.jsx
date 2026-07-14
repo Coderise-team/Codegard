@@ -66,7 +66,12 @@ describe('StandingRow', () => {
     const { container: none } = render(
       <StandingRow u={coder({ delta: null })} />
     );
-    expect(none.querySelector('.st-delta.flat')).toBeTruthy();
+    expect(none.querySelector('.st-delta.flat').textContent).toBe('·');
+
+    // A contest that moved nothing IS a zero — a different fact from "never
+    // played", and it must not be dressed up as one.
+    const { container: zero } = render(<StandingRow u={coder({ delta: 0 })} />);
+    expect(zero.querySelector('.st-delta.flat').textContent).toBe('0');
   });
 
   it('dashes the peak rating when it is missing', () => {

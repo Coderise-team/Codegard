@@ -155,4 +155,46 @@ describe('useStandings', () => {
     expect(result.current.error).toBeTruthy();
     expect(result.current.items).toEqual([]);
   });
+
+  it('clears a previous error once a later load succeeds', async () => {
+    getStandings.mockRejectedValue(new Error('boom'));
+
+    const { result, rerender } = renderHook(({ p }) => useStandings(p), {
+      initialProps: { p: { ordering: '-elo_rating' } },
+    });
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+
+    getStandings.mockResolvedValue(page([{ username: 'a' }], null));
+    rerender({ p: { tier: 'Expert' } });
+
+    // Without the reset the page would keep showing "Standings unavailable"
+    // on top of perfectly good rows.
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    expect(result.current.error).toBeNull();
+  });
+
+  it('drops the old rows the moment the params change', async () => {
+    getStandings.mockResolvedValue(page([{ username: 'a' }], null));
+
+    const { result, rerender } = renderHook(({ p }) => useStandings(p), {
+      initialProps: { p: { ordering: '-elo_rating' } },
+    });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    const next = deferred();
+    getStandings.mockReturnValueOnce(next.promise);
+    rerender({ p: { tier: 'Kernel' } });
+
+    // Mid-flight: the previous tier's rows (and its counts) must already be
+    // gone, not sitting on screen wearing places they no longer hold.
+    expect(result.current.items).toEqual([]);
+    expect(result.current.count).toBeNull();
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      next.resolve(page([{ username: 'z' }], null));
+    });
+    expect(result.current.items).toEqual([{ username: 'z' }]);
+    expect(result.current.loading).toBe(false);
+  });
 });
