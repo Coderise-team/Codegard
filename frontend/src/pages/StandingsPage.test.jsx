@@ -239,6 +239,18 @@ describe('StandingsPage when data is missing', () => {
     expect(screen.queryByText('No coders found')).toBeNull();
   });
 
+  it('keeps showing the rows it has when an extra page fails to load', () => {
+    useStandings.mockReturnValue({
+      ...result([coder('ann', 4)]),
+      error: new Error('boom'),
+    });
+    const { container } = renderPage();
+
+    // The failure was an extra page; what is already on screen is still true.
+    expect(screen.queryByText('Standings unavailable')).toBeNull();
+    expect(container.querySelectorAll('.st-list .st-row')).toHaveLength(1);
+  });
+
   it('hides the count it does not know yet rather than showing a zero', () => {
     useStandings.mockReturnValue({
       ...result([]),

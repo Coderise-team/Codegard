@@ -160,7 +160,9 @@ export default function StandingsPage() {
               </div>
             )}
 
-            {error ? (
+            {/* Only shout when there is nothing to read: a page that failed to
+                load MORE rows must not take the rows you already have with it. */}
+            {error && items.length === 0 ? (
               <div className="st-empty">
                 <div className="ei">
                   <Icons.x size={20} />
