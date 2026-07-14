@@ -77,7 +77,7 @@ export default function ProblemPage() {
     return (
       <NotFoundPage
         title="Problem not found"
-        sub="This problem doesn’t exist, or the link is out of date."
+        sub="This problem does not exist, or the link is out of date."
       />
     );
   }
@@ -107,7 +107,7 @@ export default function ProblemPage() {
         <div className="pp-empty">
           {loading || langsLoading
             ? 'Loading problem…'
-            : 'Couldn’t load the problem — please try again.'}
+            : 'Could not load the problem. Please try again.'}
         </div>
       )}
       {toast && <VerdictToast {...toast} onClose={() => setToast(null)} />}

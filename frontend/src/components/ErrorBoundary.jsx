@@ -22,8 +22,8 @@ export default function ErrorBoundary() {
         <div className="eb-mark">!</div>
         <h1 className="eb-t">Something went wrong</h1>
         <p className="eb-s">
-          The page crashed on our side. Reloading usually helps — if it doesn’t,
-          try again in a minute.
+          The page crashed on our side. Reloading usually helps. If it does not,
+          please try again in a minute.
         </p>
 
         {import.meta.env.DEV && detail && (

@@ -59,7 +59,7 @@ export default function ProfilePage() {
     return (
       <NotFoundPage
         title="User not found"
-        sub="This user doesn’t exist, or the profile was removed."
+        sub="This user does not exist, or the profile was removed."
       />
     );
   }
@@ -89,7 +89,7 @@ export default function ProfilePage() {
             {loading && <div className="list-msg">Loading…</div>}
             {error && (
               <div className="list-msg">
-                Couldn’t load this profile — please try again.
+                Could not load this profile. Please try again.
               </div>
             )}
 

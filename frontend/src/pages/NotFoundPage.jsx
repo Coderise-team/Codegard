@@ -18,7 +18,7 @@ import './NotFoundPage.css';
  */
 export default function NotFoundPage({
   title = 'Page not found',
-  sub = 'This page doesn’t exist, or the link is out of date.',
+  sub = 'This page does not exist, or the link is out of date.',
 }) {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
