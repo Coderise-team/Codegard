@@ -45,9 +45,6 @@ export default function NotFoundPage({
                 <Link className="btn btn-primary" to="/">
                   Go to dashboard
                 </Link>
-                <Link className="btn" to="/problems">
-                  Browse problems
-                </Link>
               </div>
             </section>
           </div>
