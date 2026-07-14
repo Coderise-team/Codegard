@@ -193,7 +193,7 @@ describe('StandingsPage when data is missing', () => {
     expect(screen.queryByText('No coders found')).toBeNull();
   });
 
-  it('hides the counts it does not know yet rather than showing a zero', () => {
+  it('hides the count it does not know yet rather than showing a zero', () => {
     useStandings.mockReturnValue({
       ...result([]),
       count: null,
@@ -203,7 +203,18 @@ describe('StandingsPage when data is missing', () => {
     const { container } = renderPage();
 
     expect(container.querySelector('.st-head .sub')).toBeNull();
-    expect(container.querySelector('.st-count')).toBeNull();
+  });
+
+  it('counts the tier against the whole board once one is picked', () => {
+    useStandings.mockReturnValue({ ...result([coder('ann', 4)]), total: 10 });
+    const { container } = renderPage();
+    const sub = () => container.querySelector('.st-head .sub').textContent;
+
+    expect(sub()).toBe('showing all 10 coders'); // unfiltered: the whole board
+
+    fireEvent.click(screen.getByText('Filter by tier'));
+    fireEvent.click(screen.getByText('Expert'));
+    expect(sub()).toBe('showing 1 of 10 coders');
   });
 
   it('drops the your-standing bar when the api sends no row for you', () => {
