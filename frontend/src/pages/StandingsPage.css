@@ -233,6 +233,9 @@
       transparent 62%
     ),
     var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-silver) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-silver) 20%, transparent);
 }
 .pod-3 {
   order: 3;
@@ -244,6 +247,9 @@
       transparent 62%
     ),
     var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-bronze) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-bronze) 20%, transparent);
 }
 .pod.you {
   border-color: var(--gold-line);
