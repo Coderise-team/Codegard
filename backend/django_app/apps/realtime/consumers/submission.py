@@ -9,6 +9,17 @@ logger = logging.getLogger(__name__)
 
 
 class SubmissionConsumer(AsyncJsonWebsocketConsumer):
+    """Live verdict feed for a single submission.
+
+    A client connects to ``ws/submissions/<id>/`` to watch one submission until
+    the judge finishes. Access is restricted to the submission's owner — the
+    socket is closed with 4001 (not authenticated), 4003 (not the owner), or
+    4004 (no such submission). Once accepted, the consumer joins the
+    ``submission_<id>`` group and relays every ``submission_update`` the signals
+    broadcast; the current status is also sent immediately so a reconnect is
+    never left blank.
+    """
+
     async def connect(self):
         user = self.scope["user"]
         if not user.is_authenticated:

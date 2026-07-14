@@ -217,7 +217,7 @@ def test_history_only_finished_mine_newest_first(client, user, other):
     )  # not finished
     ContestScore.objects.create(user=other, contest=other_finished)  # not mine
 
-    data = client.get(_history_url(user.username)).json()
+    data = client.get(_history_url(user.username)).json()["results"]
     ids = [row["id"] for row in data]
     assert ids == [newer.id, older.id]  # newest first; active + others excluded
 
@@ -245,7 +245,7 @@ def test_history_fields(client, user):
         user=user, contest=c, solved_count=3, rating_delta=-42, rating_after=2147
     )
 
-    row = client.get(_history_url(user.username)).json()[0]
+    row = client.get(_history_url(user.username)).json()["results"][0]
     assert row["title"] == "Done"
     assert row["subtitle"] == "Round 2 · Div. 1"
     assert row["solved"] == 3
@@ -265,7 +265,7 @@ def test_history_problems_count(client, user):
 
     by_title = {
         r["title"]: r["problems_count"]
-        for r in client.get(_history_url(user.username)).json()
+        for r in client.get(_history_url(user.username)).json()["results"]
     }
     assert by_title["With"] == 2
     assert by_title["Empty"] == 0  # contest with no problems → 0
@@ -280,19 +280,20 @@ def test_history_no_n_plus_one(client, user, django_assert_num_queries):
         ContestScore.objects.create(user=user, contest=c, solved_count=1)
 
     url = _history_url(user.username)
-    # Fixed regardless of row count: user lookup + the single history query
-    # (rank & problems_count are inline subqueries, not per-row queries).
-    with django_assert_num_queries(2):
+    # Fixed regardless of row count: user lookup + pagination COUNT + the single
+    # history query (rank & problems_count are inline subqueries, not per-row).
+    with django_assert_num_queries(3):
         resp = client.get(url)
-    assert len(resp.json()) == 5
-    assert all(row["problems_count"] == 2 for row in resp.json())
+    results = resp.json()["results"]
+    assert len(results) == 5
+    assert all(row["problems_count"] == 2 for row in results)
 
 
 @pytest.mark.django_db
 def test_history_rating_fields_null_when_unpopulated(client, user):
     c = _finished_contest("Done")
     ContestScore.objects.create(user=user, contest=c, solved_count=1)
-    row = client.get(_history_url(user.username)).json()[0]
+    row = client.get(_history_url(user.username)).json()["results"][0]
     assert row["rating_delta"] is None
     assert row["rating_after"] is None
 
@@ -302,7 +303,7 @@ def test_any_authenticated_sees_other_users_history(client, other):
     c = _finished_contest("Done")
     ContestScore.objects.create(user=other, contest=c, solved_count=2)
     # `client` is authenticated as `user`, requesting `other`'s history.
-    data = client.get(_history_url(other.username)).json()
+    data = client.get(_history_url(other.username)).json()["results"]
     assert len(data) == 1 and data[0]["id"] == c.id
 
 
@@ -317,9 +318,9 @@ def test_history_rank_matches_leaderboard_by_score(client, user, other, admin):
     ContestScore.objects.create(user=user, contest=c, score=200, solved_count=2)
     ContestScore.objects.create(user=other, contest=c, score=100, solved_count=1)
 
-    assert client.get(_history_url(user.username)).json()[0]["rank"] == 2
-    assert client.get(_history_url(other.username)).json()[0]["rank"] == 3
-    assert client.get(_history_url(admin.username)).json()[0]["rank"] == 1
+    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2
+    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 3
+    assert client.get(_history_url(admin.username)).json()["results"][0]["rank"] == 1
 
 
 @pytest.mark.django_db
@@ -341,9 +342,9 @@ def test_history_rank_tiebreak_penalty_then_time(client, user, other, admin):
         user=other, contest=c, score=100, penalty=9, last_ac_at=now
     )  # rank 3 (same penalty as user, later time)
 
-    assert client.get(_history_url(admin.username)).json()[0]["rank"] == 1
-    assert client.get(_history_url(user.username)).json()[0]["rank"] == 2
-    assert client.get(_history_url(other.username)).json()[0]["rank"] == 3
+    assert client.get(_history_url(admin.username)).json()["results"][0]["rank"] == 1
+    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2
+    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 3
 
 
 @pytest.mark.django_db
@@ -356,5 +357,5 @@ def test_history_rank_null_last_ac_at_ranks_bottom(client, user, other):
     ContestScore.objects.create(
         user=user, contest=c, score=0, solved_count=0, last_ac_at=None
     )
-    assert client.get(_history_url(other.username)).json()[0]["rank"] == 1
-    assert client.get(_history_url(user.username)).json()[0]["rank"] == 2
+    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 1
+    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2

@@ -142,6 +142,8 @@ class ProblemWriteSerializer(serializers.ModelSerializer):
         ]
 
     def _set_tags(self, problem, tag_names):
+        """Resolve tag names to Tag rows (creating missing ones) and set them on
+        the problem, replacing any existing tags. Blank names are skipped."""
         tags = [
             Tag.objects.get_or_create(name=name.strip())[0]
             for name in tag_names
@@ -150,6 +152,7 @@ class ProblemWriteSerializer(serializers.ModelSerializer):
         problem.tags.set(tags)
 
     def create(self, validated_data):
+        """Create a problem together with its nested test cases and tags."""
         test_cases_data = validated_data.pop("test_cases", [])
         tag_names = validated_data.pop("tags", [])
 
@@ -160,6 +163,9 @@ class ProblemWriteSerializer(serializers.ModelSerializer):
         return problem
 
     def update(self, instance, validated_data):
+        """Update a problem. If ``test_cases`` is provided it fully replaces the
+        existing set (old cases are deleted); tags are replaced when provided.
+        Omitting either leaves that relation untouched."""
         test_cases_data = validated_data.pop("test_cases", None)
         tag_names = validated_data.pop("tags", None)
 
