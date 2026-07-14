@@ -10,9 +10,9 @@ import { getStandings } from '../api/standings';
 // and `you` the signed-in user's own row (the API returns it on every page, so
 // the floating "Your standing" bar works even when the user is not in view).
 export function useStandings(params) {
-  // count/total stay null until a page actually answers, so the header can keep
-  // quiet instead of flashing a zero it does not know yet.
   const [items, setItems] = useState([]);
+  // Null until a page actually answers: the header stays quiet rather than
+  // flashing a zero it does not know yet.
   const [count, setCount] = useState(null);
   const [total, setTotal] = useState(null);
   const [you, setYou] = useState(null);
@@ -77,7 +77,13 @@ export function useStandings(params) {
         setHasMore(Boolean(res.next));
       })
       .catch((err) => {
-        if (gen === genRef.current) setError(err);
+        if (gen !== genRef.current) return;
+        // The rows already on screen are still good — the caller decides what to
+        // do with the error, but it must not cost the reader what they have.
+        // Stop offering more, though: the sentinel would otherwise sit there
+        // spinning, and it will not retry on its own.
+        setError(err);
+        setHasMore(false);
       })
       .finally(() => {
         fetchingRef.current = false;

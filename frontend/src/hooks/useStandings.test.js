@@ -156,6 +156,25 @@ describe('useStandings', () => {
     expect(result.current.items).toEqual([]);
   });
 
+  it('keeps the rows it has when loading more fails, and stops offering more', async () => {
+    getStandings
+      .mockResolvedValueOnce(page([{ username: 'a' }], 'url?page=2'))
+      .mockRejectedValueOnce(new Error('boom'));
+
+    const { result } = renderHook(() => useStandings(PARAMS));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      result.current.loadMore();
+    });
+
+    // The page that failed was an EXTRA one — losing it must not cost the
+    // reader the rows already on screen.
+    expect(result.current.items).toEqual([{ username: 'a' }]);
+    // ...and the sentinel must stop pretending it is still loading.
+    expect(result.current.hasMore).toBe(false);
+  });
+
   it('clears a previous error once a later load succeeds', async () => {
     getStandings.mockRejectedValue(new Error('boom'));
 
