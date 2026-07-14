@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("users", "0004_merge_20260625_1128"),
+        ("users", "0005_alter_user_elo_rating_alter_user_max_rating"),
     ]
 
     operations = [
