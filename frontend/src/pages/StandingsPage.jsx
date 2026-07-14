@@ -115,20 +115,25 @@ export default function StandingsPage() {
           <div className="canvas-in">
             <div className="st-head">
               <h1>Global Standings</h1>
+              {/* The one count on the page: the whole board, or how much of it
+                  the current tier leaves once you filter. */}
               {total != null && (
                 <span className="sub">
-                  <b>{fmt(total)}</b> coders
+                  {filtered && count != null ? (
+                    <>
+                      showing <b>{fmt(count)}</b> of <b>{fmt(total)}</b> coders
+                    </>
+                  ) : (
+                    <>
+                      showing all <b>{fmt(total)}</b> coders
+                    </>
+                  )}
                 </span>
               )}
             </div>
 
             <div className="st-controls">
               <TierSelect value={tier} onChange={setTier} />
-              {count != null && (
-                <div className="st-count">
-                  <b>{fmt(count)}</b> shown
-                </div>
-              )}
             </div>
 
             {showPodium && podium.length > 0 && (

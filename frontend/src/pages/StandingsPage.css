@@ -174,18 +174,6 @@
   flex: 0 0 auto;
 }
 
-.st-count {
-  margin-left: auto;
-  font-size: 12.5px;
-  color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.st-count b {
-  color: var(--fg);
-  font-weight: 700;
-}
-
 /* ============================================================
    PODIUM (top 3)
    ============================================================ */
@@ -888,14 +876,11 @@
     font-size: 20px;
   }
 
-  /* the tier dropdown takes the full width, the count drops under it */
+  /* the tier dropdown takes the full width */
   .st-tsel,
   .st-tsel-btn {
     width: 100%;
     min-width: 0;
-  }
-  .st-count {
-    margin-left: 0;
   }
 
   /* podium stacks, gold first — the raised centre tile makes no sense in a
