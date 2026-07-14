@@ -24,6 +24,23 @@ export function useStandings(params) {
   const genRef = useRef(0); // bumped on every params change; guards stale responses
   const fetchingRef = useRef(false);
 
+  // Wipe the board the instant `params` change, so a new tier never shows the
+  // previous one's rows (with the previous one's places) while its own page is
+  // still in flight — and so a failed load doesn't keep its error on screen
+  // after a later one succeeds. React's "adjust state during render" pattern:
+  // it resolves before paint.
+  const [shownParams, setShownParams] = useState(params);
+  if (params !== shownParams) {
+    setShownParams(params);
+    setItems([]);
+    setCount(null);
+    setTotal(null);
+    setYou(null);
+    setHasMore(false);
+    setLoading(true);
+    setError(null);
+  }
+
   // reload from page 1 whenever the ordering/filter changes
   useEffect(() => {
     genRef.current += 1;
