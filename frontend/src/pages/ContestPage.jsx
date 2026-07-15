@@ -104,11 +104,18 @@ export default function ContestPage() {
       registeredCount: contest.participants_count + countDelta,
       endedAgo: state === 'finished' ? timeAgo(contest.end_time, now) : null,
     },
-    problems: contest.problems.map((p, i) => ({
-      id: pip(i),
-      title: p.title,
-      solvedBy: null,
-    })),
+    // Before the start the backend hides the problems (problems: []) — the
+    // locked pips are drawn from the count alone.
+    problems:
+      state === 'soon'
+        ? Array.from({ length: contest.problems_count }, (_, i) => ({
+            id: pip(i),
+          }))
+        : contest.problems.map((p, i) => ({
+            id: pip(i),
+            title: p.title,
+            solvedBy: p.solved_count,
+          })),
     yourProbs: { live: statuses, finished: statuses },
   };
 
