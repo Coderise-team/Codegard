@@ -79,8 +79,8 @@ export default function ContestAside({
         ) : (
           <>
             <span className="cp-cell">Solved</span>
-            <span className="cp-cell">Pen</span>
             <span className="cp-cell">Pts</span>
+            <span className="cp-cell cp-c-pen">Penalty</span>
             {state === 'finished' && <span className="cp-cell">Δ</span>}
           </>
         )}
@@ -126,8 +126,8 @@ export default function ContestAside({
                   <span className="cp-cell">
                     {myRow.solved}/{problemsCount}
                   </span>
-                  <span className="cp-cell">—</span>
                   <span className="cp-cell cp-pts">{myRow.score}</span>
+                  <span className="cp-cell cp-c-pen">—</span>
                   {state === 'finished' && <span className="cp-cell">—</span>}
                 </div>
               </>
@@ -161,8 +161,8 @@ function LbRow({ r, state, n, you }) {
       <span className="cp-cell">
         {r.solved_count}/{n}
       </span>
-      <span className="cp-cell">{r.penalty}</span>
       <span className="cp-cell cp-pts">{r.score}</span>
+      <span className="cp-cell cp-c-pen">{r.penalty}</span>
       {state === 'finished' &&
         (r.rating_delta != null ? (
           <span className={`cp-cell cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}>

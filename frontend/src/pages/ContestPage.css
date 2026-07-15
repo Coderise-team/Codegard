@@ -350,6 +350,9 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+.cp-c-pen {
+  width: 54px;
+}
 .cp-tier {
   flex: 0 0 auto;
   width: 82px;
