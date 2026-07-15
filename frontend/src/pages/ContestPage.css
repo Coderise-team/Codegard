@@ -237,12 +237,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cp-probs a.hpip {
+.cp-probs .hpip {
   transition:
     background 0.13s,
     transform 0.13s;
 }
-.cp-probs a.hpip:hover {
+.cp-probs .hpip:hover {
   background: rgba(36, 41, 57, 0.72);
   transform: translateY(-1px);
 }
