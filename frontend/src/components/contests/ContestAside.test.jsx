@@ -181,9 +181,14 @@ describe('ContestAside', () => {
     expect(container.querySelectorAll('.cp-row').length).toBe(1);
   });
 
-  it('shows loading, empty and sentinel states', () => {
+  it('shows loading, error, empty and sentinel states', () => {
     const loading = renderAside({ panel: panelOf([], { loading: true }) });
     expect(loading.container.textContent).toContain('Loading…');
+
+    const failed = renderAside({
+      panel: panelOf([], { error: new Error('down') }),
+    });
+    expect(failed.container.textContent).toContain('Couldn’t load the list.');
 
     const empty = renderAside({ panel: panelOf([]) });
     expect(empty.container.textContent).toContain('No one has registered yet.');
