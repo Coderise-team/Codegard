@@ -33,7 +33,8 @@ describe('ContestAside', () => {
     const { container } = renderAside({ open: false, onToggle });
 
     const tab = container.querySelector('.cp-aside-tab');
-    expect(tab.textContent).toContain('Registered');
+    expect(tab).toBeTruthy();
+    expect(tab.textContent).toBe(''); // icon-only, no label
     fireEvent.click(tab);
     expect(onToggle).toHaveBeenCalled();
   });
@@ -53,7 +54,7 @@ describe('ContestAside', () => {
     expect(rendered[1].classList.contains('you')).toBe(true);
   });
 
-  it('live: LIVE badge, score on the right, solved/penalty sub-line', () => {
+  it('live: LIVE badge, table header and solved/pen/pts columns', () => {
     const rows = [
       {
         rank: 1,
@@ -67,13 +68,16 @@ describe('ContestAside', () => {
     const { container } = renderAside({ state: 'live', panel: panelOf(rows) });
 
     expect(container.querySelector('.live-dot')).toBeTruthy();
+    expect(container.querySelector('.cp-thead').textContent).toContain('Pts');
     const row = container.querySelector('.cp-row');
     expect(row.classList.contains('r1')).toBe(true);
-    expect(row.querySelector('.sub').textContent).toBe('3/5 · 74');
-    expect(row.querySelector('.cp-rt').textContent).toBe('300');
+    const cells = [...row.querySelectorAll('.cp-cell')].map(
+      (c) => c.textContent
+    );
+    expect(cells).toEqual(['3/5', '74', '300']);
   });
 
-  it('finished: colored delta on the right and the score in the sub-line', () => {
+  it('finished: colored delta column next to the scores', () => {
     const rows = [
       {
         rank: 1,
@@ -97,12 +101,16 @@ describe('ContestAside', () => {
       panel: panelOf(rows),
     });
 
+    expect(container.querySelector('.cp-thead').textContent).toContain('Δ');
+    const first = [
+      ...container.querySelectorAll('.cp-row')[0].querySelectorAll('.cp-cell'),
+    ].map((c) => c.textContent);
+    expect(first).toEqual(['3/5', '74', '300', '+48']);
+
     const deltas = container.querySelectorAll('.cp-dl');
-    expect(deltas[0].textContent).toBe('+48');
     expect(deltas[0].classList.contains('up')).toBe(true);
     expect(deltas[1].textContent).toBe('-12');
     expect(deltas[1].classList.contains('down')).toBe(true);
-    expect(container.querySelector('.sub').textContent).toBe('300 · 3/5 · 74');
   });
 
   it('live: renders my out-of-view row from my-standing under the gap', () => {

@@ -35,9 +35,6 @@ export default function ContestAside({
     return (
       <button className="cp-aside-tab" onClick={onToggle} title="Show panel">
         <I.users size={16} />
-        <span className="lbl">
-          {state === 'soon' ? 'Registered' : 'Standings'}
-        </span>
         <I.chevRight size={14} style={{ transform: 'rotate(180deg)' }} />
       </button>
     );
@@ -52,15 +49,15 @@ export default function ContestAside({
 
   return (
     <aside className="cp-aside">
-      <div className="cp-aside-hd">
-        <div className="t">
+      <button className="cp-aside-hd" onClick={onToggle} title="Hide panel">
+        <span className="t">
           {isReg ? <I.users size={15} /> : <I.trophy size={15} />}
           {isReg
             ? 'Registered'
             : state === 'finished'
               ? 'Final standings'
               : 'Standings'}
-        </div>
+        </span>
         {state === 'live' ? (
           <span className="live-dot">
             <span className="d" /> LIVE
@@ -68,9 +65,25 @@ export default function ContestAside({
         ) : (
           <span className="cnt">{total.toLocaleString('en-US')}</span>
         )}
-        <button className="cp-aside-x" onClick={onToggle} title="Hide panel">
-          <I.chevRight size={16} />
-        </button>
+        <I.chevRight size={16} className="cp-hd-arrow" />
+      </button>
+
+      <div className="cp-thead">
+        <span className="cp-rk">#</span>
+        <span className="cp-user">User</span>
+        {isReg ? (
+          <>
+            <span className="cp-tier">Rank</span>
+            <span className="cp-cell">Rating</span>
+          </>
+        ) : (
+          <>
+            <span className="cp-cell">Solved</span>
+            <span className="cp-cell">Pen</span>
+            <span className="cp-cell">Pts</span>
+            {state === 'finished' && <span className="cp-cell">Δ</span>}
+          </>
+        )}
       </div>
 
       <div className="cp-aside-body scroll">
@@ -108,14 +121,14 @@ export default function ContestAside({
               <>
                 <div className="cp-gap">⋯</div>
                 <div className="cp-row you">
-                  <div className="cp-rk">{myRow.rank}</div>
-                  <div className="cp-who">
-                    <div className="h">{you}</div>
-                    <div className="sub">
-                      {myRow.solved}/{problemsCount}
-                    </div>
-                  </div>
-                  <div className="cp-rt">{myRow.score}</div>
+                  <span className="cp-rk">{myRow.rank}</span>
+                  <span className="cp-user">{you}</span>
+                  <span className="cp-cell">
+                    {myRow.solved}/{problemsCount}
+                  </span>
+                  <span className="cp-cell">—</span>
+                  <span className="cp-cell cp-pts">{myRow.score}</span>
+                  {state === 'finished' && <span className="cp-cell">—</span>}
                 </div>
               </>
             )}
@@ -129,12 +142,10 @@ export default function ContestAside({
 function RegRow({ r, rank, you }) {
   return (
     <div className={`cp-row${r.username === you ? ' you' : ''}`}>
-      <div className="cp-rk">{rank}</div>
-      <div className="cp-who">
-        <div className="h">{r.username}</div>
-        <div className="sub">{cgRankFor(r.elo_rating).name}</div>
-      </div>
-      <div className="cp-rt">{r.elo_rating}</div>
+      <span className="cp-rk">{rank}</span>
+      <span className="cp-user">{r.username}</span>
+      <span className="cp-tier">{cgRankFor(r.elo_rating).name}</span>
+      <span className="cp-cell cp-pts">{r.elo_rating}</span>
     </div>
   );
 }
@@ -145,23 +156,22 @@ function LbRow({ r, state, n, you }) {
   }`;
   return (
     <div className={cls}>
-      <div className="cp-rk">{r.rank}</div>
-      <div className="cp-who">
-        <div className="h">{r.username}</div>
-        <div className="sub">
-          {state === 'finished'
-            ? `${r.score} · ${r.solved_count}/${n} · ${r.penalty}`
-            : `${r.solved_count}/${n} · ${r.penalty}`}
-        </div>
-      </div>
-      {state === 'finished' && r.rating_delta != null ? (
-        <div className={`cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}>
-          {r.rating_delta >= 0 ? '+' : ''}
-          {r.rating_delta}
-        </div>
-      ) : (
-        <div className="cp-rt">{r.score}</div>
-      )}
+      <span className="cp-rk">{r.rank}</span>
+      <span className="cp-user">{r.username}</span>
+      <span className="cp-cell">
+        {r.solved_count}/{n}
+      </span>
+      <span className="cp-cell">{r.penalty}</span>
+      <span className="cp-cell cp-pts">{r.score}</span>
+      {state === 'finished' &&
+        (r.rating_delta != null ? (
+          <span className={`cp-cell cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}>
+            {r.rating_delta >= 0 ? '+' : ''}
+            {r.rating_delta}
+          </span>
+        ) : (
+          <span className="cp-cell">—</span>
+        ))}
     </div>
   );
 }

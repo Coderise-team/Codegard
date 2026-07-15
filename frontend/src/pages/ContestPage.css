@@ -237,6 +237,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.cp-probs a.hpip {
+  transition:
+    background 0.13s,
+    transform 0.13s;
+}
+.cp-probs a.hpip:hover {
+  background: rgba(36, 41, 57, 0.72);
+  transform: translateY(-1px);
+}
 
 /* ============================================================
    ASIDE — right-attached, collapsible
@@ -253,13 +262,28 @@
   backdrop-filter: blur(10px);
   border-left: 1px solid var(--border);
 }
+/* the whole header is the collapse button */
 .cp-aside-hd {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 16px 16px;
+  border: 0;
   border-bottom: 1px solid var(--border);
+  background: none;
+  font-family: var(--ui);
+  color: var(--fg);
+  cursor: pointer;
+  transition: 0.13s;
+}
+.cp-aside-hd:hover {
+  background: var(--gold-soft);
+}
+.cp-hd-arrow {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--fg2);
 }
 .cp-aside-hd .t {
   display: flex;
@@ -293,35 +317,69 @@
   background: var(--wa);
   animation: pulse 1.4s ease-in-out infinite;
 }
-.cp-aside-x {
-  margin-left: auto;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  background: none;
-  border-radius: var(--r-sm);
-  color: var(--fg2);
-  cursor: pointer;
-  transition: 0.12s;
-}
-.cp-aside-x:hover {
-  color: var(--fg);
-  background: var(--card-2);
-}
-
 .cp-aside-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
 }
+
+/* table header + shared column layout */
+.cp-thead {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+.cp-user {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-cell {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.cp-tier {
+  flex: 0 0 auto;
+  width: 82px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .cp-row {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 9px 16px;
+  gap: 8px;
+  padding: 9px 14px;
   position: relative;
+  font-size: 12.5px;
+}
+.cp-row .cp-user {
+  font-weight: 600;
+}
+.cp-row .cp-cell,
+.cp-row .cp-tier {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg2);
+}
+.cp-row .cp-pts {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 12.5px;
 }
 .cp-row + .cp-row {
   border-top: 1px solid rgba(30, 34, 50, 0.5);
@@ -355,43 +413,13 @@
 .cp-row.r3 .cp-rk {
   color: var(--fg);
 }
-.cp-who {
-  flex: 1;
-  min-width: 0;
-}
-.cp-who .h {
-  font-size: 12.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cp-who .sub {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--fg2);
-  margin-top: 2px;
-  font-variant-numeric: tabular-nums;
-}
-.cp-rt {
-  flex: 0 0 auto;
-  font-family: var(--mono);
-  font-size: 13px;
+.cp-row .cp-dl {
   font-weight: 700;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
 }
-.cp-dl {
-  flex: 0 0 auto;
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.cp-dl.up {
+.cp-row .cp-dl.up {
   color: var(--ac);
 }
-.cp-dl.down {
+.cp-row .cp-dl.down {
   color: var(--wa);
 }
 .cp-gap {
@@ -436,14 +464,6 @@
 }
 .cp-aside-tab svg {
   flex: 0 0 auto;
-}
-.cp-aside-tab .lbl {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
 }
 
 /* entrance — slide only (never opacity; preview freezes at frame 0) */
@@ -539,9 +559,5 @@
     gap: 10px;
     border-left: 0;
     border-top: 1px solid var(--border);
-  }
-  .cp-aside-tab .lbl {
-    writing-mode: horizontal-tb;
-    transform: none;
   }
 }
