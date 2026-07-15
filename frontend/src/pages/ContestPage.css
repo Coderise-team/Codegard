@@ -401,32 +401,13 @@
   padding: 4px 0;
 }
 
-.cp-showall {
-  flex: 0 0 auto;
-  height: 42px;
-  border: 0;
-  border-top: 1px solid var(--border);
-  background: none;
-  cursor: pointer;
-  color: var(--fg2);
-  font-family: var(--ui);
+.cp-msg {
+  padding: 18px 16px;
   font-size: 12.5px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: 0.12s;
+  color: var(--fg2);
 }
-.cp-showall:hover {
-  color: var(--gold-hi);
-  background: var(--gold-soft);
-}
-.cp-showall svg {
-  transition: 0.2s;
-}
-.cp-showall.open svg {
-  transform: rotate(180deg);
+.cp-sentinel {
+  height: 1px;
 }
 
 /* collapsed tab, glued to the right edge */
