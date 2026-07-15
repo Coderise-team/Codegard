@@ -1,7 +1,7 @@
 """
-Tests for avatar cleanup: when an avatar is replaced, cleared, or the user is
-deleted, the source file is removed from storage and sorl's thumbnail cleanup
-is triggered (the source's thumbnail references are dropped from the KV store).
+Avatar tests: upload (API endpoint stores the image and returns thumbnails) and
+cleanup (replace / clear / user-delete remove the source file and drop sorl's
+thumbnail references).
 
 Note on thumbnails: we assert thumbnail cleanup via sorl's KV store rather than
 raw thumbnail-file existence. In tests we swap STORAGES to a temp FileSystem
@@ -21,6 +21,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
+from rest_framework.test import APIClient
 from sorl.thumbnail import default as sorl_default
 from sorl.thumbnail import get_thumbnail
 from sorl.thumbnail.images import ImageFile
@@ -73,6 +74,26 @@ def _make_user_with_avatar(username, color=(255, 0, 0)):
 def _source_has_thumbnail_refs(name: str) -> bool:
     """True if sorl still tracks thumbnails for the given source name."""
     return sorl_default.kvstore.get(ImageFile(name)) is not None
+
+
+@pytest.mark.django_db
+def test_avatar_upload_stores_image_and_generates_thumbnails(fs_storage):
+    user = get_user_model().objects.create_user(
+        username="u_upload", email="u_upload@test.com", password="pass"
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/users/avatar/",
+        data={"avatar": _image_file()},
+        format="multipart",
+    )
+
+    assert response.status_code == 200
+    assert response.data["avatar"]
+    assert response.data["thumbnails"]["128"]
+    assert response.data["thumbnails"]["256"]
 
 
 @pytest.mark.django_db
