@@ -356,7 +356,7 @@
 .cp-tier {
   flex: 0 0 auto;
   width: 82px;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -369,6 +369,13 @@
   padding: 12px 14px;
   position: relative;
   font-size: 13.5px;
+  transition: background 0.13s;
+}
+.cp-row:hover {
+  background: var(--card-2);
+}
+.cp-row.you:hover {
+  background: color-mix(in srgb, var(--gold-soft) 60%, var(--card-2));
 }
 .cp-row .cp-user {
   font-weight: 600;
