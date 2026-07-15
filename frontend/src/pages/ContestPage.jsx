@@ -38,7 +38,7 @@ export default function ContestPage() {
   const [navOpen, setNavOpen] = useState(false);
   const [showPanel, setShowPanel] = useState(true);
 
-  const { contest, loading, error } = useContest(id);
+  const { contest, loading, error, reload } = useContest(id);
 
   // A ticking clock kept in state and passed down — the React Compiler caches
   // anything that reads Date.now() in render, so the time must be a prop that
@@ -50,6 +50,16 @@ export default function ContestPage() {
   }, []);
 
   const state = contest ? contestState(contest, now) : null;
+
+  // A detail fetched before the start has its problems hidden by the backend.
+  // The instant the clock flips the contest live, refetch so the real problem
+  // list replaces the locked placeholders. Adjust-during-render.
+  const [prevState, setPrevState] = useState(state);
+  if (prevState !== state) {
+    setPrevState(state);
+    if (prevState === 'soon' && state === 'live') reload();
+  }
+
   const standing = useMyStanding(id, state === 'live' || state === 'finished');
 
   // The side panel slice: who registered before the start, the standings
