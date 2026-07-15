@@ -155,12 +155,10 @@
   flex: 0 0 auto;
 }
 
-/* timer sits directly over the gradient — no box.
-   base .cc-count comes from the hub; cp-count restyles it here. */
-.cc-count {
-  display: flex;
-}
+/* timer sits directly over the gradient — no box (unlike the hub's
+   .cc-count, whose box styles this neutralizes). */
 .cp-count {
+  display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 0;
@@ -231,13 +229,6 @@
   background: rgba(19, 22, 31, 0.5);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-}
-.cp-probs .hpip .nm {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cp-probs .hpip {
   transition:
     background 0.13s,
     transform 0.13s;
@@ -245,6 +236,11 @@
 .cp-probs .hpip:hover {
   background: rgba(36, 41, 57, 0.72);
   transform: translateY(-1px);
+}
+.cp-probs .hpip .nm {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ============================================================
@@ -268,7 +264,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 16px 16px;
+  padding: 16px;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: none;
@@ -373,14 +369,8 @@
   text-decoration: none;
   transition: background 0.13s;
 }
-.cp-row:hover {
-  background: var(--card-2);
-}
-.cp-row:hover .cp-user {
-  color: var(--gold-hi);
-}
-.cp-row.you:hover {
-  background: color-mix(in srgb, var(--gold) 22%, transparent);
+.cp-row + .cp-row {
+  border-top: 1px solid rgba(30, 34, 50, 0.5);
 }
 .cp-row .cp-user {
   font-weight: 600;
@@ -395,21 +385,6 @@
   font-weight: 700;
   color: var(--gold);
   font-size: 13.5px;
-}
-.cp-row + .cp-row {
-  border-top: 1px solid rgba(30, 34, 50, 0.5);
-}
-.cp-row.you {
-  background: var(--gold-soft);
-}
-.cp-row.you::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--gold);
 }
 .cp-rk {
   width: 22px;
@@ -436,6 +411,27 @@
 }
 .cp-row .cp-dl.down {
   color: var(--wa);
+}
+.cp-row.you {
+  background: var(--gold-soft);
+}
+.cp-row.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
+}
+.cp-row:hover {
+  background: var(--card-2);
+}
+.cp-row:hover .cp-user {
+  color: var(--gold-hi);
+}
+.cp-row.you:hover {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
 }
 .cp-gap {
   text-align: center;
@@ -496,15 +492,6 @@
   }
   .cp-c-in > *:nth-child(2) {
     animation-delay: 0.04s;
-  }
-  .cp-c-in > *:nth-child(3) {
-    animation-delay: 0.08s;
-  }
-  .cp-c-in > *:nth-child(4) {
-    animation-delay: 0.12s;
-  }
-  .cp-c-in > *:nth-child(5) {
-    animation-delay: 0.16s;
   }
   @keyframes cpIn {
     from {
