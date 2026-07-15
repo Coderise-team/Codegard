@@ -369,6 +369,8 @@
   padding: 12px 14px;
   position: relative;
   font-size: 13.5px;
+  color: var(--fg);
+  text-decoration: none;
   transition: background 0.13s;
 }
 .cp-row:hover {

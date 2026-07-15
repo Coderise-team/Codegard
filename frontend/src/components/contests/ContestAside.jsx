@@ -1,6 +1,11 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { cgRankFor } from '../../utils/ranks';
+
+// Own row points to the (future) my-profile page, others to the public profile.
+const profileHref = (username, you) =>
+  username === you ? '/profile' : `/users/${username}`;
 
 /**
  * ContestAside — right-attached, collapsible registrants / standings panel.
@@ -123,7 +128,7 @@ export default function ContestAside({
             {myRow && (
               <>
                 <div className="cp-gap">⋯</div>
-                <div className="cp-row you">
+                <Link className="cp-row you" to="/profile">
                   <span className="cp-rk">{myRow.rank}</span>
                   <span className="cp-user">{you}</span>
                   <span className="cp-cell">
@@ -132,7 +137,7 @@ export default function ContestAside({
                   <span className="cp-cell cp-pts">{myRow.score}</span>
                   <span className="cp-cell cp-c-pen">—</span>
                   {state === 'finished' && <span className="cp-cell">—</span>}
-                </div>
+                </Link>
               </>
             )}
           </>
@@ -144,12 +149,15 @@ export default function ContestAside({
 
 function RegRow({ r, rank, you }) {
   return (
-    <div className={`cp-row${r.username === you ? ' you' : ''}`}>
+    <Link
+      className={`cp-row${r.username === you ? ' you' : ''}`}
+      to={profileHref(r.username, you)}
+    >
       <span className="cp-rk">{rank}</span>
       <span className="cp-user">{r.username}</span>
       <span className="cp-tier">{cgRankFor(r.elo_rating).name}</span>
       <span className="cp-cell cp-pts">{r.elo_rating}</span>
-    </div>
+    </Link>
   );
 }
 
@@ -158,7 +166,7 @@ function LbRow({ r, state, n, you }) {
     r.rank <= 3 ? ' r' + r.rank : ''
   }`;
   return (
-    <div className={cls}>
+    <Link className={cls} to={profileHref(r.username, you)}>
       <span className="cp-rk">{r.rank}</span>
       <span className="cp-user">{r.username}</span>
       <span className="cp-cell">
@@ -175,6 +183,6 @@ function LbRow({ r, state, n, you }) {
         ) : (
           <span className="cp-cell">—</span>
         ))}
-    </div>
+    </Link>
   );
 }
