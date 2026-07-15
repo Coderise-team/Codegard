@@ -374,8 +374,11 @@
 .cp-row:hover {
   background: var(--card-2);
 }
+.cp-row:hover .cp-user {
+  color: var(--gold-hi);
+}
 .cp-row.you:hover {
-  background: color-mix(in srgb, var(--gold-soft) 60%, var(--card-2));
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
 }
 .cp-row .cp-user {
   font-weight: 600;
