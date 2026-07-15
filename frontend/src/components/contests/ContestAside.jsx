@@ -1,20 +1,35 @@
-import { useState } from 'react';
 import Icons from '../Icons';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+import { cgRankFor } from '../../utils/ranks';
 
 /**
  * ContestAside — right-attached, collapsible registrants / standings panel.
  * Shows registrants when upcoming, live standings when live, and final
- * standings (with rating deltas) when finished.
+ * standings (with rating deltas) when finished. Rows arrive paginated via
+ * useContestPanel; scrolling the panel loads the next pages.
  *
  * Props:
- *   D        — contest data object
- *   state    — 'soon' | 'live' | 'finished'
- *   open     — boolean; when false renders the collapsed edge tab
- *   onToggle — () => void
+ *   state         — 'soon' | 'live' | 'finished'
+ *   open          — boolean; when false renders the collapsed edge tab
+ *   onToggle      — () => void
+ *   panel         — useContestPanel result: { rows, total, hasMore, loading, error, loadMore }
+ *   problemsCount — total problems, for the solved/total sub-line
+ *   you           — current user's username; highlights own rows
+ *   myStanding    — my-standing payload; renders my row under the list while
+ *                   it hasn't been scrolled into view yet (live only)
  */
-export default function ContestAside({ D, state, open, onToggle }) {
+export default function ContestAside({
+  state,
+  open,
+  onToggle,
+  panel,
+  problemsCount,
+  you,
+  myStanding,
+}) {
   const I = Icons;
-  const [all, setAll] = useState(false);
+  const { rows, total, hasMore, loading, error, loadMore } = panel;
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   if (!open) {
     return (
@@ -29,14 +44,11 @@ export default function ContestAside({ D, state, open, onToggle }) {
   }
 
   const isReg = state === 'soon';
-  const rows = isReg
-    ? D.registrants
-    : state === 'finished'
-      ? D.finalStandings
-      : D.standings;
-  const shown = all ? rows : rows.slice(0, 10);
-  const you = rows.find((r) => r.you);
-  const youShown = shown.some((r) => r.you);
+  const youShown = rows.some((r) => r.username === you);
+  const myRow =
+    state === 'live' && !youShown && myStanding?.rank != null
+      ? myStanding
+      : null;
 
   return (
     <aside className="cp-aside">
@@ -54,11 +66,7 @@ export default function ContestAside({ D, state, open, onToggle }) {
             <span className="d" /> LIVE
           </span>
         ) : (
-          <span className="cnt">
-            {isReg
-              ? D.contest.registeredCount.toLocaleString('en-US')
-              : rows.length}
-          </span>
+          <span className="cnt">{total.toLocaleString('en-US')}</span>
         )}
         <button className="cp-aside-x" onClick={onToggle} title="Hide panel">
           <I.chevRight size={16} />
@@ -66,67 +74,93 @@ export default function ContestAside({ D, state, open, onToggle }) {
       </div>
 
       <div className="cp-aside-body scroll">
-        {shown.map((r) =>
-          isReg ? (
-            <RegRow key={r.handle} r={r} rank={rows.indexOf(r) + 1} />
-          ) : (
-            <LbRow key={r.handle} r={r} state={state} n={D.problems.length} />
-          )
-        )}
-        {!all && !youShown && you && (
+        {loading ? (
+          <div className="cp-msg">Loading…</div>
+        ) : error ? (
+          <div className="cp-msg">Couldn’t load the list.</div>
+        ) : rows.length === 0 ? (
+          <div className="cp-msg">
+            {isReg ? 'No one has registered yet.' : 'No submissions yet.'}
+          </div>
+        ) : (
           <>
-            <div className="cp-gap">⋯</div>
-            {isReg ? (
-              <RegRow r={you} rank={rows.indexOf(you) + 1} />
-            ) : (
-              <LbRow r={you} state={state} n={D.problems.length} />
+            {rows.map((r, i) =>
+              isReg ? (
+                <RegRow key={r.username} r={r} rank={i + 1} you={you} />
+              ) : (
+                <LbRow
+                  key={r.username}
+                  r={r}
+                  state={state}
+                  n={problemsCount}
+                  you={you}
+                />
+              )
+            )}
+            {hasMore && (
+              <div
+                ref={sentinelRef}
+                className="cp-sentinel"
+                aria-hidden="true"
+              />
+            )}
+            {myRow && (
+              <>
+                <div className="cp-gap">⋯</div>
+                <div className="cp-row you">
+                  <div className="cp-rk">{myRow.rank}</div>
+                  <div className="cp-who">
+                    <div className="h">{you}</div>
+                    <div className="sub">
+                      {myRow.solved}/{problemsCount}
+                    </div>
+                  </div>
+                  <div className="cp-rt">{myRow.score}</div>
+                </div>
+              </>
             )}
           </>
         )}
       </div>
-
-      <button
-        className={`cp-showall${all ? ' open' : ''}`}
-        onClick={() => setAll(!all)}
-      >
-        {all ? 'Show top 10' : `Show all ${rows.length}`}{' '}
-        <I.chevDown size={14} />
-      </button>
     </aside>
   );
 }
 
-function RegRow({ r, rank }) {
+function RegRow({ r, rank, you }) {
   return (
-    <div className={`cp-row${r.you ? ' you' : ''}`}>
+    <div className={`cp-row${r.username === you ? ' you' : ''}`}>
       <div className="cp-rk">{rank}</div>
       <div className="cp-who">
-        <div className="h">{r.handle}</div>
-        <div className="sub">{r.tier}</div>
+        <div className="h">{r.username}</div>
+        <div className="sub">{cgRankFor(r.elo_rating).name}</div>
       </div>
-      <div className="cp-rt">{r.rating}</div>
+      <div className="cp-rt">{r.elo_rating}</div>
     </div>
   );
 }
 
-function LbRow({ r, state, n }) {
-  const cls = `cp-row${r.you ? ' you' : ''}${r.rank <= 3 ? ' r' + r.rank : ''}`;
+function LbRow({ r, state, n, you }) {
+  const cls = `cp-row${r.username === you ? ' you' : ''}${
+    r.rank <= 3 ? ' r' + r.rank : ''
+  }`;
   return (
     <div className={cls}>
       <div className="cp-rk">{r.rank}</div>
       <div className="cp-who">
-        <div className="h">{r.handle}</div>
+        <div className="h">{r.username}</div>
         <div className="sub">
-          {r.solved}/{n} · {r.penalty}
+          {state === 'finished'
+            ? `${r.score} · ${r.solved_count}/${n} · ${r.penalty}`
+            : `${r.solved_count}/${n} · ${r.penalty}`}
         </div>
       </div>
-      {state === 'finished' && r.delta != null ? (
-        <div className={`cp-dl ${r.delta >= 0 ? 'up' : 'down'}`}>
-          {r.delta >= 0 ? '+' : ''}
-          {r.delta}
+      {state === 'finished' && r.rating_delta != null ? (
+        <div className={`cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}>
+          {r.rating_delta >= 0 ? '+' : ''}
+          {r.rating_delta}
         </div>
       ) : (
-        <div className="cp-rt">{r.rating}</div>
+        <div className="cp-rt">{r.score}</div>
       )}
     </div>
   );

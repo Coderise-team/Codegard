@@ -7,6 +7,7 @@ import ContestBanner from '../components/contests/ContestBanner';
 import ContestAside from '../components/contests/ContestAside';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContest, contestState } from '../hooks/useContest';
+import { useContestPanel } from '../hooks/useContestPanel';
 import { useMyStanding } from '../hooks/useMyStanding';
 import { joinContest, leaveContest } from '../api/contests';
 import {
@@ -15,7 +16,6 @@ import {
   formatTimeOfDay,
   timeAgo,
 } from '../utils/time';
-import contestData from '../data/contestData';
 import './ContestPage.css';
 
 // Contest problems are labelled by position: A, B, C, …
@@ -29,8 +29,8 @@ const pip = (i) => String.fromCharCode(65 + i);
  * strip. A collapsible right aside shows registrants (upcoming) or the
  * standings (live / finished).
  *
- * The banner runs on the real API (detail + my-standing + join); the aside
- * rows are still baked-in until the registrants/leaderboard endpoints land.
+ * Fully server-driven: detail + my-standing + join for the banner, paginated
+ * registrants / leaderboard slices for the aside (useContestPanel).
  */
 export default function ContestPage() {
   const { id } = useParams();
@@ -51,6 +51,12 @@ export default function ContestPage() {
 
   const state = contest ? contestState(contest, now) : null;
   const standing = useMyStanding(id, state === 'live' || state === 'finished');
+
+  // The side panel slice: who registered before the start, the standings
+  // during and after. Pages are appended as the panel scrolls.
+  const kind =
+    state == null ? null : state === 'soon' ? 'registrants' : 'leaderboard';
+  const panel = useContestPanel(id, kind);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
@@ -104,10 +110,6 @@ export default function ContestPage() {
       solvedBy: null,
     })),
     yourProbs: { live: statuses, finished: statuses },
-    // Baked-in rows until the registrants/leaderboard endpoints land.
-    registrants: contestData.registrants,
-    standings: contestData.standings,
-    finalStandings: contestData.finalStandings,
   };
 
   const crumb = (
@@ -143,10 +145,13 @@ export default function ContestPage() {
                 onToggle={toggleReg}
               />
               <ContestAside
-                D={D}
                 state={state}
                 open={showPanel}
                 onToggle={() => setShowPanel((v) => !v)}
+                panel={panel}
+                problemsCount={contest.problems_count}
+                you={user?.username}
+                myStanding={standing}
               />
             </>
           )}
