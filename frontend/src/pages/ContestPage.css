@@ -468,6 +468,14 @@
 .cp-aside-tab svg {
   flex: 0 0 auto;
 }
+.cp-aside-tab .lbl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
 
 /* entrance — slide only (never opacity; preview freezes at frame 0) */
 @media (prefers-reduced-motion: no-preference) {
@@ -562,5 +570,9 @@
     gap: 10px;
     border-left: 0;
     border-top: 1px solid var(--border);
+  }
+  .cp-aside-tab .lbl {
+    writing-mode: horizontal-tb;
+    transform: none;
   }
 }

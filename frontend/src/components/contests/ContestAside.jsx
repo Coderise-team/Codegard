@@ -35,6 +35,9 @@ export default function ContestAside({
     return (
       <button className="cp-aside-tab" onClick={onToggle} title="Show panel">
         <I.users size={16} />
+        <span className="lbl">
+          {state === 'soon' ? 'Registered' : 'Standings'}
+        </span>
         <I.chevRight size={14} style={{ transform: 'rotate(180deg)' }} />
       </button>
     );
