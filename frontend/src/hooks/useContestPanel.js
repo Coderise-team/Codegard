@@ -18,6 +18,7 @@ export function useContestPanel(id, kind) {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const pageRef = useRef(1);
   const genRef = useRef(0); // bumped on every slice change; guards stale responses
@@ -55,7 +56,11 @@ export function useContestPanel(id, kind) {
           setLoading(false);
         }
       });
-  }, [id, kind]);
+  }, [id, kind, reloadKey]);
+
+  // Refetches page 1 in place (rows swap when the response lands, no flash) —
+  // e.g. after a registration so the own row appears in the list.
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   const loadMore = useCallback(() => {
     if (fetchingRef.current || !hasMore) return;
@@ -77,5 +82,5 @@ export function useContestPanel(id, kind) {
       });
   }, [id, kind, hasMore]);
 
-  return { rows, total, hasMore, loading, error, loadMore };
+  return { rows, total, hasMore, loading, error, loadMore, reload };
 }

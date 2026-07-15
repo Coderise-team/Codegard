@@ -30,6 +30,22 @@ describe('useMyStanding', () => {
     );
   });
 
+  it('drops the previous standing when the id changes', async () => {
+    getMyStanding.mockResolvedValue({ rank: 3, problems: [] });
+
+    const { result, rerender } = renderHook(
+      ({ id }) => useMyStanding(id, true),
+      { initialProps: { id: 5 } }
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual({ rank: 3, problems: [] })
+    );
+
+    getMyStanding.mockReturnValue(new Promise(() => {}));
+    rerender({ id: 6 });
+    expect(result.current).toBe(null);
+  });
+
   it('stays null when the fetch fails', async () => {
     getMyStanding.mockRejectedValue(new Error('down'));
 

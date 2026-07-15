@@ -18,8 +18,14 @@ import {
 } from '../utils/time';
 import './ContestPage.css';
 
-// Contest problems are labelled by position: A, B, C, …
-const pip = (i) => String.fromCharCode(65 + i);
+// Contest problems are labelled by position: A, B, … Z, AA, AB, …
+const pip = (i) => {
+  let label = '';
+  for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) {
+    label = String.fromCharCode(65 + (n % 26)) + label;
+  }
+  return label;
+};
 
 /**
  * ContestPage — a single-contest event page (compact density, violet accent).
@@ -88,6 +94,7 @@ export default function ContestPage() {
     setRegOverride(!joined);
     try {
       await (joined ? leaveContest(id) : joinContest(id));
+      panel.reload();
     } catch {
       setRegOverride(joined);
     }

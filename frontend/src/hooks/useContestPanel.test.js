@@ -103,6 +103,21 @@ describe('useContestPanel', () => {
     expect(getLeaderboard).toHaveBeenCalledWith(5, { page: 1 });
   });
 
+  it('reload refetches the first page in place', async () => {
+    getRegistrants.mockResolvedValue(page([{ username: 'a' }], null));
+
+    const { result } = renderHook(() => useContestPanel(5, 'registrants'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    getRegistrants.mockResolvedValue(
+      page([{ username: 'a' }, { username: 'me' }], null)
+    );
+    act(() => result.current.reload());
+
+    await waitFor(() => expect(result.current.rows.length).toBe(2));
+    expect(getRegistrants).toHaveBeenLastCalledWith(5, { page: 1 });
+  });
+
   it('drops a stale response when the slice changed mid-flight', async () => {
     const regs = deferred();
     getRegistrants.mockReturnValueOnce(regs.promise);

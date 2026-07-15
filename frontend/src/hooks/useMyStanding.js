@@ -10,6 +10,14 @@ import { getMyStanding } from '../api/contests';
 export function useMyStanding(id, enabled) {
   const [standing, setStanding] = useState(null);
 
+  // Contests can share problems, so a stale standing could paint the previous
+  // contest's statuses on the new pips. Adjust-during-render.
+  const [prevId, setPrevId] = useState(id);
+  if (prevId !== id) {
+    setPrevId(id);
+    setStanding(null);
+  }
+
   useEffect(() => {
     if (!id || !enabled) return undefined;
     let active = true;
