@@ -176,7 +176,9 @@ function LbRow({ r, state, n, you }) {
       <span className="cp-cell cp-c-pen">{r.penalty}</span>
       {state === 'finished' &&
         (r.rating_delta != null ? (
-          <span className={`cp-cell cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}>
+          <span
+            className={`cp-cell cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}
+          >
             {r.rating_delta >= 0 ? '+' : ''}
             {r.rating_delta}
           </span>
