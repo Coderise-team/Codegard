@@ -1,5 +1,5 @@
-import { useId, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useId, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import './AuthPage.css';
 import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
@@ -21,6 +21,23 @@ function getErrorMessage(error) {
   }
   return error?.message || 'Something went wrong';
 }
+
+/**
+ * Human messages for the backend OAuth error slugs: `?oauth_error=<slug>` on
+ * the provider round-trip, or `{ error: <slug> }` from the start endpoint.
+ */
+const OAUTH_ERROR_MESSAGES = {
+  state: 'The sign-in attempt expired. Please try again.',
+  provider_not_configured: 'This sign-in method is not available right now.',
+  token_exchange_failed: 'The provider rejected the sign-in. Please try again.',
+  userinfo_failed:
+    'Could not read your profile from the provider. Please try again.',
+  email_not_verified:
+    'Your email is not verified with the provider. Verify it there and try again.',
+};
+
+const oauthErrorMessage = (slug) =>
+  OAUTH_ERROR_MESSAGES[slug] || 'Sign-in failed. Please try again.';
 
 function GoogleIcon() {
   return (
@@ -264,9 +281,21 @@ export default function AuthPage({ mode = 'login' }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Page the user was sent here from (set by PrivateRoute); fall back to home.
   const from = location.state?.from?.pathname || '/';
+
+  // The backend callback lands failures on /login?oauth_error=<slug>: surface
+  // the message once and strip the param so a refresh doesn't resurface it.
+  useEffect(() => {
+    const slug = searchParams.get('oauth_error');
+    if (!slug) return;
+    setError(oauthErrorMessage(slug));
+    const next = new URLSearchParams(searchParams);
+    next.delete('oauth_error');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const wrap = async (action, data) => {
     setError('');
@@ -296,7 +325,7 @@ export default function AuthPage({ mode = 'login' }) {
       // buttons cannot be clicked again while the browser navigates away.
       window.location.assign(authorize_url);
     } catch (e) {
-      setError(getErrorMessage(e));
+      setError(oauthErrorMessage(getErrorMessage(e)));
       setLoading(false);
     }
   };
