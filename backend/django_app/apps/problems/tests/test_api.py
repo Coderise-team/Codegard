@@ -1,5 +1,8 @@
+"""Tests for the problems API: list/filter, retrieve, CRUD, and acceptance rate."""
+
 import pytest
 from apps.problems.models import Problem, TestCase
+from apps.submissions.models import Submission
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -275,3 +278,43 @@ class TestProblemDelete:
         url = reverse("problems-detail", args=[problem.pk])
         response = auth_client.delete(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+# ---------------------------------------------------------------------------
+# Acceptance rate (AC / total submissions, annotated on the detail endpoint)
+# ---------------------------------------------------------------------------
+
+
+def _sub(user, problem, verdict):
+    return Submission.objects.create(
+        user=user,
+        problem=problem,
+        code="x",
+        language=Submission.Language.PYTHON,
+        verdict=verdict,
+    )
+
+
+@pytest.mark.django_db
+def test_acceptance_is_ac_over_total(auth_client, user, problem):
+    _sub(user, problem, Submission.Verdict.AC)
+    _sub(user, problem, Submission.Verdict.AC)
+    _sub(user, problem, Submission.Verdict.WA)
+    _sub(user, problem, Submission.Verdict.TLE)
+    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
+    assert body["acceptance"] == 50.0  # 2 AC of 4
+
+
+@pytest.mark.django_db
+def test_acceptance_rounded_to_one_decimal(auth_client, user, problem):
+    _sub(user, problem, Submission.Verdict.AC)
+    _sub(user, problem, Submission.Verdict.WA)
+    _sub(user, problem, Submission.Verdict.WA)
+    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
+    assert body["acceptance"] == 33.3  # 1 of 3
+
+
+@pytest.mark.django_db
+def test_acceptance_zero_without_submissions(auth_client, problem):
+    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
+    assert body["acceptance"] == 0.0

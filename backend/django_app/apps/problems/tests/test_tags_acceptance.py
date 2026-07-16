@@ -2,7 +2,6 @@
 
 import pytest
 from apps.problems.models import Problem, Tag
-from apps.submissions.models import Submission
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -34,16 +33,6 @@ def admin_client(db, django_user_model):
 @pytest.fixture
 def problem(db):
     return Problem.objects.create(title="Two Sum", description="d", difficulty="easy")
-
-
-def _sub(user, problem, verdict):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
 
 
 # ---- tags: read ----
@@ -133,31 +122,3 @@ def test_create_with_empty_tags_rejected(admin_client):
     }
     resp = admin_client.post(reverse("problems-list"), data, format="json")
     assert resp.status_code == 400
-
-
-# ---- acceptance ----
-
-
-@pytest.mark.django_db
-def test_acceptance_is_ac_over_total(auth_client, user, problem):
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.WA)
-    _sub(user, problem, Submission.Verdict.TLE)
-    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
-    assert body["acceptance"] == 50.0  # 2 AC of 4
-
-
-@pytest.mark.django_db
-def test_acceptance_rounded_to_one_decimal(auth_client, user, problem):
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.WA)
-    _sub(user, problem, Submission.Verdict.WA)
-    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
-    assert body["acceptance"] == 33.3  # 1 of 3
-
-
-@pytest.mark.django_db
-def test_acceptance_zero_without_submissions(auth_client, problem):
-    body = auth_client.get(reverse("problems-detail", args=[problem.pk])).json()
-    assert body["acceptance"] == 0.0
