@@ -1,7 +1,9 @@
 import { useId, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './AuthPage.css';
+import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
+import { stashOAuthFrom } from '../utils/oauthReturn';
 
 const TICKS = Array.from({ length: 50 }, (_, i) => i);
 
@@ -87,6 +89,31 @@ function EyeOffIcon() {
   );
 }
 
+function OAuthButtons({ onOAuth, disabled }) {
+  return (
+    <div className="auth-oauth">
+      <button
+        type="button"
+        className="auth-oauth-btn"
+        title="Continue with Google"
+        onClick={() => onOAuth('google')}
+        disabled={disabled}
+      >
+        <GoogleIcon />
+      </button>
+      <button
+        type="button"
+        className="auth-oauth-btn"
+        title="Continue with GitHub"
+        onClick={() => onOAuth('github')}
+        disabled={disabled}
+      >
+        <GitHubIcon />
+      </button>
+    </div>
+  );
+}
+
 function FloatInput({ type = 'text', label, value, onChange, autoComplete }) {
   const id = useId();
   const [revealed, setRevealed] = useState(false);
@@ -121,7 +148,7 @@ function FloatInput({ type = 'text', label, value, onChange, autoComplete }) {
   );
 }
 
-function LoginForm({ onSwitch, onSubmit, loading, error }) {
+function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -166,27 +193,12 @@ function LoginForm({ onSwitch, onSubmit, loading, error }) {
         </button>
       </div>
 
-      <div className="auth-oauth">
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with Google"
-        >
-          <GoogleIcon />
-        </button>
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with GitHub"
-        >
-          <GitHubIcon />
-        </button>
-      </div>
+      <OAuthButtons onOAuth={onOAuth} disabled={loading} />
     </form>
   );
 }
 
-function RegisterForm({ onSwitch, onSubmit, loading, error }) {
+function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -235,22 +247,7 @@ function RegisterForm({ onSwitch, onSubmit, loading, error }) {
         </button>
       </div>
 
-      <div className="auth-oauth">
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with Google"
-        >
-          <GoogleIcon />
-        </button>
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with GitHub"
-        >
-          <GitHubIcon />
-        </button>
-      </div>
+      <OAuthButtons onOAuth={onOAuth} disabled={loading} />
     </form>
   );
 }
@@ -289,6 +286,21 @@ export default function AuthPage({ mode = 'login' }) {
     wrap(login, { username: usernameOrEmail, password });
   const handleRegister = (data) => wrap(register, data);
 
+  const handleOAuth = async (provider) => {
+    setError('');
+    setLoading(true);
+    try {
+      stashOAuthFrom(from);
+      const { authorize_url } = await oauthStart(provider);
+      // Full-page redirect to the provider; stay in the loading state so the
+      // buttons cannot be clicked again while the browser navigates away.
+      window.location.assign(authorize_url);
+    } catch (e) {
+      setError(getErrorMessage(e));
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-ring">
@@ -301,6 +313,7 @@ export default function AuthPage({ mode = 'login' }) {
             <LoginForm
               onSwitch={() => navigate('/register')}
               onSubmit={handleLogin}
+              onOAuth={handleOAuth}
               loading={loading}
               error={error}
             />
@@ -308,6 +321,7 @@ export default function AuthPage({ mode = 'login' }) {
             <RegisterForm
               onSwitch={() => navigate('/login')}
               onSubmit={handleRegister}
+              onOAuth={handleOAuth}
               loading={loading}
               error={error}
             />
