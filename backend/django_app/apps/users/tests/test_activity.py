@@ -16,24 +16,6 @@ from rest_framework.test import APIClient
 
 
 @pytest.fixture
-def client(db, django_user_model):
-    # Endpoint requires auth; a distinct viewer can read any user's activity.
-    viewer = django_user_model.objects.create_user(
-        username="viewer", email="viewer@test.com", password="pass"
-    )
-    api = APIClient()
-    api.force_authenticate(user=viewer)
-    return api
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="u", email="u@test.com", password="pass"
-    )
-
-
-@pytest.fixture
 def problem(db):
     return Problem.objects.create(
         title="P", description="", difficulty=Problem.Difficulty.EASY
@@ -55,7 +37,7 @@ def _make_submission(user, problem, *, verdict=None, created_at=None):
 
 
 @pytest.mark.django_db
-def test_counts_all_submissions_per_day_regardless_of_verdict(client, user, problem):
+def test_counts_all_submissions_per_day_regardless_of_verdict(viewer_client, user, problem):
     now = timezone.now()
     day1 = now - timedelta(days=2)
     day2 = now - timedelta(days=1)
@@ -68,7 +50,7 @@ def test_counts_all_submissions_per_day_regardless_of_verdict(client, user, prob
     _make_submission(user, problem, verdict=Submission.Verdict.TLE, created_at=day2)
 
     url = reverse("users:user-activity", args=[user.username])
-    resp = client.get(url)
+    resp = viewer_client.get(url)
 
     assert resp.status_code == 200
     assert resp.json() == {
@@ -78,30 +60,30 @@ def test_counts_all_submissions_per_day_regardless_of_verdict(client, user, prob
 
 
 @pytest.mark.django_db
-def test_sparse_no_empty_days(client, user, problem):
+def test_sparse_no_empty_days(viewer_client, user, problem):
     """Only days with activity appear — no zero-filled gaps."""
     _make_submission(user, problem, created_at=timezone.now() - timedelta(days=5))
-    resp = client.get(reverse("users:user-activity", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert len(resp.json()) == 1
 
 
 @pytest.mark.django_db
-def test_excludes_submissions_older_than_window(client, user, problem):
+def test_excludes_submissions_older_than_window(viewer_client, user, problem):
     _make_submission(user, problem, created_at=timezone.now() - timedelta(days=400))
-    resp = client.get(reverse("users:user-activity", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert resp.json() == {}
 
 
 @pytest.mark.django_db
-def test_empty_for_user_without_submissions(client, user):
-    resp = client.get(reverse("users:user-activity", args=[user.username]))
+def test_empty_for_user_without_submissions(viewer_client, user):
+    resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert resp.status_code == 200
     assert resp.json() == {}
 
 
 @pytest.mark.django_db
-def test_nonexistent_user_returns_404(client):
-    resp = client.get(reverse("users:user-activity", args=["no-such_user"]))
+def test_nonexistent_user_returns_404(viewer_client):
+    resp = viewer_client.get(reverse("users:user-activity", args=["no-such_user"]))
     assert resp.status_code == 404
 
 
@@ -112,23 +94,23 @@ def test_requires_authentication(user):
 
 
 @pytest.mark.django_db
-def test_only_target_users_submissions(client, user, problem, django_user_model):
+def test_only_target_users_submissions(viewer_client, user, problem, django_user_model):
     other = django_user_model.objects.create_user(
         username="other", email="other@test.com", password="pass"
     )
     _make_submission(user, problem, created_at=timezone.now() - timedelta(days=1))
     _make_submission(other, problem, created_at=timezone.now() - timedelta(days=1))
 
-    resp = client.get(reverse("users:user-activity", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert sum(resp.json().values()) == 1  # only `user`'s submission counted
 
 
 @pytest.mark.django_db
-def test_same_day_different_times_grouped_as_one(client, user, problem):
+def test_same_day_different_times_grouped_as_one(viewer_client, user, problem):
     from datetime import timedelta
 
     day = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0)
     _make_submission(user, problem, created_at=day)
     _make_submission(user, problem, created_at=day + timedelta(hours=8))
-    resp = client.get(reverse("users:user-activity", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert resp.json() == {day.date().isoformat(): 2}

@@ -120,23 +120,6 @@ def test_get_rank_negative_falls_back_to_trainee():
 # --- fixtures & helpers for the endpoint tests ---
 
 
-@pytest.fixture
-def client(db, django_user_model):
-    viewer = django_user_model.objects.create_user(
-        username="viewer", email="viewer@test.com", password="pass"
-    )
-    api = APIClient()
-    api.force_authenticate(user=viewer)
-    return api
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="u", email="u@test.com", password="pass"
-    )
-
-
 def _entry(user, rating, *, when=None):
     e = EloHistory.objects.create(user=user, rating=rating)
     if when is not None:
@@ -148,11 +131,11 @@ def _entry(user, rating, *, when=None):
 
 
 @pytest.mark.django_db
-def test_user_detail_includes_rank(client, django_user_model):
+def test_user_detail_includes_rank(viewer_client, django_user_model):
     user = django_user_model.objects.create_user(
         username="u", email="u@test.com", password="pass", elo_rating=1850
     )
-    resp = client.get(reverse("users:user-detail", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-detail", args=[user.username]))
     assert resp.status_code == 200
     body = resp.json()
     assert body["elo_rating"] == 1850
@@ -160,18 +143,18 @@ def test_user_detail_includes_rank(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_user_detail_default_rating_is_junior(client, django_user_model):
+def test_user_detail_default_rating_is_junior(viewer_client, django_user_model):
     # Default elo_rating is 1200 -> Junior.
     user = django_user_model.objects.create_user(
         username="new", email="new@test.com", password="pass"
     )
-    resp = client.get(reverse("users:user-detail", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-detail", args=[user.username]))
     assert resp.json()["rank"] == "Junior"
 
 
 @pytest.mark.django_db
-def test_user_detail_404_for_unknown(client):
-    resp = client.get(reverse("users:user-detail", args=["nope-no-such-user"]))
+def test_user_detail_404_for_unknown(viewer_client):
+    resp = viewer_client.get(reverse("users:user-detail", args=["nope-no-such-user"]))
     assert resp.status_code == 404
 
 
@@ -188,62 +171,62 @@ def test_user_detail_requires_auth(django_user_model):
 
 
 @pytest.mark.django_db
-def test_max_rating_present_and_matches_model(client, django_user_model):
+def test_max_rating_present_and_matches_model(viewer_client, django_user_model):
     user = django_user_model.objects.create_user(
         username="u", email="u@test.com", password="pass"
     )
     user.max_rating = 1750
     user.save(update_fields=["max_rating"])
-    body = client.get(reverse("users:user-detail", args=[user.username])).json()
+    body = viewer_client.get(reverse("users:user-detail", args=[user.username])).json()
     assert body["maxRating"] == 1750
 
 
 @pytest.mark.django_db
-def test_global_rank_top_user_is_one(client, django_user_model):
+def test_global_rank_top_user_is_one(viewer_client, django_user_model):
     top = django_user_model.objects.create_user(
         username="top", email="top@test.com", password="pass", elo_rating=2500
     )
     django_user_model.objects.create_user(
         username="mid", email="mid@test.com", password="pass", elo_rating=1500
     )
-    body = client.get(reverse("users:user-detail", args=[top.username])).json()
+    body = viewer_client.get(reverse("users:user-detail", args=[top.username])).json()
     assert body["globalRank"] == 1
 
 
 @pytest.mark.django_db
-def test_global_rank_ties_share_place(client, django_user_model):
+def test_global_rank_ties_share_place(viewer_client, django_user_model):
     a = django_user_model.objects.create_user(
         username="a", email="a@test.com", password="pass", elo_rating=1800
     )
     b = django_user_model.objects.create_user(
         username="b", email="b@test.com", password="pass", elo_rating=1800
     )
-    ra = client.get(reverse("users:user-detail", args=[a.username])).json()[
+    ra = viewer_client.get(reverse("users:user-detail", args=[a.username])).json()[
         "globalRank"
     ]
-    rb = client.get(reverse("users:user-detail", args=[b.username])).json()[
+    rb = viewer_client.get(reverse("users:user-detail", args=[b.username])).json()[
         "globalRank"
     ]
     assert ra == rb == 1
 
 
 @pytest.mark.django_db
-def test_next_tier_middle(client, django_user_model):
+def test_next_tier_middle(viewer_client, django_user_model):
     user = django_user_model.objects.create_user(
         username="m", email="m@test.com", password="pass", elo_rating=1850
     )
-    nt = client.get(reverse("users:user-detail", args=[user.username])).json()[
+    nt = viewer_client.get(reverse("users:user-detail", args=[user.username])).json()[
         "nextTier"
     ]
     assert nt == {"name": "Grandmaster", "floor": 1800, "ceil": 2000}
 
 
 @pytest.mark.django_db
-def test_next_tier_top_is_null(client, django_user_model):
+def test_next_tier_top_is_null(viewer_client, django_user_model):
     user = django_user_model.objects.create_user(
         username="k", email="k@test.com", password="pass", elo_rating=2500
     )
-    nt = client.get(reverse("users:user-detail", args=[user.username])).json()[
+    nt = viewer_client.get(reverse("users:user-detail", args=[user.username])).json()[
         "nextTier"
     ]
     assert nt is None
@@ -253,13 +236,13 @@ def test_next_tier_top_is_null(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_returns_history_oldest_first(client, user):
+def test_returns_history_oldest_first(viewer_client, user):
     now = timezone.now()
     _entry(user, 1225, when=now - timedelta(days=1))
     _entry(user, 1210, when=now - timedelta(days=2))
     _entry(user, 1218, when=now)
 
-    resp = client.get(reverse("users:user-elo-history", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-elo-history", args=[user.username]))
     assert resp.status_code == 200
     data = resp.json()
     assert [row["rating"] for row in data] == [1210, 1225, 1218]
@@ -267,27 +250,27 @@ def test_returns_history_oldest_first(client, user):
 
 
 @pytest.mark.django_db
-def test_empty_for_user_without_history(client, user):
-    resp = client.get(reverse("users:user-elo-history", args=[user.username]))
+def test_empty_for_user_without_history(viewer_client, user):
+    resp = viewer_client.get(reverse("users:user-elo-history", args=[user.username]))
     assert resp.status_code == 200
     assert resp.json() == []
 
 
 @pytest.mark.django_db
-def test_only_target_users_history(client, user, django_user_model):
+def test_only_target_users_history(viewer_client, user, django_user_model):
     other = django_user_model.objects.create_user(
         username="other", email="other@test.com", password="pass"
     )
     _entry(user, 1215)
     _entry(other, 1190)
-    resp = client.get(reverse("users:user-elo-history", args=[user.username]))
+    resp = viewer_client.get(reverse("users:user-elo-history", args=[user.username]))
     assert len(resp.json()) == 1
     assert resp.json()[0]["rating"] == 1215
 
 
 @pytest.mark.django_db
-def test_nonexistent_user_returns_404(client):
-    resp = client.get(reverse("users:user-elo-history", args=["missing-user"]))
+def test_nonexistent_user_returns_404(viewer_client):
+    resp = viewer_client.get(reverse("users:user-elo-history", args=["missing-user"]))
     assert resp.status_code == 404
 
 

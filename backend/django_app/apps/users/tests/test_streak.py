@@ -8,25 +8,6 @@ from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
-
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="user", email="user@test.com", password="pass"
-    )
-
-
-@pytest.fixture
-def auth_client(api_client, user):
-    api_client.force_authenticate(user=user)
-    return api_client
 
 
 def _problem(title):
