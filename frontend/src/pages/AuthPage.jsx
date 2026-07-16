@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import './AuthPage.css';
 import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
-import { stashOAuthFrom } from '../utils/oauthReturn';
+import { redirectToProvider, stashOAuthFrom } from '../utils/oauthReturn';
 
 const TICKS = Array.from({ length: 50 }, (_, i) => i);
 
@@ -324,7 +324,7 @@ export default function AuthPage({ mode = 'login' }) {
       const { authorize_url } = await oauthStart(provider);
       // Full-page redirect to the provider; stay in the loading state so the
       // buttons cannot be clicked again while the browser navigates away.
-      window.location.assign(authorize_url);
+      redirectToProvider(authorize_url);
     } catch (e) {
       setError(oauthErrorMessage(getErrorMessage(e)));
       setLoading(false);

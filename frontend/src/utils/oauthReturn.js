@@ -13,3 +13,9 @@ export function popOAuthFrom() {
   sessionStorage.removeItem(KEY);
   return path || '/';
 }
+
+// Thin wrapper so tests can mock the full-page provider redirect: jsdom's
+// window.location is unforgeable and cannot be stubbed directly.
+export function redirectToProvider(url) {
+  window.location.assign(url);
+}

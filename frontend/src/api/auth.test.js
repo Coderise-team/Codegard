@@ -3,7 +3,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const { post, get } = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }));
 vi.mock('./client', () => ({ default: { post, get } }));
 
-import { register, login, refresh, logout, me } from './auth';
+import {
+  register,
+  login,
+  refresh,
+  logout,
+  me,
+  oauthStart,
+  oauthRedeem,
+} from './auth';
 
 beforeEach(() => {
   post.mockReset();
@@ -67,5 +75,23 @@ describe('auth API', () => {
 
     expect(post).toHaveBeenCalledWith('users/logout/', { refresh: 'r1' });
     expect(result).toBeUndefined();
+  });
+
+  it('oauthStart fetches the provider authorize url', async () => {
+    get.mockResolvedValue({ data: { authorize_url: 'https://provider/auth' } });
+
+    const data = await oauthStart('google');
+
+    expect(get).toHaveBeenCalledWith('users/oauth/google/start/');
+    expect(data).toEqual({ authorize_url: 'https://provider/auth' });
+  });
+
+  it('oauthRedeem posts the ticket and returns the token pair', async () => {
+    post.mockResolvedValue({ data: { access: 'a', refresh: 'r' } });
+
+    const data = await oauthRedeem('t1');
+
+    expect(post).toHaveBeenCalledWith('users/oauth/redeem/', { ticket: 't1' });
+    expect(data).toEqual({ access: 'a', refresh: 'r' });
   });
 });
