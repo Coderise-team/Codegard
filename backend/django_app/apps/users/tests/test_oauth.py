@@ -6,6 +6,7 @@ import pytest
 from apps.users import oauth
 from apps.users.models import OAuthAccount, User
 from django.core.cache import cache
+from django.db import IntegrityError
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -151,3 +152,20 @@ def test_reserved_username_hint_is_not_used(client):
     _callback(client, identity)
     created = User.objects.get(email="me@test.com")
     assert created.username != "me"
+
+
+# --- OAuthAccount model constraint ---
+
+
+@pytest.mark.django_db
+def test_provider_uid_pair_is_unique(django_user_model):
+    """The same (provider, provider_uid) can't be linked twice — DB constraint."""
+    u1 = django_user_model.objects.create_user(
+        username="one", email="one@test.com", password="pass"
+    )
+    u2 = django_user_model.objects.create_user(
+        username="two", email="two@test.com", password="pass"
+    )
+    OAuthAccount.objects.create(user=u1, provider="google", provider_uid="dup-uid")
+    with pytest.raises(IntegrityError):
+        OAuthAccount.objects.create(user=u2, provider="google", provider_uid="dup-uid")
