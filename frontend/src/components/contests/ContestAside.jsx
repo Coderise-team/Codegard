@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
@@ -36,6 +37,18 @@ export default function ContestAside({
   const { rows, total, hasMore, loading, error, loadMore } = panel;
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
+  // On phones the panel opens below the fold — bring it into view so the
+  // rows show up without manual scrolling. A no-op when already visible.
+  const asideRef = useRef(null);
+  useEffect(() => {
+    if (open) {
+      asideRef.current?.scrollIntoView?.({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [open]);
+
   if (!open) {
     return (
       <button className="cp-aside-tab" onClick={onToggle} title="Show panel">
@@ -43,7 +56,7 @@ export default function ContestAside({
         <span className="lbl">
           {state === 'soon' ? 'Registered' : 'Standings'}
         </span>
-        <I.chevRight size={14} style={{ transform: 'rotate(180deg)' }} />
+        <I.chevRight size={14} className="cp-tab-arrow" />
       </button>
     );
   }
@@ -56,7 +69,7 @@ export default function ContestAside({
       : null;
 
   return (
-    <aside className="cp-aside">
+    <aside className="cp-aside" ref={asideRef}>
       <button className="cp-aside-hd" onClick={onToggle} title="Hide panel">
         <span className="t">
           {isReg ? <I.users size={15} /> : <I.trophy size={15} />}

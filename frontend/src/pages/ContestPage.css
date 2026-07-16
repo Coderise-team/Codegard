@@ -476,6 +476,9 @@
 .cp-aside-tab svg {
   flex: 0 0 auto;
 }
+.cp-tab-arrow {
+  transform: rotate(180deg);
+}
 .cp-aside-tab .lbl {
   writing-mode: vertical-rl;
   text-orientation: mixed;
@@ -531,17 +534,14 @@
   .cp-stage::-webkit-scrollbar {
     display: none;
   }
+  /* the banner always occupies exactly one screen minus the collapsed bar,
+     so the panel sits on the floor like a footer and opening it can only
+     extend the page downward — the banner never moves */
   .cp-content {
     flex: 0 0 auto;
+    min-height: calc(100% - 48px);
     overflow: visible;
     padding: 22px 16px;
-  }
-  /* no bottom edge to pin to — plain flow with a fixed gap instead */
-  .cp-c-in {
-    display: block;
-  }
-  .cp-bottom {
-    margin-top: 40px;
   }
 
   .cp-title {
@@ -573,5 +573,12 @@
   .cp-aside-tab .lbl {
     writing-mode: horizontal-tb;
     transform: none;
+  }
+  /* the panel is a footer here: closed points down, open points up */
+  .cp-tab-arrow {
+    transform: rotate(90deg);
+  }
+  .cp-hd-arrow {
+    transform: rotate(-90deg);
   }
 }
