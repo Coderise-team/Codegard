@@ -2,11 +2,15 @@
 Project-wide test fixtures.
 
 Only universal fixtures live here — an API client, a plain user, a superuser,
-their authenticated clients, and a fake Redis. Domain fixtures (problems,
-contests, submissions, ...) belong in each app's ``tests/conftest.py``.
+an authenticated client, and a fake Redis. Domain fixtures (problems, contests,
+submissions, ...) belong in each app's ``tests/conftest.py``.
 
 An app-local fixture with the same name shadows the one defined here, so a test
 that needs a specific username or a richer object just overrides it locally.
+
+No ``admin_client`` here on purpose: pytest-django ships one (a session-auth
+Django client for /admin/ tests). Shadowing it globally breaks admin tests, so
+API tests that want a DRF admin client define their own locally.
 """
 
 import pytest
@@ -40,13 +44,6 @@ def admin(db, django_user_model):
 def auth_client(api_client, user):
     """API client authenticated as ``user``."""
     api_client.force_authenticate(user=user)
-    return api_client
-
-
-@pytest.fixture
-def admin_client(api_client, admin):
-    """API client authenticated as ``admin``."""
-    api_client.force_authenticate(user=admin)
     return api_client
 
 
