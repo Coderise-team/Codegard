@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import ProblemsPage from './pages/ProblemsPage';
 import ProblemPage from './pages/ProblemPage';
 import ContestsPage from './pages/ContestsPage';
+import ContestPage from './pages/ContestPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
           { path: '/problems', element: <ProblemsPage /> },
           { path: '/problems/:id', element: <ProblemPage /> },
           { path: '/contests', element: <ContestsPage /> },
+          { path: '/contests/:id', element: <ContestPage /> },
           { path: '/standings', element: <StandingsPage /> },
           { path: '/users/:username', element: <ProfilePage /> },
           // Catch-all: the whole product lives behind the login, so an unknown

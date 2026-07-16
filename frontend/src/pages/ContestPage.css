@@ -1,0 +1,584 @@
+/* ============================================================
+   Codegard — ContestPage (single-contest event banner)
+   The whole stage is one violet gradient banner. Reuses the app
+   shell / topbar / .hero-probs / .hpip / .hbadge / .reg-chip /
+   .reg-pill / .btn from Dashboard.css (+ tokens from
+   styles/variables.css, primitives from styles/global.css).
+   ============================================================ */
+@import './Dashboard.css';
+
+/* topbar breadcrumb */
+.cp-crumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.cp-crumb svg {
+  color: var(--gold);
+}
+.cp-crumb .dim {
+  color: var(--fg2);
+  font-weight: 500;
+}
+
+/* ============================================================
+   STAGE — the full-bleed violet gradient banner
+   ============================================================ */
+.cp-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      115% 130% at 90% -12%,
+      color-mix(in srgb, var(--gold) 30%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      95% 120% at 2% 118%,
+      color-mix(in srgb, var(--gold) 15%, transparent),
+      transparent 52%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--gold) 7%, var(--bg)),
+      var(--bg)
+    );
+}
+/* faint dotted texture, fades toward corner */
+.cp-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 0
+  );
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(
+    120% 120% at 88% 0%,
+    #000,
+    transparent 68%
+  );
+  mask-image: radial-gradient(120% 120% at 88% 0%, #000, transparent 68%);
+}
+
+/* ---- content column ----
+   Two zones hugging the stage corners: the header block (badge/title/meta)
+   sits top-left, the timer/CTA/problems block sits bottom-left, with empty
+   space between them. */
+.cp-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 54px 22px 54px 66px;
+  position: relative;
+  z-index: 1;
+  scrollbar-width: none;
+}
+.cp-content::-webkit-scrollbar {
+  display: none;
+}
+/* Three grid rows: header / guaranteed empty middle / timer block. The
+   middle never collapses below its minimum, so a long problem list can't
+   push the header — extra rows overflow downward into the stage scroll. */
+.cp-c-in {
+  width: 100%;
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-rows: auto minmax(140px, 1fr) auto;
+}
+.cp-top {
+  grid-row: 1;
+}
+.cp-bottom {
+  grid-row: 3;
+}
+
+.cp-hd {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 30px;
+}
+.cp-hd .reg-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cp-hd .reg-chip b {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.cp-hd .reg-chip svg {
+  color: var(--gold);
+}
+
+.cp-title {
+  margin: 0;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+.cp-metarow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 30px;
+  margin-top: 28px;
+}
+.cp-metarow span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-metarow span svg {
+  color: var(--gold);
+  flex: 0 0 auto;
+}
+
+/* timer sits directly over the gradient — no box (unlike the hub's
+   .cc-count, whose box styles this neutralizes). */
+.cp-count {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.cp-count .k {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.cp-count .v {
+  margin-left: 0;
+  font-family: var(--mono);
+  font-size: 46px;
+  font-weight: 700;
+  color: var(--gold-hi);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.cp-count .v.urgent {
+  color: var(--wa);
+}
+.cp-cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+/* upsize the reused reg-pill / btn to read as a primary CTA here */
+.cp-cta .reg-pill {
+  height: 46px;
+  padding: 0 22px;
+  font-size: 13.5px;
+  border-radius: var(--r);
+}
+.cp-cta .btn {
+  height: 46px;
+  padding: 0 26px;
+  font-size: 14px;
+}
+
+/* problems — reuses .hero-probs / .hpip; wraps into rows when there are many */
+.cp-probs {
+  margin-top: 32px;
+}
+.cp-probs-k {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-bottom: 16px;
+}
+.cp-probs .hero-probs {
+  padding: 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cp-probs .hpip {
+  flex: 0 0 auto;
+  width: 146px;
+  height: auto;
+  padding: 12px 14px;
+  background: rgba(19, 22, 31, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition:
+    background 0.13s,
+    transform 0.13s;
+}
+.cp-probs .hpip:hover {
+  background: rgba(36, 41, 57, 0.72);
+  transform: translateY(-1px);
+}
+.cp-probs .hpip .nm {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   ASIDE — right-attached, collapsible
+   ============================================================ */
+.cp-aside {
+  flex: 0 0 320px;
+  width: 320px;
+  z-index: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-left: 1px solid var(--border);
+}
+/* the whole header is the collapse button */
+.cp-aside-hd {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  font-family: var(--ui);
+  color: var(--fg);
+  cursor: pointer;
+  transition: 0.13s;
+}
+.cp-aside-hd:hover {
+  background: var(--gold-soft);
+}
+.cp-hd-arrow {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--fg2);
+}
+.cp-aside-hd .t {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.cp-aside-hd .t svg {
+  color: var(--gold);
+}
+.cp-aside-hd .cnt {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-aside-hd .live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--wa);
+}
+.cp-aside-hd .live-dot .d {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wa);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.cp-aside-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* table header + shared column layout */
+.cp-thead {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+.cp-user {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cp-cell {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cp-c-pen {
+  width: 54px;
+}
+.cp-tier {
+  flex: 0 0 auto;
+  width: 82px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  position: relative;
+  font-size: 13.5px;
+  color: var(--fg);
+  text-decoration: none;
+  transition: background 0.13s;
+}
+.cp-row + .cp-row {
+  border-top: 1px solid rgba(30, 34, 50, 0.5);
+}
+.cp-row .cp-user {
+  font-weight: 600;
+}
+.cp-row .cp-cell,
+.cp-row .cp-tier {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.cp-row .cp-pts {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13.5px;
+}
+.cp-rk {
+  width: 22px;
+  flex: 0 0 auto;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.cp-row.r1 .cp-rk {
+  color: var(--gold);
+}
+.cp-row.r2 .cp-rk,
+.cp-row.r3 .cp-rk {
+  color: var(--fg);
+}
+.cp-row .cp-dl {
+  font-weight: 700;
+}
+.cp-row .cp-dl.up {
+  color: var(--ac);
+}
+.cp-row .cp-dl.down {
+  color: var(--wa);
+}
+.cp-row.you {
+  background: var(--gold-soft);
+}
+.cp-row.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
+}
+.cp-row:hover {
+  background: var(--card-2);
+}
+.cp-row:hover .cp-user {
+  color: var(--gold-hi);
+}
+.cp-row.you:hover {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+}
+.cp-gap {
+  text-align: center;
+  color: var(--fg3);
+  font-family: var(--mono);
+  padding: 4px 0;
+}
+
+.cp-msg {
+  padding: 18px 16px;
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.cp-sentinel {
+  height: 1px;
+}
+
+/* collapsed tab, glued to the right edge */
+.cp-aside-tab {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 46px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--fg2);
+  transition: 0.13s;
+}
+.cp-aside-tab:hover {
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+}
+.cp-aside-tab svg {
+  flex: 0 0 auto;
+}
+.cp-tab-arrow {
+  transform: rotate(180deg);
+}
+.cp-aside-tab .lbl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* entrance — slide only (never opacity; preview freezes at frame 0) */
+@media (prefers-reduced-motion: no-preference) {
+  .cp-c-in > * {
+    animation: cpIn 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+  .cp-c-in > *:nth-child(2) {
+    animation-delay: 0.04s;
+  }
+  @keyframes cpIn {
+    from {
+      transform: translateY(10px);
+    }
+    to {
+      transform: none;
+    }
+  }
+}
+
+/* responsive: narrower title */
+@media (max-width: 1180px) {
+  .cp-title {
+    font-size: 42px;
+  }
+}
+
+/* tablet: tighter insets, slimmer aside */
+@media (max-width: 960px) {
+  .cp-content {
+    padding: 32px 20px 32px 30px;
+  }
+  .cp-aside {
+    flex-basis: 280px;
+    width: 280px;
+  }
+}
+
+/* phone: the stage stacks — banner first, panel below it, one page scroll */
+@media (max-width: 640px) {
+  .cp-stage {
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .cp-stage::-webkit-scrollbar {
+    display: none;
+  }
+  /* the banner always occupies exactly one screen minus the collapsed bar,
+     so the panel sits on the floor like a footer and opening it can only
+     extend the page downward — the banner never moves */
+  .cp-content {
+    flex: 0 0 auto;
+    min-height: calc(100% - 48px);
+    overflow: visible;
+    padding: 22px 16px;
+  }
+
+  .cp-title {
+    font-size: 34px;
+  }
+  .cp-count .v {
+    font-size: 36px;
+  }
+
+  .cp-aside {
+    flex: 0 0 auto;
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .cp-aside-body {
+    overflow: visible;
+  }
+
+  /* collapsed edge tab becomes a horizontal bar under the banner */
+  .cp-aside-tab {
+    flex-direction: row;
+    width: auto;
+    height: 48px;
+    gap: 10px;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .cp-aside-tab .lbl {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+  /* the panel is a footer here: closed points down, open points up */
+  .cp-tab-arrow {
+    transform: rotate(90deg);
+  }
+  .cp-hd-arrow {
+    transform: rotate(-90deg);
+  }
+}

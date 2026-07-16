@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { useContestHero } from '../../hooks/useContestHero';
 import { joinContest, leaveContest } from '../../api/contests';
@@ -152,9 +153,13 @@ function LiveHero({ contest, standing, now }) {
           </div>
         </div>
         <div className="hero-cta">
+          {/* Points into the round workspace once contest mode exists. */}
           <a className="btn btn-primary" href="#">
             <I.play size={15} /> Enter round
           </a>
+          <Link className="btn" to={`/contests/${contest.id}`}>
+            Details
+          </Link>
         </div>
       </div>
     </section>
@@ -248,9 +253,9 @@ function SoonHero({ contest, onChanged, now }) {
               <I.flag size={15} /> Register
             </button>
           )}
-          <a className="btn" href="#">
+          <Link className="btn" to={`/contests/${contest.id}`}>
             Details
-          </a>
+          </Link>
         </div>
       </div>
     </section>
@@ -271,9 +276,9 @@ function NoContest() {
       <div className="hero-foot">
         <div className="hero-stand" />
         <div className="hero-cta">
-          <a className="btn btn-primary" href="#">
+          <Link className="btn btn-primary" to="/contests">
             <I.trophy size={15} /> Browse contests
-          </a>
+          </Link>
         </div>
       </div>
     </section>
