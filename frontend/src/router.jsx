@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import AuthPage from './pages/AuthPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import Dashboard from './pages/Dashboard';
 import ProblemsPage from './pages/ProblemsPage';
 import ProblemPage from './pages/ProblemPage';
@@ -30,6 +31,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Unguarded on purpose: mid-exchange the auth flag flips to true, and a
+      // GuestRoute would race the page's own redirect with its Navigate home.
+      { path: '/oauth/callback', element: <OAuthCallbackPage /> },
       {
         element: <PrivateRoute />,
         children: [

@@ -28,6 +28,7 @@ function getErrorMessage(error) {
  */
 const OAUTH_ERROR_MESSAGES = {
   state: 'The sign-in attempt expired. Please try again.',
+  ticket: 'The sign-in attempt expired. Please try again.',
   provider_not_configured: 'This sign-in method is not available right now.',
   token_exchange_failed: 'The provider rejected the sign-in. Please try again.',
   userinfo_failed:
