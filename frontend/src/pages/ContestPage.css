@@ -343,7 +343,7 @@
 .cp-cell {
   flex: 0 0 auto;
   width: 42px;
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .cp-c-pen {
@@ -352,7 +352,7 @@
 .cp-tier {
   flex: 0 0 auto;
   width: 82px;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
