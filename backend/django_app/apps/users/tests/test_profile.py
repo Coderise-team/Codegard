@@ -1,4 +1,7 @@
-"""Tests for the user stats endpoint: GET /api/users/{username}/stats/."""
+"""
+Profile tests: the user stats endpoint (GET /api/users/{username}/stats/) and
+the `joined` field on the user detail endpoint.
+"""
 
 from datetime import timedelta
 
@@ -42,6 +45,9 @@ def _sub(user, problem, verdict):
         language=Submission.Language.PYTHON,
         verdict=verdict,
     )
+
+
+# --- user stats endpoint ---
 
 
 @pytest.mark.django_db
@@ -94,3 +100,15 @@ def test_nonexistent_user_returns_404(client):
 def test_requires_authentication(user):
     resp = APIClient().get(reverse("users:user-stats", args=[user.username]))
     assert resp.status_code in (401, 403)
+
+
+# --- `joined` field on the user detail endpoint ---
+
+
+@pytest.mark.django_db
+def test_joined_returns_registration_date(client, django_user_model):
+    user = django_user_model.objects.create_user(
+        username="j", email="j@test.com", password="pass"
+    )
+    body = client.get(reverse("users:user-detail", args=[user.username])).json()
+    assert body["joined"][:10] == user.date_joined.date().isoformat()
