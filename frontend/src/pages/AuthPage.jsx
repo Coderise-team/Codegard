@@ -281,18 +281,21 @@ export default function AuthPage({ mode = 'login' }) {
   const register = useAuthStore((s) => s.register);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // The backend callback lands failures on /login?oauth_error=<slug>; the
+  // param is already there on mount, so it can seed the error state directly.
+  const [error, setError] = useState(() => {
+    const slug = searchParams.get('oauth_error');
+    return slug ? oauthErrorMessage(slug) : '';
+  });
 
   // Page the user was sent here from (set by PrivateRoute); fall back to home.
   const from = location.state?.from?.pathname || '/';
 
-  // The backend callback lands failures on /login?oauth_error=<slug>: surface
-  // the message once and strip the param so a refresh doesn't resurface it.
+  // Strip the consumed oauth_error param so a refresh doesn't resurface it.
   useEffect(() => {
-    const slug = searchParams.get('oauth_error');
-    if (!slug) return;
-    setError(oauthErrorMessage(slug));
+    if (!searchParams.has('oauth_error')) return;
     const next = new URLSearchParams(searchParams);
     next.delete('oauth_error');
     setSearchParams(next, { replace: true });
