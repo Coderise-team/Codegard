@@ -135,3 +135,12 @@ def test_delete_never_daily_problem_returns_204(api_client, admin, problem):
     resp = api_client.delete(reverse("problems-detail", args=[problem.id]))
     assert resp.status_code == status.HTTP_204_NO_CONTENT
     assert not Problem.objects.filter(pk=problem.id).exists()
+
+
+# ---- DailyProblem.__str__ ----
+
+
+@pytest.mark.django_db
+def test_str(problem):
+    dp = DailyProblem.objects.create(date=timezone.now().date(), problem=problem)
+    assert str(dp) == f"{dp.date}: Two Sum"

@@ -19,13 +19,6 @@ def _problem(title):
 
 
 @pytest.mark.django_db
-def test_str():
-    p = _problem("Two Sum")
-    dp = DailyProblem.objects.create(date=timezone.now().date(), problem=p)
-    assert str(dp) == f"{dp.date}: Two Sum"
-
-
-@pytest.mark.django_db
 def test_creates_one_for_today():
     p = _problem("P")
     summary = assign_daily_problem()
