@@ -1,16 +1,18 @@
 """
 Project-wide test fixtures.
 
-Only universal fixtures live here — an API client, a plain user, a superuser,
-an authenticated client, and a fake Redis. Domain fixtures (problems, contests,
-submissions, ...) belong in each app's ``tests/conftest.py``.
+Only universal fixtures live here: an API client, a plain user, a superuser, a
+user-authenticated client, a superuser-authenticated client, and a fake Redis.
+Domain fixtures (problems, contests, submissions, ...) belong in each app's
+``tests/conftest.py``.
 
 An app-local fixture with the same name shadows the one defined here, so a test
 that needs a specific username or a richer object just overrides it locally.
 
-No ``admin_client`` here on purpose: pytest-django ships one (a session-auth
-Django client for /admin/ tests). Shadowing it globally breaks admin tests, so
-API tests that want a DRF admin client define their own locally.
+The superuser client is ``custom_admin_client``, not ``admin_client``: the latter
+is a pytest-django builtin (a session-auth Django client for /admin/ tests), and
+shadowing it would break those. ``custom_admin_client`` is a DRF client for
+hitting the REST API as a superuser.
 """
 
 import pytest
@@ -41,9 +43,16 @@ def admin(db, django_user_model):
 
 
 @pytest.fixture
-def auth_client(api_client, user):
-    """API client authenticated as ``user``."""
+def user_client(api_client, user):
+    """DRF client authenticated as a regular ``user``."""
     api_client.force_authenticate(user=user)
+    return api_client
+
+
+@pytest.fixture
+def custom_admin_client(api_client, admin):
+    """DRF client authenticated as a superuser (for the REST API, not /admin/)."""
+    api_client.force_authenticate(user=admin)
     return api_client
 
 
