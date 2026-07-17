@@ -293,6 +293,16 @@ export default function AuthPage({ mode = 'login' }) {
   // Page the user was sent here from (set by PrivateRoute); fall back to home.
   const from = location.state?.from?.pathname || '/';
 
+  // "Back" from the OAuth provider can restore this page from the bfcache
+  // with the pre-redirect state, leaving every button stuck disabled.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) setLoading(false);
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   // Strip the consumed oauth_error param so a refresh doesn't resurface it.
   useEffect(() => {
     if (!searchParams.has('oauth_error')) return;

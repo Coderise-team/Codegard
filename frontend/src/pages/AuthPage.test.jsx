@@ -178,6 +178,22 @@ describe('AuthPage', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
+  it('re-enables the buttons when the page is restored from bfcache', async () => {
+    oauthStart.mockResolvedValue({ authorize_url: 'https://provider/auth' });
+    renderInRouter(<AuthPage />);
+
+    const google = screen.getByRole('button', { name: 'Continue with Google' });
+    fireEvent.click(google);
+    await waitFor(() => expect(redirect).toHaveBeenCalled());
+    expect(google).toBeDisabled();
+
+    const pageshow = new Event('pageshow');
+    Object.defineProperty(pageshow, 'persisted', { value: true });
+    fireEvent(window, pageshow);
+
+    await waitFor(() => expect(google).not.toBeDisabled());
+  });
+
   it('shows the mapped oauth_error message from the URL and strips the param', async () => {
     render(
       <MemoryRouter initialEntries={['/login?oauth_error=email_not_verified']}>
