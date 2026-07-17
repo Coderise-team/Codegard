@@ -35,7 +35,9 @@ vi.mock('../utils/oauthReturn', () => ({
 // Probe for asserting what the router URL looks like after effects run.
 function LocationDisplay() {
   const location = useLocation();
-  return <div data-testid="location">{location.pathname + location.search}</div>;
+  return (
+    <div data-testid="location">{location.pathname + location.search}</div>
+  );
 }
 
 const renderInRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
