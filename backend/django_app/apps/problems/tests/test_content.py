@@ -4,32 +4,8 @@ import pytest
 from apps.problems.models import Problem, TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
 
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def admin_client(db, django_user_model):
-    admin = django_user_model.objects.create_superuser(
-        username="admin", email="admin@test.com", password="pass"
-    )
-    api = APIClient()
-    api.force_authenticate(user=admin)
-    return api
-
-
-@pytest.fixture
-def user_client(db, django_user_model):
-    user = django_user_model.objects.create_user(
-        username="user", email="user@test.com", password="pass"
-    )
-    api = APIClient()
-    api.force_authenticate(user=user)
-    return api
+# api_client, user_client and custom_admin_client come from conftest.
 
 
 def _valid_payload(**overrides):
@@ -51,8 +27,8 @@ def _valid_payload(**overrides):
 
 @pytest.mark.django_db
 class TestContentFieldsRequired:
-    def test_create_with_all_content_fields_succeeds(self, admin_client):
-        resp = admin_client.post(
+    def test_create_with_all_content_fields_succeeds(self, custom_admin_client):
+        resp = custom_admin_client.post(
             reverse("problems-list"), _valid_payload(), format="json"
         )
         assert resp.status_code == status.HTTP_201_CREATED
@@ -64,15 +40,15 @@ class TestContentFieldsRequired:
     @pytest.mark.parametrize(
         "missing", ["input_format", "output_format", "constraints"]
     )
-    def test_create_without_a_content_field_is_400(self, admin_client, missing):
+    def test_create_without_a_content_field_is_400(self, custom_admin_client, missing):
         payload = _valid_payload()
         payload.pop(missing)
-        resp = admin_client.post(reverse("problems-list"), payload, format="json")
+        resp = custom_admin_client.post(reverse("problems-list"), payload, format="json")
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert missing in resp.data
 
-    def test_create_with_blank_content_field_is_400(self, admin_client):
-        resp = admin_client.post(
+    def test_create_with_blank_content_field_is_400(self, custom_admin_client):
+        resp = custom_admin_client.post(
             reverse("problems-list"), _valid_payload(input_format=""), format="json"
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
