@@ -48,6 +48,12 @@ export const useAuthStore = create((set) => {
       await loadUser();
     },
 
+    // OAuth: exchange the one-time login ticket for tokens, then the usual path.
+    loginWithTicket: async (ticket) => {
+      tokenStorage.set(await authApi.oauthRedeem(ticket));
+      await loadUser();
+    },
+
     logout: async () => {
       const refresh = tokenStorage.getRefresh();
       try {

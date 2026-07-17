@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { authApi, tokenStorage } = vi.hoisted(() => ({
-  authApi: { login: vi.fn(), register: vi.fn(), logout: vi.fn(), me: vi.fn() },
+  authApi: {
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+    me: vi.fn(),
+    oauthRedeem: vi.fn(),
+  },
   tokenStorage: {
     getAccess: vi.fn(),
     getRefresh: vi.fn(),
@@ -85,6 +91,32 @@ describe('authStore', () => {
     await expect(
       store().register({ username: 'u', email: 'e', password: 'p' })
     ).rejects.toThrow('boom');
+
+    expect(tokenStorage.clear).toHaveBeenCalled();
+    expect(store().user).toBeNull();
+    expect(store().isAuthenticated).toBe(false);
+  });
+
+  it('loginWithTicket stores tokens, fetches the user and authenticates', async () => {
+    authApi.oauthRedeem.mockResolvedValue({ access: 'a', refresh: 'r' });
+    authApi.me.mockResolvedValue({ username: 'u', avatar: null });
+
+    await store().loginWithTicket('t1');
+
+    expect(authApi.oauthRedeem).toHaveBeenCalledWith('t1');
+    expect(tokenStorage.set).toHaveBeenCalledWith({
+      access: 'a',
+      refresh: 'r',
+    });
+    expect(store().user).toEqual({ username: 'u', avatar: null });
+    expect(store().isAuthenticated).toBe(true);
+  });
+
+  it('loginWithTicket rolls back tokens and rethrows when /me/ fails', async () => {
+    authApi.oauthRedeem.mockResolvedValue({ access: 'a', refresh: 'r' });
+    authApi.me.mockRejectedValue(new Error('boom'));
+
+    await expect(store().loginWithTicket('t1')).rejects.toThrow('boom');
 
     expect(tokenStorage.clear).toHaveBeenCalled();
     expect(store().user).toBeNull();

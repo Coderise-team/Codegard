@@ -1,7 +1,9 @@
-import { useId, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useId, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import './AuthPage.css';
+import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
+import { redirectToProvider, stashOAuthFrom } from '../utils/oauthReturn';
 
 const TICKS = Array.from({ length: 50 }, (_, i) => i);
 
@@ -19,6 +21,24 @@ function getErrorMessage(error) {
   }
   return error?.message || 'Something went wrong';
 }
+
+/**
+ * Human messages for the backend OAuth error slugs: `?oauth_error=<slug>` on
+ * the provider round-trip, or `{ error: <slug> }` from the start endpoint.
+ */
+const OAUTH_ERROR_MESSAGES = {
+  state: 'The sign-in attempt expired. Please try again.',
+  ticket: 'The sign-in attempt expired. Please try again.',
+  provider_not_configured: 'This sign-in method is not available right now.',
+  token_exchange_failed: 'The provider rejected the sign-in. Please try again.',
+  userinfo_failed:
+    'Could not read your profile from the provider. Please try again.',
+  email_not_verified:
+    'Your email is not verified with the provider. Verify it there and try again.',
+};
+
+const oauthErrorMessage = (slug) =>
+  OAUTH_ERROR_MESSAGES[slug] || 'Sign-in failed. Please try again.';
 
 function GoogleIcon() {
   return (
@@ -87,6 +107,31 @@ function EyeOffIcon() {
   );
 }
 
+function OAuthButtons({ onOAuth, disabled }) {
+  return (
+    <div className="auth-oauth">
+      <button
+        type="button"
+        className="auth-oauth-btn"
+        title="Continue with Google"
+        onClick={() => onOAuth('google')}
+        disabled={disabled}
+      >
+        <GoogleIcon />
+      </button>
+      <button
+        type="button"
+        className="auth-oauth-btn"
+        title="Continue with GitHub"
+        onClick={() => onOAuth('github')}
+        disabled={disabled}
+      >
+        <GitHubIcon />
+      </button>
+    </div>
+  );
+}
+
 function FloatInput({ type = 'text', label, value, onChange, autoComplete }) {
   const id = useId();
   const [revealed, setRevealed] = useState(false);
@@ -121,7 +166,7 @@ function FloatInput({ type = 'text', label, value, onChange, autoComplete }) {
   );
 }
 
-function LoginForm({ onSwitch, onSubmit, loading, error }) {
+function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -166,27 +211,12 @@ function LoginForm({ onSwitch, onSubmit, loading, error }) {
         </button>
       </div>
 
-      <div className="auth-oauth">
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with Google"
-        >
-          <GoogleIcon />
-        </button>
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with GitHub"
-        >
-          <GitHubIcon />
-        </button>
-      </div>
+      <OAuthButtons onOAuth={onOAuth} disabled={loading} />
     </form>
   );
 }
 
-function RegisterForm({ onSwitch, onSubmit, loading, error }) {
+function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -235,22 +265,7 @@ function RegisterForm({ onSwitch, onSubmit, loading, error }) {
         </button>
       </div>
 
-      <div className="auth-oauth">
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with Google"
-        >
-          <GoogleIcon />
-        </button>
-        <button
-          type="button"
-          className="auth-oauth-btn"
-          title="Continue with GitHub"
-        >
-          <GitHubIcon />
-        </button>
-      </div>
+      <OAuthButtons onOAuth={onOAuth} disabled={loading} />
     </form>
   );
 }
@@ -266,10 +281,35 @@ export default function AuthPage({ mode = 'login' }) {
   const register = useAuthStore((s) => s.register);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // The backend callback lands failures on /login?oauth_error=<slug>; the
+  // param is already there on mount, so it can seed the error state directly.
+  const [error, setError] = useState(() => {
+    const slug = searchParams.get('oauth_error');
+    return slug ? oauthErrorMessage(slug) : '';
+  });
 
   // Page the user was sent here from (set by PrivateRoute); fall back to home.
   const from = location.state?.from?.pathname || '/';
+
+  // "Back" from the OAuth provider can restore this page from the bfcache
+  // with the pre-redirect state, leaving every button stuck disabled.
+  useEffect(() => {
+    const onPageShow = (e) => {
+      if (e.persisted) setLoading(false);
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
+  // Strip the consumed oauth_error param so a refresh doesn't resurface it.
+  useEffect(() => {
+    if (!searchParams.has('oauth_error')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('oauth_error');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const wrap = async (action, data) => {
     setError('');
@@ -289,6 +329,21 @@ export default function AuthPage({ mode = 'login' }) {
     wrap(login, { username: usernameOrEmail, password });
   const handleRegister = (data) => wrap(register, data);
 
+  const handleOAuth = async (provider) => {
+    setError('');
+    setLoading(true);
+    try {
+      stashOAuthFrom(from);
+      const { authorize_url } = await oauthStart(provider);
+      // Full-page redirect to the provider; stay in the loading state so the
+      // buttons cannot be clicked again while the browser navigates away.
+      redirectToProvider(authorize_url);
+    } catch (e) {
+      setError(oauthErrorMessage(getErrorMessage(e)));
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-ring">
@@ -301,6 +356,7 @@ export default function AuthPage({ mode = 'login' }) {
             <LoginForm
               onSwitch={() => navigate('/register')}
               onSubmit={handleLogin}
+              onOAuth={handleOAuth}
               loading={loading}
               error={error}
             />
@@ -308,6 +364,7 @@ export default function AuthPage({ mode = 'login' }) {
             <RegisterForm
               onSwitch={() => navigate('/login')}
               onSubmit={handleRegister}
+              onOAuth={handleOAuth}
               loading={loading}
               error={error}
             />

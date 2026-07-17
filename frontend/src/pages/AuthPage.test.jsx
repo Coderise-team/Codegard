@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 import AuthPage from './AuthPage';
 
-const { navigate, login, register } = vi.hoisted(() => ({
-  navigate: vi.fn(),
-  login: vi.fn(),
-  register: vi.fn(),
-}));
+const { navigate, login, register, oauthStart, stash, redirect } = vi.hoisted(
+  () => ({
+    navigate: vi.fn(),
+    login: vi.fn(),
+    register: vi.fn(),
+    oauthStart: vi.fn(),
+    stash: vi.fn(),
+    redirect: vi.fn(),
+  })
+);
 
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
@@ -19,6 +24,21 @@ vi.mock('../store/authStore', () => ({
   useAuthStore: (selector) =>
     selector({ login, register, isAuthenticated: false }),
 }));
+
+vi.mock('../api/auth', () => ({ oauthStart }));
+
+vi.mock('../utils/oauthReturn', () => ({
+  stashOAuthFrom: stash,
+  redirectToProvider: redirect,
+}));
+
+// Probe for asserting what the router URL looks like after effects run.
+function LocationDisplay() {
+  const location = useLocation();
+  return (
+    <div data-testid="location">{location.pathname + location.search}</div>
+  );
+}
 
 const renderInRouter = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
@@ -126,5 +146,81 @@ describe('AuthPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Register' }));
 
     expect(navigate).toHaveBeenCalledWith('/register');
+  });
+
+  it('starts the oauth flow: stashes the origin and redirects to the provider', async () => {
+    oauthStart.mockResolvedValue({ authorize_url: 'https://provider/auth' });
+    renderInRouter(<AuthPage />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Continue with Google' })
+    );
+
+    await waitFor(() => expect(oauthStart).toHaveBeenCalledWith('google'));
+    expect(stash).toHaveBeenCalledWith('/');
+    await waitFor(() =>
+      expect(redirect).toHaveBeenCalledWith('https://provider/auth')
+    );
+  });
+
+  it('shows a human message when the oauth start fails', async () => {
+    oauthStart.mockRejectedValue({
+      response: { data: { error: 'provider_not_configured' } },
+    });
+    renderInRouter(<AuthPage mode="register" />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Continue with GitHub' })
+    );
+
+    expect(oauthStart).toHaveBeenCalledWith('github');
+    expect(
+      await screen.findByText('This sign-in method is not available right now.')
+    ).toBeInTheDocument();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('re-enables the buttons when the page is restored from bfcache', async () => {
+    oauthStart.mockResolvedValue({ authorize_url: 'https://provider/auth' });
+    renderInRouter(<AuthPage />);
+
+    const google = screen.getByRole('button', { name: 'Continue with Google' });
+    fireEvent.click(google);
+    await waitFor(() => expect(redirect).toHaveBeenCalled());
+    expect(google).toBeDisabled();
+
+    const pageshow = new Event('pageshow');
+    Object.defineProperty(pageshow, 'persisted', { value: true });
+    fireEvent(window, pageshow);
+
+    await waitFor(() => expect(google).not.toBeDisabled());
+  });
+
+  it('shows the mapped oauth_error message from the URL and strips the param', async () => {
+    render(
+      <MemoryRouter initialEntries={['/login?oauth_error=email_not_verified']}>
+        <AuthPage />
+        <LocationDisplay />
+      </MemoryRouter>
+    );
+
+    expect(
+      await screen.findByText(/your email is not verified/i)
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/)
+    );
+  });
+
+  it('falls back to a generic message for an unknown oauth_error slug', async () => {
+    render(
+      <MemoryRouter initialEntries={['/login?oauth_error=whatever']}>
+        <AuthPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      await screen.findByText('Sign-in failed. Please try again.')
+    ).toBeInTheDocument();
   });
 });
