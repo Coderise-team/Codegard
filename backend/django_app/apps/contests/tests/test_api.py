@@ -434,24 +434,12 @@ def test_list_page_size_capped_at_50(user_client):
 
 
 # ---------------------------------------------------------------------------
-# Status tests (moving out: update_status -> test_models, task -> test_tasks)
+# Status task (moves to test_tasks)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.django_db
 class TestContestStatus:
-    def test_pending_contest_has_correct_status(self, contest):
-        contest.update_status()
-        assert contest.status == Contest.Status.PENDING
-
-    def test_active_contest_has_correct_status(self, active_contest):
-        active_contest.update_status()
-        assert active_contest.status == Contest.Status.ACTIVE
-
-    def test_finished_contest_has_correct_status(self, finished_contest):
-        finished_contest.update_status()
-        assert finished_contest.status == Contest.Status.FINISHED
-
     @patch("apps.contests.tasks.Redis")
     def test_celery_task_updates_statuses_in_bulk(self, mock_redis, db):
         now = timezone.now()
