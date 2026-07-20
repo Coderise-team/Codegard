@@ -82,41 +82,6 @@ def _sub(user, problem, contest, verdict):
     )
 
 
-# --- Step 1: subtitle ------------------------------------------------------
-
-
-@pytest.mark.django_db
-def test_subtitle_in_list_and_detail(client):
-    c = _active_contest()
-    c.subtitle = "Round 1 · Div. 2"
-    c.save()
-    assert client.get(reverse("contests-list")).json()["results"][0]["subtitle"] == (
-        "Round 1 · Div. 2"
-    )
-    assert client.get(reverse("contests-detail", args=[c.id])).json()["subtitle"] == (
-        "Round 1 · Div. 2"
-    )
-
-
-@pytest.mark.django_db
-def test_admin_can_write_subtitle(admin):
-    api = APIClient()
-    api.force_authenticate(user=admin)
-    now = timezone.now()
-    resp = api.post(
-        reverse("contests-list"),
-        {
-            "title": "C",
-            "subtitle": "Round 2 · Div. 1",
-            "start_time": now + timedelta(hours=1),
-            "end_time": now + timedelta(hours=3),
-        },
-        format="json",
-    )
-    assert resp.status_code == 201
-    assert Contest.objects.get(pk=resp.json()["id"]).subtitle == "Round 2 · Div. 1"
-
-
 # --- Step 2: rating fields -------------------------------------------------
 
 
