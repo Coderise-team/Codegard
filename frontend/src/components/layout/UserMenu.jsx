@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icons from '../Icons';
 import { useAuthStore } from '../../store/authStore';
 
 /**
  * UserMenu — avatar chip in the topbar that opens a dropdown.
  *
- * Profile shortcuts (My profile / Edit profile / Change password) are
- * placeholders until those pages exist; Log out is wired to the auth store.
+ * Navigation only: editing lives on the profile page itself, behind the owner's
+ * Edit profile button, so the menu just points there and logs out.
  *
  * Props:
  *   user — { username, initials }
@@ -56,12 +56,14 @@ export default function UserMenu({ user }) {
 
       {open && (
         <div className="user-pop" role="menu">
-          <a className="um-item" href="#" role="menuitem">
+          <Link
+            to="/profile"
+            className="um-item"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
             <Icons.user size={16} /> My profile
-          </a>
-          <a className="um-item" href="#" role="menuitem">
-            <Icons.edit size={16} /> Edit profile
-          </a>
+          </Link>
           <div className="um-sep" />
           <button
             type="button"
