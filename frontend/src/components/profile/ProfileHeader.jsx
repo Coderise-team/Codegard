@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Icons from '../Icons';
+import AvatarUpload from './AvatarUpload';
 import { cgRankFor } from '../../utils/ranks';
 
 /**
@@ -10,11 +11,12 @@ import { cgRankFor } from '../../utils/ranks';
  * than shown as blank slots.
  *
  * Props:
- *   user  — public user object (username, first_name, last_name, bio,
- *           elo_rating, rank, maxRating, globalRank, joined)
- *   delta — rating change on the latest contest, or null when unknown
+ *   user    — public user object (username, first_name, last_name, bio,
+ *             elo_rating, rank, maxRating, globalRank, joined)
+ *   delta   — rating change on the latest contest, or null when unknown
+ *   isOwner — viewer owns this profile: adds the editing controls
  */
-export default function ProfileHeader({ user, delta }) {
+export default function ProfileHeader({ user, delta, isOwner = false }) {
   const I = Icons;
   const [copied, setCopied] = useState(false);
 
@@ -42,7 +44,10 @@ export default function ProfileHeader({ user, delta }) {
   return (
     <section className="phead">
       <div className="phead-main">
-        <div className="pavatar">{initials}</div>
+        <div className="pavatar">
+          {initials}
+          {isOwner && <AvatarUpload />}
+        </div>
 
         <div className="phead-id">
           <div className="top">

@@ -78,6 +78,47 @@
   box-shadow: 0 8px 28px color-mix(in srgb, var(--rank-c) 30%, transparent);
 }
 
+/* Camera badge: sits on the avatar's bottom-right corner, owner only. */
+.avatar-cam {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+  background: var(--card-2);
+  border: 2px solid var(--card);
+  cursor: pointer;
+  transition: 0.14s;
+}
+.avatar-cam:hover:not(:disabled) {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+.avatar-cam:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* Status sits outside the avatar box so it can't squash the initials. */
+.avatar-note {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 150px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--fg2);
+}
+.avatar-note.is-error {
+  color: var(--wa);
+}
+
 .phead-id {
   flex: 1;
   min-width: 220px;
