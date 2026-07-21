@@ -3,11 +3,9 @@ per-problem solved_count, problem visibility, the ?joined filter and page_size.
 """
 
 from datetime import timedelta
-from unittest.mock import patch
 
 import pytest
 from apps.contests.models import Contest
-from apps.contests.tasks import update_contest_statuses
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
@@ -431,43 +429,3 @@ def test_list_page_size_capped_at_50(user_client):
     )
     body = user_client.get(reverse("contests-list"), {"page_size": 999}).json()
     assert len(body["results"]) == 50  # max_page_size, not 999
-
-
-# ---------------------------------------------------------------------------
-# Status task (moves to test_tasks)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.django_db
-class TestContestStatus:
-    @patch("apps.contests.tasks.Redis")
-    def test_celery_task_updates_statuses_in_bulk(self, mock_redis, db):
-        now = timezone.now()
-        pending = Contest.objects.create(
-            title="Pending",
-            start_time=now + timedelta(hours=1),
-            end_time=now + timedelta(hours=2),
-            status=Contest.Status.FINISHED,
-        )
-        active = Contest.objects.create(
-            title="Active",
-            start_time=now - timedelta(hours=1),
-            end_time=now + timedelta(hours=1),
-            status=Contest.Status.PENDING,
-        )
-        finished = Contest.objects.create(
-            title="Finished",
-            start_time=now - timedelta(hours=3),
-            end_time=now - timedelta(hours=1),
-            status=Contest.Status.ACTIVE,
-        )
-
-        update_contest_statuses()
-
-        pending.refresh_from_db()
-        active.refresh_from_db()
-        finished.refresh_from_db()
-
-        assert pending.status == Contest.Status.PENDING
-        assert active.status == Contest.Status.ACTIVE
-        assert finished.status == Contest.Status.FINISHED

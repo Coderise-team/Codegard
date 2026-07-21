@@ -1,12 +1,13 @@
-"""Rating fields, apply flow and task tests for the contest ELO rework."""
+"""Rating fields and apply flow for the contest ELO rework.
+
+The beat task that drives ``apply_contest_ratings`` lives in ``test_tasks``.
+"""
 
 from datetime import timedelta
-from unittest.mock import patch
 
 import pytest
 from apps.contests.models import Contest, ContestScore
 from apps.contests.services import apply_contest_ratings, calculate_score
-from apps.contests.tasks import apply_finished_contest_ratings
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from apps.users.models import EloHistory
@@ -205,55 +206,3 @@ def test_single_submitter_marks_applied_without_change(users, problems):
     assert a.elo_rating == 1200  # untouched
     c.refresh_from_db()
     assert c.rating_applied is True  # but still marked done
-
-
-# --- task ------------------------------------------------------------------
-
-
-@pytest.mark.django_db
-def test_task_isolates_failing_contest(users, problems):
-    a, b, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)
-
-    # One bad contest must not crash the batch.
-    with patch(
-        "apps.contests.services.apply_contest_ratings", side_effect=RuntimeError("boom")
-    ):
-        summary = apply_finished_contest_ratings()  # must not raise
-
-    assert summary["contests_processed"] == 0  # the failing one wasn't counted
-    c.refresh_from_db()
-    assert c.rating_applied is False  # left for the next run
-
-
-@pytest.mark.django_db
-def test_task_picks_finished_unrated_only(users, problems):
-    a, b, _ = users
-    now = timezone.now()
-
-    finished = _finished_contest()
-    _submit(a, problems[0], finished, Submission.Verdict.AC)
-    _submit(b, problems[0], finished, Submission.Verdict.AC)
-
-    already = _finished_contest()
-    already.rating_applied = True
-    already.save(update_fields=["rating_applied"])
-
-    active = Contest.objects.create(
-        title="Active",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=1),
-        status=Contest.Status.ACTIVE,
-    )
-    _submit(a, problems[0], active, Submission.Verdict.AC)
-    _submit(b, problems[0], active, Submission.Verdict.AC)
-
-    summary = apply_finished_contest_ratings()
-
-    assert summary["contests_processed"] == 1  # only `finished`
-    finished.refresh_from_db()
-    active.refresh_from_db()
-    assert finished.rating_applied is True
-    assert active.rating_applied is False  # not finished → untouched
