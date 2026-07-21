@@ -1,3 +1,8 @@
+"""Tests for the submissions API: create (incl. contest rules), list/retrieve
+scoping, no update/delete, the verdict flags, the ?problem= filter and the
+public per-username list.
+"""
+
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -45,6 +50,17 @@ def problem(db):
     return Problem.objects.create(
         title="Two Sum",
         description="Find two numbers.",
+        difficulty="easy",
+        time_limit=1000,
+        memory_limit=256,
+    )
+
+
+@pytest.fixture
+def problem2(db):
+    return Problem.objects.create(
+        title="Reverse String",
+        description="",
         difficulty="easy",
         time_limit=1000,
         memory_limit=256,
@@ -123,16 +139,6 @@ class TestSubmissionCreate:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["status"] == "queue_error"
 
-
-@pytest.mark.django_db
-def test_submission_str_includes_pending_and_verdict(submission):
-    # Covers Submission.__str__ branches (Pending vs verdict code).
-    assert "Pending" in str(submission)
-
-    submission.verdict = Submission.Verdict.AC
-    submission.save(update_fields=["verdict"])
-    assert "AC" in str(submission)
-
     def test_unauthenticated_cannot_submit(self, api_client, problem):
         url = reverse("submissions-list")
         data = {"problem": problem.pk, "code": "x=1", "language": "python"}
@@ -169,18 +175,13 @@ def test_submission_str_includes_pending_and_verdict(submission):
         response = auth_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_problem_not_in_contest_returns_400(self, auth_client, active_contest):
-        # Create a problem NOT added to the contest
-        other_problem = Problem.objects.create(
-            title="Other",
-            description="",
-            difficulty="easy",
-            time_limit=1000,
-            memory_limit=256,
-        )
+    def test_problem_not_in_contest_returns_400(
+        self, auth_client, problem2, active_contest
+    ):
+        # problem2 is never added to the contest.
         url = reverse("submissions-list")
         data = {
-            "problem": other_problem.pk,
+            "problem": problem2.pk,
             "contest": active_contest.pk,
             "code": "x=1",
             "language": "python",
@@ -281,17 +282,6 @@ class TestSubmissionVerdict:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture
-def problem2(db):
-    return Problem.objects.create(
-        title="Reverse String",
-        description="",
-        difficulty="easy",
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
 @pytest.mark.django_db
 class TestSubmissionProblemFilter:
     def test_filters_by_problem(self, auth_client, user, problem, problem2):
@@ -381,3 +371,18 @@ class TestPublicSubmissions:
         )
         data = auth_client.get(_user_subs_url(user.username)).json()
         assert len(data) == RECENT_SUBMISSIONS_LIMIT
+
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_submission_str_includes_pending_and_verdict(submission):
+    # Covers Submission.__str__ branches (Pending vs verdict code).
+    assert "Pending" in str(submission)
+
+    submission.verdict = Submission.Verdict.AC
+    submission.save(update_fields=["verdict"])
+    assert "AC" in str(submission)
