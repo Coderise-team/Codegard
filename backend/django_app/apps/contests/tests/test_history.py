@@ -14,14 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-# user, admin and user_client come from conftest.
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
-    )
+# user, other, admin and user_client come from conftest.
 
 
 def _problem(title):

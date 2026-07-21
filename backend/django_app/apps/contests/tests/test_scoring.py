@@ -8,30 +8,10 @@ from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.test import APIClient
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Fixtures (api_client, user and other come from conftest)
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="user", email="user@test.com", password="pass"
-    )
-
-
-@pytest.fixture
-def user2(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="user2", email="user2@test.com", password="pass"
-    )
 
 
 @pytest.fixture
@@ -255,32 +235,32 @@ class TestCalculateScore:
 @pytest.mark.django_db
 class TestLeaderboard:
     def test_higher_score_ranks_first(
-        self, user, user2, problem, problem2, active_contest
+        self, user, other, problem, problem2, active_contest
     ):
         # user solves both problems
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         make_submission(user, problem2, active_contest, Submission.Verdict.AC, 20)
         calculate_score(user, active_contest)
 
-        # user2 solves only one
-        make_submission(user2, problem, active_contest, Submission.Verdict.AC, 10)
-        calculate_score(user2, active_contest)
+        # other solves only one
+        make_submission(other, problem, active_contest, Submission.Verdict.AC, 10)
+        calculate_score(other, active_contest)
 
         lb = list(get_leaderboard(active_contest))
         assert lb[0].user == user
-        assert lb[1].user == user2
+        assert lb[1].user == other
 
     def test_same_score_lower_penalty_ranks_first(
-        self, user, user2, problem, active_contest
+        self, user, other, problem, active_contest
     ):
         # user — AC at 10 min (penalty=10)
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
 
-        # user2 — WA then AC at 20 min (penalty=20+10=30)
-        make_submission(user2, problem, active_contest, Submission.Verdict.WA, 5)
-        make_submission(user2, problem, active_contest, Submission.Verdict.AC, 20)
-        calculate_score(user2, active_contest)
+        # other — WA then AC at 20 min (penalty=20+10=30)
+        make_submission(other, problem, active_contest, Submission.Verdict.WA, 5)
+        make_submission(other, problem, active_contest, Submission.Verdict.AC, 20)
+        calculate_score(other, active_contest)
 
         lb = list(get_leaderboard(active_contest))
         assert lb[0].user == user  # lower penalty wins
@@ -411,13 +391,13 @@ class TestLeaderboardPagination:
         response = api_client.get(_leaderboard_url(active_contest, page=2))
         assert [row["rank"] for row in response.data["results"]] == [11, 12]
 
-    def test_full_tie_is_ordered_by_id(self, api_client, user, user2, active_contest):
+    def test_full_tie_is_ordered_by_id(self, api_client, user, other, active_contest):
         ContestScore.objects.create(user=user, contest=active_contest)
-        ContestScore.objects.create(user=user2, contest=active_contest)
+        ContestScore.objects.create(user=other, contest=active_contest)
         api_client.force_authenticate(user=user)
         response = api_client.get(_leaderboard_url(active_contest))
         usernames = [row["username"] for row in response.data["results"]]
-        assert usernames == [user.username, user2.username]
+        assert usernames == [user.username, other.username]
 
     def test_rating_delta_in_response(self, api_client, user, active_contest):
         ContestScore.objects.create(

@@ -3,79 +3,33 @@
 The beat task that drives ``apply_contest_ratings`` lives in ``test_tasks``.
 """
 
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest, ContestScore
+from apps.contests.models import ContestScore
 from apps.contests.services import apply_contest_ratings, calculate_score
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from apps.users.models import EloHistory
-from django.utils import timezone
 
-
-@pytest.fixture
-def users(db, django_user_model):
-    return [
-        django_user_model.objects.create_user(
-            username=f"u{i}", email=f"u{i}@t.com", password="pass"
-        )
-        for i in range(3)
-    ]
-
-
-@pytest.fixture
-def problems(db):
-    return [
-        Problem.objects.create(
-            title=f"P{i}",
-            description="",
-            difficulty=Problem.Difficulty.EASY,
-            time_limit=1000,
-            memory_limit=256,
-        )
-        for i in range(2)
-    ]
-
-
-def _finished_contest():
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Done",
-        start_time=now - timedelta(hours=3),
-        end_time=now - timedelta(hours=1),
-        status=Contest.Status.FINISHED,
-    )
-
-
-def _submit(user, problem, contest, verdict):
-    # An AC submission fires the scoring signal → creates/updates ContestScore.
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        contest=contest,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
+# user, users, problems, finished_contest and submit come from conftest.
 
 
 # --- rating fields on ContestScore -----------------------------------------
 
 
 @pytest.mark.django_db
-def test_rating_fields_default_null(user):
-    cs = ContestScore.objects.create(user=user, contest=_finished_contest())
+def test_rating_fields_default_null(user, finished_contest):
+    cs = ContestScore.objects.create(user=user, contest=finished_contest)
     assert cs.rating_delta is None
     assert cs.rating_after is None
 
 
 @pytest.mark.django_db
-def test_calculate_score_does_not_clobber_rating(user, problems):
-    c = _finished_contest()
+def test_calculate_score_does_not_clobber_rating(
+    user, problems, finished_contest, submit
+):
+    c = finished_contest
     p = problems[0]
     c.problems.add(p)
-    _submit(user, p, c, Submission.Verdict.AC)
+    submit(user, p, c)
     calculate_score(user, c)  # creates the ContestScore
 
     cs = ContestScore.objects.get(user=user, contest=c)
@@ -84,7 +38,7 @@ def test_calculate_score_does_not_clobber_rating(user, problems):
     cs.save()
 
     # New submission → recalc; rating fields must survive.
-    _submit(user, p, c, Submission.Verdict.AC)
+    submit(user, p, c)
     calculate_score(user, c)
 
     cs.refresh_from_db()
@@ -96,12 +50,12 @@ def test_calculate_score_does_not_clobber_rating(user, problems):
 
 
 @pytest.mark.django_db
-def test_apply_writes_everything(users, problems):
+def test_apply_writes_everything(users, problems, finished_contest, submit):
     a, b, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)  # a: 2 solved → rank 1
-    _submit(a, problems[1], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)  # b: 1 solved → rank 2
+    c = finished_contest
+    submit(a, problems[0], c)  # a: 2 solved → rank 1
+    submit(a, problems[1], c)
+    submit(b, problems[0], c)  # b: 1 solved → rank 2
 
     updated = apply_contest_ratings(c)
     assert updated == 2
@@ -125,11 +79,13 @@ def test_apply_writes_everything(users, problems):
 
 
 @pytest.mark.django_db
-def test_submitted_but_solved_nothing_goes_minus_and_gets_contestscore(users, problems):
+def test_submitted_but_solved_nothing_goes_minus_and_gets_contestscore(
+    users, problems, finished_contest, submit
+):
     a, b, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)  # solver → rank 1
-    _submit(b, problems[0], c, Submission.Verdict.WA)  # only WA → no ContestScore yet
+    c = finished_contest
+    submit(a, problems[0], c)  # solver → rank 1
+    submit(b, problems[0], c, Submission.Verdict.WA)  # only WA → no ContestScore yet
 
     apply_contest_ratings(c)
 
@@ -142,12 +98,12 @@ def test_submitted_but_solved_nothing_goes_minus_and_gets_contestscore(users, pr
 
 
 @pytest.mark.django_db
-def test_pure_no_show_not_rated(users, problems):
+def test_pure_no_show_not_rated(users, problems, finished_contest, submit):
     a, b, c_user = users
-    c = _finished_contest()
+    c = finished_contest
     c.participants.add(c_user)  # joined but never submits
-    _submit(a, problems[0], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)
+    submit(a, problems[0], c)
+    submit(b, problems[0], c)
 
     apply_contest_ratings(c)
 
@@ -158,12 +114,12 @@ def test_pure_no_show_not_rated(users, problems):
 
 
 @pytest.mark.django_db
-def test_idempotent(users, problems):
+def test_idempotent(users, problems, finished_contest, submit):
     a, b, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)
-    _submit(a, problems[1], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)
+    c = finished_contest
+    submit(a, problems[0], c)
+    submit(a, problems[1], c)
+    submit(b, problems[0], c)
 
     apply_contest_ratings(c)
     a.refresh_from_db()
@@ -177,14 +133,14 @@ def test_idempotent(users, problems):
 
 
 @pytest.mark.django_db
-def test_max_rating_keeps_peak_on_loss(users, problems):
+def test_max_rating_keeps_peak_on_loss(users, problems, finished_contest, submit):
     a, b, _ = users
     b.max_rating = 1300  # historical peak above current
     b.save(update_fields=["max_rating"])
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)
-    _submit(a, problems[1], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)
+    c = finished_contest
+    submit(a, problems[0], c)
+    submit(a, problems[1], c)
+    submit(b, problems[0], c)
 
     apply_contest_ratings(c)
 
@@ -194,10 +150,12 @@ def test_max_rating_keeps_peak_on_loss(users, problems):
 
 
 @pytest.mark.django_db
-def test_single_submitter_marks_applied_without_change(users, problems):
+def test_single_submitter_marks_applied_without_change(
+    users, problems, finished_contest, submit
+):
     a, _, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)  # only one submitter
+    c = finished_contest
+    submit(a, problems[0], c)  # only one submitter
 
     updated = apply_contest_ratings(c)
 

@@ -11,55 +11,9 @@ from apps.contests.tasks import (
     apply_finished_contest_ratings,
     update_contest_statuses,
 )
-from apps.problems.models import Problem
-from apps.submissions.models import Submission
 from django.utils import timezone
 
-
-@pytest.fixture
-def users(db, django_user_model):
-    return [
-        django_user_model.objects.create_user(
-            username=f"u{i}", email=f"u{i}@t.com", password="pass"
-        )
-        for i in range(3)
-    ]
-
-
-@pytest.fixture
-def problems(db):
-    return [
-        Problem.objects.create(
-            title=f"P{i}",
-            description="",
-            difficulty=Problem.Difficulty.EASY,
-            time_limit=1000,
-            memory_limit=256,
-        )
-        for i in range(2)
-    ]
-
-
-def _finished_contest():
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Done",
-        start_time=now - timedelta(hours=3),
-        end_time=now - timedelta(hours=1),
-        status=Contest.Status.FINISHED,
-    )
-
-
-def _submit(user, problem, contest, verdict):
-    # An AC submission fires the scoring signal → creates/updates ContestScore.
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        contest=contest,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
+# users, problems, finished_contest and submit come from conftest.
 
 
 # --- update_contest_statuses -----------------------------------------------
@@ -182,11 +136,11 @@ def test_broadcast_contest_ended_sends_to_each_contest():
 
 
 @pytest.mark.django_db
-def test_ratings_isolate_failing_contest(users, problems):
+def test_ratings_isolate_failing_contest(users, problems, finished_contest, submit):
     a, b, _ = users
-    c = _finished_contest()
-    _submit(a, problems[0], c, Submission.Verdict.AC)
-    _submit(b, problems[0], c, Submission.Verdict.AC)
+    c = finished_contest
+    submit(a, problems[0], c)
+    submit(b, problems[0], c)
 
     # One bad contest must not crash the batch.
     with patch(
@@ -200,26 +154,28 @@ def test_ratings_isolate_failing_contest(users, problems):
 
 
 @pytest.mark.django_db
-def test_ratings_pick_finished_unrated_only(users, problems):
+def test_ratings_pick_finished_unrated_only(users, problems, finished_contest, submit):
     a, b, _ = users
     now = timezone.now()
 
-    finished = _finished_contest()
-    _submit(a, problems[0], finished, Submission.Verdict.AC)
-    _submit(b, problems[0], finished, Submission.Verdict.AC)
+    finished = finished_contest
+    submit(a, problems[0], finished)
+    submit(b, problems[0], finished)
 
-    already = _finished_contest()
-    already.rating_applied = True
-    already.save(update_fields=["rating_applied"])
+    Contest.objects.create(  # finished, but already rated → skipped
+        title="Already rated",
+        start_time=now - timedelta(hours=3),
+        end_time=now - timedelta(hours=1),
+        rating_applied=True,
+    )
 
     active = Contest.objects.create(
         title="Active",
         start_time=now - timedelta(hours=1),
         end_time=now + timedelta(hours=1),
-        status=Contest.Status.ACTIVE,
     )
-    _submit(a, problems[0], active, Submission.Verdict.AC)
-    _submit(b, problems[0], active, Submission.Verdict.AC)
+    submit(a, problems[0], active)
+    submit(b, problems[0], active)
 
     summary = apply_finished_contest_ratings()
 

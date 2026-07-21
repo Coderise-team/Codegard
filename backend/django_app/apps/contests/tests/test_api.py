@@ -12,7 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 
-# api_client, user, admin, user_client and custom_admin_client come from conftest.
+# api_client, user, other, admin, user_client, custom_admin_client and
+# finished_contest come from conftest.
 
 # ---------------------------------------------------------------------------
 # Helpers & fixtures
@@ -63,13 +64,6 @@ def _detail_url(cid):
 
 
 @pytest.fixture
-def other(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
-    )
-
-
-@pytest.fixture
 def contest(db):
     return _contest("Test Contest", starts_in=1, ends_in=3)
 
@@ -77,11 +71,6 @@ def contest(db):
 @pytest.fixture
 def active_contest(db):
     return _contest("Active Contest", starts_in=-1, ends_in=1)
-
-
-@pytest.fixture
-def finished_contest(db):
-    return _contest("Finished Contest", starts_in=-3, ends_in=-1)
 
 
 # ---------------------------------------------------------------------------
@@ -404,7 +393,9 @@ def test_list_page_size_client_controlled(user_client):
     page1 = user_client.get(reverse("contests-list"), {"page_size": 5}).json()
     assert len(page1["results"]) == 5
     assert page1["next"] is not None
-    page2 = user_client.get(reverse("contests-list"), {"page_size": 5, "page": 2}).json()
+    page2 = user_client.get(
+        reverse("contests-list"), {"page_size": 5, "page": 2}
+    ).json()
     assert len(page2["results"]) == 1
 
 
