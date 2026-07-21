@@ -125,7 +125,7 @@ export default function SettingsModal({ open, onClose, onSaved }) {
         </div>
 
         <div
-          className="sm-body"
+          className="sm-body scroll"
           role="tabpanel"
           id={`sm-panel-${tab}`}
           aria-labelledby={`sm-tab-${tab}`}

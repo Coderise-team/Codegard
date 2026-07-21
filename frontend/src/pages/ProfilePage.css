@@ -161,16 +161,6 @@
   font-weight: 600;
   color: var(--fg2);
 }
-/* Free text: break anywhere so an unspaced bio can't widen the banner. */
-.phead-id .pbio {
-  margin-top: 9px;
-  max-width: 62ch;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--fg2);
-  overflow-wrap: anywhere;
-  white-space: pre-line;
-}
 .phead-id .sub {
   margin-top: 9px;
   display: flex;
@@ -197,6 +187,19 @@
   width: 1px;
   height: 12px;
   background: var(--border-2);
+}
+
+/* Own row under the whole banner, full width. Inside .phead-main it would sit
+   in a flex-end row and push the handle and meta upward as it grew, instead of
+   extending the banner downward. Breaks anywhere so an unspaced bio can't
+   widen the page. */
+.pbio {
+  padding: 0 var(--pad) 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg2);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .phead-act {

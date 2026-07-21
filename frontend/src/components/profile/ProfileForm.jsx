@@ -93,7 +93,7 @@ export default function ProfileForm({ onSaved, onClose }) {
           </span>
         </span>
         <textarea
-          className="sm-input sm-textarea"
+          className="sm-input sm-textarea scroll"
           value={values.bio}
           onChange={change('bio')}
           maxLength={MAX_BIO}

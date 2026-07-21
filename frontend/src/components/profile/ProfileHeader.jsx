@@ -70,7 +70,6 @@ export default function ProfileHeader({ user, delta, isOwner = false, onSaved })
               <I.calendar size={14} /> Joined <b>{joined}</b>
             </span>
           </div>
-          {user.bio && <div className="pbio">{user.bio}</div>}
         </div>
 
         <div className="phead-rate">
@@ -116,6 +115,8 @@ export default function ProfileHeader({ user, delta, isOwner = false, onSaved })
           </button>
         </div>
       </div>
+
+      {user.bio && <p className="pbio">{user.bio}</p>}
 
       <SettingsModal
         open={settingsOpen}
