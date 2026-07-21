@@ -161,6 +161,22 @@
   margin-top: 2px;
 }
 
+.sm-done {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 14px 0 6px;
+  text-align: center;
+}
+.sm-done svg {
+  color: var(--ac);
+}
+.sm-done p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--fg2);
+}
+
 @media (max-width: 460px) {
   .sm-row {
     flex-direction: column;

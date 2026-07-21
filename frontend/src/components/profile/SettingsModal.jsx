@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icons from '../Icons';
 import ProfileForm from './ProfileForm';
+import PasswordForm from './PasswordForm';
 import './SettingsModal.css';
 
 const TABS = [
@@ -129,8 +130,10 @@ export default function SettingsModal({ open, onClose, onSaved }) {
           id={`sm-panel-${tab}`}
           aria-labelledby={`sm-tab-${tab}`}
         >
-          {tab === 'profile' && (
+          {tab === 'profile' ? (
             <ProfileForm onSaved={onSaved} onClose={onClose} />
+          ) : (
+            <PasswordForm onClose={onClose} />
           )}
         </div>
       </div>
