@@ -1,11 +1,11 @@
-"""Flow + task tests for the contest ELO rework."""
+"""Rating fields, apply flow and task tests for the contest ELO rework."""
 
 from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
 from apps.contests.models import Contest, ContestScore
-from apps.contests.services import apply_contest_ratings
+from apps.contests.services import apply_contest_ratings, calculate_score
 from apps.contests.tasks import apply_finished_contest_ratings
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
@@ -57,6 +57,38 @@ def _submit(user, problem, contest, verdict):
         language=Submission.Language.PYTHON,
         verdict=verdict,
     )
+
+
+# --- rating fields on ContestScore -----------------------------------------
+
+
+@pytest.mark.django_db
+def test_rating_fields_default_null(user):
+    cs = ContestScore.objects.create(user=user, contest=_finished_contest())
+    assert cs.rating_delta is None
+    assert cs.rating_after is None
+
+
+@pytest.mark.django_db
+def test_calculate_score_does_not_clobber_rating(user, problems):
+    c = _finished_contest()
+    p = problems[0]
+    c.problems.add(p)
+    _submit(user, p, c, Submission.Verdict.AC)
+    calculate_score(user, c)  # creates the ContestScore
+
+    cs = ContestScore.objects.get(user=user, contest=c)
+    cs.rating_delta = -42
+    cs.rating_after = 2147
+    cs.save()
+
+    # New submission → recalc; rating fields must survive.
+    _submit(user, p, c, Submission.Verdict.AC)
+    calculate_score(user, c)
+
+    cs.refresh_from_db()
+    assert cs.rating_delta == -42
+    assert cs.rating_after == 2147
 
 
 # --- main flow -------------------------------------------------------------
