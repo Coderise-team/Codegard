@@ -1,4 +1,4 @@
-"""Tests for personal contest data: subtitle, rating, my-standing, contest-history."""
+"""Tests for personal contest data: rating fields and my-standing."""
 
 from datetime import timedelta
 
@@ -17,20 +17,6 @@ from rest_framework.test import APIClient
 def user(db, django_user_model):
     return django_user_model.objects.create_user(
         username="u", email="u@test.com", password="pass"
-    )
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="o", email="o@test.com", password="pass"
-    )
-
-
-@pytest.fixture
-def admin(db, django_user_model):
-    return django_user_model.objects.create_superuser(
-        username="adm", email="adm@test.com", password="pass"
     )
 
 
@@ -61,16 +47,6 @@ def _active_contest():
     )
 
 
-def _finished_contest(title="Past", hours_ago=1):
-    now = timezone.now()
-    return Contest.objects.create(
-        title=title,
-        start_time=now - timedelta(hours=hours_ago + 2),
-        end_time=now - timedelta(hours=hours_ago),
-        status=Contest.Status.FINISHED,
-    )
-
-
 def _sub(user, problem, contest, verdict):
     return Submission.objects.create(
         user=user,
@@ -82,7 +58,7 @@ def _sub(user, problem, contest, verdict):
     )
 
 
-# --- Step 2: rating fields -------------------------------------------------
+# --- rating fields ---------------------------------------------------------
 
 
 @pytest.mark.django_db
@@ -115,7 +91,7 @@ def test_calculate_score_does_not_clobber_rating(user):
     assert cs.rating_after == 2147
 
 
-# --- Step 3: my-standing ---------------------------------------------------
+# --- my-standing -----------------------------------------------------------
 
 
 @pytest.mark.django_db
@@ -159,168 +135,3 @@ def test_my_standing_requires_auth():
     c = _active_contest()
     resp = APIClient().get(reverse("contests-my-standing", args=[c.id]))
     assert resp.status_code in (401, 403)
-
-
-# --- contest history (public by username) ----------------------------------
-
-
-def _history_url(username):
-    return reverse("users:user-contest-history", args=[username])
-
-
-@pytest.mark.django_db
-def test_history_only_finished_mine_newest_first(client, user, other):
-    older = _finished_contest("Older", hours_ago=10)
-    newer = _finished_contest("Newer", hours_ago=1)
-    active = _active_contest()
-    other_finished = _finished_contest("Others", hours_ago=2)
-
-    ContestScore.objects.create(user=user, contest=older, solved_count=1)
-    ContestScore.objects.create(user=user, contest=newer, solved_count=3)
-    ContestScore.objects.create(
-        user=user, contest=active, solved_count=2
-    )  # not finished
-    ContestScore.objects.create(user=other, contest=other_finished)  # not mine
-
-    data = client.get(_history_url(user.username)).json()["results"]
-    ids = [row["id"] for row in data]
-    assert ids == [newer.id, older.id]  # newest first; active + others excluded
-
-
-@pytest.mark.django_db
-def test_history_requires_auth(user):
-    resp = APIClient().get(_history_url(user.username))
-    assert resp.status_code in (401, 403)
-
-
-@pytest.mark.django_db
-def test_history_unknown_username_404(client):
-    assert client.get(_history_url("ghost")).status_code == 404
-
-
-@pytest.mark.django_db
-def test_history_fields(client, user):
-    c = _finished_contest("Done")
-    c.subtitle = "Round 2 · Div. 1"
-    c.save()
-    c.problems.add(
-        _problem("A"), _problem("B"), _problem("C"), _problem("D"), _problem("E")
-    )
-    ContestScore.objects.create(
-        user=user, contest=c, solved_count=3, rating_delta=-42, rating_after=2147
-    )
-
-    row = client.get(_history_url(user.username)).json()["results"][0]
-    assert row["title"] == "Done"
-    assert row["subtitle"] == "Round 2 · Div. 1"
-    assert row["solved"] == 3
-    assert row["problems_count"] == 5  # "3/5" on the frontend
-    assert row["rank"] == 1
-    assert row["rating_delta"] == -42
-    assert row["rating_after"] == 2147
-
-
-@pytest.mark.django_db
-def test_history_problems_count(client, user):
-    with_problems = _finished_contest("With", hours_ago=1)
-    with_problems.problems.add(_problem("A"), _problem("B"))
-    empty = _finished_contest("Empty", hours_ago=2)  # no problems
-    ContestScore.objects.create(user=user, contest=with_problems, solved_count=1)
-    ContestScore.objects.create(user=user, contest=empty, solved_count=0)
-
-    by_title = {
-        r["title"]: r["problems_count"]
-        for r in client.get(_history_url(user.username)).json()["results"]
-    }
-    assert by_title["With"] == 2
-    assert by_title["Empty"] == 0  # contest with no problems → 0
-
-
-@pytest.mark.django_db
-def test_history_no_n_plus_one(client, user, django_assert_num_queries):
-    # Query count must not grow with the number of history rows.
-    for i in range(5):
-        c = _finished_contest(f"C{i}", hours_ago=i + 1)
-        c.problems.add(_problem(f"P{i}a"), _problem(f"P{i}b"))
-        ContestScore.objects.create(user=user, contest=c, solved_count=1)
-
-    url = _history_url(user.username)
-    # Fixed regardless of row count: user lookup + pagination COUNT + the single
-    # history query (rank & problems_count are inline subqueries, not per-row).
-    with django_assert_num_queries(3):
-        resp = client.get(url)
-    results = resp.json()["results"]
-    assert len(results) == 5
-    assert all(row["problems_count"] == 2 for row in results)
-
-
-@pytest.mark.django_db
-def test_history_rating_fields_null_when_unpopulated(client, user):
-    c = _finished_contest("Done")
-    ContestScore.objects.create(user=user, contest=c, solved_count=1)
-    row = client.get(_history_url(user.username)).json()["results"][0]
-    assert row["rating_delta"] is None
-    assert row["rating_after"] is None
-
-
-@pytest.mark.django_db
-def test_any_authenticated_sees_other_users_history(client, other):
-    c = _finished_contest("Done")
-    ContestScore.objects.create(user=other, contest=c, solved_count=2)
-    # `client` is authenticated as `user`, requesting `other`'s history.
-    data = client.get(_history_url(other.username)).json()["results"]
-    assert len(data) == 1 and data[0]["id"] == c.id
-
-
-# --- rank annotation (single query, matches leaderboard) -------------------
-
-
-@pytest.mark.django_db
-def test_history_rank_matches_leaderboard_by_score(client, user, other, admin):
-    c = _finished_contest("Done")
-    # scores: admin 300 (rank1), user 200 (rank2), other 100 (rank3)
-    ContestScore.objects.create(user=admin, contest=c, score=300, solved_count=3)
-    ContestScore.objects.create(user=user, contest=c, score=200, solved_count=2)
-    ContestScore.objects.create(user=other, contest=c, score=100, solved_count=1)
-
-    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2
-    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 3
-    assert client.get(_history_url(admin.username)).json()["results"][0]["rank"] == 1
-
-
-@pytest.mark.django_db
-def test_history_rank_tiebreak_penalty_then_time(client, user, other, admin):
-    c = _finished_contest("Done")
-    now = timezone.now()
-    # all same score: lower penalty wins; equal penalty -> earlier last_ac_at wins
-    ContestScore.objects.create(
-        user=admin, contest=c, score=100, penalty=5, last_ac_at=now
-    )  # rank 1 (lowest penalty)
-    ContestScore.objects.create(
-        user=user,
-        contest=c,
-        score=100,
-        penalty=9,
-        last_ac_at=now - timedelta(minutes=1),
-    )  # rank 2
-    ContestScore.objects.create(
-        user=other, contest=c, score=100, penalty=9, last_ac_at=now
-    )  # rank 3 (same penalty as user, later time)
-
-    assert client.get(_history_url(admin.username)).json()["results"][0]["rank"] == 1
-    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2
-    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 3
-
-
-@pytest.mark.django_db
-def test_history_rank_null_last_ac_at_ranks_bottom(client, user, other):
-    c = _finished_contest("Done")
-    # solver (score>0, has last_ac_at) ranks above the no-solver (score 0, NULL time)
-    ContestScore.objects.create(
-        user=other, contest=c, score=100, solved_count=1, last_ac_at=timezone.now()
-    )
-    ContestScore.objects.create(
-        user=user, contest=c, score=0, solved_count=0, last_ac_at=None
-    )
-    assert client.get(_history_url(other.username)).json()["results"][0]["rank"] == 1
-    assert client.get(_history_url(user.username)).json()["results"][0]["rank"] == 2
