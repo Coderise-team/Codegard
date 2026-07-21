@@ -1,0 +1,90 @@
+/* ============================================================
+   SETTINGS MODAL
+   Rendered in a portal on <body>, so these live outside the page
+   stylesheets and are named sm-* to stay out of their way.
+   ============================================================ */
+.sm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.sm-panel {
+  width: 100%;
+  max-width: 460px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+
+.sm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.sm-head h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.sm-close {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  color: var(--fg2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: 0.14s;
+}
+.sm-close:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+
+.sm-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px 0;
+}
+.sm-tab {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  font-family: var(--ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: 0.14s;
+}
+.sm-tab:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+.sm-tab.is-active {
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+}
+
+/* Scrolls on its own so the header and tabs stay put on short screens. */
+.sm-body {
+  padding: 16px 18px 18px;
+  overflow-y: auto;
+}

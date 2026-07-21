@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Icons from '../Icons';
 import AvatarUpload from './AvatarUpload';
+import SettingsModal from './SettingsModal';
 import { cgRankFor } from '../../utils/ranks';
 
 /**
@@ -19,6 +20,7 @@ import { cgRankFor } from '../../utils/ranks';
 export default function ProfileHeader({ user, delta, isOwner = false }) {
   const I = Icons;
   const [copied, setCopied] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const initials = user.username.slice(0, 2).toUpperCase();
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
@@ -94,6 +96,15 @@ export default function ProfileHeader({ user, delta, isOwner = false }) {
         </div>
 
         <div className="phead-act">
+          {isOwner && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <I.edit size={14} /> Edit profile
+            </button>
+          )}
           <button
             className="icon-act"
             title="Copy profile link"
@@ -104,6 +115,11 @@ export default function ProfileHeader({ user, delta, isOwner = false }) {
           </button>
         </div>
       </div>
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </section>
   );
 }
