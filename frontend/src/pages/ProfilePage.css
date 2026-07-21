@@ -114,6 +114,22 @@
   border-radius: 50%;
   background: var(--rank-c);
 }
+.phead-id .pname {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+/* Free text: break anywhere so an unspaced bio can't widen the banner. */
+.phead-id .pbio {
+  margin-top: 9px;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg2);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
 .phead-id .sub {
   margin-top: 9px;
   display: flex;

@@ -6,9 +6,12 @@ import { cgRankFor } from '../../utils/ranks';
  * ProfileHeader — top banner of the viewed profile: avatar, handle, rank,
  * meta row, rating/peak readout and a copy-link (share) action.
  *
+ * Full name and bio are optional: both are left out entirely when empty rather
+ * than shown as blank slots.
+ *
  * Props:
- *   user  — public user object (username, elo_rating, rank, maxRating,
- *           globalRank, joined)
+ *   user  — public user object (username, first_name, last_name, bio,
+ *           elo_rating, rank, maxRating, globalRank, joined)
  *   delta — rating change on the latest contest, or null when unknown
  */
 export default function ProfileHeader({ user, delta }) {
@@ -16,6 +19,7 @@ export default function ProfileHeader({ user, delta }) {
   const [copied, setCopied] = useState(false);
 
   const initials = user.username.slice(0, 2).toUpperCase();
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
   const joined = new Date(user.joined).toLocaleDateString('en-US', {
     month: 'short',
     year: 'numeric',
@@ -47,6 +51,7 @@ export default function ProfileHeader({ user, delta }) {
               <span className="rdot"></span> {user.rank}
             </span>
           </div>
+          {fullName && <div className="pname">{fullName}</div>}
           <div className="sub">
             <span className="s">
               <I.trophy size={14} /> Global rank{' '}
@@ -57,6 +62,7 @@ export default function ProfileHeader({ user, delta }) {
               <I.calendar size={14} /> Joined <b>{joined}</b>
             </span>
           </div>
+          {user.bio && <div className="pbio">{user.bio}</div>}
         </div>
 
         <div className="phead-rate">
