@@ -148,7 +148,38 @@
   height: auto;
   padding: 10px 12px;
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
+}
+/* Drag strip along the whole bottom edge, replacing the native corner grip.
+   It sits over the textarea's bottom padding, so it never covers any text. */
+.sm-textwrap {
+  position: relative;
+}
+.sm-grip {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  height: 8px;
+  border-radius: 0 0 var(--r-sm) var(--r-sm);
+  cursor: ns-resize;
+  touch-action: none;
+}
+.sm-grip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  background: var(--border-2);
+  opacity: 0;
+  transition: 0.14s;
+}
+.sm-grip:hover::after {
+  opacity: 1;
 }
 .sm-err {
   font-size: 12px;

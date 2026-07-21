@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { updateProfile } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 // Matches MAX_BIO_LENGTH in the backend serializer.
 const MAX_BIO = 300;
+
+// Shortest the bio box may be dragged, in pixels.
+const MIN_BIO_HEIGHT = 84;
 
 // DRF reports field errors as a list of messages; only the first is shown.
 const firstError = (value) => (Array.isArray(value) ? value[0] : value);
@@ -29,9 +32,30 @@ export default function ProfileForm({ onSaved, onClose }) {
   });
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  const bioRef = useRef(null);
 
   const change = (field) => (event) =>
     setValues((v) => ({ ...v, [field]: event.target.value }));
+
+  // Custom resizing: the native grip only responds in the bottom-right corner
+  // and draws a light square that ignores the theme, so it is switched off and
+  // the whole bottom edge is made draggable instead.
+  const startResize = (event) => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = bioRef.current.offsetHeight;
+
+    const onMove = (moveEvent) => {
+      const height = startHeight + moveEvent.clientY - startY;
+      bioRef.current.style.height = `${Math.max(MIN_BIO_HEIGHT, height)}px`;
+    };
+    const onUp = () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    };
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  };
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -92,14 +116,22 @@ export default function ProfileForm({ onSaved, onClose }) {
             {values.bio.length}/{MAX_BIO}
           </span>
         </span>
-        <textarea
-          className="sm-input sm-textarea scroll"
-          value={values.bio}
-          onChange={change('bio')}
-          maxLength={MAX_BIO}
-          rows={4}
-          placeholder="A line or two about yourself"
-        />
+        <div className="sm-textwrap">
+          <textarea
+            ref={bioRef}
+            className="sm-input sm-textarea scroll"
+            value={values.bio}
+            onChange={change('bio')}
+            maxLength={MAX_BIO}
+            rows={4}
+            placeholder="A line or two about yourself"
+          />
+          <span
+            className="sm-grip"
+            onPointerDown={startResize}
+            aria-hidden="true"
+          />
+        </div>
         {errors.bio && <span className="sm-err">{firstError(errors.bio)}</span>}
       </label>
 
