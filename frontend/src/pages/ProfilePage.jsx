@@ -32,6 +32,13 @@ export default function ProfilePage() {
   const user = profile?.user;
   const history = profile?.history;
 
+  // Whether the viewer is looking at their own profile — decides if the editing
+  // controls are shown. Compared against the name the API returned, not the one
+  // in the URL, so the check runs on the canonical value.
+  // This only hides controls that would be pointless for a stranger: editing is
+  // guarded by the backend, which always writes to the authenticated user.
+  const isOwner = Boolean(viewer && user && viewer.username === user.username);
+
   // Delta = change between the two latest rating points (computed on the fly).
   const delta = useMemo(() => {
     if (!history || history.length < 2) return null;
@@ -95,7 +102,7 @@ export default function ProfilePage() {
 
             {user && (
               <div className="lay-overview">
-                <ProfileHeader user={user} delta={delta} />
+                <ProfileHeader user={user} delta={delta} isOwner={isOwner} />
                 <StatsStrip username={username} extraStats={extraStats} />
 
                 <div className="cols">
