@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icons from '../Icons';
+import ProfileForm from './ProfileForm';
 import './SettingsModal.css';
 
 const TABS = [
@@ -22,8 +23,9 @@ const FOCUSABLE =
  * Props:
  *   open    — whether the dialog is shown
  *   onClose — called on Escape, backdrop click or the close button
+ *   onSaved — the profile changed, so the page behind should reload it
  */
-export default function SettingsModal({ open, onClose }) {
+export default function SettingsModal({ open, onClose, onSaved }) {
   const [tab, setTab] = useState(TABS[0].key);
   const panelRef = useRef(null);
 
@@ -127,7 +129,9 @@ export default function SettingsModal({ open, onClose }) {
           id={`sm-panel-${tab}`}
           aria-labelledby={`sm-tab-${tab}`}
         >
-          {/* Forms land here in the next steps. */}
+          {tab === 'profile' && (
+            <ProfileForm onSaved={onSaved} onClose={onClose} />
+          )}
         </div>
       </div>
     </div>,

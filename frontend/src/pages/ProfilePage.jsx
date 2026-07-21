@@ -28,7 +28,7 @@ export default function ProfilePage() {
   const { username } = useParams();
   const [navOpen, setNavOpen] = useState(false);
 
-  const { data: profile, loading, error } = useProfile(username);
+  const { data: profile, loading, error, refetch } = useProfile(username);
   const user = profile?.user;
   const history = profile?.history;
 
@@ -102,7 +102,12 @@ export default function ProfilePage() {
 
             {user && (
               <div className="lay-overview">
-                <ProfileHeader user={user} delta={delta} isOwner={isOwner} />
+                <ProfileHeader
+                  user={user}
+                  delta={delta}
+                  isOwner={isOwner}
+                  onSaved={refetch}
+                />
                 <StatsStrip username={username} extraStats={extraStats} />
 
                 <div className="cols">

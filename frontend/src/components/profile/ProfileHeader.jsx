@@ -16,8 +16,9 @@ import { cgRankFor } from '../../utils/ranks';
  *             elo_rating, rank, maxRating, globalRank, joined)
  *   delta   — rating change on the latest contest, or null when unknown
  *   isOwner — viewer owns this profile: adds the editing controls
+ *   onSaved — the owner saved an edit, so the profile should be reloaded
  */
-export default function ProfileHeader({ user, delta, isOwner = false }) {
+export default function ProfileHeader({ user, delta, isOwner = false, onSaved }) {
   const I = Icons;
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -119,6 +120,7 @@ export default function ProfileHeader({ user, delta, isOwner = false }) {
       <SettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        onSaved={onSaved}
       />
     </section>
   );
