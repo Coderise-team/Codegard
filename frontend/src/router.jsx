@@ -7,6 +7,7 @@ import ProblemPage from './pages/ProblemPage';
 import ContestsPage from './pages/ContestsPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
+import ProfileRedirect from './pages/ProfileRedirect';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import PrivateRoute from './components/PrivateRoute';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
           { path: '/contests', element: <ContestsPage /> },
           { path: '/standings', element: <StandingsPage /> },
           { path: '/users/:username', element: <ProfilePage /> },
+          { path: '/profile', element: <ProfileRedirect /> },
           // Catch-all: the whole product lives behind the login, so an unknown
           // URL shows the 404 shell to members and sends guests to /login like
           // any other private route.
