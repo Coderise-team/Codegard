@@ -17,7 +17,7 @@ const linkClass = ({ isActive }) => `nav-link${isActive ? ' is-active' : ''}`;
  * drawer toggled via `open`; the scrim and nav links call `onClose`.
  *
  * Props:
- *   user    — { username, initials }  (bottom mini card)
+ *   user    — { username, initials }  (bottom mini card, links to own profile)
  *   open    — drawer open (phone only)
  *   onClose — close the drawer (scrim click / navigation)
  */
@@ -59,12 +59,12 @@ export default function Sidebar({ user, open = false, onClose }) {
         </nav>
 
         <div className="side-foot">
-          <div className="nav-mini">
+          <Link to="/profile" className="nav-mini" onClick={onClose}>
             <div className="avatar">{user?.initials}</div>
             <div className="mid">
               <div className="h">{user?.username}</div>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
     </>
