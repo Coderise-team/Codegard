@@ -199,7 +199,7 @@ describe('StandingsPage navigation', () => {
     expect(navigate).toHaveBeenCalledWith('/users/ann');
   });
 
-  it('sends your own name to your own profile instead', () => {
+  it('sends your own name to the same profile route as anyone else', () => {
     useStandings.mockReturnValue({
       ...result([coder('me', 4)]),
       you: coder('me', 4),
@@ -207,7 +207,7 @@ describe('StandingsPage navigation', () => {
     const { container } = renderPage();
 
     fireEvent.click(container.querySelector('.st-youbar .st-row'));
-    expect(navigate).toHaveBeenCalledWith('/me');
+    expect(navigate).toHaveBeenCalledWith('/users/me');
   });
 
   it('opens the coder the podium tile is currently showing', () => {
