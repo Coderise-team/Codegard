@@ -9,6 +9,8 @@ from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.utils import timezone
 
+# user comes from conftest.
+
 
 def make_app():
     return URLRouter(websocket_urlpatterns)
@@ -46,11 +48,6 @@ def finished_contest(db):
         status=Contest.Status.FINISHED,
     )
     return contest
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(username="player1", password="pass")
 
 
 async def _assert_rejected_with_code(communicator, expected_code: int) -> None:

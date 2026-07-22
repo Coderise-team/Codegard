@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-from apps.problems.models import Problem
 from apps.realtime.routing import websocket_urlpatterns
 from apps.submissions.models import Submission
 from channels.db import database_sync_to_async
@@ -23,40 +22,14 @@ async def _assert_rejected_with_code(communicator, expected_code: int) -> None:
     assert close_code == expected_code
 
 
-@pytest.fixture
-def user(db, django_user_model):
-    uid = uuid.uuid4().hex[:6]
-    return django_user_model.objects.create_user(
-        username=f"owner_{uid}", password="pass", email=f"owner_{uid}@example.com"
-    )
+# user, problem and submission come from conftest.
 
 
 @pytest.fixture
-def other_user(db, django_user_model):
+def other(db, django_user_model):
     uid = uuid.uuid4().hex[:6]
     return django_user_model.objects.create_user(
         username=f"other_{uid}", password="pass", email=f"other_{uid}@example.com"
-    )
-
-
-@pytest.fixture
-def problem(db):
-    return Problem.objects.create(
-        title="Two Sum",
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
-@pytest.fixture
-def submission(db, user, problem):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x=1",
-        language=Submission.Language.PYTHON,
     )
 
 
@@ -80,8 +53,8 @@ async def test_nonexistent_submission_is_rejected(user):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_wrong_owner_is_rejected(other_user, submission):
-    communicator = make_communicator(other_user, submission.pk)
+async def test_wrong_owner_is_rejected(other, submission):
+    communicator = make_communicator(other, submission.pk)
     await _assert_rejected_with_code(communicator, 4003)
 
 
