@@ -3,15 +3,14 @@
 Generic clients and users (``api_client``, ``user``, ``other``, ``admin``,
 ``user_client``, ``custom_admin_client``) come from the project-wide
 ``conftest.py``; only what several contests modules need lives here.
+
+Objects a test builds itself (several problems, a contest at a given time) come
+from ``factories.py``.
 """
 
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest
-from apps.problems.models import Problem
-from apps.submissions.models import Submission
-from django.utils import timezone
+
+from .factories import make_contest, make_problem
 
 
 @pytest.fixture
@@ -28,41 +27,10 @@ def users(db, django_user_model):
 @pytest.fixture
 def problems(db):
     """Two problems, so "solved one of two" scenarios are possible."""
-    return [
-        Problem.objects.create(
-            title=f"P{i}",
-            description="",
-            difficulty=Problem.Difficulty.EASY,
-            time_limit=1000,
-            memory_limit=256,
-        )
-        for i in range(2)
-    ]
+    return [make_problem(f"P{i}") for i in range(2)]
 
 
 @pytest.fixture
 def finished_contest(db):
     """A contest that ran from three hours ago until an hour ago."""
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Finished",
-        start_time=now - timedelta(hours=3),
-        end_time=now - timedelta(hours=1),
-    )
-
-
-@pytest.fixture
-def submit():
-    """Factory: a submission. An AC one fires the scoring signal."""
-
-    def make(user, problem, contest, verdict=Submission.Verdict.AC):
-        return Submission.objects.create(
-            user=user,
-            problem=problem,
-            contest=contest,
-            code="x",
-            language=Submission.Language.PYTHON,
-            verdict=verdict,
-        )
-
-    return make
+    return make_contest("Finished", starts_in=-3, ends_in=-1)

@@ -9,17 +9,7 @@ from apps.contests.models import Contest, ContestScore
 from django.db import IntegrityError
 from django.utils import timezone
 
-
-def _contest(title="C", *, starts_in=-1, ends_in=1, **extra):
-    """Contest whose start/end are `starts_in`/`ends_in` hours from now."""
-    now = timezone.now()
-    return Contest.objects.create(
-        title=title,
-        start_time=now + timedelta(hours=starts_in),
-        end_time=now + timedelta(hours=ends_in),
-        **extra,
-    )
-
+from .factories import make_contest
 
 # --- _compute_status (pure, no DB) -----------------------------------------
 
@@ -50,15 +40,19 @@ def test_compute_status_window_edges_are_active():
 @pytest.mark.django_db
 def test_save_overrides_the_given_status_with_the_clock():
     # Asked for FINISHED, but the window says the contest is live right now.
-    c = _contest(starts_in=-1, ends_in=1, status=Contest.Status.FINISHED)
+    c = make_contest(starts_in=-1, ends_in=1, status=Contest.Status.FINISHED)
     assert c.status == Contest.Status.ACTIVE
 
 
 @pytest.mark.django_db
 def test_save_sets_status_for_each_window():
-    assert _contest("Pending", starts_in=1, ends_in=3).status == Contest.Status.PENDING
-    assert _contest("Live", starts_in=-1, ends_in=1).status == Contest.Status.ACTIVE
-    assert _contest("Done", starts_in=-3, ends_in=-1).status == Contest.Status.FINISHED
+    assert (
+        make_contest("Pending", starts_in=1, ends_in=3).status == Contest.Status.PENDING
+    )
+    assert make_contest("Live", starts_in=-1, ends_in=1).status == Contest.Status.ACTIVE
+    assert (
+        make_contest("Done", starts_in=-3, ends_in=-1).status == Contest.Status.FINISHED
+    )
 
 
 # --- update_status() -------------------------------------------------------
@@ -66,7 +60,7 @@ def test_save_sets_status_for_each_window():
 
 @pytest.mark.django_db
 def test_update_status_fixes_a_stale_value():
-    c = _contest("Done", starts_in=-3, ends_in=-1)
+    c = make_contest("Done", starts_in=-3, ends_in=-1)
     # Go behind save()'s back so the row really holds a stale status.
     Contest.objects.filter(pk=c.pk).update(status=Contest.Status.ACTIVE)
     c.refresh_from_db()
@@ -80,7 +74,7 @@ def test_update_status_fixes_a_stale_value():
 
 @pytest.mark.django_db
 def test_update_status_does_not_write_when_already_correct(django_assert_num_queries):
-    c = _contest("Live", starts_in=-1, ends_in=1)
+    c = make_contest("Live", starts_in=-1, ends_in=1)
     assert c.status == Contest.Status.ACTIVE
     with django_assert_num_queries(0):  # the guard skips the UPDATE
         c.update_status()
@@ -92,7 +86,7 @@ def test_update_status_does_not_write_when_already_correct(django_assert_num_que
 @pytest.mark.django_db
 def test_end_before_start_is_rejected():
     with pytest.raises(IntegrityError):
-        _contest("Backwards", starts_in=2, ends_in=1)
+        make_contest("Backwards", starts_in=2, ends_in=1)
 
 
 @pytest.mark.django_db
@@ -107,7 +101,7 @@ def test_zero_length_contest_is_rejected():
 
 @pytest.mark.django_db
 def test_one_score_per_user_and_contest(user):
-    c = _contest()
+    c = make_contest()
     ContestScore.objects.create(user=user, contest=c)
     with pytest.raises(IntegrityError):
         ContestScore.objects.create(user=user, contest=c)
@@ -118,12 +112,12 @@ def test_one_score_per_user_and_contest(user):
 
 @pytest.mark.django_db
 def test_contest_str_is_title_and_status():
-    c = _contest("Round 1", starts_in=-1, ends_in=1)
+    c = make_contest("Round 1", starts_in=-1, ends_in=1)
     assert str(c) == "Round 1 (active)"
 
 
 @pytest.mark.django_db
 def test_contest_score_str_carries_score_and_penalty(user):
-    c = _contest("Round 1")
+    c = make_contest("Round 1")
     cs = ContestScore.objects.create(user=user, contest=c, score=120, penalty=20)
     assert str(cs) == f"{user} in {c} — score=120 penalty=20"

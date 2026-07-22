@@ -8,41 +8,19 @@ query count does not grow with the number of rows.
 from datetime import timedelta
 
 import pytest
-from apps.contests.models import Contest, ContestScore
-from apps.problems.models import Problem
+from apps.contests.models import ContestScore
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .factories import make_contest, make_problem
+
 # user, other, admin and user_client come from conftest.
 
 
-def _problem(title):
-    return Problem.objects.create(
-        title=title,
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
-def _active_contest():
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Live",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=1),
-    )
-
-
 def _finished_contest(title="Past", hours_ago=1):
-    now = timezone.now()
-    return Contest.objects.create(
-        title=title,
-        start_time=now - timedelta(hours=hours_ago + 2),
-        end_time=now - timedelta(hours=hours_ago),
-    )
+    """Contest that ended `hours_ago` hours ago."""
+    return make_contest(title, starts_in=-(hours_ago + 2), ends_in=-hours_ago)
 
 
 def _url(username):
@@ -56,7 +34,7 @@ def _url(username):
 def test_only_finished_mine_newest_first(user_client, user, other):
     older = _finished_contest("Older", hours_ago=10)
     newer = _finished_contest("Newer", hours_ago=1)
-    active = _active_contest()
+    active = make_contest("Live")
     other_finished = _finished_contest("Others", hours_ago=2)
 
     ContestScore.objects.create(user=user, contest=older, solved_count=1)
@@ -100,7 +78,11 @@ def test_fields(user_client, user):
     c.subtitle = "Round 2 · Div. 1"
     c.save()
     c.problems.add(
-        _problem("A"), _problem("B"), _problem("C"), _problem("D"), _problem("E")
+        make_problem("A"),
+        make_problem("B"),
+        make_problem("C"),
+        make_problem("D"),
+        make_problem("E"),
     )
     ContestScore.objects.create(
         user=user, contest=c, solved_count=3, rating_delta=-42, rating_after=2147
@@ -119,7 +101,7 @@ def test_fields(user_client, user):
 @pytest.mark.django_db
 def test_problems_count(user_client, user):
     with_problems = _finished_contest("With", hours_ago=1)
-    with_problems.problems.add(_problem("A"), _problem("B"))
+    with_problems.problems.add(make_problem("A"), make_problem("B"))
     empty = _finished_contest("Empty", hours_ago=2)  # no problems
     ContestScore.objects.create(user=user, contest=with_problems, solved_count=1)
     ContestScore.objects.create(user=user, contest=empty, solved_count=0)
@@ -217,7 +199,7 @@ def test_no_n_plus_one(user_client, user, django_assert_num_queries):
     # Query count must not grow with the number of history rows.
     for i in range(5):
         c = _finished_contest(f"C{i}", hours_ago=i + 1)
-        c.problems.add(_problem(f"P{i}a"), _problem(f"P{i}b"))
+        c.problems.add(make_problem(f"P{i}a"), make_problem(f"P{i}b"))
         ContestScore.objects.create(user=user, contest=c, solved_count=1)
 
     # Fixed regardless of row count: user lookup + pagination COUNT + the single

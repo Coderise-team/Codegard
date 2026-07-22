@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 
+from .factories import make_submission
+
 # ---------------------------------------------------------------------------
 # Fixtures (api_client, user and other come from conftest)
 # ---------------------------------------------------------------------------
@@ -49,17 +51,14 @@ def active_contest(db, problem, problem2):
     return contest
 
 
-def make_submission(user, problem, contest, verdict, minutes_after_start=10):
-    """Helper to create a submission at a specific time after contest start."""
+def submit_at(user, problem, contest, verdict, minutes_after_start=10):
+    """A submission pinned to a given minute after the contest start.
+
+    Not ``factories.make_submission``: penalty is measured from the contest
+    start, so these tests need control over ``created_at``.
+    """
     created_at = contest.start_time + timedelta(minutes=minutes_after_start)
-    submission = Submission.objects.create(
-        user=user,
-        problem=problem,
-        contest=contest,
-        code="x=1",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
+    submission = make_submission(user, problem, contest, verdict)
     # `created_at` is `auto_now_add=True`, so update it explicitly for scoring tests.
     Submission.objects.filter(pk=submission.pk).update(created_at=created_at)
     submission.created_at = created_at
@@ -80,7 +79,7 @@ class TestCalculateScore:
         assert score.solved_count == 0
 
     def test_ac_submission_gives_100_points(self, user, problem, active_contest):
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -93,7 +92,7 @@ class TestCalculateScore:
 
     def test_time_penalty_calculated_correctly(self, user, problem, active_contest):
         # AC at 30 minutes after start → penalty = 30 minutes
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -105,14 +104,14 @@ class TestCalculateScore:
 
     def test_wrong_attempt_adds_10_minutes_penalty(self, user, problem, active_contest):
         # 1 WA at 5 min, then AC at 30 min → penalty = 30 + 10 = 40
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
             Submission.Verdict.WA,
             minutes_after_start=5,
         )
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -125,14 +124,14 @@ class TestCalculateScore:
     def test_multiple_wrong_attempts(self, user, problem, active_contest):
         # 3 WA then AC at 20 min → penalty = 20 + 3*10 = 50
         for m in [5, 8, 12]:
-            make_submission(
+            submit_at(
                 user,
                 problem,
                 active_contest,
                 Submission.Verdict.WA,
                 minutes_after_start=m,
             )
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -144,14 +143,14 @@ class TestCalculateScore:
 
     def test_wa_after_ac_not_counted(self, user, problem, active_contest):
         # AC at 10 min, then WA at 20 min → penalty = 10 (WA after AC ignored)
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
             Submission.Verdict.AC,
             minutes_after_start=10,
         )
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -162,14 +161,14 @@ class TestCalculateScore:
         assert score.penalty == 10
 
     def test_two_solved_problems(self, user, problem, problem2, active_contest):
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
             Submission.Verdict.AC,
             minutes_after_start=10,
         )
-        make_submission(
+        submit_at(
             user,
             problem2,
             active_contest,
@@ -183,14 +182,14 @@ class TestCalculateScore:
 
     def test_unsolved_problem_no_penalty(self, user, problem, problem2, active_contest):
         # Only WA on problem2 — not solved, no penalty
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
             Submission.Verdict.AC,
             minutes_after_start=10,
         )
-        make_submission(
+        submit_at(
             user,
             problem2,
             active_contest,
@@ -205,7 +204,7 @@ class TestCalculateScore:
     def test_score_updated_on_recalculation(
         self, user, problem, problem2, active_contest
     ):
-        make_submission(
+        submit_at(
             user,
             problem,
             active_contest,
@@ -216,7 +215,7 @@ class TestCalculateScore:
         assert score.score == 100
 
         # Now solve problem2
-        make_submission(
+        submit_at(
             user,
             problem2,
             active_contest,
@@ -238,12 +237,12 @@ class TestLeaderboard:
         self, user, other, problem, problem2, active_contest
     ):
         # user solves both problems
-        make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
-        make_submission(user, problem2, active_contest, Submission.Verdict.AC, 20)
+        submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
+        submit_at(user, problem2, active_contest, Submission.Verdict.AC, 20)
         calculate_score(user, active_contest)
 
         # other solves only one
-        make_submission(other, problem, active_contest, Submission.Verdict.AC, 10)
+        submit_at(other, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(other, active_contest)
 
         lb = list(get_leaderboard(active_contest))
@@ -254,12 +253,12 @@ class TestLeaderboard:
         self, user, other, problem, active_contest
     ):
         # user — AC at 10 min (penalty=10)
-        make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
+        submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
 
         # other — WA then AC at 20 min (penalty=20+10=30)
-        make_submission(other, problem, active_contest, Submission.Verdict.WA, 5)
-        make_submission(other, problem, active_contest, Submission.Verdict.AC, 20)
+        submit_at(other, problem, active_contest, Submission.Verdict.WA, 5)
+        submit_at(other, problem, active_contest, Submission.Verdict.AC, 20)
         calculate_score(other, active_contest)
 
         lb = list(get_leaderboard(active_contest))
@@ -283,7 +282,7 @@ class TestLeaderboardAPI:
         self, api_client, user, problem, active_contest
     ):
         api_client.force_authenticate(user=user)
-        make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
+        submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
 
         url = reverse("contests-leaderboard", args=[active_contest.pk])
@@ -302,7 +301,7 @@ class TestLeaderboardAPI:
         self, api_client, user, problem, active_contest
     ):
         api_client.force_authenticate(user=user)
-        make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
+        submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
 
         url = reverse("contests-leaderboard", args=[active_contest.pk])

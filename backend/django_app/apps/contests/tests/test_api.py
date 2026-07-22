@@ -6,11 +6,12 @@ from datetime import timedelta
 
 import pytest
 from apps.contests.models import Contest
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+
+from .factories import make_contest, make_problem, make_submission
 
 # api_client, user, other, admin, user_client, custom_admin_client and
 # finished_contest come from conftest.
@@ -20,57 +21,18 @@ from rest_framework import status
 # ---------------------------------------------------------------------------
 
 
-def _contest(title="C", *, starts_in=-1, ends_in=1):
-    """Contest whose start/end are `starts_in`/`ends_in` hours from now."""
-    now = timezone.now()
-    contest_status = (
-        Contest.Status.PENDING
-        if starts_in > 0
-        else Contest.Status.ACTIVE
-        if ends_in > 0
-        else Contest.Status.FINISHED
-    )
-    return Contest.objects.create(
-        title=title,
-        start_time=now + timedelta(hours=starts_in),
-        end_time=now + timedelta(hours=ends_in),
-        status=contest_status,
-    )
-
-
-def _problem(title="P"):
-    return Problem.objects.create(
-        title=title,
-        description="statement",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
-def _sub(user, problem, contest, verdict=Submission.Verdict.AC):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        contest=contest,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
-
-
 def _detail_url(cid):
     return reverse("contests-detail", args=[cid])
 
 
 @pytest.fixture
 def contest(db):
-    return _contest("Test Contest", starts_in=1, ends_in=3)
+    return make_contest("Test Contest", starts_in=1, ends_in=3)
 
 
 @pytest.fixture
 def active_contest(db):
-    return _contest("Active Contest", starts_in=-1, ends_in=1)
+    return make_contest("Active Contest", starts_in=-1, ends_in=1)
 
 
 # ---------------------------------------------------------------------------
@@ -95,8 +57,8 @@ class TestContestList:
         assert titles == [active_contest.title]
 
     def test_ordering_by_start_time(self, db, api_client):
-        _contest("Early", starts_in=1, ends_in=3)
-        _contest("Late", starts_in=5, ends_in=7)
+        make_contest("Early", starts_in=1, ends_in=3)
+        make_contest("Late", starts_in=5, ends_in=7)
         url = reverse("contests-list")
 
         default_titles = [c["title"] for c in api_client.get(url).data["results"]]
@@ -257,54 +219,56 @@ def _detail_problems(client, contest):
 
 @pytest.mark.django_db
 def test_solved_count_distinct_per_user(user_client, user):
-    c = _contest("Live", starts_in=-1, ends_in=1)
-    p = _problem("A")
+    c = make_contest("Live", starts_in=-1, ends_in=1)
+    p = make_problem("A")
     c.problems.add(p)
-    _sub(user, p, c, Submission.Verdict.AC)
-    _sub(user, p, c, Submission.Verdict.AC)  # same user, twice
+    make_submission(user, p, c, Submission.Verdict.AC)
+    make_submission(user, p, c, Submission.Verdict.AC)  # same user, twice
 
     assert _detail_problems(user_client, c)[0]["solved_count"] == 1
 
 
 @pytest.mark.django_db
 def test_solved_count_two_users(user_client, user, other):
-    c = _contest("Live", starts_in=-1, ends_in=1)
-    p = _problem("A")
+    c = make_contest("Live", starts_in=-1, ends_in=1)
+    p = make_problem("A")
     c.problems.add(p)
-    _sub(user, p, c, Submission.Verdict.AC)
-    _sub(other, p, c, Submission.Verdict.AC)
+    make_submission(user, p, c, Submission.Verdict.AC)
+    make_submission(other, p, c, Submission.Verdict.AC)
 
     assert _detail_problems(user_client, c)[0]["solved_count"] == 2
 
 
 @pytest.mark.django_db
 def test_solved_count_ignores_non_ac(user_client, user, other):
-    c = _contest("Live", starts_in=-1, ends_in=1)
-    p = _problem("A")
+    c = make_contest("Live", starts_in=-1, ends_in=1)
+    p = make_problem("A")
     c.problems.add(p)
-    _sub(user, p, c, Submission.Verdict.WA)
-    _sub(other, p, c, Submission.Verdict.TLE)
+    make_submission(user, p, c, Submission.Verdict.WA)
+    make_submission(other, p, c, Submission.Verdict.TLE)
 
     assert _detail_problems(user_client, c)[0]["solved_count"] == 0
 
 
 @pytest.mark.django_db
 def test_solved_count_ignores_other_and_no_contest(user_client, user):
-    c = _contest("Live", starts_in=-1, ends_in=1)
-    elsewhere = _contest("Other", starts_in=-1, ends_in=1)
-    p = _problem("A")
+    c = make_contest("Live", starts_in=-1, ends_in=1)
+    elsewhere = make_contest("Other", starts_in=-1, ends_in=1)
+    p = make_problem("A")
     c.problems.add(p)
     elsewhere.problems.add(p)
-    _sub(user, p, None, Submission.Verdict.AC)  # solo solve, contest=None
-    _sub(user, p, elsewhere, Submission.Verdict.AC)  # AC in a different contest
+    make_submission(user, p, None, Submission.Verdict.AC)  # solo solve, contest=None
+    make_submission(
+        user, p, elsewhere, Submission.Verdict.AC
+    )  # AC in a different contest
 
     assert _detail_problems(user_client, c)[0]["solved_count"] == 0
 
 
 @pytest.mark.django_db
 def test_solved_count_zero_without_submissions(user_client):
-    c = _contest("Live", starts_in=-1, ends_in=1)
-    c.problems.add(_problem("A"))
+    c = make_contest("Live", starts_in=-1, ends_in=1)
+    c.problems.add(make_problem("A"))
     assert _detail_problems(user_client, c)[0]["solved_count"] == 0
 
 
@@ -315,8 +279,8 @@ def test_solved_count_zero_without_submissions(user_client):
 
 @pytest.mark.django_db
 def test_problems_hidden_before_start(user_client):
-    c = _contest("Future", starts_in=1, ends_in=3)  # not started
-    c.problems.add(_problem("Secret A"), _problem("Secret B"))
+    c = make_contest("Future", starts_in=1, ends_in=3)  # not started
+    c.problems.add(make_problem("Secret A"), make_problem("Secret B"))
 
     body = user_client.get(_detail_url(c.id)).json()
     assert body["problems"] == []
@@ -328,8 +292,8 @@ def test_problems_hidden_before_start(user_client):
 @pytest.mark.django_db
 def test_problems_visible_when_active_and_finished(user_client):
     for title, s, e in [("Live", -1, 1), ("Done", -3, -1)]:
-        c = _contest(title, starts_in=s, ends_in=e)
-        c.problems.add(_problem(f"{title}-A"))
+        c = make_contest(title, starts_in=s, ends_in=e)
+        c.problems.add(make_problem(f"{title}-A"))
         assert len(user_client.get(_detail_url(c.id)).json()["problems"]) == 1
 
 
@@ -340,8 +304,8 @@ def test_problems_visible_when_active_and_finished(user_client):
 
 @pytest.mark.django_db
 def test_joined_filter_only_mine(user_client, user, other):
-    mine = _contest("Mine", starts_in=1, ends_in=3)
-    theirs = _contest("Theirs", starts_in=1, ends_in=3)
+    mine = make_contest("Mine", starts_in=1, ends_in=3)
+    theirs = make_contest("Theirs", starts_in=1, ends_in=3)
     mine.participants.add(user)
     theirs.participants.add(other)
 
@@ -351,8 +315,8 @@ def test_joined_filter_only_mine(user_client, user, other):
 
 @pytest.mark.django_db
 def test_joined_combines_with_status(user_client, user):
-    pending = _contest("Pending", starts_in=1, ends_in=3)
-    finished = _contest("Finished", starts_in=-3, ends_in=-1)
+    pending = make_contest("Pending", starts_in=1, ends_in=3)
+    finished = make_contest("Finished", starts_in=-3, ends_in=-1)
     pending.participants.add(user)
     finished.participants.add(user)
 
@@ -364,7 +328,7 @@ def test_joined_combines_with_status(user_client, user):
 
 @pytest.mark.django_db
 def test_joined_anonymous_empty_not_500(api_client, user):
-    c = _contest("C", starts_in=1, ends_in=3)
+    c = make_contest("C", starts_in=1, ends_in=3)
     c.participants.add(user)
     resp = api_client.get(reverse("contests-list"), {"joined": "true"})
     assert resp.status_code == 200
@@ -373,8 +337,8 @@ def test_joined_anonymous_empty_not_500(api_client, user):
 
 @pytest.mark.django_db
 def test_joined_garbage_value_ignored(user_client, user):
-    mine = _contest("Mine", starts_in=1, ends_in=3)
-    _contest("Other", starts_in=1, ends_in=3)
+    mine = make_contest("Mine", starts_in=1, ends_in=3)
+    make_contest("Other", starts_in=1, ends_in=3)
     mine.participants.add(user)
     # "yes" is not "true" -> filter ignored -> both contests returned
     body = user_client.get(reverse("contests-list"), {"joined": "yes"}).json()
@@ -389,7 +353,7 @@ def test_joined_garbage_value_ignored(user_client, user):
 @pytest.mark.django_db
 def test_list_page_size_client_controlled(user_client):
     for i in range(6):
-        _contest(f"C{i}", starts_in=1, ends_in=3)
+        make_contest(f"C{i}", starts_in=1, ends_in=3)
     page1 = user_client.get(reverse("contests-list"), {"page_size": 5}).json()
     assert len(page1["results"]) == 5
     assert page1["next"] is not None
@@ -402,7 +366,7 @@ def test_list_page_size_client_controlled(user_client):
 @pytest.mark.django_db
 def test_list_default_page_size_20(user_client):
     for i in range(25):
-        _contest(f"C{i}", starts_in=1, ends_in=3)
+        make_contest(f"C{i}", starts_in=1, ends_in=3)
     page1 = user_client.get(reverse("contests-list")).json()
     assert len(page1["results"]) == 20
     assert page1["next"] is not None

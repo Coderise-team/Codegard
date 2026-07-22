@@ -1,11 +1,9 @@
 """Tests for the contest registrants list: GET /api/contests/{id}/registrants/."""
 
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest
 from django.urls import reverse
-from django.utils import timezone
+
+from .factories import make_contest
 
 # user and user_client come from conftest.
 
@@ -18,12 +16,7 @@ def _make_user(django_user_model, name, elo=1200):
 
 def _pending_contest(title="C"):
     """Pending contest (starts in an hour), so join/leave are allowed."""
-    now = timezone.now()
-    return Contest.objects.create(
-        title=title,
-        start_time=now + timedelta(hours=1),
-        end_time=now + timedelta(hours=3),
-    )
+    return make_contest(title, starts_in=1, ends_in=3)
 
 
 def _url(cid):

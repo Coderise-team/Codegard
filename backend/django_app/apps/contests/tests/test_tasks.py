@@ -13,7 +13,9 @@ from apps.contests.tasks import (
 )
 from django.utils import timezone
 
-# users, problems, finished_contest and submit come from conftest.
+from .factories import make_submission
+
+# users, problems, finished_contest come from conftest.
 
 
 # --- update_contest_statuses -----------------------------------------------
@@ -136,11 +138,11 @@ def test_broadcast_contest_ended_sends_to_each_contest():
 
 
 @pytest.mark.django_db
-def test_ratings_isolate_failing_contest(users, problems, finished_contest, submit):
+def test_ratings_isolate_failing_contest(users, problems, finished_contest):
     a, b, _ = users
     c = finished_contest
-    submit(a, problems[0], c)
-    submit(b, problems[0], c)
+    make_submission(a, problems[0], c)
+    make_submission(b, problems[0], c)
 
     # One bad contest must not crash the batch.
     with patch(
@@ -154,13 +156,13 @@ def test_ratings_isolate_failing_contest(users, problems, finished_contest, subm
 
 
 @pytest.mark.django_db
-def test_ratings_pick_finished_unrated_only(users, problems, finished_contest, submit):
+def test_ratings_pick_finished_unrated_only(users, problems, finished_contest):
     a, b, _ = users
     now = timezone.now()
 
     finished = finished_contest
-    submit(a, problems[0], finished)
-    submit(b, problems[0], finished)
+    make_submission(a, problems[0], finished)
+    make_submission(b, problems[0], finished)
 
     Contest.objects.create(  # finished, but already rated → skipped
         title="Already rated",
@@ -174,8 +176,8 @@ def test_ratings_pick_finished_unrated_only(users, problems, finished_contest, s
         start_time=now - timedelta(hours=1),
         end_time=now + timedelta(hours=1),
     )
-    submit(a, problems[0], active)
-    submit(b, problems[0], active)
+    make_submission(a, problems[0], active)
+    make_submission(b, problems[0], active)
 
     summary = apply_finished_contest_ratings()
 
