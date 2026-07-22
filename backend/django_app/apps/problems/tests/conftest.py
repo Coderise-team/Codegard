@@ -17,11 +17,3 @@ def problem(db):
         time_limit=1000,
         memory_limit=256,
     )
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    """A second user, for "someone else's submissions/activity" scenarios."""
-    return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
-    )

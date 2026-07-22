@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 from apps.realtime.routing import websocket_urlpatterns
 from apps.submissions.models import Submission
@@ -22,15 +20,7 @@ async def _assert_rejected_with_code(communicator, expected_code: int) -> None:
     assert close_code == expected_code
 
 
-# user, problem and submission come from conftest.
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    uid = uuid.uuid4().hex[:6]
-    return django_user_model.objects.create_user(
-        username=f"other_{uid}", password="pass", email=f"other_{uid}@example.com"
-    )
+# user, other, problem and submission come from conftest.
 
 
 @pytest.mark.asyncio

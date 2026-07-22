@@ -1,8 +1,8 @@
 """Shared fixtures for the contests test package.
 
-Generic clients and users (``api_client``, ``user``, ``admin``, ``user_client``,
-``custom_admin_client``) come from the project-wide ``conftest.py``; only what
-several contests modules need lives here.
+Generic clients and users (``api_client``, ``user``, ``other``, ``admin``,
+``user_client``, ``custom_admin_client``) come from the project-wide
+``conftest.py``; only what several contests modules need lives here.
 """
 
 from datetime import timedelta
@@ -12,14 +12,6 @@ from apps.contests.models import Contest
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.utils import timezone
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    """A second user, for "someone else's contest/score" scenarios."""
-    return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
-    )
 
 
 @pytest.fixture

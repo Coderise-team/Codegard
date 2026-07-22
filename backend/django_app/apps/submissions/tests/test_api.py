@@ -15,16 +15,9 @@ from django.utils import timezone
 from rest_framework import status
 
 # ---------------------------------------------------------------------------
-# Fixtures (api_client, user, user_client, problem and active_contest come
-# from conftest)
+# Fixtures (api_client, user, other, user_client, problem and active_contest
+# come from conftest)
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture
-def other(db, django_user_model):
-    return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
-    )
 
 
 @pytest.fixture
