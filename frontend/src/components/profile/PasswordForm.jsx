@@ -42,7 +42,12 @@ export default function PasswordForm({ onClose }) {
     setBusy(true);
     setErrors({});
     try {
-      tokenStorage.set(await changePassword(values));
+      tokenStorage.set(
+        await changePassword({
+          old_password: values.old_password,
+          new_password: values.new_password,
+        })
+      );
       setDone(true);
     } catch (error) {
       const body = error.response?.data;
