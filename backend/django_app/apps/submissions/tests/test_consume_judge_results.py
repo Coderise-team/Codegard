@@ -1,11 +1,8 @@
 """Tests for the judge-results consumer (consume_judge_results command)."""
 
-from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
-from apps.contests.models import Contest
-from apps.problems.models import Problem
 from apps.submissions.management.commands.consume_judge_results import (
     DEAD_KEY,
     MAX_ATTEMPTS,
@@ -17,37 +14,9 @@ from apps.submissions.management.commands.consume_judge_results import (
     recover_orphans,
 )
 from apps.submissions.models import Submission
-from django.utils import timezone
 from schemas.response import SubmissionResponse, VerdictEnum
 
-# redis (fakeredis) comes from conftest.
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(username="solver", password="pass")
-
-
-@pytest.fixture
-def problem(db):
-    return Problem.objects.create(
-        title="Sum",
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
-@pytest.fixture
-def active_contest(db):
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Live",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=2),
-        status=Contest.Status.ACTIVE,
-    )
+# user, problem, active_contest and redis (fakeredis) come from conftest.
 
 
 def _pending(user, problem, contest=None):
@@ -111,7 +80,6 @@ def test_apply_missing_submission_returns_false(user, problem):
 
 @pytest.mark.django_db
 def test_apply_triggers_score_recalc(user, problem, active_contest):
-    active_contest.problems.add(problem)
     sub = _pending(user, problem, contest=active_contest)
     resp = SubmissionResponse(submission_id=sub.pk, verdict=VerdictEnum.AC)
 

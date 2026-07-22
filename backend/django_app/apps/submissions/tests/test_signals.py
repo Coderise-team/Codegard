@@ -1,45 +1,16 @@
 """Tests for the `channel_layer is None` early-return branches in signals.py."""
 
-from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
-from apps.contests.models import Contest
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from apps.submissions.signals import (
     _broadcast_leaderboard,
     _broadcast_problem_solved,
     _broadcast_submission_update,
 )
-from django.utils import timezone
 
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(username="tester", password="pass")
-
-
-@pytest.fixture
-def problem(db):
-    return Problem.objects.create(
-        title="Problem A",
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-
-
-@pytest.fixture
-def active_contest(db):
-    now = timezone.now()
-    return Contest.objects.create(
-        title="Test Contest",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=2),
-        status=Contest.Status.ACTIVE,
-    )
+# user, problem and active_contest come from conftest.
 
 
 @pytest.mark.django_db
