@@ -1,6 +1,5 @@
 """Tests for the judge-results consumer (consume_judge_results command)."""
 
-from collections import defaultdict
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -21,48 +20,7 @@ from apps.submissions.models import Submission
 from django.utils import timezone
 from schemas.response import SubmissionResponse, VerdictEnum
 
-
-class _FakeRedis:
-    """In-memory stand-in for redis, mirroring test_tasks.py's fake."""
-
-    def __init__(self):
-        self.lists = defaultdict(list)
-        self.counters = {}
-
-    def rpush(self, key, value):
-        self.lists[key].append(value)
-
-    def lrem(self, key, count, value):
-        removed = 0
-        out = []
-        for v in self.lists[key]:
-            if v == value and (count == 0 or removed < count):
-                removed += 1
-                continue
-            out.append(v)
-        self.lists[key] = out
-        return removed
-
-    def incr(self, key):
-        self.counters[key] = self.counters.get(key, 0) + 1
-        return self.counters[key]
-
-    def expire(self, key, ttl):
-        pass
-
-    def delete(self, key):
-        self.counters.pop(key, None)
-        self.lists.pop(key, None)
-
-    def lmove(self, first, second, src="LEFT", dest="LEFT"):
-        if not self.lists[first]:
-            return None
-        value = self.lists[first].pop(0 if src == "LEFT" else -1)
-        if dest == "LEFT":
-            self.lists[second].insert(0, value)
-        else:
-            self.lists[second].append(value)
-        return value
+# redis (fakeredis) comes from conftest.
 
 
 @pytest.fixture
@@ -100,6 +58,10 @@ def _pending(user, problem, contest=None):
         code="print(1)",
         language=Submission.Language.PYTHON,
     )
+
+
+def _items(redis, key):
+    return redis.lrange(key, 0, -1)
 
 
 # --- Step 3: apply_result -------------------------------------------------
@@ -162,59 +124,55 @@ def test_apply_triggers_score_recalc(user, problem, active_contest):
 # --- Step 4: process_message ----------------------------------------------
 
 
-def test_process_malformed_json_dead_letters():
-    redis = _FakeRedis()
+def test_process_malformed_json_dead_letters(redis):
     raw = "{not json"
-    redis.lists[PROCESSING_KEY] = [raw]
+    redis.rpush(PROCESSING_KEY, raw)
 
     process_message(redis, raw)
 
-    assert redis.lists[DEAD_KEY] == [raw]
-    assert raw not in redis.lists[PROCESSING_KEY]
+    assert _items(redis, DEAD_KEY) == [raw]
+    assert _items(redis, PROCESSING_KEY) == []
 
 
 @pytest.mark.django_db
-def test_process_success_clears_processing(user, problem):
+def test_process_success_clears_processing(redis, user, problem):
     sub = _pending(user, problem)
     raw = SubmissionResponse(
         submission_id=sub.pk, verdict=VerdictEnum.AC
     ).model_dump_json()
-    redis = _FakeRedis()
-    redis.lists[PROCESSING_KEY] = [raw]
+    redis.rpush(PROCESSING_KEY, raw)
 
     process_message(redis, raw)
 
-    assert redis.lists[PROCESSING_KEY] == []
-    assert redis.lists[DEAD_KEY] == []
+    assert _items(redis, PROCESSING_KEY) == []
+    assert _items(redis, DEAD_KEY) == []
     sub.refresh_from_db()
     assert sub.verdict == Submission.Verdict.AC
 
 
 @pytest.mark.django_db
-def test_process_unknown_submission_discarded_not_dead_lettered():
+def test_process_unknown_submission_discarded_not_dead_lettered(redis):
     raw = SubmissionResponse(
         submission_id=123456, verdict=VerdictEnum.AC
     ).model_dump_json()
-    redis = _FakeRedis()
-    redis.lists[PROCESSING_KEY] = [raw]
+    redis.rpush(PROCESSING_KEY, raw)
 
     process_message(redis, raw)  # must not raise
 
-    assert redis.lists[PROCESSING_KEY] == []
-    assert redis.lists[DEAD_KEY] == []
+    assert _items(redis, PROCESSING_KEY) == []
+    assert _items(redis, DEAD_KEY) == []
 
 
 # --- Step 5: recover_orphans ----------------------------------------------
 
 
-def test_recover_orphans_requeues_all():
-    redis = _FakeRedis()
-    redis.lists[PROCESSING_KEY] = ["a", "b"]
+def test_recover_orphans_requeues_all(redis):
+    redis.rpush(PROCESSING_KEY, "a", "b")
 
     recover_orphans(redis)
 
-    assert redis.lists[PROCESSING_KEY] == []
-    assert sorted(redis.lists[RESULTS_KEY]) == ["a", "b"]
+    assert _items(redis, PROCESSING_KEY) == []
+    assert sorted(_items(redis, RESULTS_KEY)) == ["a", "b"]
 
 
 # --- Step 4: transient failure → retry / dead-letter ----------------------
@@ -224,31 +182,29 @@ _CMD = "apps.submissions.management.commands.consume_judge_results"
 
 @patch(f"{_CMD}.time.sleep")  # don't actually pause in tests
 @patch(f"{_CMD}.apply_result", side_effect=RuntimeError("db down"))
-def test_process_transient_failure_requeues_and_paces(_apply, _sleep):
+def test_process_transient_failure_requeues_and_paces(_apply, _sleep, redis):
     raw = SubmissionResponse(submission_id=7, verdict=VerdictEnum.AC).model_dump_json()
-    redis = _FakeRedis()
-    redis.lists[PROCESSING_KEY] = [raw]
+    redis.rpush(PROCESSING_KEY, raw)
 
     process_message(redis, raw)  # attempt 1 of MAX
 
-    assert redis.lists[RESULTS_KEY] == [raw]  # requeued, not lost
-    assert redis.lists[PROCESSING_KEY] == []
-    assert redis.lists[DEAD_KEY] == []
+    assert _items(redis, RESULTS_KEY) == [raw]  # requeued, not lost
+    assert _items(redis, PROCESSING_KEY) == []
+    assert _items(redis, DEAD_KEY) == []
     _sleep.assert_called_once()  # paced, not a hot spin
 
 
 @patch(f"{_CMD}.time.sleep")
 @patch(f"{_CMD}.apply_result", side_effect=RuntimeError("db down"))
-def test_process_dead_letters_after_max_attempts(_apply, _sleep):
+def test_process_dead_letters_after_max_attempts(_apply, _sleep, redis):
     raw = SubmissionResponse(submission_id=7, verdict=VerdictEnum.AC).model_dump_json()
-    redis = _FakeRedis()
-    redis.lists[PROCESSING_KEY] = [raw]
+    redis.rpush(PROCESSING_KEY, raw)
     # Pretend we've already failed MAX times → this call tips it over.
-    redis.counters[_attempts_key(7)] = MAX_ATTEMPTS
+    redis.set(_attempts_key(7), MAX_ATTEMPTS)
 
     process_message(redis, raw)
 
-    assert redis.lists[DEAD_KEY] == [raw]
-    assert redis.lists[PROCESSING_KEY] == []
-    assert redis.lists[RESULTS_KEY] == []  # not requeued
-    assert _attempts_key(7) not in redis.counters  # counter cleaned up
+    assert _items(redis, DEAD_KEY) == [raw]
+    assert _items(redis, PROCESSING_KEY) == []
+    assert _items(redis, RESULTS_KEY) == []  # not requeued
+    assert not redis.exists(_attempts_key(7))  # counter cleaned up
