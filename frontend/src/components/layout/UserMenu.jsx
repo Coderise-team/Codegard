@@ -57,7 +57,7 @@ export default function UserMenu({ user }) {
       {open && (
         <div className="user-pop" role="menu">
           <Link
-            to="/profile"
+            to={user?.username ? `/users/${user.username}` : '/'}
             className="um-item"
             role="menuitem"
             onClick={() => setOpen(false)}

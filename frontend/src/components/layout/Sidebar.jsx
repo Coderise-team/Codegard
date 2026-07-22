@@ -59,7 +59,11 @@ export default function Sidebar({ user, open = false, onClose }) {
         </nav>
 
         <div className="side-foot">
-          <Link to="/profile" className="nav-mini" onClick={onClose}>
+          <Link
+            to={user?.username ? `/users/${user.username}` : '/'}
+            className="nav-mini"
+            onClick={onClose}
+          >
             <div className="avatar">{user?.initials}</div>
             <div className="mid">
               <div className="h">{user?.username}</div>
