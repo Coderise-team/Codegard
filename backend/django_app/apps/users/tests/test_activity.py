@@ -37,7 +37,9 @@ def _make_submission(user, problem, *, verdict=None, created_at=None):
 
 
 @pytest.mark.django_db
-def test_counts_all_submissions_per_day_regardless_of_verdict(viewer_client, user, problem):
+def test_counts_all_submissions_per_day_regardless_of_verdict(
+    viewer_client, user, problem
+):
     now = timezone.now()
     day1 = now - timedelta(days=2)
     day2 = now - timedelta(days=1)

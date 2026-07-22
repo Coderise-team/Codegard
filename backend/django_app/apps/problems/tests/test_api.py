@@ -115,7 +115,9 @@ class TestProblemRetrieve:
         # Only 1 visible test case
         assert len(response.data["test_cases"]) == 1
 
-    def test_admin_sees_all_test_cases(self, custom_admin_client, problem_with_test_cases):
+    def test_admin_sees_all_test_cases(
+        self, custom_admin_client, problem_with_test_cases
+    ):
         url = reverse("problems-detail", args=[problem_with_test_cases.pk])
         response = custom_admin_client.get(url)
         assert response.status_code == status.HTTP_200_OK

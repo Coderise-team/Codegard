@@ -43,7 +43,9 @@ class TestContentFieldsRequired:
     def test_create_without_a_content_field_is_400(self, custom_admin_client, missing):
         payload = _valid_payload()
         payload.pop(missing)
-        resp = custom_admin_client.post(reverse("problems-list"), payload, format="json")
+        resp = custom_admin_client.post(
+            reverse("problems-list"), payload, format="json"
+        )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert missing in resp.data
 
