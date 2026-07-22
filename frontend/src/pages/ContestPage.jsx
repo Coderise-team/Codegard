@@ -10,6 +10,7 @@ import { useContest, contestState } from '../hooks/useContest';
 import { useContestPanel } from '../hooks/useContestPanel';
 import { useMyStanding } from '../hooks/useMyStanding';
 import { joinContest, leaveContest } from '../api/contests';
+import { indexToLetter } from '../utils/contestLetters';
 import {
   formatDuration,
   formatFullDate,
@@ -17,15 +18,6 @@ import {
   timeAgo,
 } from '../utils/time';
 import './ContestPage.css';
-
-// Contest problems are labelled by position: A, B, … Z, AA, AB, …
-const pip = (i) => {
-  let label = '';
-  for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) {
-    label = String.fromCharCode(65 + (n % 26)) + label;
-  }
-  return label;
-};
 
 /**
  * ContestPage — a single-contest event page (compact density, violet accent).
@@ -126,10 +118,10 @@ export default function ContestPage() {
     problems:
       state === 'soon'
         ? Array.from({ length: contest.problems_count }, (_, i) => ({
-            id: pip(i),
+            id: indexToLetter(i),
           }))
         : contest.problems.map((p, i) => ({
-            id: pip(i),
+            id: indexToLetter(i),
             title: p.title,
             solvedBy: p.solved_count,
           })),
