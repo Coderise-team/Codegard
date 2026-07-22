@@ -92,14 +92,13 @@ export default function StandingsPage() {
     : items;
   const isYou = (u) => u.username === user?.username;
 
-  // Your own name goes to your own profile — a page that does not exist yet, so
-  // the link is dead on purpose and will start working the day /me lands.
+  // Every name goes to the same profile route, your own included: the page
+  // itself works out that you own it and adds the editing controls.
   // Memoised: StandingRow is memo()'d, and a fresh handler on every render would
   // re-render every row on the board for nothing.
   const openUser = useCallback(
-    (username) =>
-      navigate(username === user?.username ? '/me' : `/users/${username}`),
-    [navigate, user?.username]
+    (username) => navigate(`/users/${username}`),
+    [navigate]
   );
 
   // Your own entry lives either on the podium or in the list, never both — and
