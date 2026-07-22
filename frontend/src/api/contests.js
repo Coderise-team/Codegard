@@ -25,6 +25,21 @@ export async function getMyStanding(id) {
   return data;
 }
 
+// GET contests/{id}/registrants/?page=... -> the full paginated payload
+// { results, count, next }; rows { username, elo_rating }, rating desc.
+export async function getRegistrants(id, params = {}) {
+  const { data } = await client.get(`contests/${id}/registrants/`, { params });
+  return data;
+}
+
+// GET contests/{id}/leaderboard/?page=... -> the full paginated payload
+// { results, count, next }; rows { rank, username, score, penalty,
+// solved_count, last_ac_at, rating_delta } (delta is null until the ELO run).
+export async function getLeaderboard(id, params = {}) {
+  const { data } = await client.get(`contests/${id}/leaderboard/`, { params });
+  return data;
+}
+
 // POST contests/{id}/join/ — register the current user for a contest.
 export async function joinContest(id) {
   await client.post(`contests/${id}/join/`);

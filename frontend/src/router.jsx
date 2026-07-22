@@ -1,10 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import AuthPage from './pages/AuthPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import Dashboard from './pages/Dashboard';
 import ProblemsPage from './pages/ProblemsPage';
 import ProblemPage from './pages/ProblemPage';
 import ContestsPage from './pages/ContestsPage';
+import ContestPage from './pages/ContestPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileRedirect from './pages/ProfileRedirect';
@@ -30,6 +32,9 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      // Unguarded on purpose: mid-exchange the auth flag flips to true, and a
+      // GuestRoute would race the page's own redirect with its Navigate home.
+      { path: '/oauth/callback', element: <OAuthCallbackPage /> },
       {
         element: <PrivateRoute />,
         children: [
@@ -37,6 +42,7 @@ export const router = createBrowserRouter([
           { path: '/problems', element: <ProblemsPage /> },
           { path: '/problems/:id', element: <ProblemPage /> },
           { path: '/contests', element: <ContestsPage /> },
+          { path: '/contests/:id', element: <ContestPage /> },
           { path: '/standings', element: <StandingsPage /> },
           { path: '/users/:username', element: <ProfilePage /> },
           { path: '/profile', element: <ProfileRedirect /> },

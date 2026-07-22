@@ -1,7 +1,9 @@
-// Human-friendly "time ago" label for an ISO timestamp.
-export function timeAgo(iso) {
+// Human-friendly "time ago" label for an ISO timestamp. Pass `nowMs` when the
+// label must follow a ticking clock kept in state (React Compiler caches
+// render-time Date.now() reads).
+export function timeAgo(iso, nowMs = Date.now()) {
   const then = new Date(iso);
-  const seconds = Math.floor((Date.now() - then.getTime()) / 1000);
+  const seconds = Math.floor((nowMs - then.getTime()) / 1000);
 
   if (seconds < 60) return 'just now';
 
@@ -23,6 +25,24 @@ export function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
+  });
+}
+
+// Full date label with the year, e.g. "Jun 6, 2026".
+export function formatFullDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+// Clock time of an ISO timestamp, e.g. "17:00".
+export function formatTimeOfDay(iso) {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
   });
 }
 

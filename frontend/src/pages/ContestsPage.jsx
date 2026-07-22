@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import { ContestHeroView } from '../components/dashboard/ContestHero';
@@ -56,9 +57,8 @@ export default function ContestsPage() {
     return () => clearInterval(id);
   }, [tab]);
 
-  // The contest page doesn't exist yet; the card is clickable so the affordance
-  // is in place — wire the navigation once that route lands.
-  const openContest = () => {};
+  const navigate = useNavigate();
+  const openContest = (c) => navigate(`/contests/${c.id}`);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   const [regOverride, setRegOverride] = useState({}); // contest id -> joined

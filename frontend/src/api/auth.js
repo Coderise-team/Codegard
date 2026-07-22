@@ -35,6 +35,19 @@ export async function logout(refreshToken) {
   await client.post('users/logout/', { refresh: refreshToken });
 }
 
+// GET users/oauth/<provider>/start/ -> { authorize_url } to send the browser to.
+export async function oauthStart(provider) {
+  const { data } = await client.get(`users/oauth/${provider}/start/`);
+  return data;
+}
+
+// POST users/oauth/redeem/ -> { access, refresh }. The one-time ticket comes
+// from the provider round-trip (backend redirects to /oauth/callback?ticket=).
+export async function oauthRedeem(ticket) {
+  const { data } = await client.post('users/oauth/redeem/', { ticket });
+  return data;
+}
+
 // PATCH users/me/ -> the updated profile. Takes a partial payload: only the keys
 // present are changed, and only bio / first_name / last_name are editable at all.
 export async function updateProfile(payload) {
