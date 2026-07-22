@@ -18,9 +18,17 @@ def make_communicator(user, submission_id):
 
 
 async def _assert_rejected_with_code(communicator, expected_code: int) -> None:
-    connected, close_code = await communicator.connect()
-    assert not connected
-    assert close_code == expected_code
+    """
+    The consumer calls accept() before close(code=...) so the client receives the
+    custom close code as a proper WebSocket close frame.  That means connect()
+    returns (True, None) — the handshake succeeded — and the close message
+    arrives as the next output frame.
+    """
+    connected, _ = await communicator.connect()
+    assert connected  # accept() was called first
+    close_msg = await communicator.receive_output(timeout=1)
+    assert close_msg["type"] == "websocket.close"
+    assert close_msg.get("code") == expected_code
 
 
 @pytest.fixture

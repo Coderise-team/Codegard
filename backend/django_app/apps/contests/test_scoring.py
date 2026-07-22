@@ -257,6 +257,8 @@ class TestLeaderboard:
     def test_higher_score_ranks_first(
         self, user, user2, problem, problem2, active_contest
     ):
+        active_contest.participants.add(user, user2)
+
         # user solves both problems
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         make_submission(user, problem2, active_contest, Submission.Verdict.AC, 20)
@@ -267,12 +269,14 @@ class TestLeaderboard:
         calculate_score(user2, active_contest)
 
         lb = list(get_leaderboard(active_contest))
-        assert lb[0].user == user
-        assert lb[1].user == user2
+        assert lb[0] == user
+        assert lb[1] == user2
 
     def test_same_score_lower_penalty_ranks_first(
         self, user, user2, problem, active_contest
     ):
+        active_contest.participants.add(user, user2)
+
         # user — AC at 10 min (penalty=10)
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -283,7 +287,7 @@ class TestLeaderboard:
         calculate_score(user2, active_contest)
 
         lb = list(get_leaderboard(active_contest))
-        assert lb[0].user == user  # lower penalty wins
+        assert lb[0] == user  # lower penalty wins
 
 
 # ---------------------------------------------------------------------------
@@ -302,6 +306,7 @@ class TestLeaderboardAPI:
     def test_leaderboard_contains_correct_fields(
         self, api_client, user, problem, active_contest
     ):
+        active_contest.participants.add(user)
         api_client.force_authenticate(user=user)
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -321,6 +326,7 @@ class TestLeaderboardAPI:
     def test_leaderboard_rank_starts_at_1(
         self, api_client, user, problem, active_contest
     ):
+        active_contest.participants.add(user)
         api_client.force_authenticate(user=user)
         make_submission(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -386,6 +392,7 @@ def fill_scores(contest, django_user_model, n):
         participant = django_user_model.objects.create_user(
             username=f"p{i}", email=f"p{i}@test.com", password="pass"
         )
+        contest.participants.add(participant)
         ContestScore.objects.create(
             user=participant, contest=contest, score=100 * (n - i), penalty=i
         )
@@ -412,6 +419,7 @@ class TestLeaderboardPagination:
         assert [row["rank"] for row in response.data["results"]] == [11, 12]
 
     def test_full_tie_is_ordered_by_id(self, api_client, user, user2, active_contest):
+        active_contest.participants.add(user, user2)
         ContestScore.objects.create(user=user, contest=active_contest)
         ContestScore.objects.create(user=user2, contest=active_contest)
         api_client.force_authenticate(user=user)
@@ -420,6 +428,7 @@ class TestLeaderboardPagination:
         assert usernames == [user.username, user2.username]
 
     def test_rating_delta_in_response(self, api_client, user, active_contest):
+        active_contest.participants.add(user)
         ContestScore.objects.create(
             user=user, contest=active_contest, score=100, rating_delta=48
         )

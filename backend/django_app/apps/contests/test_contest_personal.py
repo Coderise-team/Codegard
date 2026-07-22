@@ -156,6 +156,7 @@ def test_calculate_score_does_not_clobber_rating(user):
 @pytest.mark.django_db
 def test_my_standing_statuses_and_rank(client, user):
     c = _active_contest()
+    c.participants.add(user)  # leaderboard is now built from participants
     solved, attempted, untouched = _problem("A"), _problem("B"), _problem("C")
     c.problems.add(solved, attempted, untouched)
     _sub(user, solved, c, Submission.Verdict.AC)

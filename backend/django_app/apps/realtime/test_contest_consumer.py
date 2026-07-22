@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 import pytest
-from apps.contests.models import Contest, ContestScore
+from apps.contests.models import Contest
 from apps.realtime.routing import websocket_urlpatterns
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
@@ -94,65 +94,34 @@ async def test_non_participant_is_rejected(user, active_contest):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_connect_sends_initial_leaderboard(user, active_contest):
+async def test_connect_sends_nothing(user, active_contest):
+    """The socket signals; it no longer pushes a snapshot on connect."""
     await add_participant(active_contest, user)
     communicator = make_communicator(user, active_contest.pk)
     try:
         connected, _ = await communicator.connect()
         assert connected
-
-        response = await communicator.receive_json_from()
-        assert response["type"] == "leaderboard_update"
-        assert "leaderboard" in response
+        assert await communicator.receive_nothing(timeout=0.3)
     finally:
         await communicator.disconnect()
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_leaderboard_update_forwarded(user, active_contest):
+async def test_leaderboard_update_forwarded_without_payload(user, active_contest):
     await add_participant(active_contest, user)
     communicator = make_communicator(user, active_contest.pk)
     try:
         await communicator.connect()
-        await communicator.receive_json_from()  # consume initial
 
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             f"contest_{active_contest.pk}",
-            {"type": "leaderboard_update", "leaderboard": [{"rank": 1}]},
+            {"type": "leaderboard_update"},
         )
 
         response = await communicator.receive_json_from()
-        assert response["type"] == "leaderboard_update"
-        assert response["leaderboard"] == [{"rank": 1}]
-    finally:
-        await communicator.disconnect()
-
-
-@pytest.mark.asyncio
-@pytest.mark.django_db(transaction=True)
-async def test_problem_solved_notification(user, active_contest):
-    await add_participant(active_contest, user)
-    communicator = make_communicator(user, active_contest.pk)
-    try:
-        await communicator.connect()
-        await communicator.receive_json_from()  # consume initial
-
-        channel_layer = get_channel_layer()
-        await channel_layer.group_send(
-            f"contest_{active_contest.pk}",
-            {
-                "type": "problem_solved",
-                "username": "opponent",
-                "problem_title": "Two Sum",
-            },
-        )
-
-        response = await communicator.receive_json_from()
-        assert response["type"] == "problem_solved"
-        assert response["username"] == "opponent"
-        assert response["problem_title"] == "Two Sum"
+        assert response == {"type": "leaderboard_update"}  # signal only, no rows
     finally:
         await communicator.disconnect()
 
@@ -164,8 +133,6 @@ async def test_contest_ended_closes_connection(user, active_contest):
     communicator = make_communicator(user, active_contest.pk)
     try:
         await communicator.connect()
-        await communicator.receive_json_from()  # consume initial
-
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             f"contest_{active_contest.pk}",
@@ -180,30 +147,34 @@ async def test_contest_ended_closes_connection(user, active_contest):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_connect_to_finished_contest_sends_ended(user, finished_contest):
-    """Connecting to an already-finished contest sends leaderboard + contest_ended."""
+async def test_connect_to_rated_contest_sends_ended(user, finished_contest):
+    """A contest that is over AND rated closes the socket right away."""
     await add_participant(finished_contest, user)
-    # Add a score so the leaderboard has entries — covers the rank-assignment
-    # loop inside build_leaderboard (entry.rank = rank).
-    await database_sync_to_async(ContestScore.objects.create)(
-        user=user,
-        contest=finished_contest,
-        score=100,
-        penalty=10,
-        solved_count=1,
+    finished_contest.rating_applied = True
+    await database_sync_to_async(finished_contest.save)(
+        update_fields=["rating_applied"]
     )
     communicator = make_communicator(user, finished_contest.pk)
     try:
         connected, _ = await communicator.connect()
         assert connected
 
-        # First message: current leaderboard snapshot (with entries this time)
-        leaderboard_msg = await communicator.receive_json_from()
-        assert leaderboard_msg["type"] == "leaderboard_update"
-        assert len(leaderboard_msg["leaderboard"]) == 1
-
-        # Second message: contest is already over
+        # No leaderboard snapshot any more — straight to the ended signal.
         ended_msg = await communicator.receive_json_from()
-        assert ended_msg["type"] == "contest_ended"
+        assert ended_msg == {"type": "contest_ended"}
+    finally:
+        await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_connect_to_unrated_finished_contest_stays_open(user, finished_contest):
+    """Time is up but ELO isn't applied yet — keep waiting for the event."""
+    await add_participant(finished_contest, user)
+    communicator = make_communicator(user, finished_contest.pk)
+    try:
+        connected, _ = await communicator.connect()
+        assert connected
+        assert await communicator.receive_nothing(timeout=0.3)
     finally:
         await communicator.disconnect()
