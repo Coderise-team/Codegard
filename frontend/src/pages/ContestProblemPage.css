@@ -1,0 +1,16 @@
+/* ContestProblemPage.css — contest-mode problem workspace styles */
+
+/* ── Shell ──────────────────────────────────────────────────── */
+.cpp-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.cpp-empty {
+  text-align: center;
+  color: var(--fg2);
+  padding: 48px 20px;
+  font-size: 13.5px;
+}
