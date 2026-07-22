@@ -102,6 +102,8 @@ describe('PasswordForm', () => {
     expect(
       await screen.findByText(/at least 8 characters/i)
     ).toBeInTheDocument();
-    expect(screen.getByText('This password is too common.')).toBeInTheDocument();
+    expect(
+      screen.getByText('This password is too common.')
+    ).toBeInTheDocument();
   });
 });
