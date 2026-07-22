@@ -21,12 +21,14 @@ const FOCUSABLE =
  * components, so moving all of this onto a /settings route later would mean
  * replacing this shell and nothing else.
  *
+ * Mounted only while it is open, so every visit starts on the first tab with
+ * empty forms and no state left over from the last one.
+ *
  * Props:
- *   open    — whether the dialog is shown
  *   onClose — called on Escape, backdrop click or the close button
  *   onSaved — the profile changed, so the page behind should reload it
  */
-export default function SettingsModal({ open, onClose, onSaved }) {
+export default function SettingsModal({ onClose, onSaved }) {
   const [tab, setTab] = useState(TABS[0].key);
   const panelRef = useRef(null);
 
@@ -39,11 +41,8 @@ export default function SettingsModal({ open, onClose, onSaved }) {
   });
 
   useEffect(() => {
-    if (!open) return undefined;
-
-    // Always open on the first tab, and hand focus to the dialog so the
-    // keyboard doesn't stay behind on the page underneath.
-    setTab(TABS[0].key);
+    // Hand focus to the dialog so the keyboard doesn't stay behind on the page
+    // underneath.
     const opener = document.activeElement;
     panelRef.current?.focus();
 
@@ -76,9 +75,7 @@ export default function SettingsModal({ open, onClose, onSaved }) {
       document.body.style.overflow = overflow;
       opener?.focus?.();
     };
-  }, [open]);
-
-  if (!open) return null;
+  }, []);
 
   return createPortal(
     <div

@@ -8,7 +8,7 @@ vi.mock('./AvatarUpload', () => ({
   default: () => <div>change photo</div>,
 }));
 vi.mock('./SettingsModal', () => ({
-  default: ({ open }) => (open ? <div>settings dialog</div> : null),
+  default: () => <div>settings dialog</div>,
 }));
 
 const user = {
