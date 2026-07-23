@@ -1,0 +1,97 @@
+/* ContestTopbar.css - workspace top bar for solving inside a contest:
+   back-to-round link, A/B/C problem strip and the round countdown.
+   Owned by the component, so any page that mounts it gets the styles. */
+
+.ct-topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+.ct-left,
+.ct-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ct-div {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+
+/* Back to the round (its standings) — doubles as a breadcrumb. */
+.ct-back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 260px;
+}
+.ct-back-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ct-back:hover .ct-back-title {
+  text-decoration: underline;
+}
+
+/* Problem strip: compact letter pills, the active one lit in the accent. */
+.ct-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+.ct-pip {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--fg2);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: 0.13s;
+}
+.ct-pip:hover {
+  color: var(--fg);
+  border-color: var(--gold-line);
+}
+.ct-pip.current {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
+}
+
+/* Round countdown. */
+.ct-timer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fg2);
+}
+.ct-timer-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.ct-timer.done .ct-timer-val {
+  color: var(--fg2);
+  font-family: var(--ui);
+}

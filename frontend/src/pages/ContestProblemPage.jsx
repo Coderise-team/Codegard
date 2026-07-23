@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
-import SoloTopbar from '../components/problem/SoloTopbar';
+import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import NotFoundPage from './NotFoundPage';
 import { useCurrentUser } from '../hooks/useCurrentUser';
@@ -28,9 +28,17 @@ export default function ContestProblemPage() {
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
 
-  const { problem, loading, notFound } = useContestProblem(id, letter);
+  const { contest, problem, loading, notFound } = useContestProblem(id, letter);
   const { data: languages, loading: langsLoading } = useLanguages();
   const { data: submissions } = useProblemSubmissions(problem?.id);
+
+  // The topbar countdown ticks off a clock kept in state (the React Compiler
+  // caches a render-time Date.now(), so the timer would otherwise freeze).
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   // An unknown round, an unknown letter and a letter past the end of the round
   // are all "this URL addresses nothing" — anything else (server down, dropped
@@ -51,13 +59,15 @@ export default function ContestProblemPage() {
   return (
     <div className="cpp-app">
       <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
-      {/* Placeholder chrome: the contest topbar (round timer, problem strip,
-          back to the standings) replaces this next. */}
-      <SoloTopbar
-        title={problem?.title ?? ''}
-        user={user}
-        onMenuClick={() => setNavOpen(true)}
-      />
+      {contest && (
+        <ContestTopbar
+          contest={contest}
+          currentLetter={letter}
+          now={now}
+          user={user}
+          onMenuClick={() => setNavOpen(true)}
+        />
+      )}
       {ready ? (
         <ProblemWorkspace
           problem={problem}
