@@ -3,11 +3,13 @@ import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
+import VerdictToast from '../components/problem/VerdictToast';
 import NotFoundPage from './NotFoundPage';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContestProblem } from '../hooks/useContestProblem';
 import { useLanguages } from '../hooks/useLanguages';
 import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
+import { useSubmitFlow } from '../hooks/useSubmitFlow';
 import './ContestProblemPage.css';
 
 /**
@@ -30,7 +32,19 @@ export default function ContestProblemPage() {
 
   const { contest, problem, loading, notFound } = useContestProblem(id, letter);
   const { data: languages, loading: langsLoading } = useLanguages();
-  const { data: submissions } = useProblemSubmissions(problem?.id);
+  const { data: submissions, reload } = useProblemSubmissions(problem?.id);
+
+  // Same submit -> judge -> toast flow as the solo page, but the attempt is
+  // filed against the round, so it counts toward the standings and rating.
+  const { busy, toast, setToast, submit } = useSubmitFlow(
+    (code, language) => ({
+      problem: problem.id,
+      contest: Number(id),
+      code,
+      language,
+    }),
+    reload
+  );
 
   // The topbar countdown ticks off a clock kept in state (the React Compiler
   // caches a render-time Date.now(), so the timer would otherwise freeze).
@@ -73,10 +87,9 @@ export default function ContestProblemPage() {
           problem={problem}
           submissions={submissions ?? []}
           languages={languages}
-          // Submitting is deliberately inert until the contest submission flow
-          // lands: a button that does nothing is safer than one that quietly
-          // files the solution outside the round.
-          onSubmit={() => {}}
+          busy={busy}
+          statusText={busy ? 'Judging…' : undefined}
+          onSubmit={submit}
         />
       ) : (
         <div className="cpp-empty">
@@ -85,6 +98,7 @@ export default function ContestProblemPage() {
             : 'Could not load the problem. Please try again.'}
         </div>
       )}
+      {toast && <VerdictToast {...toast} onClose={() => setToast(null)} />}
     </div>
   );
 }
