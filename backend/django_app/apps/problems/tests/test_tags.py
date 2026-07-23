@@ -5,6 +5,7 @@ tag serialization on the problem detail, and tag write rules on create/update.
 import pytest
 from apps.problems.models import Problem, Tag
 from django.urls import reverse
+from factories import make_problem
 
 # ``api_client`` (anonymous), ``user_client``, ``custom_admin_client`` and
 # ``problem`` come from conftest.
@@ -21,8 +22,8 @@ def _tags_url():
 def test_returns_tags_with_counts(api_client):
     arrays = Tag.objects.create(name="Arrays")
     hashing = Tag.objects.create(name="Hashing")
-    p1 = Problem.objects.create(title="A", description="", difficulty="easy")
-    p2 = Problem.objects.create(title="B", description="", difficulty="easy")
+    p1 = make_problem("A")
+    p2 = make_problem("B")
     p1.tags.set([arrays, hashing])
     p2.tags.set([arrays])
 

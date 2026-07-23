@@ -8,19 +8,16 @@ counting ALL submissions regardless of verdict.
 from datetime import timedelta
 
 import pytest
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
-from factories import make_submission
+from factories import make_problem, make_submission
 from rest_framework.test import APIClient
 
 
 @pytest.fixture
 def problem(db):
-    return Problem.objects.create(
-        title="P", description="", difficulty=Problem.Difficulty.EASY
-    )
+    return make_problem()
 
 
 @pytest.mark.django_db

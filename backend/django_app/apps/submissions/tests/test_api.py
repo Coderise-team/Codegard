@@ -7,11 +7,10 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
-from apps.contests.models import Contest
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_contest, make_problem, make_submission
 from rest_framework import status
 
 # ---------------------------------------------------------------------------
@@ -22,36 +21,19 @@ from rest_framework import status
 
 @pytest.fixture
 def problem2(db):
-    return Problem.objects.create(
-        title="Reverse String",
-        description="",
-        difficulty="easy",
-        time_limit=1000,
-        memory_limit=256,
-    )
+    return make_problem("Reverse String")
 
 
 @pytest.fixture
 def finished_contest(db, problem):
-    now = timezone.now()
-    contest = Contest.objects.create(
-        title="Finished Contest",
-        start_time=now - timedelta(hours=3),
-        end_time=now - timedelta(hours=1),
-        status=Contest.Status.FINISHED,
-    )
+    contest = make_contest("Finished Contest", starts_in=-3, ends_in=-1)
     contest.problems.add(problem)
     return contest
 
 
 @pytest.fixture
 def submission(db, user, problem):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="print('hello')",
-        language=Submission.Language.PYTHON,
-    )
+    return make_submission(user, problem, verdict=None)
 
 
 # ---------------------------------------------------------------------------

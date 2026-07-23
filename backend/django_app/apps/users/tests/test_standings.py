@@ -1,12 +1,9 @@
 """Tests for the global ELO standings endpoint (GET /api/users/standings/)."""
 
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest, ContestScore
+from apps.contests.models import ContestScore
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils import timezone
 from factories import make_contest
 from rest_framework.test import APIClient
 
@@ -217,12 +214,7 @@ def test_delta_skips_unrated_live_contest():
     u = _user("a", 1500)
     rated = _finished_contest("Rated", hours_ago=10)
     ContestScore.objects.create(user=u, contest=rated, rating_delta=+15)
-    live = Contest.objects.create(
-        title="Live",
-        start_time=timezone.now() - timedelta(hours=1),
-        end_time=timezone.now() + timedelta(hours=1),
-        status=Contest.Status.ACTIVE,
-    )
+    live = make_contest("Live")
     ContestScore.objects.create(user=u, contest=live, rating_delta=None)
     rows = _auth(u).get(reverse(URL)).json()["results"]
     assert rows[0]["delta"] == 15  # live NULL skipped, old rated one used

@@ -1,13 +1,11 @@
 from datetime import timedelta
 
 import pytest
-from apps.contests.models import Contest, ContestScore
+from apps.contests.models import ContestScore
 from apps.contests.services import calculate_score, get_leaderboard
-from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
-from django.utils import timezone
-from factories import make_submission
+from factories import make_contest, make_problem, make_submission
 from rest_framework import status
 
 # ---------------------------------------------------------------------------
@@ -17,35 +15,17 @@ from rest_framework import status
 
 @pytest.fixture
 def problem(db):
-    return Problem.objects.create(
-        title="Two Sum",
-        description="",
-        difficulty="easy",
-        time_limit=1000,
-        memory_limit=256,
-    )
+    return make_problem("Two Sum")
 
 
 @pytest.fixture
 def problem2(db):
-    return Problem.objects.create(
-        title="Reverse String",
-        description="",
-        difficulty="easy",
-        time_limit=1000,
-        memory_limit=256,
-    )
+    return make_problem("Reverse String")
 
 
 @pytest.fixture
 def active_contest(db, problem, problem2):
-    now = timezone.now()
-    contest = Contest.objects.create(
-        title="Active Contest",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=2),
-        status=Contest.Status.ACTIVE,
-    )
+    contest = make_contest("Active Contest")
     contest.problems.add(problem, problem2)
     return contest
 

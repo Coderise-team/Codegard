@@ -3,14 +3,10 @@ Profile tests: the user stats endpoint (GET /api/users/{username}/stats/) and
 the `joined` field on the user detail endpoint.
 """
 
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest
 from apps.submissions.models import Submission
 from django.urls import reverse
-from django.utils import timezone
-from factories import make_problem, make_submission
+from factories import make_contest, make_problem, make_submission
 from rest_framework.test import APIClient
 
 # --- user stats endpoint ---
@@ -30,11 +26,7 @@ def test_solved_counts_distinct_ac_problems(viewer_client, user):
 
 @pytest.mark.django_db
 def test_contests_counts_participations(viewer_client, user):
-    contest = Contest.objects.create(
-        title="C",
-        start_time=timezone.now(),
-        end_time=timezone.now() + timedelta(hours=2),
-    )
+    contest = make_contest("C")
     contest.participants.add(user)
     body = viewer_client.get(reverse("users:user-stats", args=[user.username])).json()
     assert body["contests"] == 1
