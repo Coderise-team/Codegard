@@ -4,14 +4,10 @@ Covers the mint endpoint and the middleware redemption rules:
 valid ticket -> connect ok; reuse / expired / missing / garbage -> 4001.
 """
 
-import uuid
-
 import pytest
-from apps.problems.models import Problem
 from apps.realtime.middleware import TicketAuthMiddleware
 from apps.realtime.routing import websocket_urlpatterns
 from apps.realtime.tickets import issue_ticket
-from apps.submissions.models import Submission
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
 from django.core.cache import cache
@@ -37,29 +33,7 @@ def _clear_cache():
     cache.clear()
 
 
-@pytest.fixture
-def user(db, django_user_model):
-    uid = uuid.uuid4().hex[:6]
-    return django_user_model.objects.create_user(
-        username=f"u_{uid}", password="pass", email=f"u_{uid}@example.com"
-    )
-
-
-@pytest.fixture
-def submission(db, user):
-    problem = Problem.objects.create(
-        title="Two Sum",
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x=1",
-        language=Submission.Language.PYTHON,
-    )
+# user and submission come from conftest.
 
 
 # --- endpoint --------------------------------------------------------------

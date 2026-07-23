@@ -21,13 +21,6 @@ def user(db):
     )
 
 
-@pytest.fixture
-def auth(user):
-    api = APIClient()
-    api.force_authenticate(user=user)
-    return api
-
-
 ME = "users:me"
 ME_PASSWORD = "users:me-password"
 REFRESH = "users:token-refresh"
@@ -37,8 +30,8 @@ REFRESH = "users:token-refresh"
 
 
 @pytest.mark.django_db
-def test_patch_updates_editable_fields(auth, user):
-    resp = auth.patch(
+def test_patch_updates_editable_fields(user_client, user):
+    resp = user_client.patch(
         reverse(ME),
         {"bio": "hi", "first_name": "Yurii", "last_name": ""},
         format="json",
@@ -51,9 +44,9 @@ def test_patch_updates_editable_fields(auth, user):
 
 
 @pytest.mark.django_db
-def test_patch_is_partial(auth, user):
+def test_patch_is_partial(user_client, user):
     # Only bio sent -> first_name / last_name untouched.
-    resp = auth.patch(reverse(ME), {"bio": "changed"}, format="json")
+    resp = user_client.patch(reverse(ME), {"bio": "changed"}, format="json")
     assert resp.status_code == 200
     user.refresh_from_db()
     assert user.bio == "changed"
@@ -62,9 +55,9 @@ def test_patch_is_partial(auth, user):
 
 
 @pytest.mark.django_db
-def test_patch_ignores_forbidden_fields(auth, user):
+def test_patch_ignores_forbidden_fields(user_client, user):
     # username / email / elo_rating are not in the write serializer -> ignored.
-    resp = auth.patch(
+    resp = user_client.patch(
         reverse(ME),
         {
             "username": "hacker",
@@ -83,8 +76,8 @@ def test_patch_ignores_forbidden_fields(auth, user):
 
 
 @pytest.mark.django_db
-def test_get_me_returns_new_fields(auth):
-    data = auth.get(reverse(ME)).json()
+def test_get_me_returns_new_fields(user_client):
+    data = user_client.get(reverse(ME)).json()
     assert data["bio"] == "old bio"
     assert data["first_name"] == "Old"
     assert data["last_name"] == "Name"
@@ -97,8 +90,8 @@ def test_me_anonymous_401():
 
 
 @pytest.mark.django_db
-def test_me_put_not_allowed(auth):
-    resp = auth.put(reverse(ME), {"bio": "x"}, format="json")
+def test_me_put_not_allowed(user_client):
+    resp = user_client.put(reverse(ME), {"bio": "x"}, format="json")
     assert resp.status_code == 405
 
 
@@ -106,8 +99,8 @@ def test_me_put_not_allowed(auth):
 
 
 @pytest.mark.django_db
-def test_password_change_success(auth, user):
-    resp = auth.post(
+def test_password_change_success(user_client, user):
+    resp = user_client.post(
         reverse(ME_PASSWORD),
         {"old_password": "OldPass!234", "new_password": "BrandNew!567"},
         format="json",
@@ -121,11 +114,11 @@ def test_password_change_success(auth, user):
 
 
 @pytest.mark.django_db
-def test_old_refresh_dies_new_one_works(auth, user):
+def test_old_refresh_dies_new_one_works(user_client, user):
     # An outstanding refresh token issued before the change...
     old_refresh = str(RefreshToken.for_user(user))
 
-    resp = auth.post(
+    resp = user_client.post(
         reverse(ME_PASSWORD),
         {"old_password": "OldPass!234", "new_password": "BrandNew!567"},
         format="json",
@@ -144,8 +137,8 @@ def test_old_refresh_dies_new_one_works(auth, user):
 
 
 @pytest.mark.django_db
-def test_password_change_wrong_old(auth, user):
-    resp = auth.post(
+def test_password_change_wrong_old(user_client, user):
+    resp = user_client.post(
         reverse(ME_PASSWORD),
         {"old_password": "WRONG", "new_password": "BrandNew!567"},
         format="json",
@@ -156,8 +149,8 @@ def test_password_change_wrong_old(auth, user):
 
 
 @pytest.mark.django_db
-def test_password_change_weak_new(auth):
-    resp = auth.post(
+def test_password_change_weak_new(user_client):
+    resp = user_client.post(
         reverse(ME_PASSWORD),
         {"old_password": "OldPass!234", "new_password": "12345678"},
         format="json",

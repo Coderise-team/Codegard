@@ -1,8 +1,9 @@
 """
 Project-wide test fixtures.
 
-Only universal fixtures live here: an API client, a plain user, a superuser, a
-user-authenticated client, a superuser-authenticated client, and a fake Redis.
+Only universal fixtures live here: an API client, a plain user, a second user, a
+superuser, a user-authenticated client, a superuser-authenticated client, and a
+fake Redis.
 Domain fixtures (problems, contests, submissions, ...) belong in each app's
 ``tests/conftest.py``.
 
@@ -31,6 +32,14 @@ def user(db, django_user_model):
     """Plain user for tests that don't care about the exact username."""
     return django_user_model.objects.create_user(
         username="user", email="user@test.com", password="pass"
+    )
+
+
+@pytest.fixture
+def other(db, django_user_model):
+    """A second user, for "someone else's data" scenarios."""
+    return django_user_model.objects.create_user(
+        username="other", email="other@test.com", password="pass"
     )
 
 

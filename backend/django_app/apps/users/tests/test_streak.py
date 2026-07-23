@@ -3,21 +3,11 @@
 from datetime import datetime, time, timedelta
 
 import pytest
-from apps.problems.models import DailyProblem, Problem
-from apps.submissions.models import Submission
+from apps.problems.models import DailyProblem
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_problem, make_submission
 from rest_framework import status
-
-
-def _problem(title):
-    return Problem.objects.create(
-        title=title,
-        description="",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
 
 
 def _assign(date, problem):
@@ -26,16 +16,8 @@ def _assign(date, problem):
 
 def _solve(user, problem, date):
     """Create an AC submission dated on `date` (UTC noon)."""
-    s = Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=Submission.Verdict.AC,
-    )
     when = timezone.make_aware(datetime.combine(date, time(12, 0)))
-    Submission.objects.filter(pk=s.pk).update(created_at=when)
-    return s
+    return make_submission(user, problem, created_at=when)
 
 
 def url(username):
@@ -72,7 +54,7 @@ def test_current_streak_counts_consecutive_days(user_client, user):
     today = timezone.now().date()
     for offset in range(3):  # today, yesterday, day before
         d = today - timedelta(days=offset)
-        p = _problem(f"P{offset}")
+        p = make_problem(f"P{offset}")
         _assign(d, p)
         _solve(user, p, d)
     assert user_client.get(url(user.username)).json()["current_streak"] == 3
@@ -84,10 +66,10 @@ def test_today_unsolved_does_not_break(user_client, user):
     # yesterday + day before solved; today assigned but unsolved.
     for offset in (1, 2):
         d = today - timedelta(days=offset)
-        p = _problem(f"P{offset}")
+        p = make_problem(f"P{offset}")
         _assign(d, p)
         _solve(user, p, d)
-    _assign(today, _problem("Ptoday"))  # unsolved
+    _assign(today, make_problem("Ptoday"))  # unsolved
     assert user_client.get(url(user.username)).json()["current_streak"] == 2
 
 
@@ -97,11 +79,11 @@ def test_gap_in_middle_breaks(user_client, user):
     # today and yesterday solved; day before (offset 2) missed.
     for offset in (0, 1, 3):
         d = today - timedelta(days=offset)
-        p = _problem(f"P{offset}")
+        p = make_problem(f"P{offset}")
         _assign(d, p)
         _solve(user, p, d)
     # offset 2 assigned but not solved (a gap right below the chain)
-    _assign(today - timedelta(days=2), _problem("gap"))
+    _assign(today - timedelta(days=2), make_problem("gap"))
     assert user_client.get(url(user.username)).json()["current_streak"] == 2
 
 
@@ -111,9 +93,9 @@ def test_gap_in_middle_breaks(user_client, user):
 @pytest.mark.django_db
 def test_solving_different_problem_does_not_count(user_client, user):
     today = timezone.now().date()
-    daily = _problem("daily")
+    daily = make_problem("daily")
     _assign(today, daily)
-    _solve(user, _problem("other"), today)  # solved a different problem
+    _solve(user, make_problem("other"), today)  # solved a different problem
     body = user_client.get(url(user.username)).json()
     assert body["current_streak"] == 0
 
@@ -121,7 +103,7 @@ def test_solving_different_problem_does_not_count(user_client, user):
 @pytest.mark.django_db
 def test_solving_daily_problem_on_other_day_does_not_count(user_client, user):
     today = timezone.now().date()
-    p = _problem("daily")
+    p = make_problem("daily")
     _assign(today, p)
     _solve(user, p, today - timedelta(days=1))  # right problem, wrong day
     assert user_client.get(url(user.username)).json()["current_streak"] == 0
@@ -136,11 +118,11 @@ def test_longest_streak_independent_of_current(user_client, user):
     # Past record: 4 consecutive days, 10..13 days ago.
     for offset in range(10, 14):
         d = today - timedelta(days=offset)
-        p = _problem(f"old{offset}")
+        p = make_problem(f"old{offset}")
         _assign(d, p)
         _solve(user, p, d)
     # Current: just today.
-    p_today = _problem("today")
+    p_today = make_problem("today")
     _assign(today, p_today)
     _solve(user, p_today, today)
 
@@ -155,7 +137,7 @@ def test_longest_streak_independent_of_current(user_client, user):
 @pytest.mark.django_db
 def test_history_shape(user_client, user):
     today = timezone.now().date()
-    p = _problem("daily")
+    p = make_problem("daily")
     _assign(today, p)  # assigned, unsolved → today cell is "today"
     body = user_client.get(url(user.username)).json()
     history = body["history"]
@@ -168,7 +150,7 @@ def test_history_shape(user_client, user):
 @pytest.mark.django_db
 def test_history_today_solved_is_solved(user_client, user):
     today = timezone.now().date()
-    p = _problem("daily")
+    p = make_problem("daily")
     _assign(today, p)
     _solve(user, p, today)
     history = user_client.get(url(user.username)).json()["history"]

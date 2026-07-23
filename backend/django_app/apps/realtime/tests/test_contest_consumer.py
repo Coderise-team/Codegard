@@ -1,13 +1,13 @@
-from datetime import timedelta
-
 import pytest
-from apps.contests.models import Contest, ContestScore
+from apps.contests.models import ContestScore
 from apps.realtime.routing import websocket_urlpatterns
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
-from django.utils import timezone
+from factories import make_contest
+
+# user comes from conftest.
 
 
 def make_app():
@@ -27,30 +27,12 @@ async def add_participant(contest, user) -> None:
 
 @pytest.fixture
 def active_contest(db):
-    now = timezone.now()
-    contest = Contest.objects.create(
-        title="Test Contest",
-        start_time=now - timedelta(hours=1),
-        end_time=now + timedelta(hours=2),
-    )
-    return contest
+    return make_contest("Test Contest")
 
 
 @pytest.fixture
 def finished_contest(db):
-    now = timezone.now()
-    contest = Contest.objects.create(
-        title="Finished Contest",
-        start_time=now - timedelta(hours=3),
-        end_time=now - timedelta(hours=1),
-        status=Contest.Status.FINISHED,
-    )
-    return contest
-
-
-@pytest.fixture
-def user(db, django_user_model):
-    return django_user_model.objects.create_user(username="player1", password="pass")
+    return make_contest("Finished Contest", starts_in=-3, ends_in=-1)
 
 
 async def _assert_rejected_with_code(communicator, expected_code: int) -> None:
