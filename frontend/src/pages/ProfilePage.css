@@ -202,11 +202,28 @@
   white-space: pre-line;
 }
 
+/* Transparent wrapper: on desktop the rating readout and the actions stay
+   direct flex children of .phead-main; the phone rule below turns it into a
+   real row. */
+.phead-meta {
+  display: contents;
+}
+
 .phead-act {
   display: flex;
   align-items: center;
   gap: 9px;
   padding-bottom: 4px;
+}
+/* Edit profile sits next to the copy-link icon, so it wears the same idle tone
+   and gold hover instead of the default grey .btn hover. */
+.phead-edit {
+  color: var(--fg2);
+}
+.phead-edit:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
 }
 .icon-act {
   width: 38px;
@@ -295,13 +312,20 @@
 }
 
 @media (max-width: 720px) {
+  /* Rating readout and actions share one full-width row; the buttons move to
+     the right edge, into the space that used to sit empty beside the counters
+     instead of dropping onto a line of their own. */
+  .phead-meta {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    width: 100%;
+  }
   .phead-rate {
     margin-left: 0;
-    width: 100%;
-    justify-content: flex-start;
   }
   .phead-act {
-    width: 100%;
+    margin-left: auto;
   }
 }
 

@@ -77,47 +77,52 @@ export default function ProfileHeader({
           </div>
         </div>
 
-        <div className="phead-rate">
-          <div className="rblock">
-            <div className="k">Rating</div>
-            <div className="v cur">{user.elo_rating}</div>
-            {delta != null && (
-              <div className={`pdelta ${up ? 'up' : 'down'}`}>
-                {up ? <I.arrowUp size={11} /> : <I.arrowDown size={11} />}
-                {up ? '+' : ''}
-                {delta} last
+        {/* Rating readout and owner actions: laid out as direct children of
+            .phead-main on desktop (display:contents), regrouped into one row on
+            phones so the buttons fill the space beside the counters. */}
+        <div className="phead-meta">
+          <div className="phead-rate">
+            <div className="rblock">
+              <div className="k">Rating</div>
+              <div className="v cur">{user.elo_rating}</div>
+              {delta != null && (
+                <div className={`pdelta ${up ? 'up' : 'down'}`}>
+                  {up ? <I.arrowUp size={11} /> : <I.arrowDown size={11} />}
+                  {up ? '+' : ''}
+                  {delta} last
+                </div>
+              )}
+            </div>
+            <div className="rblock">
+              <div className="k">Peak</div>
+              <div className="v" style={{ color: 'var(--fg)' }}>
+                {user.maxRating ?? '—'}
               </div>
-            )}
-          </div>
-          <div className="rblock">
-            <div className="k">Peak</div>
-            <div className="v" style={{ color: 'var(--fg)' }}>
-              {user.maxRating ?? '—'}
-            </div>
-            <div className="pdelta" style={{ color: 'var(--fg2)' }}>
-              {maxRank}
+              <div className="pdelta" style={{ color: 'var(--fg2)' }}>
+                {maxRank}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="phead-act">
-          {isOwner && (
+          <div className="phead-act">
+            {isOwner && (
+              <button
+                type="button"
+                className="btn btn-sm phead-edit"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <I.edit size={14} /> Edit profile
+              </button>
+            )}
             <button
-              type="button"
-              className="btn btn-sm"
-              onClick={() => setSettingsOpen(true)}
+              className="icon-act"
+              title="Copy profile link"
+              onClick={onShare}
             >
-              <I.edit size={14} /> Edit profile
+              <I.link size={17} />
+              {copied && <span className="copied-pop">Link copied</span>}
             </button>
-          )}
-          <button
-            className="icon-act"
-            title="Copy profile link"
-            onClick={onShare}
-          >
-            <I.link size={17} />
-            {copied && <span className="copied-pop">Link copied</span>}
-          </button>
+          </div>
         </div>
       </div>
 
