@@ -72,7 +72,7 @@ describe('ContestAside', () => {
     expect(rendered[0].getAttribute('href')).toBe('/users/tourist_ng');
     expect(rendered[1].textContent).toContain('Master'); // 1850 tier
     expect(rendered[1].classList.contains('you')).toBe(true);
-    expect(rendered[1].getAttribute('href')).toBe('/profile'); // own row
+    expect(rendered[1].getAttribute('href')).toBe('/users/n3ptune'); // own row
   });
 
   it('live: LIVE badge, table header and solved/pts/penalty columns', () => {
@@ -157,7 +157,7 @@ describe('ContestAside', () => {
     const mine = container.querySelector('.cp-row.you');
     expect(mine.querySelector('.cp-rk').textContent).toBe('42');
     expect(mine.textContent).toContain('n3ptune');
-    expect(mine.getAttribute('href')).toBe('/profile');
+    expect(mine.getAttribute('href')).toBe('/users/n3ptune');
   });
 
   it('live: my extra row is not duplicated when I am already listed', () => {
