@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
@@ -7,6 +7,7 @@ import VerdictToast from '../components/problem/VerdictToast';
 import NotFoundPage from './NotFoundPage';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContestProblem } from '../hooks/useContestProblem';
+import { contestState } from '../hooks/useContest';
 import { useLanguages } from '../hooks/useLanguages';
 import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
 import { useSubmitFlow } from '../hooks/useSubmitFlow';
@@ -66,6 +67,18 @@ export default function ContestProblemPage() {
     );
   }
 
+  // Solving is for registered participants. A non-participant is in the wrong
+  // place — send them to the contest page, which is where they register and
+  // where the solo catalogue (/problems/:id) is one click away for upsolving.
+  if (contest && !contest.is_joined) {
+    return <Navigate to={`/contests/${id}`} replace />;
+  }
+
+  // The backend only accepts submissions while the round is active; mirror that
+  // in the UI so the Submit button is disabled (with a reason) after the end
+  // instead of letting the click bounce off a 400.
+  const isLive = contest && contestState(contest, now) === 'live';
+
   // The workspace needs both the statement and the language templates (the
   // editor starts from the selected language's starter code).
   const ready = problem && languages?.length;
@@ -88,7 +101,10 @@ export default function ContestProblemPage() {
           submissions={submissions ?? []}
           languages={languages}
           busy={busy}
-          statusText={busy ? 'Judging…' : undefined}
+          canSubmit={isLive}
+          statusText={
+            !isLive ? 'Contest has ended' : busy ? 'Judging…' : undefined
+          }
           onSubmit={submit}
         />
       ) : (
