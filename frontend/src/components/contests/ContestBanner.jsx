@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { fmtCountdown } from '../../utils/time';
 
@@ -10,13 +11,15 @@ import { fmtCountdown } from '../../utils/time';
  *
  * Props:
  *   D          — contest data object
+ *   contestId  — the round id, for the problem-strip and Enter-round links
  *   state      — 'soon' | 'live' | 'finished'
  *   seconds    — countdown seconds for the current state
- *   registered — boolean (soon state)
+ *   registered — boolean; gates entering the problems
  *   onToggle   — () => void; registers or unregisters
  */
 export default function ContestBanner({
   D,
+  contestId,
   state,
   seconds,
   registered,
@@ -51,13 +54,19 @@ export default function ContestBanner({
 
   const your = D.yourProbs[state] || [];
 
+  // "Enter round" only means something once you're in it: a non-registered
+  // viewer gets Register instead (joining is allowed while a contest is live).
+  const firstLetter = D.problems[0]?.id;
   let cta;
-  if (state === 'live') {
-    cta = (
-      <a className="btn btn-primary" href="#">
+  if (state === 'live' && registered) {
+    cta = firstLetter ? (
+      <Link
+        className="btn btn-primary"
+        to={`/contests/${contestId}/problems/${firstLetter}`}
+      >
         <I.play size={15} /> Enter round
-      </a>
-    );
+      </Link>
+    ) : null;
   } else if (state === 'finished') {
     cta = null;
   } else if (registered) {
@@ -138,10 +147,15 @@ export default function ContestBanner({
                       : st === 'locked'
                         ? null
                         : I.chevRight;
-                const href = st === 'locked' ? undefined : '#';
-                const Tag = href ? 'a' : 'span';
+                // Clickable only for a registered participant; a locked slot and
+                // a non-participant both render as an inert pip.
+                const clickable = registered && st !== 'locked';
+                const Tag = clickable ? Link : 'span';
+                const linkProps = clickable
+                  ? { to: `/contests/${contestId}/problems/${p.id}` }
+                  : {};
                 return (
-                  <Tag key={p.id} className={`hpip s-${st}`} href={href}>
+                  <Tag key={p.id} className={`hpip s-${st}`} {...linkProps}>
                     <span className="lid">{p.id}</span>
                     <span className="ld">
                       <span className="nm">{p.title}</span>

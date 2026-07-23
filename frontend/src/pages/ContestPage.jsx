@@ -155,6 +155,7 @@ export default function ContestPage() {
             <>
               <ContestBanner
                 D={D}
+                contestId={id}
                 state={state}
                 seconds={seconds}
                 registered={registered}
