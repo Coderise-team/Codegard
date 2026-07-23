@@ -2,8 +2,7 @@
 
 import pytest
 from django.urls import reverse
-
-from .factories import make_contest
+from factories import make_contest
 
 # user and user_client come from conftest.
 

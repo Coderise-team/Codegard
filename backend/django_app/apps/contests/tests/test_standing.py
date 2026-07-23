@@ -9,8 +9,7 @@ from apps.contests.services import calculate_score
 from apps.contests.views import _leaderboard_rank
 from apps.submissions.models import Submission
 from django.urls import reverse
-
-from .factories import make_contest, make_problem, make_submission
+from factories import make_contest, make_problem, make_submission
 
 # api_client, user and user_client come from conftest.
 

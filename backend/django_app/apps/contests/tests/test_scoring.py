@@ -7,9 +7,8 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_submission
 from rest_framework import status
-
-from .factories import make_submission
 
 # ---------------------------------------------------------------------------
 # Fixtures (api_client, user and other come from conftest)

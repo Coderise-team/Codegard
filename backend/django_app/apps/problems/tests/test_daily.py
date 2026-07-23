@@ -4,26 +4,14 @@ from datetime import timedelta
 
 import pytest
 from apps.problems.models import DailyProblem, Problem
-from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_submission
 from rest_framework import status
 
 # api_client, user, other, admin, user_client and problem come from conftest.
 
 DAILY_URL = reverse("problems-daily")
-
-
-def _ac(user, problem, when):
-    s = Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=Submission.Verdict.AC,
-    )
-    Submission.objects.filter(pk=s.pk).update(created_at=when)
-    return s
 
 
 @pytest.mark.django_db
@@ -59,21 +47,21 @@ def test_shape_and_keys(user_client, problem):
 @pytest.mark.django_db
 def test_solved_today_true_after_ac_today(user_client, user, problem):
     DailyProblem.objects.create(date=timezone.now().date(), problem=problem)
-    _ac(user, problem, timezone.now())
+    make_submission(user, problem, created_at=timezone.now())
     assert user_client.get(DAILY_URL).json()["solved_today"] is True
 
 
 @pytest.mark.django_db
 def test_ac_yesterday_does_not_count(user_client, user, problem):
     DailyProblem.objects.create(date=timezone.now().date(), problem=problem)
-    _ac(user, problem, timezone.now() - timedelta(days=1))
+    make_submission(user, problem, created_at=timezone.now() - timedelta(days=1))
     assert user_client.get(DAILY_URL).json()["solved_today"] is False
 
 
 @pytest.mark.django_db
 def test_other_users_ac_does_not_count(user_client, other, problem):
     DailyProblem.objects.create(date=timezone.now().date(), problem=problem)
-    _ac(other, problem, timezone.now())
+    make_submission(other, problem, created_at=timezone.now())
     assert user_client.get(DAILY_URL).json()["solved_today"] is False
 
 

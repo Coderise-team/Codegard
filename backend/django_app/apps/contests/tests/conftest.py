@@ -9,8 +9,7 @@ from ``factories.py``.
 """
 
 import pytest
-
-from .factories import make_contest, make_problem
+from factories import make_contest, make_problem
 
 
 @pytest.fixture

@@ -11,9 +11,8 @@ import pytest
 from apps.contests.models import ContestScore
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_contest, make_problem
 from rest_framework.test import APIClient
-
-from .factories import make_contest, make_problem
 
 # user, other, admin and user_client come from conftest.
 

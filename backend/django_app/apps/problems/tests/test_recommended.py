@@ -3,31 +3,18 @@
 from collections import Counter
 
 import pytest
-from apps.problems.models import Problem, Tag
+from apps.problems.models import Tag
 from apps.submissions.models import Submission
 from django.urls import reverse
+from factories import make_problem, make_submission
 from rest_framework.test import APIClient
 
 # user and user_client come from conftest; APIClient is used directly for the
 # unauthenticated case below.
 
 
-def _problem(title, difficulty):
-    return Problem.objects.create(title=title, description="d", difficulty=difficulty)
-
-
 def _make(n, difficulty):
-    return [_problem(f"{difficulty}-{i}", difficulty) for i in range(n)]
-
-
-def _sub(user, problem, verdict):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
+    return [make_problem(f"{difficulty}-{i}", difficulty=difficulty) for i in range(n)]
 
 
 @pytest.mark.django_db
@@ -38,9 +25,9 @@ def test_requires_authentication():
 
 @pytest.mark.django_db
 def test_excludes_solved_problems(user_client, user):
-    solved = _problem("solved", "easy")
-    _sub(user, solved, Submission.Verdict.AC)
-    unsolved = _problem("unsolved", "easy")
+    solved = make_problem("solved", difficulty="easy")
+    make_submission(user, solved, verdict=Submission.Verdict.AC)
+    unsolved = make_problem("unsolved", difficulty="easy")
 
     ids = [p["id"] for p in user_client.get(reverse("problems-recommended")).json()]
     assert solved.id not in ids
@@ -49,8 +36,8 @@ def test_excludes_solved_problems(user_client, user):
 
 @pytest.mark.django_db
 def test_attempted_but_failed_is_still_recommended(user_client, user):
-    p = _problem("tried", "easy")
-    _sub(user, p, Submission.Verdict.WA)
+    p = make_problem("tried", difficulty="easy")
+    make_submission(user, p, verdict=Submission.Verdict.WA)
 
     ids = [x["id"] for x in user_client.get(reverse("problems-recommended")).json()]
     assert p.id in ids
@@ -95,10 +82,10 @@ def test_item_shape_has_tags_and_acceptance(user_client, django_user_model):
     other = django_user_model.objects.create_user(
         username="o", email="o@test.com", password="pass"
     )
-    p = _problem("shape", "easy")
+    p = make_problem("shape", difficulty="easy")
     p.tags.add(Tag.objects.create(name="DP"), Tag.objects.create(name="Math"))
-    _sub(other, p, Submission.Verdict.AC)
-    _sub(other, p, Submission.Verdict.WA)
+    make_submission(other, p, verdict=Submission.Verdict.AC)
+    make_submission(other, p, verdict=Submission.Verdict.WA)
 
     body = user_client.get(reverse("problems-recommended")).json()
     item = next(x for x in body if x["id"] == p.id)

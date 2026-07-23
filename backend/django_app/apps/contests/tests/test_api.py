@@ -9,9 +9,8 @@ from apps.contests.models import Contest
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_contest, make_problem, make_submission
 from rest_framework import status
-
-from .factories import make_contest, make_problem, make_submission
 
 # api_client, user, other, admin, user_client, custom_admin_client and
 # finished_contest come from conftest.

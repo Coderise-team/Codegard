@@ -8,8 +8,7 @@ import pytest
 from apps.contests.models import Contest, ContestScore
 from django.db import IntegrityError
 from django.utils import timezone
-
-from .factories import make_contest
+from factories import make_contest
 
 # --- _compute_status (pure, no DB) -----------------------------------------
 

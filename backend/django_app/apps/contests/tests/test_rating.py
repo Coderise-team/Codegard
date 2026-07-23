@@ -8,8 +8,7 @@ from apps.contests.models import ContestScore
 from apps.contests.services import apply_contest_ratings, calculate_score
 from apps.submissions.models import Submission
 from apps.users.models import EloHistory
-
-from .factories import make_submission
+from factories import make_submission
 
 # user, users, problems, finished_contest come from conftest.
 

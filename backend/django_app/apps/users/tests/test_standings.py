@@ -7,6 +7,7 @@ from apps.contests.models import Contest, ContestScore
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_contest
 from rest_framework.test import APIClient
 
 User = get_user_model()
@@ -32,13 +33,7 @@ def _auth(user):
 
 
 def _finished_contest(title, hours_ago):
-    now = timezone.now()
-    return Contest.objects.create(
-        title=title,
-        start_time=now - timedelta(hours=hours_ago + 2),
-        end_time=now - timedelta(hours=hours_ago),
-        status=Contest.Status.FINISHED,
-    )
+    return make_contest(title, starts_in=-(hours_ago + 2), ends_in=-hours_ago)
 
 
 # --- dense rank ------------------------------------------------------------

@@ -12,6 +12,7 @@ from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from django.urls import reverse
 from django.utils import timezone
+from factories import make_submission
 from rest_framework.test import APIClient
 
 
@@ -20,20 +21,6 @@ def problem(db):
     return Problem.objects.create(
         title="P", description="", difficulty=Problem.Difficulty.EASY
     )
-
-
-def _make_submission(user, problem, *, verdict=None, created_at=None):
-    sub = Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
-    if created_at is not None:
-        # created_at is auto_now_add, so override via update() to bypass it.
-        Submission.objects.filter(pk=sub.pk).update(created_at=created_at)
-    return sub
 
 
 @pytest.mark.django_db
@@ -45,11 +32,11 @@ def test_counts_all_submissions_per_day_regardless_of_verdict(
     day2 = now - timedelta(days=1)
 
     # day1: 3 submissions with mixed verdicts (all must count)
-    _make_submission(user, problem, verdict=Submission.Verdict.AC, created_at=day1)
-    _make_submission(user, problem, verdict=Submission.Verdict.WA, created_at=day1)
-    _make_submission(user, problem, verdict=None, created_at=day1)
+    make_submission(user, problem, verdict=Submission.Verdict.AC, created_at=day1)
+    make_submission(user, problem, verdict=Submission.Verdict.WA, created_at=day1)
+    make_submission(user, problem, verdict=None, created_at=day1)
     # day2: 1 submission
-    _make_submission(user, problem, verdict=Submission.Verdict.TLE, created_at=day2)
+    make_submission(user, problem, verdict=Submission.Verdict.TLE, created_at=day2)
 
     url = reverse("users:user-activity", args=[user.username])
     resp = viewer_client.get(url)
@@ -64,14 +51,14 @@ def test_counts_all_submissions_per_day_regardless_of_verdict(
 @pytest.mark.django_db
 def test_sparse_no_empty_days(viewer_client, user, problem):
     """Only days with activity appear — no zero-filled gaps."""
-    _make_submission(user, problem, created_at=timezone.now() - timedelta(days=5))
+    make_submission(user, problem, created_at=timezone.now() - timedelta(days=5))
     resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert len(resp.json()) == 1
 
 
 @pytest.mark.django_db
 def test_excludes_submissions_older_than_window(viewer_client, user, problem):
-    _make_submission(user, problem, created_at=timezone.now() - timedelta(days=400))
+    make_submission(user, problem, created_at=timezone.now() - timedelta(days=400))
     resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert resp.json() == {}
 
@@ -100,8 +87,8 @@ def test_only_target_users_submissions(viewer_client, user, problem, django_user
     other = django_user_model.objects.create_user(
         username="other", email="other@test.com", password="pass"
     )
-    _make_submission(user, problem, created_at=timezone.now() - timedelta(days=1))
-    _make_submission(other, problem, created_at=timezone.now() - timedelta(days=1))
+    make_submission(user, problem, created_at=timezone.now() - timedelta(days=1))
+    make_submission(other, problem, created_at=timezone.now() - timedelta(days=1))
 
     resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert sum(resp.json().values()) == 1  # only `user`'s submission counted
@@ -112,7 +99,7 @@ def test_same_day_different_times_grouped_as_one(viewer_client, user, problem):
     from datetime import timedelta
 
     day = timezone.now().replace(hour=9, minute=0, second=0, microsecond=0)
-    _make_submission(user, problem, created_at=day)
-    _make_submission(user, problem, created_at=day + timedelta(hours=8))
+    make_submission(user, problem, created_at=day)
+    make_submission(user, problem, created_at=day + timedelta(hours=8))
     resp = viewer_client.get(reverse("users:user-activity", args=[user.username]))
     assert resp.json() == {day.date().isoformat(): 2}

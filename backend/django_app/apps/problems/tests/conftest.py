@@ -5,15 +5,9 @@ problem-domain fixtures live here.
 """
 
 import pytest
-from apps.problems.models import Problem
+from factories import make_problem
 
 
 @pytest.fixture
 def problem(db):
-    return Problem.objects.create(
-        title="Two Sum",
-        description="d",
-        difficulty=Problem.Difficulty.EASY,
-        time_limit=1000,
-        memory_limit=256,
-    )
+    return make_problem("Two Sum")

@@ -12,8 +12,7 @@ from apps.contests.tasks import (
     update_contest_statuses,
 )
 from django.utils import timezone
-
-from .factories import make_submission
+from factories import make_submission
 
 # users, problems, finished_contest come from conftest.
 

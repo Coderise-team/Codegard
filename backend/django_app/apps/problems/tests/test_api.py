@@ -4,6 +4,7 @@ import pytest
 from apps.problems.models import Problem, TestCase
 from apps.submissions.models import Submission
 from django.urls import reverse
+from factories import make_submission
 from rest_framework import status
 
 # api_client, user, admin, user_client, custom_admin_client and problem come
@@ -243,31 +244,21 @@ class TestProblemDelete:
 # ---------------------------------------------------------------------------
 
 
-def _sub(user, problem, verdict):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
-
-
 @pytest.mark.django_db
 def test_acceptance_is_ac_over_total(user_client, user, problem):
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.WA)
-    _sub(user, problem, Submission.Verdict.TLE)
+    make_submission(user, problem, verdict=Submission.Verdict.AC)
+    make_submission(user, problem, verdict=Submission.Verdict.AC)
+    make_submission(user, problem, verdict=Submission.Verdict.WA)
+    make_submission(user, problem, verdict=Submission.Verdict.TLE)
     body = user_client.get(reverse("problems-detail", args=[problem.pk])).json()
     assert body["acceptance"] == 50.0  # 2 AC of 4
 
 
 @pytest.mark.django_db
 def test_acceptance_rounded_to_one_decimal(user_client, user, problem):
-    _sub(user, problem, Submission.Verdict.AC)
-    _sub(user, problem, Submission.Verdict.WA)
-    _sub(user, problem, Submission.Verdict.WA)
+    make_submission(user, problem, verdict=Submission.Verdict.AC)
+    make_submission(user, problem, verdict=Submission.Verdict.WA)
+    make_submission(user, problem, verdict=Submission.Verdict.WA)
     body = user_client.get(reverse("problems-detail", args=[problem.pk])).json()
     assert body["acceptance"] == 33.3  # 1 of 3
 

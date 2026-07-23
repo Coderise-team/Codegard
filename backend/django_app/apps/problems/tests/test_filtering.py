@@ -1,36 +1,13 @@
 """Tests for the problems catalog: status, tag AND, ordering, combinations."""
 
 import pytest
-from apps.problems.models import Problem, Tag
 from apps.submissions.models import Submission
 from django.urls import reverse
+from factories import make_problem, make_submission
 
 LIST = reverse("problems-list")
 
 # api_client, user, other and user_client come from conftest.
-
-
-def _p(title, difficulty="easy", tags=()):
-    p = Problem.objects.create(
-        title=title,
-        description="",
-        difficulty=difficulty,
-        time_limit=1000,
-        memory_limit=256,
-    )
-    for t in tags:
-        p.tags.add(Tag.objects.get_or_create(name=t)[0])
-    return p
-
-
-def _sub(user, problem, verdict):
-    return Submission.objects.create(
-        user=user,
-        problem=problem,
-        code="x",
-        language=Submission.Language.PYTHON,
-        verdict=verdict,
-    )
 
 
 def _rows(resp):
@@ -42,11 +19,11 @@ def _rows(resp):
 
 @pytest.mark.django_db
 def test_status_solved_attempted_todo(user_client, user):
-    solved = _p("Solved")
-    attempted = _p("Attempted")
-    _p("Todo")
-    _sub(user, solved, Submission.Verdict.AC)
-    _sub(user, attempted, Submission.Verdict.WA)
+    solved = make_problem("Solved")
+    attempted = make_problem("Attempted")
+    make_problem("Todo")
+    make_submission(user, solved, verdict=Submission.Verdict.AC)
+    make_submission(user, attempted, verdict=Submission.Verdict.WA)
 
     by_title = {r["title"]: r["status"] for r in _rows(user_client.get(LIST))}
     assert by_title["Solved"] == "solved"
@@ -56,24 +33,24 @@ def test_status_solved_attempted_todo(user_client, user):
 
 @pytest.mark.django_db
 def test_other_users_ac_does_not_make_me_solved(user_client, user, other):
-    p = _p("P")
-    _sub(other, p, Submission.Verdict.AC)  # someone else solved it
+    p = make_problem("P")
+    make_submission(other, p, verdict=Submission.Verdict.AC)  # someone else solved it
     row = next(r for r in _rows(user_client.get(LIST)) if r["title"] == "P")
     assert row["status"] == "todo"
 
 
 @pytest.mark.django_db
 def test_anonymous_all_todo(api_client):
-    _p("P")
+    make_problem("P")
     row = _rows(api_client.get(LIST))[0]
     assert row["status"] == "todo"
 
 
 @pytest.mark.django_db
 def test_filter_status(user_client, user):
-    solved = _p("Solved")
-    _p("Todo")
-    _sub(user, solved, Submission.Verdict.AC)
+    solved = make_problem("Solved")
+    make_problem("Todo")
+    make_submission(user, solved, verdict=Submission.Verdict.AC)
     titles = [r["title"] for r in _rows(user_client.get(LIST, {"status": "solved"}))]
     assert titles == ["Solved"]
 
@@ -83,17 +60,17 @@ def test_filter_status(user_client, user):
 
 @pytest.mark.django_db
 def test_tag_single(user_client):
-    _p("Has Arrays", tags=["Arrays"])
-    _p("No tags")
+    make_problem("Has Arrays", tags=["Arrays"])
+    make_problem("No tags")
     titles = [r["title"] for r in _rows(user_client.get(LIST, {"tag": "Arrays"}))]
     assert titles == ["Has Arrays"]
 
 
 @pytest.mark.django_db
 def test_tag_and_requires_all(user_client):
-    both = _p("Both", tags=["Arrays", "Hashing"])
-    _p("Only Arrays", tags=["Arrays"])
-    _p("Only Hashing", tags=["Hashing"])
+    both = make_problem("Both", tags=["Arrays", "Hashing"])
+    make_problem("Only Arrays", tags=["Arrays"])
+    make_problem("Only Hashing", tags=["Hashing"])
     resp = user_client.get(LIST, {"tag": ["Arrays", "Hashing"]})
     rows = _rows(resp)
     titles = [r["title"] for r in rows]
@@ -104,7 +81,7 @@ def test_tag_and_requires_all(user_client):
 
 @pytest.mark.django_db
 def test_tag_unknown_empty(user_client):
-    _p("P", tags=["Arrays"])
+    make_problem("P", tags=["Arrays"])
     assert _rows(user_client.get(LIST, {"tag": "Nope"})) == []
 
 
@@ -113,9 +90,9 @@ def test_tag_unknown_empty(user_client):
 
 @pytest.mark.django_db
 def test_ordering_difficulty_is_by_rank_not_alphabetical(user_client):
-    _p("H", difficulty="hard")
-    _p("E", difficulty="easy")
-    _p("M", difficulty="medium")
+    make_problem("H", difficulty="hard")
+    make_problem("E", difficulty="easy")
+    make_problem("M", difficulty="medium")
     diffs = [
         r["difficulty"]
         for r in _rows(user_client.get(LIST, {"ordering": "difficulty"}))
@@ -130,13 +107,13 @@ def test_ordering_difficulty_is_by_rank_not_alphabetical(user_client):
 
 @pytest.mark.django_db
 def test_ordering_acceptance_and_zero_total(user_client, user, other):
-    low = _p("Low")  # 1 AC / 2 subs = 50%
-    high = _p("High")  # 2 AC / 2 subs = 100%
-    zero = _p("Zero")  # no submissions -> rate 0
-    _sub(user, low, Submission.Verdict.AC)
-    _sub(other, low, Submission.Verdict.WA)
-    _sub(user, high, Submission.Verdict.AC)
-    _sub(other, high, Submission.Verdict.AC)
+    low = make_problem("Low")  # 1 AC / 2 subs = 50%
+    high = make_problem("High")  # 2 AC / 2 subs = 100%
+    zero = make_problem("Zero")  # no submissions -> rate 0
+    make_submission(user, low, verdict=Submission.Verdict.AC)
+    make_submission(other, low, verdict=Submission.Verdict.WA)
+    make_submission(user, high, verdict=Submission.Verdict.AC)
+    make_submission(other, high, verdict=Submission.Verdict.AC)
 
     asc = [r["title"] for r in _rows(user_client.get(LIST, {"ordering": "acceptance"}))]
     # Zero-total sorts as 0 (bottom of ascending, not wrongly on top).
@@ -146,9 +123,9 @@ def test_ordering_acceptance_and_zero_total(user_client, user, other):
 
 @pytest.mark.django_db
 def test_ordering_by_name(user_client):
-    _p("Banana")
-    _p("Apple")
-    _p("Cherry")
+    make_problem("Banana")
+    make_problem("Apple")
+    make_problem("Cherry")
     asc = [r["title"] for r in _rows(user_client.get(LIST, {"ordering": "name"}))]
     assert asc == ["Apple", "Banana", "Cherry"]
     desc = [r["title"] for r in _rows(user_client.get(LIST, {"ordering": "-name"}))]
@@ -157,8 +134,8 @@ def test_ordering_by_name(user_client):
 
 @pytest.mark.django_db
 def test_default_ordering_newest_first(user_client):
-    first = _p("First")
-    second = _p("Second")
+    first = make_problem("First")
+    second = make_problem("Second")
     ids = [r["id"] for r in _rows(user_client.get(LIST))]
     assert ids.index(second.id) < ids.index(first.id)  # newest (created later) on top
 
@@ -168,9 +145,9 @@ def test_default_ordering_newest_first(user_client):
 
 @pytest.mark.django_db
 def test_combined_difficulty_tag_ordering(user_client):
-    _p("A", difficulty="easy", tags=["Arrays"])
-    _p("B", difficulty="hard", tags=["Arrays"])
-    _p("C", difficulty="medium", tags=["Other"])  # excluded by tag
+    make_problem("A", difficulty="easy", tags=["Arrays"])
+    make_problem("B", difficulty="hard", tags=["Arrays"])
+    make_problem("C", difficulty="medium", tags=["Other"])  # excluded by tag
     resp = user_client.get(
         LIST, {"difficulty": "easy", "tag": "Arrays", "ordering": "difficulty"}
     )
