@@ -248,7 +248,10 @@ class ContestViewSet(viewsets.ModelViewSet):
         ).first()
         score = score_obj.score if score_obj else 0
         solved = score_obj.solved_count if score_obj else 0
-        rank = _leaderboard_rank(contest, request.user.pk) if score_obj else None
+        # Not gated on score_obj: the leaderboard now lists every participant,
+        # so a joined no-show has a real place there and my-standing must agree.
+        # _leaderboard_rank returns None only for genuine non-participants.
+        rank = _leaderboard_rank(contest, request.user.pk)
 
         # All my submissions for this contest in ONE query, grouped in memory.
         verdicts_by_problem = defaultdict(set)

@@ -185,6 +185,23 @@ def test_my_standing_no_contestscore(client):
 
 
 @pytest.mark.django_db
+def test_my_standing_participant_no_show_gets_a_rank(client, user, other):
+    """A joined no-show is on the leaderboard, so my-standing must place them
+    too — not None — and the place must match the table."""
+    c = _active_contest()
+    p = _problem("A")
+    c.problems.add(p)
+    c.participants.add(user, other)
+    _sub(other, p, c, Submission.Verdict.AC)  # other scores, user is a no-show
+    calculate_score(other, c)
+
+    data = client.get(reverse("contests-my-standing", args=[c.id])).json()
+    assert data["score"] == 0
+    assert data["rank"] == 2  # last place, below the one who solved
+    assert data["rank"] == _leaderboard_rank(c, user.pk)  # agrees with the table
+
+
+@pytest.mark.django_db
 def test_leaderboard_rank_returns_none_when_user_absent(user):
     c = _active_contest()  # no ContestScore for anyone → empty leaderboard
     assert _leaderboard_rank(c, user.pk) is None
