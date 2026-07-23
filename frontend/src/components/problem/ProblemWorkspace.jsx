@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import Icons from '../Icons';
 import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
+import './ProblemWorkspace.css';
 
 // Monaco is heavy — load it (and its chunk) only when the workspace renders.
 const CodeEditor = lazy(() => import('./CodeEditor'));

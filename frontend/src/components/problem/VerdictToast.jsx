@@ -1,4 +1,5 @@
 import Icons from '../Icons';
+import './VerdictToast.css';
 
 const CLOCKISH = ['TLE', 'MLE', 'OLE'];
 
