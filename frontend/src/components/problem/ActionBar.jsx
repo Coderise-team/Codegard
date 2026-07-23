@@ -4,11 +4,19 @@ import Icons from '../Icons';
  * ActionBar — editor footer: status line + Reset / Submit actions.
  *
  * Props:
- *   busy       — falsy | 'submit' (disables actions, spins the button)
- *   statusText — short status line ("Python 3 · ready", "Judging…")
+ *   busy           — falsy | 'submit' (disables actions, spins the button)
+ *   statusText     — short status line ("Python 3 · ready", "Judging…")
+ *   submitDisabled — disable Submit on its own (e.g. a closed contest); the
+ *                    status line says why, Reset stays available
  *   onSubmit, onReset
  */
-export default function ActionBar({ busy, statusText, onSubmit, onReset }) {
+export default function ActionBar({
+  busy,
+  statusText,
+  submitDisabled,
+  onSubmit,
+  onReset,
+}) {
   return (
     <div className="pp-actionbar">
       <div className="pp-ab-status">
@@ -25,7 +33,7 @@ export default function ActionBar({ busy, statusText, onSubmit, onReset }) {
         <button
           className="btn btn-primary btn-sm"
           onClick={onSubmit}
-          disabled={!!busy}
+          disabled={!!busy || submitDisabled}
         >
           {busy === 'submit' ? (
             <span className="spin" />

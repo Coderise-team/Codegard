@@ -20,6 +20,8 @@ const CodeEditor = lazy(() => import('./CodeEditor'));
  *   busy        — falsy | 'submit', forwarded to the ActionBar
  *   statusText  — optional ActionBar status override (defaults to
  *                 "{language} · ready")
+ *   canSubmit   — gate on the Submit button (default true); false disables it
+ *                 without touching Reset (e.g. a contest that has ended)
  *   onSubmit    — called with (code, languageId)
  *   rail        — optional right-side slot (contest leaderboard later)
  */
@@ -29,6 +31,7 @@ export default function ProblemWorkspace({
   languages,
   busy,
   statusText,
+  canSubmit = true,
   onSubmit,
   rail,
 }) {
@@ -110,6 +113,7 @@ export default function ProblemWorkspace({
         <ActionBar
           busy={busy}
           statusText={statusText ?? `${lang.name} · ready`}
+          submitDisabled={!canSubmit}
           onSubmit={() => onSubmit(code, langId)}
           onReset={() => setCode(lang.template)}
         />
