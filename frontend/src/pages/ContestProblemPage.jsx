@@ -1,6 +1,13 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import SoloTopbar from '../components/problem/SoloTopbar';
+import ProblemWorkspace from '../components/problem/ProblemWorkspace';
+import NotFoundPage from './NotFoundPage';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useContestProblem } from '../hooks/useContestProblem';
+import { useLanguages } from '../hooks/useLanguages';
+import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
 import './ContestProblemPage.css';
 
 /**
@@ -17,13 +24,57 @@ import './ContestProblemPage.css';
  * the address bar.
  */
 export default function ContestProblemPage() {
+  const { id, letter } = useParams();
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
+
+  const { problem, loading, notFound } = useContestProblem(id, letter);
+  const { data: languages, loading: langsLoading } = useLanguages();
+  const { data: submissions } = useProblemSubmissions(problem?.id);
+
+  // An unknown round, an unknown letter and a letter past the end of the round
+  // are all "this URL addresses nothing" — anything else (server down, dropped
+  // connection) has to say so instead of blaming the URL.
+  if (notFound) {
+    return (
+      <NotFoundPage
+        title="Problem not found"
+        sub="This contest problem does not exist, or the link is out of date."
+      />
+    );
+  }
+
+  // The workspace needs both the statement and the language templates (the
+  // editor starts from the selected language's starter code).
+  const ready = problem && languages?.length;
 
   return (
     <div className="cpp-app">
       <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
-      <div className="cpp-empty">Loading problem…</div>
+      {/* Placeholder chrome: the contest topbar (round timer, problem strip,
+          back to the standings) replaces this next. */}
+      <SoloTopbar
+        title={problem?.title ?? ''}
+        user={user}
+        onMenuClick={() => setNavOpen(true)}
+      />
+      {ready ? (
+        <ProblemWorkspace
+          problem={problem}
+          submissions={submissions ?? []}
+          languages={languages}
+          // Submitting is deliberately inert until the contest submission flow
+          // lands: a button that does nothing is safer than one that quietly
+          // files the solution outside the round.
+          onSubmit={() => {}}
+        />
+      ) : (
+        <div className="cpp-empty">
+          {loading || langsLoading
+            ? 'Loading problem…'
+            : 'Could not load the problem. Please try again.'}
+        </div>
+      )}
     </div>
   );
 }
