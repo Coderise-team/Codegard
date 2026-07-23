@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 import ContestBanner from './ContestBanner';
 
@@ -23,12 +24,29 @@ const renderBanner = (props) =>
   render(
     <ContestBanner
       D={D}
+      contestId={5}
       state="soon"
       seconds={7200}
       registered={false}
       onToggle={() => {}}
       {...props}
     />
+  );
+
+// Registered pips and the Enter-round button are links, so they need a router.
+const renderRouted = (props) =>
+  render(
+    <MemoryRouter>
+      <ContestBanner
+        D={D}
+        contestId={5}
+        state="live"
+        seconds={7200}
+        registered
+        onToggle={() => {}}
+        {...props}
+      />
+    </MemoryRouter>
   );
 
 describe('ContestBanner', () => {
@@ -81,5 +99,24 @@ describe('ContestBanner', () => {
     expect(container.querySelector('.cp-count .k').textContent).toBe('Ended');
     expect(container.querySelector('.cp-count .v').textContent).toBe('3h ago');
     expect(container.querySelector('.cp-cta')).toBeNull();
+  });
+
+  it('live registered: Enter round and pips link into the round', () => {
+    const { container } = renderRouted();
+
+    expect(container.querySelector('a.btn-primary').getAttribute('href')).toBe(
+      '/contests/5/problems/A'
+    );
+    const pip = container.querySelector('.hpip.s-solved');
+    expect(pip.tagName).toBe('A');
+    expect(pip.getAttribute('href')).toBe('/contests/5/problems/A');
+  });
+
+  it('live not registered: pips are inert and the cta is Register', () => {
+    const { container } = renderRouted({ registered: false });
+
+    expect(container.querySelector('.hpip.s-solved').tagName).toBe('SPAN');
+    expect(container.querySelector('a.btn-primary')).toBeNull();
+    expect(container.querySelector('.reg-pill.go')).toBeTruthy();
   });
 });
