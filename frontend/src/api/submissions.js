@@ -17,11 +17,14 @@ export async function getSubmission(id) {
 
 // POST submissions/ -> queues the solution for judging. Returns
 // { id, status: 'queued' | 'queue_error', verdict: null, created_at }.
-export async function createSubmission({ problem, code, language }) {
+// `contest` is optional: pass the round id to file the attempt inside a contest
+// (counts toward the standings and rating); omit it for solo practice.
+export async function createSubmission({ problem, code, language, contest }) {
   const { data } = await client.post('submissions/', {
     problem,
     code,
     language,
+    ...(contest != null && { contest }),
   });
   return data;
 }
