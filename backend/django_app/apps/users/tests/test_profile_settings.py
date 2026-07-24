@@ -76,6 +76,33 @@ def test_patch_ignores_forbidden_fields(user_client, user):
 
 
 @pytest.mark.django_db
+def test_patch_accepts_bio_at_the_limit(user_client, user):
+    bio = "a" * 300
+    resp = user_client.patch(reverse(ME), {"bio": bio}, format="json")
+    assert resp.status_code == 200
+    user.refresh_from_db()
+    assert user.bio == bio
+
+
+@pytest.mark.django_db
+def test_patch_rejects_bio_over_the_limit(user_client, user):
+    resp = user_client.patch(reverse(ME), {"bio": "a" * 301}, format="json")
+    assert resp.status_code == 400
+    assert "bio" in resp.json()
+    user.refresh_from_db()
+    assert user.bio == "old bio"  # left untouched
+
+
+@pytest.mark.django_db
+def test_patch_accepts_blank_bio(user_client, user):
+    # allow_blank on the serializer -> clearing the bio is valid.
+    resp = user_client.patch(reverse(ME), {"bio": ""}, format="json")
+    assert resp.status_code == 200
+    user.refresh_from_db()
+    assert user.bio == ""
+
+
+@pytest.mark.django_db
 def test_get_me_returns_new_fields(user_client):
     data = user_client.get(reverse(ME)).json()
     assert data["bio"] == "old bio"

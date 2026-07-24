@@ -72,3 +72,14 @@ def test_joined_returns_registration_date(viewer_client, django_user_model):
     )
     body = viewer_client.get(reverse("users:user-detail", args=[user.username])).json()
     assert body["joined"][:10] == user.date_joined.date().isoformat()
+
+
+@pytest.mark.django_db
+def test_detail_exposes_full_name(viewer_client, user):
+    # first_name / last_name are public: a visitor sees the owner's name.
+    user.first_name = "Yurii"
+    user.last_name = "Koval"
+    user.save()
+    body = viewer_client.get(reverse("users:user-detail", args=[user.username])).json()
+    assert body["first_name"] == "Yurii"
+    assert body["last_name"] == "Koval"
