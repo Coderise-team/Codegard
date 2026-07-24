@@ -6,8 +6,11 @@ import { getMyStanding } from '../api/contests';
  * My rank/score/solved + per-problem statuses for a contest. Fetched only
  * when `enabled` — the problem strip needs it in live/finished, not before
  * the start. On failure stays null and the strip falls back to 'open'.
+ *
+ * `reloadKey` refetches in place when it changes (no flash) — contest mode
+ * bumps it off the live standings signal so my own rank tracks the round.
  */
-export function useMyStanding(id, enabled) {
+export function useMyStanding(id, enabled, reloadKey = 0) {
   const [standing, setStanding] = useState(null);
 
   // Contests can share problems, so a stale standing could paint the previous
@@ -29,7 +32,7 @@ export function useMyStanding(id, enabled) {
     return () => {
       active = false;
     };
-  }, [id, enabled]);
+  }, [id, enabled, reloadKey]);
 
   return standing;
 }
