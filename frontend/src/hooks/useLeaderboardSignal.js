@@ -25,6 +25,15 @@ export function useLeaderboardSignal(contestId, enabled = true) {
   const [signal, setSignal] = useState(0);
   const [ended, setEnded] = useState(false);
 
+  // Adjust-during-render: the pages that mount this hook aren't remounted when
+  // only the :id param changes, so a previous round's `ended` would otherwise
+  // stick and keep the next round from ever connecting.
+  const [prevId, setPrevId] = useState(contestId);
+  if (prevId !== contestId) {
+    setPrevId(contestId);
+    setEnded(false);
+  }
+
   useEffect(() => {
     if (!enabled || !contestId) return undefined;
 
