@@ -118,6 +118,35 @@ describe('useContestPanel', () => {
     expect(getRegistrants).toHaveBeenLastCalledWith(5, { page: 1 });
   });
 
+  it('reloadLoaded refetches every loaded page without resetting to page 1', async () => {
+    getLeaderboard
+      .mockResolvedValueOnce(page([{ rank: 1 }], 'url?page=2'))
+      .mockResolvedValueOnce(page([{ rank: 11 }], null));
+
+    const { result } = renderHook(() => useContestPanel(5, 'leaderboard'));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      result.current.loadMore();
+    });
+    expect(result.current.rows).toEqual([{ rank: 1 }, { rank: 11 }]);
+
+    // A live update: both loaded pages come back fresh, length preserved.
+    getLeaderboard
+      .mockResolvedValueOnce(page([{ rank: 1, score: 5 }], 'url?page=2'))
+      .mockResolvedValueOnce(page([{ rank: 11, score: 1 }], null));
+    await act(async () => {
+      result.current.reloadLoaded();
+    });
+
+    expect(result.current.rows).toEqual([
+      { rank: 1, score: 5 },
+      { rank: 11, score: 1 },
+    ]);
+    const pages = getLeaderboard.mock.calls.map((c) => c[1]);
+    expect(pages).toContainEqual({ page: 1 });
+    expect(pages).toContainEqual({ page: 2 });
+  });
+
   it('drops a stale response when the slice changed mid-flight', async () => {
     const regs = deferred();
     getRegistrants.mockReturnValueOnce(regs.promise);
