@@ -79,12 +79,13 @@ export default function ContestPage() {
     state == null ? null : state === 'soon' ? 'registrants' : 'leaderboard';
   const panel = useContestPanel(id, kind);
 
-  // A paced bump means the standings changed — refetch the visible slice in
-  // place (resets to page 1; harmless while watching the top).
-  const { reload: reloadPanel } = panel;
+  // A paced bump means the standings changed — refetch every loaded page in
+  // place, so a viewer scrolled down the list is refreshed where they are
+  // instead of being thrown back to the top.
+  const { reloadLoaded } = panel;
   useEffect(() => {
-    if (paced) reloadPanel();
-  }, [paced, reloadPanel]);
+    if (paced) reloadLoaded();
+  }, [paced, reloadLoaded]);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
