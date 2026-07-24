@@ -5,12 +5,17 @@ import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import VerdictToast from '../components/problem/VerdictToast';
 import NotFoundPage from './NotFoundPage';
+import ContestRail from '../components/problem/ContestRail';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContestProblem } from '../hooks/useContestProblem';
 import { contestState } from '../hooks/useContest';
 import { useLanguages } from '../hooks/useLanguages';
 import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
 import { useSubmitFlow } from '../hooks/useSubmitFlow';
+import { useContestPanel } from '../hooks/useContestPanel';
+import { useMyStanding } from '../hooks/useMyStanding';
+import { useLeaderboardSignal } from '../hooks/useLeaderboardSignal';
+import { useThrottledSignal } from '../hooks/useThrottledSignal';
 import './ContestProblemPage.css';
 
 /**
@@ -55,6 +60,23 @@ export default function ContestProblemPage() {
     return () => clearInterval(t);
   }, []);
 
+  // The backend only accepts submissions while the round is active; mirror that
+  // in the UI (disabled Submit with a reason) and drive the live channel — the
+  // socket is only worth opening while the standings can still change.
+  const isLive = contest ? contestState(contest, now) === 'live' : false;
+
+  // Live standings for the rail: the socket only signals that something changed
+  // (variant B), so a paced signal (throttle + jitter) triggers a refetch of
+  // the top slice and my own row through the ordinary HTTP endpoints.
+  const { signal } = useLeaderboardSignal(id, isLive);
+  const paced = useThrottledSignal(signal);
+  const panel = useContestPanel(id, 'leaderboard');
+  const { reload: reloadPanel } = panel;
+  const myStanding = useMyStanding(id, Boolean(contest), paced);
+  useEffect(() => {
+    if (paced) reloadPanel();
+  }, [paced, reloadPanel]);
+
   // An unknown round, an unknown letter and a letter past the end of the round
   // are all "this URL addresses nothing" — anything else (server down, dropped
   // connection) has to say so instead of blaming the URL.
@@ -73,11 +95,6 @@ export default function ContestProblemPage() {
   if (contest && !contest.is_joined) {
     return <Navigate to={`/contests/${id}`} replace />;
   }
-
-  // The backend only accepts submissions while the round is active; mirror that
-  // in the UI so the Submit button is disabled (with a reason) after the end
-  // instead of letting the click bounce off a 400.
-  const isLive = contest && contestState(contest, now) === 'live';
 
   // The workspace needs both the statement and the language templates (the
   // editor starts from the selected language's starter code).
@@ -106,6 +123,15 @@ export default function ContestProblemPage() {
             !isLive ? 'Contest has ended' : busy ? 'Judging…' : undefined
           }
           onSubmit={submit}
+          rail={
+            <ContestRail
+              contestId={id}
+              live={isLive}
+              panel={panel}
+              you={user?.username}
+              myStanding={myStanding}
+            />
+          }
         />
       ) : (
         <div className="cpp-empty">
