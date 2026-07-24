@@ -9,6 +9,8 @@ import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContest, contestState } from '../hooks/useContest';
 import { useContestPanel } from '../hooks/useContestPanel';
 import { useMyStanding } from '../hooks/useMyStanding';
+import { useLeaderboardSignal } from '../hooks/useLeaderboardSignal';
+import { useThrottledSignal } from '../hooks/useThrottledSignal';
 import { joinContest, leaveContest } from '../api/contests';
 import { indexToLetter } from '../utils/contestLetters';
 import {
@@ -58,13 +60,31 @@ export default function ContestPage() {
     if (prevState === 'soon' && state === 'live') reload();
   }
 
-  const standing = useMyStanding(id, state === 'live' || state === 'finished');
+  // Live standings: open the contest channel only while the round is running
+  // and the panel is open. Collapsed or finished -> no socket, so no refetch —
+  // that is exactly "don't update while collapsed", for free. Variant B: the
+  // socket only signals; a paced signal (throttle + jitter) refetches over HTTP.
+  const { signal } = useLeaderboardSignal(id, state === 'live' && showPanel);
+  const paced = useThrottledSignal(signal);
+
+  const standing = useMyStanding(
+    id,
+    state === 'live' || state === 'finished',
+    paced
+  );
 
   // The side panel slice: who registered before the start, the standings
   // during and after. Pages are appended as the panel scrolls.
   const kind =
     state == null ? null : state === 'soon' ? 'registrants' : 'leaderboard';
   const panel = useContestPanel(id, kind);
+
+  // A paced bump means the standings changed — refetch the visible slice in
+  // place (resets to page 1; harmless while watching the top).
+  const { reload: reloadPanel } = panel;
+  useEffect(() => {
+    if (paced) reloadPanel();
+  }, [paced, reloadPanel]);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
