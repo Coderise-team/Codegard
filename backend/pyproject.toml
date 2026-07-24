@@ -30,6 +30,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "django-debug-toolbar>=6.3.0",
+    "fakeredis>=2.26.0",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-django>=4.12.0",

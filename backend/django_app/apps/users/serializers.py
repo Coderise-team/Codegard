@@ -22,6 +22,9 @@ AVATAR_OUTPUT_CONTENT_TYPE = "image/webp"
 AVATAR_OUTPUT_QUALITY = 85
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
+# Profile edit constants
+MAX_BIO_LENGTH = 300
+
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     """Serializer used for user registration."""
@@ -63,6 +66,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "username",
+            "first_name",
+            "last_name",
             "elo_rating",
             "rank",
             "avatar",
@@ -186,6 +191,13 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     fixed (public URLs & history depend on it); email stays fixed (an honest
     change needs email confirmation, which we don't have yet).
     """
+
+    bio = serializers.CharField(
+        max_length=MAX_BIO_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
     class Meta:
         model = User

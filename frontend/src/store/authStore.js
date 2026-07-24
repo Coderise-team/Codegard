@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import * as authApi from '../api/auth';
 import { tokenStorage } from '../api/client';
 
-export const useAuthStore = create((set) => {
+export const useAuthStore = create((set, get) => {
   // Load the user once tokens are stored. If /me/ fails the tokens are useless
   // to us, so roll them back to keep auth state consistent; rethrow so callers
   // (login/register forms) can surface the failure.
@@ -36,6 +36,14 @@ export const useAuthStore = create((set) => {
       } finally {
         set({ isHydrating: false });
       }
+    },
+
+    // Merge fields returned by a profile edit into the cached user. Ignored
+    // while logged out, so a response arriving after a logout can't resurrect
+    // the session.
+    setUser: (fields) => {
+      const user = get().user;
+      if (user) set({ user: { ...user, ...fields } });
     },
 
     login: async (credentials) => {

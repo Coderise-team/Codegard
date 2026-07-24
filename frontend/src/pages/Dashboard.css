@@ -111,6 +111,9 @@
   align-items: center;
   gap: 10px;
 }
+.nav-mini:hover {
+  border-color: var(--gold-line);
+}
 .nav-mini .avatar {
   width: 32px;
   height: 32px;

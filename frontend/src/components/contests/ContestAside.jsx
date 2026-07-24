@@ -4,9 +4,9 @@ import Icons from '../Icons';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { cgRankFor } from '../../utils/ranks';
 
-// Own row points to the (future) my-profile page, others to the public profile.
-const profileHref = (username, you) =>
-  username === you ? '/profile' : `/users/${username}`;
+// One profile route for everyone, your own row included: the page works out
+// that you own it. Keeping the url the same is what makes a row shareable.
+const profileHref = (username) => `/users/${username}`;
 
 /**
  * ContestAside — right-attached, collapsible registrants / standings panel.
@@ -141,7 +141,7 @@ export default function ContestAside({
             {myRow && (
               <>
                 <div className="cp-gap">⋯</div>
-                <Link className="cp-row you" to="/profile">
+                <Link className="cp-row you" to={profileHref(you)}>
                   <span className="cp-rk">{myRow.rank}</span>
                   <span className="cp-user">{you}</span>
                   <span className="cp-cell">
@@ -164,7 +164,7 @@ function RegRow({ r, rank, you }) {
   return (
     <Link
       className={`cp-row${r.username === you ? ' you' : ''}`}
-      to={profileHref(r.username, you)}
+      to={profileHref(r.username)}
     >
       <span className="cp-rk">{rank}</span>
       <span className="cp-user">{r.username}</span>
@@ -179,7 +179,7 @@ function LbRow({ r, state, n, you }) {
     r.rank <= 3 ? ' r' + r.rank : ''
   }`;
   return (
-    <Link className={cls} to={profileHref(r.username, you)}>
+    <Link className={cls} to={profileHref(r.username)}>
       <span className="cp-rk">{r.rank}</span>
       <span className="cp-user">{r.username}</span>
       <span className="cp-cell">
