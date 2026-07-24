@@ -201,6 +201,18 @@ class TestContestLeave:
         response = user_client.post(url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_user_cannot_leave_finished_contest(
+        self, user_client, finished_contest, user
+    ):
+        """New behaviour: leaving a finished contest would rewrite the standings
+        and let a rated participant keep their ELO while vanishing from them.
+        Checked by start_time, not the cached status column."""
+        finished_contest.participants.add(user)
+        url = reverse("contests-leave", args=[finished_contest.pk])
+        response = user_client.post(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert finished_contest.participants.filter(pk=user.pk).exists()
+
     def test_user_cannot_leave_if_not_joined(self, user_client, contest):
         url = reverse("contests-leave", args=[contest.pk])
         response = user_client.post(url)

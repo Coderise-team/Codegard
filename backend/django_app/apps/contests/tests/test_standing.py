@@ -21,6 +21,7 @@ def _url(cid):
 @pytest.mark.django_db
 def test_statuses_and_rank(user_client, user):
     c = make_contest("Live")
+    c.participants.add(user)  # rank now comes from the participant set
     solved, attempted, untouched = (
         make_problem("A"),
         make_problem("B"),
@@ -53,8 +54,25 @@ def test_no_contestscore(user_client):
 
 
 @pytest.mark.django_db
+def test_participant_no_show_gets_a_rank(user_client, user, other):
+    """A joined no-show is on the leaderboard, so my-standing must place them
+    too — not None — and the place must match the table."""
+    c = make_contest("Live")
+    p = make_problem("A")
+    c.problems.add(p)
+    c.participants.add(user, other)
+    make_submission(other, p, c, Submission.Verdict.AC)  # other scores, user no-show
+    calculate_score(other, c)
+
+    data = user_client.get(_url(c.id)).json()
+    assert data["score"] == 0
+    assert data["rank"] == 2  # last place, below the one who solved
+    assert data["rank"] == _leaderboard_rank(c, user.pk)  # agrees with the table
+
+
+@pytest.mark.django_db
 def test_leaderboard_rank_none_when_user_absent(user):
-    c = make_contest("Live")  # no ContestScore for anyone → empty leaderboard
+    c = make_contest("Live")  # user is not a participant → not on the leaderboard
     assert _leaderboard_rank(c, user.pk) is None
 
 
