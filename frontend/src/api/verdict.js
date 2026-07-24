@@ -1,27 +1,18 @@
-import client from './client';
 import { getSubmission } from './submissions';
+import { createWsTicket, wsUrl } from './ws';
 
 // Judging normally takes seconds; these caps only guard against a dead judge.
 const WS_TIMEOUT_MS = 45000;
 const POLL_TIMEOUT_MS = 90000;
 const POLL_INTERVAL_MS = 1500;
 
-// POST ws-ticket/ -> { ticket, expires_in }: a single-use short-lived ticket
-// that authenticates the WebSocket handshake (the ws-ticket-auth contract;
-// JWT never goes into a URL).
-async function createWsTicket() {
-  const { data } = await client.post('ws-ticket/');
-  return data.ticket;
-}
-
 // Primary channel: the submission WebSocket. The consumer replays the current
 // state on connect, so a verdict that landed before the socket opened is not
 // missed.
 function wsVerdict(submissionId, ticket, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(
-      `${proto}//${window.location.host}/ws/submissions/${submissionId}/?ticket=${encodeURIComponent(ticket)}`
+      wsUrl(`/ws/submissions/${submissionId}/`, ticket)
     );
 
     let settled = false;
