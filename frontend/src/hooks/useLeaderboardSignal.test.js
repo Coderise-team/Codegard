@@ -94,6 +94,22 @@ describe('useLeaderboardSignal', () => {
     Math.random.mockRestore();
   });
 
+  it('resets ended and reconnects when the contest id changes', async () => {
+    const { result, rerender } = renderHook(
+      ({ id }) => useLeaderboardSignal(id, true),
+      { initialProps: { id: 5 } }
+    );
+    await waitFor(() => expect(sockets()).toHaveLength(1));
+
+    act(() => last().emit({ type: 'contest_ended' }));
+    expect(result.current.ended).toBe(true);
+
+    rerender({ id: 6 });
+    expect(result.current.ended).toBe(false);
+    await waitFor(() => expect(sockets()).toHaveLength(2));
+    expect(last().url).toContain('/ws/contests/6/');
+  });
+
   it('closes the socket and stops reconnecting on unmount', async () => {
     const { unmount } = renderHook(() => useLeaderboardSignal(5, true));
     await waitFor(() => expect(sockets()).toHaveLength(1));
