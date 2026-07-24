@@ -60,11 +60,18 @@ export default function ContestPage() {
     if (prevState === 'soon' && state === 'live') reload();
   }
 
-  // Live standings: open the contest channel only while the round is running
-  // and the panel is open. Collapsed or finished -> no socket, so no refetch —
-  // that is exactly "don't update while collapsed", for free. Variant B: the
-  // socket only signals; a paced signal (throttle + jitter) refetches over HTTP.
-  const { signal } = useLeaderboardSignal(id, state === 'live' && showPanel);
+  // Live standings: open the contest channel while the panel is open and the
+  // round is live or finished. Collapsed -> no socket, so no refetch (that is
+  // "don't update while collapsed", for free). It stays open through the
+  // finished window on purpose: ELO is applied ~a minute after the end, and
+  // `contest_ended` (which the server sends once, after rating, then closes) is
+  // how the deltas get pulled in without a manual refresh — the hook stops
+  // reconnecting on its own once that arrives. Variant B: the socket only
+  // signals; a paced signal (throttle + jitter) refetches over HTTP.
+  const { signal, ended } = useLeaderboardSignal(
+    id,
+    showPanel && (state === 'live' || state === 'finished')
+  );
   const paced = useThrottledSignal(signal);
 
   const standing = useMyStanding(
@@ -86,6 +93,12 @@ export default function ContestPage() {
   useEffect(() => {
     if (paced) reloadLoaded();
   }, [paced, reloadLoaded]);
+
+  // The round closed: the server applied ELO and sent contest_ended, so pull
+  // the final standings once more to show the rating deltas that just landed.
+  useEffect(() => {
+    if (ended) reloadLoaded();
+  }, [ended, reloadLoaded]);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
