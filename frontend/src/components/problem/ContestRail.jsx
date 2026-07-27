@@ -1,38 +1,29 @@
-import { Link } from 'react-router-dom';
 import Icons from '../Icons';
+import StandingsList from '../contests/StandingsList';
 import './ContestRail.css';
 
-// Own row -> my-profile, everyone else -> their public profile.
-const profileHref = (username, you) =>
-  username === you ? '/profile' : `/users/${username}`;
-
 /**
- * ContestRail — compact live standings beside the editor in contest mode,
+ * ContestRail — the contest standings beside the editor in contest mode,
  * dropped into the ProblemWorkspace `rail` slot.
  *
- * Shows the top slice from useContestPanel, refetched on the paced socket
- * signal; the viewer's own row is highlighted, and pinned at the bottom when it
- * falls outside the visible slice. A footer link opens the full, paginated
- * standings on the contest page.
+ * It renders the exact same StandingsList table as the contest page, so the
+ * board looks and behaves identically in both places; only the surrounding
+ * chrome (header + LIVE marker) belongs to the rail.
  *
  * Props:
- *   contestId  — the round id, for the profile/full-standings links
- *   live       — show the LIVE marker while the round is running
- *   panel      — useContestPanel result: { rows, loading, error }
- *   you        — current user's username; highlights own rows
- *   myStanding — my-standing payload; pins my row when it is off the slice
+ *   live          — show the LIVE marker while the round is running
+ *   panel         — useContestPanel result
+ *   problemsCount — total problems, for the solved/total cell
+ *   you           — current user's username; highlights + links own row
+ *   myStanding    — my-standing payload; pins my row when off the loaded slice
  */
 export default function ContestRail({
-  contestId,
   live,
   panel,
+  problemsCount,
   you,
   myStanding,
 }) {
-  const { rows, loading, error } = panel;
-  const youShown = rows.some((r) => r.username === you);
-  const pinned = !youShown && myStanding?.rank != null ? myStanding : null;
-
   return (
     <aside className="cpp-rail">
       <div className="cpp-rail-hd">
@@ -46,50 +37,13 @@ export default function ContestRail({
         )}
       </div>
 
-      <div className="cpp-rail-body scroll">
-        {loading ? (
-          <div className="cpp-rail-msg">Loading…</div>
-        ) : error ? (
-          <div className="cpp-rail-msg">Couldn’t load standings.</div>
-        ) : rows.length === 0 ? (
-          <div className="cpp-rail-msg">No submissions yet.</div>
-        ) : (
-          <>
-            {rows.map((r) => (
-              <Row key={r.username} r={r} you={you} />
-            ))}
-            {pinned && (
-              <>
-                <div className="cpp-rail-gap">⋯</div>
-                <Link className="cpp-rail-row you" to="/profile">
-                  <span className="rk">{pinned.rank}</span>
-                  <span className="u">{you}</span>
-                  <span className="v">{pinned.score}</span>
-                  <span className="v pen">—</span>
-                </Link>
-              </>
-            )}
-          </>
-        )}
-      </div>
-
-      <Link className="cpp-rail-all" to={`/contests/${contestId}`}>
-        Full standings <Icons.chevRight size={13} />
-      </Link>
+      <StandingsList
+        state={live ? 'live' : 'finished'}
+        panel={panel}
+        problemsCount={problemsCount}
+        you={you}
+        myStanding={myStanding}
+      />
     </aside>
-  );
-}
-
-function Row({ r, you }) {
-  const cls =
-    `cpp-rail-row${r.username === you ? ' you' : ''}` +
-    (r.rank <= 3 ? ' top' : '');
-  return (
-    <Link className={cls} to={profileHref(r.username, you)}>
-      <span className="rk">{r.rank}</span>
-      <span className="u">{r.username}</span>
-      <span className="v">{r.score}</span>
-      <span className="v pen">{r.penalty}</span>
-    </Link>
   );
 }
