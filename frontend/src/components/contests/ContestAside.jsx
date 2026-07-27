@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Icons from '../Icons';
+import StandingsList from './StandingsList';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { cgRankFor } from '../../utils/ranks';
 
@@ -62,11 +63,6 @@ export default function ContestAside({
   }
 
   const isReg = state === 'soon';
-  const youShown = rows.some((r) => r.username === you);
-  const myRow =
-    state === 'live' && !youShown && myStanding?.rank != null
-      ? myStanding
-      : null;
 
   return (
     <aside className="cp-aside" ref={asideRef}>
@@ -89,73 +85,46 @@ export default function ContestAside({
         <I.chevRight size={16} className="cp-hd-arrow" />
       </button>
 
-      <div className="cp-thead">
-        <span className="cp-rk">#</span>
-        <span className="cp-user">User</span>
-        {isReg ? (
-          <>
+      {isReg ? (
+        <>
+          <div className="cp-thead">
+            <span className="cp-rk">#</span>
+            <span className="cp-user">User</span>
             <span className="cp-tier">Rank</span>
             <span className="cp-cell">Rating</span>
-          </>
-        ) : (
-          <>
-            <span className="cp-cell">Solved</span>
-            <span className="cp-cell">Pts</span>
-            <span className="cp-cell cp-c-pen">Penalty</span>
-            {state === 'finished' && <span className="cp-cell">Δ</span>}
-          </>
-        )}
-      </div>
-
-      <div className="cp-aside-body scroll">
-        {loading ? (
-          <div className="cp-msg">Loading…</div>
-        ) : error ? (
-          <div className="cp-msg">Couldn’t load the list.</div>
-        ) : rows.length === 0 ? (
-          <div className="cp-msg">
-            {isReg ? 'No one has registered yet.' : 'No submissions yet.'}
           </div>
-        ) : (
-          <>
-            {rows.map((r, i) =>
-              isReg ? (
-                <RegRow key={r.username} r={r} rank={i + 1} you={you} />
-              ) : (
-                <LbRow
-                  key={r.username}
-                  r={r}
-                  state={state}
-                  n={problemsCount}
-                  you={you}
-                />
-              )
-            )}
-            {hasMore && (
-              <div
-                ref={sentinelRef}
-                className="cp-sentinel"
-                aria-hidden="true"
-              />
-            )}
-            {myRow && (
+          <div className="cp-aside-body scroll">
+            {loading ? (
+              <div className="cp-msg">Loading…</div>
+            ) : error ? (
+              <div className="cp-msg">Couldn’t load the list.</div>
+            ) : rows.length === 0 ? (
+              <div className="cp-msg">No one has registered yet.</div>
+            ) : (
               <>
-                <div className="cp-gap">⋯</div>
-                <Link className="cp-row you" to="/profile">
-                  <span className="cp-rk">{myRow.rank}</span>
-                  <span className="cp-user">{you}</span>
-                  <span className="cp-cell">
-                    {myRow.solved}/{problemsCount}
-                  </span>
-                  <span className="cp-cell cp-pts">{myRow.score}</span>
-                  <span className="cp-cell cp-c-pen">—</span>
-                  {state === 'finished' && <span className="cp-cell">—</span>}
-                </Link>
+                {rows.map((r, i) => (
+                  <RegRow key={r.username} r={r} rank={i + 1} you={you} />
+                ))}
+                {hasMore && (
+                  <div
+                    ref={sentinelRef}
+                    className="cp-sentinel"
+                    aria-hidden="true"
+                  />
+                )}
               </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      ) : (
+        <StandingsList
+          state={state}
+          panel={panel}
+          problemsCount={problemsCount}
+          you={you}
+          myStanding={myStanding}
+        />
+      )}
     </aside>
   );
 }
@@ -170,34 +139,6 @@ function RegRow({ r, rank, you }) {
       <span className="cp-user">{r.username}</span>
       <span className="cp-tier">{cgRankFor(r.elo_rating).name}</span>
       <span className="cp-cell cp-pts">{r.elo_rating}</span>
-    </Link>
-  );
-}
-
-function LbRow({ r, state, n, you }) {
-  const cls = `cp-row${r.username === you ? ' you' : ''}${
-    r.rank <= 3 ? ' r' + r.rank : ''
-  }`;
-  return (
-    <Link className={cls} to={profileHref(r.username, you)}>
-      <span className="cp-rk">{r.rank}</span>
-      <span className="cp-user">{r.username}</span>
-      <span className="cp-cell">
-        {r.solved_count}/{n}
-      </span>
-      <span className="cp-cell cp-pts">{r.score}</span>
-      <span className="cp-cell cp-c-pen">{r.penalty}</span>
-      {state === 'finished' &&
-        (r.rating_delta != null ? (
-          <span
-            className={`cp-cell cp-dl ${r.rating_delta >= 0 ? 'up' : 'down'}`}
-          >
-            {r.rating_delta >= 0 ? '+' : ''}
-            {r.rating_delta}
-          </span>
-        ) : (
-          <span className="cp-cell">—</span>
-        ))}
     </Link>
   );
 }
