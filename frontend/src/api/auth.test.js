@@ -6,7 +6,6 @@ vi.mock('./client', () => ({ default: { post, get } }));
 import {
   register,
   login,
-  refresh,
   logout,
   me,
   oauthStart,
@@ -55,17 +54,6 @@ describe('auth API', () => {
       password: 'p',
     });
     expect(data).toEqual({ access: 'a', refresh: 'r' });
-  });
-
-  it('refresh posts the refresh token', async () => {
-    post.mockResolvedValue({ data: { access: 'a2', refresh: 'r2' } });
-
-    const data = await refresh('r1');
-
-    expect(post).toHaveBeenCalledWith('users/token/refresh/', {
-      refresh: 'r1',
-    });
-    expect(data).toEqual({ access: 'a2', refresh: 'r2' });
   });
 
   it('logout posts the refresh token and returns nothing', async () => {

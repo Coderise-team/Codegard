@@ -22,14 +22,6 @@ export async function login({ username, password }) {
   return data;
 }
 
-// POST users/token/refresh/ -> { access, refresh }
-export async function refresh(refreshToken) {
-  const { data } = await client.post('users/token/refresh/', {
-    refresh: refreshToken,
-  });
-  return data;
-}
-
 // POST users/logout/ (Bearer + refresh) -> 205, blacklists the refresh token.
 export async function logout(refreshToken) {
   await client.post('users/logout/', { refresh: refreshToken });
