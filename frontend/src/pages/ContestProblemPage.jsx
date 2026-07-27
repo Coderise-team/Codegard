@@ -44,7 +44,7 @@ export default function ContestProblemPage() {
   // filed against the round, so it counts toward the standings and rating.
   const { busy, toast, setToast, submit } = useSubmitFlow(
     (code, language) => ({
-      problem: problem.id,
+      problem: problem?.id,
       contest: Number(id),
       code,
       language,
