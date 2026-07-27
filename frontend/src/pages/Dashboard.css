@@ -580,6 +580,7 @@
   transition: 0.14s;
 }
 .hpip:hover {
+  background: var(--border-2);
   border-color: var(--border-2);
   transform: translateY(-1px);
 }
