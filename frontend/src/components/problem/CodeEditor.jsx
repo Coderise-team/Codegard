@@ -47,6 +47,11 @@ const OPTIONS = {
   automaticLayout: true,
   padding: { top: 14, bottom: 14 },
   scrollbar: { verticalScrollbarSize: 10, horizontalScrollbarSize: 10 },
+  // No minimap, so drop the overview-ruler lane and its border too — otherwise
+  // it leaves a thin marker strip down the editor's right edge.
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
 };
 
 /**
