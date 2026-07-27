@@ -3,14 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const { post, get } = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }));
 vi.mock('./client', () => ({ default: { post, get } }));
 
-import {
-  register,
-  login,
-  logout,
-  me,
-  oauthStart,
-  oauthRedeem,
-} from './auth';
+import { register, login, logout, me, oauthStart, oauthRedeem } from './auth';
 
 beforeEach(() => {
   post.mockReset();
