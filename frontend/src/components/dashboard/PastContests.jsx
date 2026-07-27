@@ -31,9 +31,6 @@ export default function PastContests({ username }) {
         <span className="t">
           <I.trophy size={16} /> Contest history
         </span>
-        <button className="more">
-          All <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd flush">
         {loading && <div className="list-msg">Loading…</div>}

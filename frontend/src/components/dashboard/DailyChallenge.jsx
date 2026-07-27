@@ -32,9 +32,6 @@ export default function DailyChallenge() {
         <span className="t">
           <I.flame size={16} style={{ color: 'var(--tle)' }} /> Daily challenge
         </span>
-        <button className="more">
-          All <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd">
         {loading && <div className="list-msg">Loading…</div>}

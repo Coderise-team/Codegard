@@ -30,9 +30,6 @@ export default function Recommended() {
         <span className="t">
           <I.sparkle size={16} /> Recommended for you
         </span>
-        <button className="more">
-          Problemset <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd flush">
         {loading && <div className="list-msg">Loading…</div>}

@@ -32,9 +32,6 @@ export default function RecentSubmissions({ username }) {
         <span className="t">
           <I.list size={16} /> Recent submissions
         </span>
-        <button className="more">
-          All <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd flush">
         {loading && <div className="list-msg">Loading…</div>}
