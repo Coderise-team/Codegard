@@ -35,6 +35,9 @@ export default function ContestProblemPage() {
   const { id, letter } = useParams();
   const user = useCurrentUser();
   const [navOpen, setNavOpen] = useState(false);
+  // Standings live in a rail toggled from the topbar; hidden by default so the
+  // editor gets the full width until the solver asks for the board.
+  const [showLb, setShowLb] = useState(false);
 
   const { contest, problem, loading, notFound } = useContestProblem(id, letter);
   const { data: languages, loading: langsLoading } = useLanguages();
@@ -67,12 +70,13 @@ export default function ContestProblemPage() {
 
   // Live standings for the rail: the socket only signals that something changed
   // (variant B), so a paced signal (throttle + jitter) triggers a refetch of
-  // the top slice and my own row through the ordinary HTTP endpoints.
-  const { signal } = useLeaderboardSignal(id, isLive);
+  // the top slice and my own row through the ordinary HTTP endpoints. All of it
+  // is gated on `showLb` — a collapsed rail opens no socket and fetches nothing.
+  const { signal } = useLeaderboardSignal(id, showLb && isLive);
   const paced = useThrottledSignal(signal);
-  const panel = useContestPanel(id, 'leaderboard');
+  const panel = useContestPanel(id, showLb ? 'leaderboard' : null);
   const { reload: reloadPanel } = panel;
-  const myStanding = useMyStanding(id, Boolean(contest), paced);
+  const myStanding = useMyStanding(id, showLb, paced);
   useEffect(() => {
     if (paced) reloadPanel();
   }, [paced, reloadPanel]);
@@ -109,6 +113,8 @@ export default function ContestProblemPage() {
           currentLetter={letter}
           now={now}
           user={user}
+          showLeaderboard={showLb}
+          onToggleLeaderboard={() => setShowLb((v) => !v)}
           onMenuClick={() => setNavOpen(true)}
         />
       )}
@@ -124,13 +130,15 @@ export default function ContestProblemPage() {
           }
           onSubmit={submit}
           rail={
-            <ContestRail
-              contestId={id}
-              live={isLive}
-              panel={panel}
-              you={user?.username}
-              myStanding={myStanding}
-            />
+            showLb ? (
+              <ContestRail
+                contestId={id}
+                live={isLive}
+                panel={panel}
+                you={user?.username}
+                myStanding={myStanding}
+              />
+            ) : null
           }
         />
       ) : (

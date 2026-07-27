@@ -20,6 +20,8 @@ import './ContestTopbar.css';
  *                   Compiler caches a render-time Date.now(), so live time has
  *                   to arrive as a prop)
  *   user          — { username, initials } for the user menu
+ *   showLeaderboard    — whether the standings rail is open (lights the toggle)
+ *   onToggleLeaderboard — show/hide the standings rail
  *   onMenuClick   — open the sidebar drawer (burger button)
  */
 export default function ContestTopbar({
@@ -27,6 +29,8 @@ export default function ContestTopbar({
   currentLetter,
   now,
   user,
+  showLeaderboard,
+  onToggleLeaderboard,
   onMenuClick,
 }) {
   const active = (currentLetter ?? '').toUpperCase();
@@ -35,6 +39,8 @@ export default function ContestTopbar({
     0,
     Math.floor((new Date(contest.end_time).getTime() - now) / 1000)
   );
+  // Under five minutes the clock turns red — the round is closing.
+  const urgent = state === 'live' && secondsLeft < 5 * 60;
 
   return (
     <header className="ct-topbar">
@@ -77,12 +83,33 @@ export default function ContestTopbar({
       </div>
 
       <div className="ct-right">
-        <div className={`ct-timer${state === 'finished' ? ' done' : ''}`}>
-          <Icons.clock size={14} />
-          <span className="ct-timer-val">
-            {state === 'finished' ? 'Finished' : fmtCountdown(secondsLeft)}
-          </span>
+        <div
+          className={`ct-timer${urgent ? ' urgent' : ''}${
+            state === 'finished' ? ' done' : ''
+          }`}
+        >
+          {state !== 'finished' && <span className="ct-timer-pulse" />}
+          <div className="ct-timer-body">
+            <span className="ct-timer-lbl">
+              {state === 'finished' ? 'Round' : 'Ends in'}
+            </span>
+            <span className="ct-timer-val">
+              {state === 'finished' ? 'Finished' : fmtCountdown(secondsLeft)}
+            </span>
+          </div>
         </div>
+
+        <button
+          type="button"
+          className={`ct-lb-toggle${showLeaderboard ? ' is-on' : ''}`}
+          onClick={onToggleLeaderboard}
+          aria-pressed={showLeaderboard}
+        >
+          <Icons.trophy size={16} />
+          {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
+        </button>
+
+        <div className="ct-div" />
         <UserMenu user={user} />
       </div>
     </header>

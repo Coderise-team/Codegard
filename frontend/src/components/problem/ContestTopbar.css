@@ -78,20 +78,92 @@
   color: var(--gold-hi);
 }
 
-/* Round countdown. */
+/* Round countdown — a boxed "Ends in" label over a big mono clock, with a
+   pulsing dot; the clock turns red in the final five minutes. */
 .ct-timer {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+}
+.ct-timer-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: ct-pulse 1.6s ease-in-out infinite;
+}
+.ct-timer.urgent .ct-timer-pulse {
+  background: var(--wa);
+}
+@keyframes ct-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.ct-timer-body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.ct-timer-lbl {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--fg2);
 }
 .ct-timer-val {
   font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--fg);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.ct-timer.urgent .ct-timer-val {
+  color: var(--wa);
+}
+.ct-timer.done {
+  padding-left: 0;
+  background: transparent;
+  border-color: transparent;
 }
 .ct-timer.done .ct-timer-val {
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--fg2);
+}
+
+/* Show/hide the standings rail. */
+.ct-lb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--card-2);
   color: var(--fg2);
   font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.14s;
+}
+.ct-lb-toggle svg {
+  color: var(--gold);
+}
+.ct-lb-toggle:hover {
+  color: var(--fg);
+  border-color: var(--gold-line);
+}
+.ct-lb-toggle.is-on {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
 }
