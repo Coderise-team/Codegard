@@ -95,6 +95,30 @@ def test_login_nonexistent_user(api_client):
 
 
 @pytest.mark.django_db
+def test_login_error_is_generic_and_identical(api_client, user_data):
+    """A wrong password and an unknown user return the same generic message.
+
+    Distinct wording would reveal whether an account exists, letting an
+    attacker enumerate valid usernames/emails.
+    """
+    api_client.post("/api/users/register/", user_data, format="json")
+
+    wrong_password = api_client.post(
+        "/api/users/login/",
+        {"username": "testuser", "password": "wrongpassword"},
+        format="json",
+    )
+    unknown_user = api_client.post(
+        "/api/users/login/",
+        {"username": "nobody", "password": "wrongpassword"},
+        format="json",
+    )
+
+    assert wrong_password.data["detail"] == "Incorrect username or password."
+    assert wrong_password.data["detail"] == unknown_user.data["detail"]
+
+
+@pytest.mark.django_db
 def test_register_missing_fields(api_client):
     response = api_client.post("/api/users/register/", {}, format="json")
     assert response.status_code == 400
