@@ -77,6 +77,14 @@ function LiveHero({ contest, standing, now }) {
     status: statusById[p.id] || 'open',
   }));
 
+  // "Enter round" drops the solver on the first problem they haven't solved
+  // yet (all solved -> the first one), so it never lands on a done task.
+  const firstUnsolved =
+    problems.find((p) => p.status !== 'solved') ?? problems[0];
+  const enterTo = firstUnsolved
+    ? `/contests/${contest.id}/problems/${firstUnsolved.label}`
+    : `/contests/${contest.id}`;
+
   return (
     <section className="hero">
       <div className="hero-hd">
@@ -121,7 +129,11 @@ function LiveHero({ contest, standing, now }) {
         {problems.map((p) => {
           const St = Icons[STATUS_ICON[p.status]] || I.chevRight;
           return (
-            <a key={p.id} className={`hpip s-${p.status}`} href="#">
+            <Link
+              key={p.id}
+              className={`hpip s-${p.status}`}
+              to={`/contests/${contest.id}/problems/${p.label}`}
+            >
               <span className="lid">{p.label}</span>
               <span className="ld">
                 <span className="nm">{p.title}</span>
@@ -132,7 +144,7 @@ function LiveHero({ contest, standing, now }) {
               >
                 <St size={15} />
               </span>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -153,10 +165,9 @@ function LiveHero({ contest, standing, now }) {
           </div>
         </div>
         <div className="hero-cta">
-          {/* Points into the round workspace once contest mode exists. */}
-          <a className="btn btn-primary" href="#">
+          <Link className="btn btn-primary" to={enterTo}>
             <I.play size={15} /> Enter round
-          </a>
+          </Link>
           <Link className="btn" to={`/contests/${contest.id}`}>
             Details
           </Link>
