@@ -83,6 +83,10 @@ export default function ProblemWorkspace({
           <div className="pp-et-left">
             <label className="pp-lang-select">
               <span className="pp-lang-ic" />
+              <span className="pp-lang-name">{lang.name}</span>
+              <Icons.chevDown size={14} style={{ color: 'var(--fg2)' }} />
+              {/* Transparent native select overlaid on the whole control, so a
+                  click anywhere — including the chevron — opens it. */}
               <select
                 value={langId}
                 onChange={(e) => setLangId(e.target.value)}
@@ -94,7 +98,6 @@ export default function ProblemWorkspace({
                   </option>
                 ))}
               </select>
-              <Icons.chevDown size={14} style={{ color: 'var(--fg2)' }} />
             </label>
           </div>
           <div className="pp-et-right">

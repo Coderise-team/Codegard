@@ -332,6 +332,7 @@
 }
 
 .pp-lang-select {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -343,17 +344,27 @@
   color: var(--fg);
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
   transition: 0.14s;
 }
 .pp-lang-select:hover {
   border-color: var(--border-2);
 }
+.pp-lang-name {
+  white-space: nowrap;
+}
+/* The real control: a transparent native select filling the whole chip, so a
+   click anywhere on it (name or chevron) opens the language menu. */
 .pp-lang-select select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   appearance: none;
   background: transparent;
   border: 0;
   outline: 0;
-  color: inherit;
+  color: transparent;
   font: inherit;
   cursor: pointer;
 }
