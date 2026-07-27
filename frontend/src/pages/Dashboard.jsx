@@ -8,7 +8,6 @@ import Recommended from '../components/dashboard/Recommended';
 import RecentSubmissions from '../components/dashboard/RecentSubmissions';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 import DailyChallenge from '../components/dashboard/DailyChallenge';
-import UpcomingContests from '../components/dashboard/UpcomingContests';
 import PastContests from '../components/dashboard/PastContests';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import './Dashboard.css';
@@ -56,7 +55,6 @@ export default function Dashboard() {
                 </div>
                 <div className="col-rail">
                   <DailyChallenge />
-                  <UpcomingContests />
                   <PastContests username={user?.username} />
                 </div>
               </div>
