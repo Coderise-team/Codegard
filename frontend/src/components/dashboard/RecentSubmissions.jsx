@@ -14,7 +14,7 @@ const formatRuntime = (ms) => (ms == null ? '—' : `${ms} ms`);
  */
 export default function RecentSubmissions({ username }) {
   const I = Icons;
-  const { data, loading, error } = useUserSubmissions(username);
+  const { data, loading, error } = useUserSubmissions(username, MAX_ROWS);
 
   if (data && data.length === 0) {
     return (
