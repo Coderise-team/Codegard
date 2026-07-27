@@ -11,13 +11,15 @@ const TICKS = Array.from({ length: 50 }, (_, i) => i);
  * Pull a human-readable message out of an API error.
  * DRF returns field errors as { field: ["msg", ...] } (e.g. register), or a
  * single { detail: "msg" }; fall back to the network/error message.
+ * Every field error is surfaced (newline-joined) so a second failing field
+ * isn't hidden behind the first.
  */
 function getErrorMessage(error) {
   const data = error?.response?.data;
   if (data && typeof data === 'object') {
     if (data.detail) return data.detail;
-    const first = Object.values(data).flat().find(Boolean);
-    if (first) return String(first);
+    const messages = Object.values(data).flat().filter(Boolean).map(String);
+    if (messages.length) return messages.join('\n');
   }
   return error?.message || 'Something went wrong';
 }
