@@ -140,6 +140,28 @@ describe('AuthPage', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it('surfaces every field error on failed register, not just the first', async () => {
+    register.mockRejectedValue({
+      response: {
+        data: {
+          username: ['A user with that username already exists.'],
+          password: ['This password is too common.'],
+        },
+      },
+    });
+    renderInRouter(<AuthPage mode="register" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(
+      await screen.findByText(/A user with that username already exists\./)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/This password is too common\./)
+    ).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('navigates to /register when the switch link is clicked', () => {
     renderInRouter(<AuthPage />);
 
