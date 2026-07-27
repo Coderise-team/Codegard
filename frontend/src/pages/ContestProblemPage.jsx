@@ -38,6 +38,9 @@ export default function ContestProblemPage() {
   // Standings live in a rail toggled from the topbar; hidden by default so the
   // editor gets the full width until the solver asks for the board.
   const [showLb, setShowLb] = useState(false);
+  // Bumped after a submission lands, so my-standing refetches — this is what
+  // turns the topbar problem dots green the moment a solve is judged.
+  const [afterSubmit, setAfterSubmit] = useState(0);
 
   const { contest, problem, loading, notFound } = useContestProblem(id, letter);
   const { data: languages, loading: langsLoading } = useLanguages();
@@ -52,7 +55,10 @@ export default function ContestProblemPage() {
       code,
       language,
     }),
-    reload
+    () => {
+      reload();
+      setAfterSubmit((k) => k + 1);
+    }
   );
 
   // The topbar countdown ticks off a clock kept in state (the React Compiler
@@ -76,10 +82,23 @@ export default function ContestProblemPage() {
   const paced = useThrottledSignal(signal);
   const panel = useContestPanel(id, showLb ? 'leaderboard' : null);
   const { reload: reloadPanel } = panel;
-  const myStanding = useMyStanding(id, showLb, paced);
+
+  // A live tick refreshes the standings list (rail).
   useEffect(() => {
     if (paced) reloadPanel();
   }, [paced, reloadPanel]);
+
+  // my-standing drives the topbar dots, so it loads whenever the round does —
+  // independent of whether the rail is open. It refetches on a live tick
+  // (`paced`) and right after a submission (`afterSubmit`).
+  const myStanding = useMyStanding(
+    id,
+    Boolean(contest),
+    `${paced}:${afterSubmit}`
+  );
+  const statusById = Object.fromEntries(
+    (myStanding?.problems ?? []).map((p) => [p.id, p.status])
+  );
 
   // An unknown round, an unknown letter and a letter past the end of the round
   // are all "this URL addresses nothing" — anything else (server down, dropped
@@ -113,6 +132,7 @@ export default function ContestProblemPage() {
           currentLetter={letter}
           now={now}
           user={user}
+          statuses={statusById}
           showLeaderboard={showLb}
           onToggleLeaderboard={() => setShowLb((v) => !v)}
           onMenuClick={() => setNavOpen(true)}
@@ -132,9 +152,9 @@ export default function ContestProblemPage() {
           rail={
             showLb ? (
               <ContestRail
-                contestId={id}
                 live={isLive}
                 panel={panel}
+                problemsCount={contest.problems.length}
                 you={user?.username}
                 myStanding={myStanding}
               />
