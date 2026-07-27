@@ -114,7 +114,7 @@ def test_login_error_is_generic_and_identical(api_client, user_data):
         format="json",
     )
 
-    assert wrong_password.data["detail"] == "Incorrect username or password."
+    assert wrong_password.data["detail"] == "Incorrect username/email or password."
     assert wrong_password.data["detail"] == unknown_user.data["detail"]
 
 
