@@ -1,0 +1,104 @@
+/* UserMenu.css - avatar chip + dropdown, owned by the component so any topbar
+   that mounts <UserMenu> is styled without importing a page stylesheet. */
+
+.user-menu {
+  position: relative;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: 0.13s;
+  -webkit-tap-highlight-color: transparent;
+}
+.user-chip:hover {
+  background: var(--card-2);
+}
+.user-chip .meta {
+  text-align: right;
+  line-height: 1.3;
+}
+.user-chip .handle {
+  font-size: 13px;
+  font-weight: 700;
+}
+.user-chip .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.user-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform-origin: top right;
+  animation: umPop 0.14s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes umPop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+.um-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: var(--r-sm);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.um-item svg {
+  color: var(--fg3);
+  flex: 0 0 auto;
+}
+.um-item:hover {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.um-item:hover svg {
+  color: var(--fg2);
+}
+.um-item.danger,
+.um-item.danger svg {
+  color: var(--wa);
+}
+.um-item.danger:hover {
+  background: var(--wa-soft);
+  color: var(--wa);
+}
+.um-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 2px;
+}
