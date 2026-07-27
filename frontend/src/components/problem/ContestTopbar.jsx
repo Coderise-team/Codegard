@@ -29,6 +29,7 @@ export default function ContestTopbar({
   currentLetter,
   now,
   user,
+  statuses = {},
   showLeaderboard,
   onToggleLeaderboard,
   onMenuClick,
@@ -69,13 +70,16 @@ export default function ContestTopbar({
       <div className="ct-strip">
         {contest.problems.map((p, i) => {
           const label = indexToLetter(i);
+          const st = statuses[p.id] || 'open';
           return (
             <Link
               key={p.id}
               to={`/contests/${contest.id}/problems/${label}`}
-              className={`ct-pip${label === active ? ' current' : ''}`}
+              className={`ct-pip s-${st}${label === active ? ' current' : ''}`}
               aria-current={label === active ? 'page' : undefined}
+              title={p.title}
             >
+              <span className="ct-pip-dot" />
               {label}
             </Link>
           );
@@ -109,7 +113,6 @@ export default function ContestTopbar({
           {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
         </button>
 
-        <div className="ct-div" />
         <UserMenu user={user} />
       </div>
     </header>

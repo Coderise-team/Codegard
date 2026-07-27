@@ -55,13 +55,14 @@
   overflow-x: auto;
 }
 .ct-pip {
-  display: grid;
-  place-items: center;
-  width: 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   height: 30px;
+  padding: 0 11px;
   border-radius: var(--r-sm);
-  border: 1px solid var(--border);
-  background: var(--card-2);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--fg2);
   font-size: 13px;
   font-weight: 700;
@@ -69,13 +70,29 @@
   transition: 0.13s;
 }
 .ct-pip:hover {
+  background: var(--card-2);
   color: var(--fg);
-  border-color: var(--gold-line);
 }
 .ct-pip.current {
   background: var(--gold-soft);
   border-color: var(--gold-line);
   color: var(--gold-hi);
+}
+
+/* Status dot: solved -> green (glow), attempted -> amber, untouched -> grey. */
+.ct-pip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg3);
+  flex-shrink: 0;
+}
+.ct-pip.s-solved .ct-pip-dot {
+  background: var(--ac);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+.ct-pip.s-attempted .ct-pip-dot {
+  background: var(--tle);
 }
 
 /* Round countdown — a boxed "Ends in" label over a big mono clock, with a
