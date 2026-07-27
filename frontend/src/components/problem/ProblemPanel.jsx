@@ -97,7 +97,6 @@ function SubmissionsTab({ submissions }) {
             <th>Verdict</th>
             <th>Language</th>
             <th>Time</th>
-            <th>Memory</th>
             <th>When</th>
           </tr>
         </thead>
@@ -124,9 +123,6 @@ function SubmissionsTab({ submissions }) {
               <td>{s.language_display}</td>
               <td className="mono pp-fg2">
                 {fmtMetric(s.execution_time_ms, 'ms')}
-              </td>
-              <td className="mono pp-fg2">
-                {fmtMetric(s.memory_used_mb, 'MB')}
               </td>
               <td className="pp-fg2">{timeAgo(s.created_at)}</td>
             </tr>
