@@ -40,3 +40,15 @@ class ContestHistoryPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
     max_page_size = 50
+
+
+class UserSubmissionsPagination(PageNumberPagination):
+    """User-submissions pagination with a client-controlled page size.
+
+    Defaults to 20 (the future "all my submissions" page takes it as-is); the
+    dashboard's Recent Submissions block requests ``?page_size=6``. Capped at 50.
+    """
+
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 50
