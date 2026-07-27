@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { useAuthStore } from '../../store/authStore';
 import { useProfile } from '../../hooks/useProfile';
@@ -118,9 +119,9 @@ export default function ProfileCard() {
         <span className="t">
           <Icons.award size={16} /> Your standing
         </span>
-        <button className="more">
+        <Link className="more" to={username ? `/users/${username}` : '/'}>
           Profile <Icons.chevRight size={13} />
-        </button>
+        </Link>
       </div>
 
       {loading && <div className="list-msg">Loading…</div>}
