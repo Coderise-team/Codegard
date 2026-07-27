@@ -331,8 +331,12 @@
   gap: 8px;
 }
 
-.pp-lang-select {
+/* Language picker: a custom dropdown (LangSelect) so the menu follows our
+   tokens instead of the OS-native <select> list. */
+.pp-lang {
   position: relative;
+}
+.pp-lang-btn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -347,30 +351,14 @@
   cursor: pointer;
   transition: 0.14s;
 }
-.pp-lang-select:hover {
+.pp-lang-btn:hover {
   border-color: var(--border-2);
+}
+.pp-lang-btn svg {
+  color: var(--fg2);
 }
 .pp-lang-name {
   white-space: nowrap;
-}
-/* The real control: a transparent native select filling the whole chip, so a
-   click anywhere on it (name or chevron) opens the language menu. */
-.pp-lang-select select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  background: transparent;
-  border: 0;
-  outline: 0;
-  color: transparent;
-  font: inherit;
-  cursor: pointer;
-}
-.pp-lang-select select option {
-  background: var(--card-2);
-  color: var(--fg);
 }
 .pp-lang-ic {
   width: 16px;
@@ -378,6 +366,52 @@
   border-radius: 4px;
   background: linear-gradient(135deg, #3776ab, #ffd43b);
   flex-shrink: 0;
+}
+
+.pp-lang-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pp-lang-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fg2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.12s;
+}
+.pp-lang-opt:hover {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.pp-lang-opt.is-sel {
+  color: var(--fg);
+}
+.pp-lang-opt svg {
+  margin-left: auto;
+  color: var(--gold);
 }
 .pp-tool-link {
   background: none;
