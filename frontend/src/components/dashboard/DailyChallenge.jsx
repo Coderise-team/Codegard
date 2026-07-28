@@ -65,6 +65,7 @@ export default function DailyChallenge() {
                 <I.flame size={22} />
                 <span className="n">{data.streak.current_streak}</span>
                 <span className="u">streak</span>
+                <span className="rec">best {data.streak.longest_streak}</span>
               </div>
             </div>
 

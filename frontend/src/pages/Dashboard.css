@@ -1080,6 +1080,12 @@
   text-transform: uppercase;
   color: var(--fg2);
 }
+.daily-flame .rec {
+  margin-top: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg3);
+}
 
 .streak-grid {
   display: flex;
