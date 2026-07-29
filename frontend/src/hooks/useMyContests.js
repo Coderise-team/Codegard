@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { getContests } from '../api/contests';
 
 // Loads the contests the current user is registered for that haven't finished
-// yet (live + upcoming), soonest start first. `reload` bumps a trigger so the
-// effect refetches (used after leaving a contest). Finished ones are dropped —
-// they belong to the Contest History block.
+// yet (live + upcoming), soonest start first. Finished ones are dropped — they
+// belong to the Contest History block. Registration changes are reflected
+// optimistically in the component, so no refetch is wired here.
 export function useMyContests() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -29,9 +28,7 @@ export function useMyContests() {
     return () => {
       active = false;
     };
-  }, [reloadKey]);
+  }, []);
 
-  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
-
-  return { data, loading, error, reload };
+  return { data, loading, error };
 }
