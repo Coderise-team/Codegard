@@ -104,9 +104,9 @@ describe('AuthPage', () => {
     );
   });
 
-  it('shows a backend error and does not redirect on failed login', async () => {
+  it('shows a failed login in the banner and leaves the fields unmarked', async () => {
     login.mockRejectedValue({
-      response: { data: { detail: 'No active account found' } },
+      response: { data: { detail: 'Incorrect username/email or password.' } },
     });
     renderInRouter(<AuthPage />);
 
@@ -119,8 +119,15 @@ describe('AuthPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
     expect(
-      await screen.findByText('No active account found')
+      await screen.findByText('Incorrect username/email or password.')
     ).toBeInTheDocument();
+    // A form-level error is not tied to a field, so neither input is flagged.
+    expect(screen.getByLabelText('Username or email')).not.toHaveAttribute(
+      'aria-invalid'
+    );
+    expect(screen.getByLabelText('Password')).not.toHaveAttribute(
+      'aria-invalid'
+    );
     expect(navigate).not.toHaveBeenCalled();
   });
 
@@ -137,6 +144,37 @@ describe('AuthPage', () => {
     expect(
       await screen.findByText('A user with that username already exists.')
     ).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('surfaces every field error under its own field on failed register', async () => {
+    register.mockRejectedValue({
+      response: {
+        data: {
+          username: ['A user with that username already exists.'],
+          password: ['This password is too common.'],
+        },
+      },
+    });
+    renderInRouter(<AuthPage mode="register" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+
+    expect(
+      await screen.findByText(/A user with that username already exists\./)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/This password is too common\./)
+    ).toBeInTheDocument();
+    // Each error is tied to its field, not dumped into the form banner.
+    expect(screen.getByLabelText('Username')).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
+    expect(screen.getByLabelText('Password')).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
     expect(navigate).not.toHaveBeenCalled();
   });
 
