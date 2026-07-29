@@ -263,11 +263,6 @@
 .pp-subs-table tr:hover td {
   background: var(--card);
 }
-.pp-sid {
-  font-family: var(--mono);
-  color: var(--fg2);
-  font-size: 12px;
-}
 .pp-fg2 {
   color: var(--fg2);
   font-size: 12.5px;

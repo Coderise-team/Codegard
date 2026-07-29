@@ -93,7 +93,6 @@ function SubmissionsTab({ submissions }) {
       <table className="pp-subs-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Verdict</th>
             <th>Language</th>
             <th>Time</th>
@@ -103,7 +102,6 @@ function SubmissionsTab({ submissions }) {
         <tbody>
           {submissions.map((s) => (
             <tr key={s.id}>
-              <td className="pp-sid">#{s.id}</td>
               <td>
                 {s.verdict ? (
                   <span
