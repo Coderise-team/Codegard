@@ -56,13 +56,19 @@ export default function ContestBanner({
 
   // "Enter round" only means something once you're in it: a non-registered
   // viewer gets Register instead (joining is allowed while a contest is live).
-  const firstLetter = D.problems[0]?.id;
+  // It lands on the first problem not yet solved (all solved -> the first one),
+  // so it never drops you on a done task.
+  const firstUnsolvedIdx = D.problems.findIndex(
+    (_, i) => (your[i] || 'open') !== 'solved'
+  );
+  const enterLetter =
+    D.problems[firstUnsolvedIdx >= 0 ? firstUnsolvedIdx : 0]?.id;
   let cta;
   if (state === 'live' && registered) {
-    cta = firstLetter ? (
+    cta = enterLetter ? (
       <Link
         className="btn btn-primary"
-        to={`/contests/${contestId}/problems/${firstLetter}`}
+        to={`/contests/${contestId}/problems/${enterLetter}`}
       >
         <I.play size={15} /> Enter round
       </Link>
