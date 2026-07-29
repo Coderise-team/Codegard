@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -165,7 +165,10 @@ export default function ContestPage() {
   const crumb = (
     <span className="cp-crumb">
       <Icons.trophy size={16} />
-      <span className="dim">Contests&nbsp;/</span> {contest?.title ?? '…'}
+      <Link className="cp-crumb-link" to="/contests">
+        Contests
+      </Link>
+      <span className="dim">&nbsp;/</span> {contest?.title ?? '…'}
     </span>
   );
 

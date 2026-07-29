@@ -22,6 +22,15 @@
   color: var(--fg2);
   font-weight: 500;
 }
+/* Breadcrumb root back to the hub — white, violet on hover, no underline. */
+.cp-crumb-link {
+  color: var(--fg);
+  text-decoration: none;
+  transition: color 0.13s;
+}
+.cp-crumb-link:hover {
+  color: var(--gold);
+}
 
 /* ============================================================
    STAGE — the full-bleed violet gradient banner
