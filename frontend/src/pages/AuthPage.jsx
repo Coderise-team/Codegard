@@ -8,20 +8,32 @@ import { redirectToProvider, stashOAuthFrom } from '../utils/oauthReturn';
 const TICKS = Array.from({ length: 50 }, (_, i) => i);
 
 /**
- * Pull a human-readable message out of an API error.
- * DRF returns field errors as { field: ["msg", ...] } (e.g. register), or a
- * single { detail: "msg" }; fall back to the network/error message.
- * Every field error is surfaced (newline-joined) so a second failing field
- * isn't hidden behind the first.
+ * Split an API error into per-field errors and a single form-level error.
+ * DRF names each field error by its field ({ username: ["msg"], ... }) so those
+ * belong under the matching input; `detail` (e.g. a failed login) and
+ * `non_field_errors` aren't tied to a field and go in the form-wide banner.
  */
-function getErrorMessage(error) {
+function parseApiError(error) {
   const data = error?.response?.data;
-  if (data && typeof data === 'object') {
-    if (data.detail) return data.detail;
-    const messages = Object.values(data).flat().filter(Boolean).map(String);
-    if (messages.length) return messages.join('\n');
+  if (!data || typeof data !== 'object') {
+    return {
+      fieldErrors: {},
+      formError: error?.message || 'Something went wrong',
+    };
   }
-  return error?.message || 'Something went wrong';
+  if (data.detail) return { fieldErrors: {}, formError: String(data.detail) };
+
+  const fieldErrors = {};
+  let formError = '';
+  for (const [field, value] of Object.entries(data)) {
+    const message = (Array.isArray(value) ? value : [value])
+      .filter(Boolean)
+      .map(String)
+      .join(' ');
+    if (field === 'non_field_errors') formError = message;
+    else fieldErrors[field] = message;
+  }
+  return { fieldErrors, formError };
 }
 
 /**
@@ -134,41 +146,65 @@ function OAuthButtons({ onOAuth, disabled }) {
   );
 }
 
-function FloatInput({ type = 'text', label, value, onChange, autoComplete }) {
+function FloatInput({
+  type = 'text',
+  label,
+  value,
+  onChange,
+  autoComplete,
+  error,
+}) {
   const id = useId();
   const [revealed, setRevealed] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword && revealed ? 'text' : type;
+  const errorId = `${id}-error`;
 
   return (
     <div className="auth-field">
-      <input
-        id={id}
-        type={inputType}
-        placeholder=" "
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={autoComplete}
-        className={isPassword ? 'auth-input-pw' : undefined}
-        required
-      />
-      <label htmlFor={id}>{label}</label>
-      {isPassword && (
-        <button
-          type="button"
-          className="auth-eye"
-          onClick={() => setRevealed((v) => !v)}
-          aria-label={revealed ? 'Hide password' : 'Show password'}
-          aria-pressed={revealed}
-        >
-          {revealed ? <EyeOffIcon /> : <EyeIcon />}
-        </button>
+      <div className="auth-field-box">
+        <input
+          id={id}
+          type={inputType}
+          placeholder=" "
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          className={isPassword ? 'auth-input-pw' : undefined}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? errorId : undefined}
+          required
+        />
+        <label htmlFor={id}>{label}</label>
+        {isPassword && (
+          <button
+            type="button"
+            className="auth-eye"
+            onClick={() => setRevealed((v) => !v)}
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+          >
+            {revealed ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        )}
+      </div>
+      {error && (
+        <div id={errorId} className="auth-field-error">
+          {error}
+        </div>
       )}
     </div>
   );
 }
 
-function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
+function LoginForm({
+  onSwitch,
+  onSubmit,
+  onOAuth,
+  loading,
+  fieldErrors,
+  formError,
+}) {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -187,6 +223,7 @@ function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
         value={usernameOrEmail}
         onChange={setUsernameOrEmail}
         autoComplete="username"
+        error={fieldErrors.username}
       />
       <FloatInput
         label="Password"
@@ -194,13 +231,14 @@ function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
         value={password}
         onChange={setPassword}
         autoComplete="current-password"
+        error={fieldErrors.password}
       />
 
       <div className="auth-forgot">
         <a href="#">Forgot your password?</a>
       </div>
 
-      {error && <div className="auth-error">{error}</div>}
+      {formError && <div className="auth-error">{formError}</div>}
 
       <button type="submit" className="auth-btn" disabled={loading}>
         {loading ? <span className="auth-spin" /> : 'Login'}
@@ -218,7 +256,14 @@ function LoginForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
   );
 }
 
-function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
+function RegisterForm({
+  onSwitch,
+  onSubmit,
+  onOAuth,
+  loading,
+  fieldErrors,
+  formError,
+}) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -238,6 +283,7 @@ function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
         value={username}
         onChange={setUsername}
         autoComplete="username"
+        error={fieldErrors.username}
       />
       <FloatInput
         label="Email"
@@ -245,6 +291,7 @@ function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
         value={email}
         onChange={setEmail}
         autoComplete="email"
+        error={fieldErrors.email}
       />
       <FloatInput
         label="Password"
@@ -252,9 +299,10 @@ function RegisterForm({ onSwitch, onSubmit, onOAuth, loading, error }) {
         value={password}
         onChange={setPassword}
         autoComplete="new-password"
+        error={fieldErrors.password}
       />
 
-      {error && <div className="auth-error">{error}</div>}
+      {formError && <div className="auth-error">{formError}</div>}
 
       <button type="submit" className="auth-btn" disabled={loading}>
         {loading ? <span className="auth-spin" /> : 'Create account'}
@@ -285,9 +333,12 @@ export default function AuthPage({ mode = 'login' }) {
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [fieldErrors, setFieldErrors] = useState({});
+
   // The backend callback lands failures on /login?oauth_error=<slug>; the
-  // param is already there on mount, so it can seed the error state directly.
-  const [error, setError] = useState(() => {
+  // param is already there on mount, so it can seed the banner directly. OAuth
+  // failures are never field-specific, so only the form-wide error is seeded.
+  const [formError, setFormError] = useState(() => {
     const slug = searchParams.get('oauth_error');
     return slug ? oauthErrorMessage(slug) : '';
   });
@@ -314,13 +365,16 @@ export default function AuthPage({ mode = 'login' }) {
   }, [searchParams, setSearchParams]);
 
   const wrap = async (action, data) => {
-    setError('');
+    setFieldErrors({});
+    setFormError('');
     setLoading(true);
     try {
       await action(data);
       navigate(from, { replace: true });
     } catch (e) {
-      setError(getErrorMessage(e));
+      const parsed = parseApiError(e);
+      setFieldErrors(parsed.fieldErrors);
+      setFormError(parsed.formError);
     } finally {
       setLoading(false);
     }
@@ -332,7 +386,8 @@ export default function AuthPage({ mode = 'login' }) {
   const handleRegister = (data) => wrap(register, data);
 
   const handleOAuth = async (provider) => {
-    setError('');
+    setFieldErrors({});
+    setFormError('');
     setLoading(true);
     try {
       stashOAuthFrom(from);
@@ -341,7 +396,9 @@ export default function AuthPage({ mode = 'login' }) {
       // buttons cannot be clicked again while the browser navigates away.
       redirectToProvider(authorize_url);
     } catch (e) {
-      setError(oauthErrorMessage(getErrorMessage(e)));
+      // The start endpoint reports failures as { error: <slug> }; anything
+      // else (network) falls through to the generic sign-in message.
+      setFormError(oauthErrorMessage(e?.response?.data?.error));
       setLoading(false);
     }
   };
@@ -360,7 +417,8 @@ export default function AuthPage({ mode = 'login' }) {
               onSubmit={handleLogin}
               onOAuth={handleOAuth}
               loading={loading}
-              error={error}
+              fieldErrors={fieldErrors}
+              formError={formError}
             />
           ) : (
             <RegisterForm
@@ -368,7 +426,8 @@ export default function AuthPage({ mode = 'login' }) {
               onSubmit={handleRegister}
               onOAuth={handleOAuth}
               loading={loading}
-              error={error}
+              fieldErrors={fieldErrors}
+              formError={formError}
             />
           )}
         </div>

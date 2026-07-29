@@ -140,7 +140,7 @@ describe('AuthPage', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('surfaces every field error on failed register, not just the first', async () => {
+  it('surfaces every field error under its own field on failed register', async () => {
     register.mockRejectedValue({
       response: {
         data: {
@@ -159,6 +159,15 @@ describe('AuthPage', () => {
     expect(
       screen.getByText(/This password is too common\./)
     ).toBeInTheDocument();
+    // Each error is tied to its field, not dumped into the form banner.
+    expect(screen.getByLabelText('Username')).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
+    expect(screen.getByLabelText('Password')).toHaveAttribute(
+      'aria-invalid',
+      'true'
+    );
     expect(navigate).not.toHaveBeenCalled();
   });
 
