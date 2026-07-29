@@ -31,19 +31,20 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: var(--gold);
+  color: var(--fg);
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
   max-width: 260px;
+  transition: color 0.13s;
 }
 .ct-back-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ct-back:hover .ct-back-title {
-  text-decoration: underline;
+.ct-back:hover {
+  color: var(--gold);
 }
 
 /* Problem strip: compact letter pills, the active one lit in the accent. */
