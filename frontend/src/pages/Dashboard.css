@@ -1287,6 +1287,7 @@
   flex: 1;
 }
 .up-row .um .nm {
+  display: block;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;

@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
 import { useMyContests } from '../../hooks/useMyContests';
-import { leaveContest } from '../../api/contests';
+import { joinContest, leaveContest } from '../../api/contests';
 import { formatDuration } from '../../utils/time';
 
 const MAX_ROWS = 4;
@@ -22,19 +23,28 @@ const isLive = (c) => {
 
 /**
  * MyContests — rail list of the rounds the current user is registered for that
- * haven't finished yet (live + upcoming), soonest first. "Going" leaves the
- * contest and refetches. Finished rounds live in the Contest History block.
+ * haven't finished yet (live + upcoming), soonest first. Finished rounds live
+ * in the Contest History block.
+ *
+ * Leaving flips the pill in place (Registered <-> Register) rather than dropping
+ * the row, so a mis-click is easy to undo; a left contest only disappears on the
+ * next page load, when the hook refetches.
  */
 export default function MyContests() {
   const I = Icons;
-  const { data, loading, error, reload } = useMyContests();
+  const { data, loading, error } = useMyContests();
 
-  const leave = async (c) => {
+  // Optimistic registration override: id -> registered? Rows are joined by
+  // definition, so a missing entry means "still registered".
+  const [reg, setReg] = useState({});
+  const isRegistered = (c) => reg[c.id] ?? true;
+  const toggle = async (c) => {
+    const joined = isRegistered(c);
+    setReg((m) => ({ ...m, [c.id]: !joined }));
     try {
-      await leaveContest(c.id);
-      reload();
+      await (joined ? leaveContest(c.id) : joinContest(c.id));
     } catch {
-      // leave the row as-is on failure
+      setReg((m) => ({ ...m, [c.id]: joined })); // revert on failure
     }
   };
 
@@ -84,9 +94,25 @@ export default function MyContests() {
                   </div>
                 </div>
                 <div className="ua">
-                  <button className="reg-pill done" onClick={() => leave(c)}>
-                    <I.checkBold size={13} /> Going
-                  </button>
+                  {live ? (
+                    // A live round can't be left — offer entry instead of a
+                    // no-op toggle. Points to the contest page (its workspace
+                    // once contest mode exists).
+                    <Link className="reg-pill go" to={`/contests/${c.id}`}>
+                      <I.play size={13} /> Enter round
+                    </Link>
+                  ) : isRegistered(c) ? (
+                    <button
+                      className="reg-pill done"
+                      onClick={() => toggle(c)}
+                    >
+                      <I.checkBold size={13} /> Registered
+                    </button>
+                  ) : (
+                    <button className="reg-pill go" onClick={() => toggle(c)}>
+                      <I.flag size={13} /> Register
+                    </button>
+                  )}
                 </div>
               </div>
             );
