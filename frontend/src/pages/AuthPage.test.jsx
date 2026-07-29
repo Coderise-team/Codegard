@@ -104,9 +104,9 @@ describe('AuthPage', () => {
     );
   });
 
-  it('shows a backend error and does not redirect on failed login', async () => {
+  it('shows a failed login in the banner and leaves the fields unmarked', async () => {
     login.mockRejectedValue({
-      response: { data: { detail: 'No active account found' } },
+      response: { data: { detail: 'Incorrect username/email or password.' } },
     });
     renderInRouter(<AuthPage />);
 
@@ -119,8 +119,15 @@ describe('AuthPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
     expect(
-      await screen.findByText('No active account found')
+      await screen.findByText('Incorrect username/email or password.')
     ).toBeInTheDocument();
+    // A form-level error is not tied to a field, so neither input is flagged.
+    expect(screen.getByLabelText('Username or email')).not.toHaveAttribute(
+      'aria-invalid'
+    );
+    expect(screen.getByLabelText('Password')).not.toHaveAttribute(
+      'aria-invalid'
+    );
     expect(navigate).not.toHaveBeenCalled();
   });
 
