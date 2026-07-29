@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
 import { useMyContests } from '../../hooks/useMyContests';
@@ -26,12 +26,14 @@ const isLive = (c) => {
  * haven't finished yet (live + upcoming), soonest first. Finished rounds live
  * in the Contest History block.
  *
- * Leaving flips the pill in place (Registered <-> Register) rather than dropping
- * the row, so a mis-click is easy to undo; a left contest only disappears on the
- * next page load, when the hook refetches.
+ * The whole row opens the contest (like the other dashboard list cards). A live
+ * round can't be left, so it carries no action; upcoming rows show a register
+ * toggle that flips in place — a left contest only disappears on the next page
+ * load, when the hook refetches, so a mis-click is easy to undo.
  */
 export default function MyContests() {
   const I = Icons;
+  const navigate = useNavigate();
   const { data, loading, error } = useMyContests();
 
   // Optimistic registration override: id -> registered? Rows are joined by
@@ -73,15 +75,17 @@ export default function MyContests() {
             const dl = dayCell(c.start_time);
             const live = isLive(c);
             return (
-              <div className="up-row" key={c.id}>
+              <div
+                className="up-row"
+                key={c.id}
+                onClick={() => navigate(`/contests/${c.id}`)}
+              >
                 <div className="up-cal">
                   <span className="d">{dl.d}</span>
                   <span className="mo">{dl.mo}</span>
                 </div>
                 <div className="um">
-                  <Link className="nm" to={`/contests/${c.id}`}>
-                    {c.title}
-                  </Link>
+                  <div className="nm">{c.title}</div>
                   <div className="mt">
                     {live ? (
                       <span className="hbadge live">
@@ -93,27 +97,31 @@ export default function MyContests() {
                     <span>· {formatDuration(c.start_time, c.end_time)}</span>
                   </div>
                 </div>
-                <div className="ua">
-                  {live ? (
-                    // A live round can't be left — offer entry instead of a
-                    // no-op toggle. Points to the contest page (its workspace
-                    // once contest mode exists).
-                    <Link className="reg-pill go" to={`/contests/${c.id}`}>
-                      <I.play size={13} /> Enter round
-                    </Link>
-                  ) : isRegistered(c) ? (
-                    <button
-                      className="reg-pill done"
-                      onClick={() => toggle(c)}
-                    >
-                      <I.checkBold size={13} /> Registered
-                    </button>
-                  ) : (
-                    <button className="reg-pill go" onClick={() => toggle(c)}>
-                      <I.flag size={13} /> Register
-                    </button>
-                  )}
-                </div>
+                {!live && (
+                  <div className="ua">
+                    {isRegistered(c) ? (
+                      <button
+                        className="reg-pill done"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggle(c);
+                        }}
+                      >
+                        <I.checkBold size={13} /> Registered
+                      </button>
+                    ) : (
+                      <button
+                        className="reg-pill go"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggle(c);
+                        }}
+                      >
+                        <I.flag size={13} /> Register
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
