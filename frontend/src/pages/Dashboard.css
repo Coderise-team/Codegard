@@ -979,12 +979,6 @@
 .subtab tbody tr:hover {
   background: var(--card-2);
 }
-.subtab .st-id {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--fg3);
-  white-space: nowrap;
-}
 .subtab .st-title {
   font-weight: 600;
 }
