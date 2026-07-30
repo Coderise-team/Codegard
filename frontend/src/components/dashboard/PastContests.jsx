@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import EmptyState from './EmptyState';
 import { useContestHistory } from '../../hooks/useContestHistory';
@@ -43,7 +44,11 @@ export default function PastContests({ username }) {
               const hasDelta = c.rating_delta != null;
               const up = c.rating_delta >= 0;
               return (
-                <a key={c.id} className="lrow crow" href="#">
+                <Link
+                  key={c.id}
+                  className="lrow crow"
+                  to={`/contests/${c.id}`}
+                >
                   <div className="lr-main">
                     <div className="lr-title">{c.title}</div>
                     <div className="lr-sub">
@@ -63,7 +68,7 @@ export default function PastContests({ username }) {
                       </span>
                     )}
                   </div>
-                </a>
+                </Link>
               );
             })}
           </div>
