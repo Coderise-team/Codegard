@@ -1,7 +1,7 @@
-/* ContestRail.css - the workspace rail wrapper + its header. The standings
-   table itself is StandingsList (shared with the contest page). */
+/* ContestLeaderboard.css - the workspace leaderboard wrapper + its header. The
+   standings table itself is StandingsList (shared with the contest page). */
 
-.cpp-rail {
+.cpp-lb {
   flex-shrink: 0;
   width: 300px;
   display: flex;
@@ -11,7 +11,7 @@
   border-left: 1px solid var(--border);
 }
 
-.cpp-rail-hd {
+.cpp-lb-hd {
   flex-shrink: 0;
   height: 40px;
   padding: 0 14px;
@@ -20,7 +20,7 @@
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
 }
-.cpp-rail-hd .t {
+.cpp-lb-hd .t {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -28,7 +28,7 @@
   font-weight: 700;
   color: var(--gold-hi);
 }
-.cpp-rail-live {
+.cpp-lb-live {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -37,7 +37,7 @@
   letter-spacing: 0.1em;
   color: var(--wa);
 }
-.cpp-rail-live .d {
+.cpp-lb-live .d {
   width: 6px;
   height: 6px;
   border-radius: 50%;

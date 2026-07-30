@@ -5,7 +5,7 @@ import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import VerdictToast from '../components/problem/VerdictToast';
 import NotFoundPage from './NotFoundPage';
-import ContestRail from '../components/problem/ContestRail';
+import ContestLeaderboard from '../components/problem/ContestLeaderboard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContestProblem } from '../hooks/useContestProblem';
 import { contestState } from '../hooks/useContest';
@@ -151,7 +151,7 @@ export default function ContestProblemPage() {
           onSubmit={submit}
           rail={
             showLb ? (
-              <ContestRail
+              <ContestLeaderboard
                 live={isLive}
                 panel={panel}
                 problemsCount={contest.problems.length}
