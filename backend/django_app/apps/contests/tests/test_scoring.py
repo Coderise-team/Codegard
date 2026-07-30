@@ -215,6 +215,9 @@ class TestLeaderboard:
     def test_higher_score_ranks_first(
         self, user, other, problem, problem2, active_contest
     ):
+        # The leaderboard is built from participants, so both must be registered.
+        active_contest.participants.add(user, other)
+
         # user solves both problems
         submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         submit_at(user, problem2, active_contest, Submission.Verdict.AC, 20)
@@ -224,13 +227,16 @@ class TestLeaderboard:
         submit_at(other, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(other, active_contest)
 
+        # Rows are the participants themselves, annotated with their score.
         lb = list(get_leaderboard(active_contest))
-        assert lb[0].user == user
-        assert lb[1].user == other
+        assert lb[0] == user
+        assert lb[1] == other
 
     def test_same_score_lower_penalty_ranks_first(
         self, user, other, problem, active_contest
     ):
+        active_contest.participants.add(user, other)
+
         # user — AC at 10 min (penalty=10)
         submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -241,7 +247,47 @@ class TestLeaderboard:
         calculate_score(other, active_contest)
 
         lb = list(get_leaderboard(active_contest))
-        assert lb[0].user == user  # lower penalty wins
+        assert lb[0] == user  # lower penalty wins
+
+    def test_no_show_appears_with_zeros_below_solvers(
+        self, user, other, active_contest
+    ):
+        """A registered no-show is a row of zeros, sorted under anyone who solved."""
+        active_contest.participants.add(user, other)
+        ContestScore.objects.create(
+            user=other, contest=active_contest, score=100, penalty=5, solved_count=1
+        )
+
+        rows = {r.username: r for r in get_leaderboard(active_contest)}
+        assert set(rows) == {user.username, other.username}
+        me = rows[user.username]
+        assert (me.score, me.penalty, me.solved_count) == (0, 0, 0)
+        assert me.last_ac_at is None
+        assert me.rating_delta is None
+
+        order = [r.username for r in get_leaderboard(active_contest)]
+        assert order == [other.username, user.username]  # no-show at the bottom
+
+    def test_dense_rank_ties_share_a_place(self, active_contest, django_user_model):
+        """Equal results share a place; the next one is +1 (1, 2, 2, 3)."""
+        tie = active_contest.start_time + timedelta(minutes=5)
+        specs = [("a", 300, tie), ("b", 200, tie), ("c", 200, tie), ("d", 0, None)]
+        for name, score, last in specs:
+            u = django_user_model.objects.create_user(
+                username=name, email=f"{name}@t.com", password="pass"
+            )
+            active_contest.participants.add(u)
+            ContestScore.objects.create(
+                user=u,
+                contest=active_contest,
+                score=score,
+                penalty=10,
+                solved_count=1 if score else 0,
+                last_ac_at=last,
+            )
+
+        ranks = {r.username: r.rank for r in get_leaderboard(active_contest)}
+        assert ranks == {"a": 1, "b": 2, "c": 2, "d": 3}
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +306,7 @@ class TestLeaderboardAPI:
     def test_leaderboard_contains_correct_fields(
         self, api_client, user, problem, active_contest
     ):
+        active_contest.participants.add(user)
         api_client.force_authenticate(user=user)
         submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -279,6 +326,7 @@ class TestLeaderboardAPI:
     def test_leaderboard_rank_starts_at_1(
         self, api_client, user, problem, active_contest
     ):
+        active_contest.participants.add(user)
         api_client.force_authenticate(user=user)
         submit_at(user, problem, active_contest, Submission.Verdict.AC, 10)
         calculate_score(user, active_contest)
@@ -344,6 +392,8 @@ def fill_scores(contest, django_user_model, n):
         participant = django_user_model.objects.create_user(
             username=f"p{i}", email=f"p{i}@test.com", password="pass"
         )
+        # The leaderboard lists participants, so each scorer must be registered.
+        contest.participants.add(participant)
         ContestScore.objects.create(
             user=participant, contest=contest, score=100 * (n - i), penalty=i
         )
@@ -370,6 +420,7 @@ class TestLeaderboardPagination:
         assert [row["rank"] for row in response.data["results"]] == [11, 12]
 
     def test_full_tie_is_ordered_by_id(self, api_client, user, other, active_contest):
+        active_contest.participants.add(user, other)
         ContestScore.objects.create(user=user, contest=active_contest)
         ContestScore.objects.create(user=other, contest=active_contest)
         api_client.force_authenticate(user=user)
@@ -378,6 +429,7 @@ class TestLeaderboardPagination:
         assert usernames == [user.username, other.username]
 
     def test_rating_delta_in_response(self, api_client, user, active_contest):
+        active_contest.participants.add(user)
         ContestScore.objects.create(
             user=user, contest=active_contest, score=100, rating_delta=48
         )

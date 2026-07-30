@@ -26,6 +26,16 @@ def _connect(submission_id, ticket=None):
     return WebsocketCommunicator(ws_app, path)
 
 
+async def _assert_rejected(communicator) -> None:
+    """The consumer accepts before closing with 4001, so the client sees a
+    successful handshake followed by a close frame carrying the code."""
+    connected, _ = await communicator.connect()
+    assert connected  # accept() was called first
+    close_msg = await communicator.receive_output(timeout=1)
+    assert close_msg["type"] == "websocket.close"
+    assert close_msg.get("code") == 4001
+
+
 @pytest.fixture(autouse=True)
 def _clear_cache():
     cache.clear()
@@ -78,9 +88,7 @@ async def test_reused_ticket_is_rejected(user, submission):
     await first.disconnect()
 
     second = _connect(submission.pk, ticket)  # same ticket again
-    connected, code = await second.connect()
-    assert not connected
-    assert code == 4001
+    await _assert_rejected(second)
 
 
 @pytest.mark.asyncio
@@ -88,26 +96,19 @@ async def test_reused_ticket_is_rejected(user, submission):
 async def test_expired_ticket_is_rejected(user, submission):
     ticket = await _issue(user.id)
     await _evict(ticket)  # simulate TTL expiry: key no longer in cache
-    connected, code = await _connect(submission.pk, ticket).connect()
-    assert not connected
-    assert code == 4001
+    await _assert_rejected(_connect(submission.pk, ticket))
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_missing_ticket_is_rejected(submission):
-    connected, code = await _connect(submission.pk, ticket=None).connect()
-    assert not connected
-    assert code == 4001
+    await _assert_rejected(_connect(submission.pk, ticket=None))
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_garbage_ticket_is_rejected(submission):
-    communicator = _connect(submission.pk, ticket="not-a-real-ticket")
-    connected, code = await communicator.connect()
-    assert not connected
-    assert code == 4001
+    await _assert_rejected(_connect(submission.pk, ticket="not-a-real-ticket"))
 
 
 @pytest.mark.asyncio
@@ -116,9 +117,7 @@ async def test_ticket_for_missing_user_is_rejected(submission):
     # Ticket is valid in the cache but points at a user that no longer exists
     # (e.g. deleted between minting and connecting) -> AnonymousUser -> 4001.
     ticket = await _issue(999_999_999)
-    connected, code = await _connect(submission.pk, ticket).connect()
-    assert not connected
-    assert code == 4001
+    await _assert_rejected(_connect(submission.pk, ticket))
 
 
 # --- helpers (cache ops must be called off the async loop) -----------------

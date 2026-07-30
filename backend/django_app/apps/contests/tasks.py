@@ -26,10 +26,10 @@ def update_contest_statuses(self) -> dict:
     finished = Contest.objects.filter(end_time__lt=now).exclude(
         status=Contest.Status.FINISHED
     )
-    finished_ids = list(finished.values_list("pk", flat=True))
+    # No contest_ended here: "time is up" isn't the same as "results are final".
+    # The event now rides with apply_finished_contest_ratings, so viewers get
+    # the ELO column filled in instead of a socket that closed a minute early.
     finished_updated = finished.update(status=Contest.Status.FINISHED, updated_at=now)
-    if finished_updated:
-        _broadcast_contest_ended(finished_ids)
 
     # Active: start_time <= now <= end_time
     active = Contest.objects.filter(start_time__lte=now, end_time__gte=now).exclude(
@@ -117,6 +117,10 @@ def apply_finished_contest_ratings(self) -> dict:
         try:
             participants_updated += apply_contest_ratings(contest)
             processed += 1
+            # Only now are the results final. apply_contest_ratings has already
+            # written the deltas and busted the leaderboard cache, so a client
+            # refetching on this event sees the rated table.
+            _broadcast_contest_ended([contest.pk])
         except Exception:
             logger.exception("Failed to apply ratings for contest %s", contest.pk)
 
@@ -131,17 +135,12 @@ def apply_finished_contest_ratings(self) -> dict:
 
 def _broadcast_contest_ended(contest_ids: list[int]) -> None:
     """Push a ``contest_ended`` event to each contest's ``contest_<id>`` group so
-    viewers' live pages close out. No-op if the channel layer isn't configured."""
+    viewers' live pages close out."""
+    from apps.realtime.broadcast import group_send
     from apps.realtime.events import ContestEvents
-    from asgiref.sync import async_to_sync
-    from channels.layers import get_channel_layer
-
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return
 
     for contest_id in contest_ids:
-        async_to_sync(channel_layer.group_send)(
+        group_send(
             f"contest_{contest_id}",
             {"type": ContestEvents.CONTEST_ENDED},
         )
