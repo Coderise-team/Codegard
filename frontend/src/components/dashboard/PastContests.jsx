@@ -22,6 +22,7 @@ export default function PastContests({ username }) {
         title="No contests played"
         sub="Register for an upcoming round to start building your rating."
         cta="See upcoming"
+        to="/contests"
       />
     );
   }
