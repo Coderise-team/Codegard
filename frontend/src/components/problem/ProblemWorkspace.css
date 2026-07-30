@@ -468,3 +468,58 @@
   align-items: center;
   gap: 10px;
 }
+
+/* ── Responsive: stack the workspace on a narrow screen ────────
+   Shared by the solo and contest pages (both mount ProblemWorkspace); the
+   page shells and topbars keep their own breakpoints. */
+@media (max-width: 640px) {
+  .pp-workspace,
+  .pp-pane {
+    max-width: 100%;
+  }
+  .pp-workspace {
+    flex-direction: column;
+    flex: none;
+    overflow: visible;
+  }
+  .pp-vsplit {
+    display: none;
+  }
+  .pp-pane {
+    overflow: visible;
+  }
+  /* natural height for the statement; overrides the splitter's inline flexBasis
+     (a height in column direction) */
+  .pp-problem-pane {
+    flex: none !important;
+  }
+  .pp-pane-body {
+    flex: none;
+    overflow: visible;
+    overflow-x: auto;
+  }
+  /* the JSX sets an inline flex: 1 (basis 0) — pin the editor height */
+  .pp-editor-pane {
+    flex: none !important;
+    height: 70vh;
+    overflow: hidden;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  /* examples: input/output stack instead of two columns */
+  .pp-example-grid {
+    grid-template-columns: 1fr;
+  }
+  .pp-io-cell + .pp-io-cell {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  /* submissions table: tighter cells on a narrow screen */
+  .pp-subs-table th,
+  .pp-subs-table td {
+    padding: 8px 8px;
+  }
+  .pp-subs-table {
+    font-size: 12px;
+  }
+}

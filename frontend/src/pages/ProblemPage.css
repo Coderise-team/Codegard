@@ -38,7 +38,8 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* ── Responsive: solo page on a narrow screen ────────── */
+/* ── Responsive: solo shell + topbar on a narrow screen ──────────
+   The workspace stacking itself lives in ProblemWorkspace.css (shared). */
 @media (max-width: 640px) {
   /* body is overflow:hidden globally (global.css), so the app itself is
      the scroll container; nothing may widen the page sideways */
@@ -46,10 +47,6 @@
     height: 100dvh;
     overflow-y: auto;
     overflow-x: clip;
-  }
-  .pp-workspace,
-  .pp-pane {
-    max-width: 100%;
   }
   .pp-topbar {
     position: sticky;
@@ -66,56 +63,6 @@
   }
   .pp-topbar .user-chip .meta {
     display: none;
-  }
-
-  /* the workspace grows with its content instead of filling the viewport;
-     the app container above provides the scroll */
-  .pp-workspace {
-    flex-direction: column;
-    flex: none;
-    overflow: visible;
-  }
-  .pp-vsplit {
-    display: none;
-  }
-  .pp-pane {
-    overflow: visible;
-  }
-  /* natural height for the statement; also overrides the splitter's inline
-     flexBasis (which would be a height in column direction) */
-  .pp-problem-pane {
-    flex: none !important;
-  }
-  .pp-pane-body {
-    flex: none;
-    overflow: visible;
-    overflow-x: auto;
-  }
-  /* the JSX sets an inline flex: 1 (basis 0) — pin the editor height */
-  .pp-editor-pane {
-    flex: none !important;
-    height: 70vh;
-    overflow: hidden;
-    border-left: 0;
-    border-top: 1px solid var(--border);
-  }
-
-  /* examples: input/output stack instead of two columns */
-  .pp-example-grid {
-    grid-template-columns: 1fr;
-  }
-  .pp-io-cell + .pp-io-cell {
-    border-left: 0;
-    border-top: 1px solid var(--border);
-  }
-
-  /* submissions table: tighter cells on a narrow screen */
-  .pp-subs-table th,
-  .pp-subs-table td {
-    padding: 8px 8px;
-  }
-  .pp-subs-table {
-    font-size: 12px;
   }
 
   .pp-toast-wrap {
