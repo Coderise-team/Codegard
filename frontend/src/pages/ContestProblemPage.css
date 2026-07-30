@@ -44,3 +44,51 @@
   z-index: 40;
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* ── Responsive: contest shell + topbar + leaderboard ────────────
+   The workspace stacking itself lives in ProblemWorkspace.css (shared). */
+@media (max-width: 640px) {
+  /* the app container is the scroll surface; nothing widens the page */
+  .cpp-app {
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: clip;
+  }
+  .ct-topbar {
+    position: sticky;
+    top: 0;
+    gap: 10px;
+    padding: 0 12px;
+  }
+  /* trim the left group: keep the burger + logo mark + a back trophy */
+  .ct-topbar .logo > span:last-child,
+  .ct-topbar .ct-div,
+  .ct-back-title {
+    display: none;
+  }
+  /* timer: keep the clock, drop the label */
+  .ct-timer {
+    padding: 6px 10px;
+  }
+  .ct-timer-lbl {
+    display: none;
+  }
+  /* leaderboard toggle + user chip collapse to icons */
+  .ct-lb-toggle {
+    padding: 0 9px;
+  }
+  .ct-lb-txt {
+    display: none;
+  }
+  .ct-topbar .user-chip .meta {
+    display: none;
+  }
+
+  /* the standings stack full-width under the editor with their own scroll */
+  .cpp-lb {
+    width: 100%;
+    height: 60vh;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}

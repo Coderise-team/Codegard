@@ -110,7 +110,9 @@ export default function ContestTopbar({
           aria-pressed={showLeaderboard}
         >
           <Icons.trophy size={16} />
-          {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
+          <span className="ct-lb-txt">
+            {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
+          </span>
         </button>
 
         <UserMenu user={user} />
