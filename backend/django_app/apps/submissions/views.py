@@ -41,6 +41,9 @@ class SubmissionViewSet(
         problem = self.request.query_params.get("problem")
         if problem and problem.isdigit():
             qs = qs.filter(problem_id=problem)
+        contest = self.request.query_params.get("contest")
+        if contest and contest.isdigit():
+            qs = qs.filter(contest_id=contest)
         return qs
 
     def get_serializer_class(self):
