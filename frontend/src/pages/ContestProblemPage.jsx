@@ -44,7 +44,12 @@ export default function ContestProblemPage() {
 
   const { contest, problem, loading, notFound } = useContestProblem(id, letter);
   const { data: languages, loading: langsLoading } = useLanguages();
-  const { data: submissions, reload } = useProblemSubmissions(problem?.id);
+  // Scope submissions to this round — the contest workspace must not surface
+  // training attempts at the same problem.
+  const { data: submissions, reload } = useProblemSubmissions(
+    problem?.id,
+    Number(id)
+  );
 
   // Same submit -> judge -> toast flow as the solo page, but the attempt is
   // filed against the round, so it counts toward the standings and rating.
