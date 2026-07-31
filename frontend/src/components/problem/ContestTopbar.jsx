@@ -104,21 +104,21 @@ export default function ContestTopbar({
         </div>
       </div>
 
-      <div className="ct-right">
-        <button
-          type="button"
-          className={`ct-lb-toggle${showLeaderboard ? ' is-on' : ''}`}
-          onClick={onToggleLeaderboard}
-          aria-pressed={showLeaderboard}
-        >
-          <Icons.trophy size={16} />
-          <span className="ct-lb-txt">
-            {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
-          </span>
-        </button>
+      {/* Toggle and user are direct children (not wrapped in a right group) so
+          the phone layout can split them onto different rows. */}
+      <button
+        type="button"
+        className={`ct-lb-toggle${showLeaderboard ? ' is-on' : ''}`}
+        onClick={onToggleLeaderboard}
+        aria-pressed={showLeaderboard}
+      >
+        <Icons.trophy size={16} />
+        <span className="ct-lb-txt">
+          {showLeaderboard ? 'Hide leaderboard' : 'Show leaderboard'}
+        </span>
+      </button>
 
-        <UserMenu user={user} />
-      </div>
+      <UserMenu user={user} />
     </header>
   );
 }

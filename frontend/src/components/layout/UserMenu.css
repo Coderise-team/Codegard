@@ -29,6 +29,10 @@
 .user-chip .handle {
   font-size: 13px;
   font-weight: 700;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .user-chip .avatar {
   width: 32px;

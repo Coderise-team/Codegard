@@ -13,11 +13,14 @@
   border-bottom: 1px solid var(--border);
   z-index: 30;
 }
-/* Four direct children — left group, problem strip, timer, right group — laid
+/* Five direct children — left group, problem strip, timer, toggle, user — laid
    out by order so the responsive breakpoints can reflow them into rows. On a
-   wide screen: left | strip (fills, centered) | timer | toggle + user. */
+   wide screen: left | strip (fills, centered) | timer | toggle | user. */
 .ct-left {
   order: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 .ct-strip {
   order: 2;
@@ -27,14 +30,11 @@
 .ct-timer {
   order: 3;
 }
-.ct-right {
+.ct-lb-toggle {
   order: 4;
 }
-.ct-left,
-.ct-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.ct-topbar > .user-menu {
+  order: 5;
 }
 .ct-div {
   width: 1px;
@@ -214,8 +214,10 @@
     padding-top: 8px;
     padding-bottom: 8px;
   }
+  /* order 6 so the strip sits after the user (order 5) — otherwise they share
+     a row and the user is pushed below the pips */
   .ct-strip {
-    order: 5;
+    order: 6;
     flex: 0 0 100%;
     justify-content: center;
   }
@@ -240,27 +242,50 @@
 }
 
 /* ── Phone: three rows ──────────────────────────────────────────────────
-   Row 1: back (trophy + contest name) and the timer.
-   Row 2: the leaderboard toggle and the user (avatar pinned right).
+   The narrowest phones (360px) can't fit the contest name and the timer on one
+   line, so pair the name with the user instead — that always fits — and put the
+   timer with the toggle on the next line.
+   Row 1: back (trophy + contest name), then the user (pinned right).
+   Row 2: the leaderboard toggle, then the timer (pinned right).
    Row 3: the problem strip, centered. (The logo is already gone, see ≤900.) */
 @media (max-width: 640px) {
   .ct-topbar {
-    gap: 10px;
+    gap: 8px 10px;
     padding-left: 12px;
     padding-right: 12px;
   }
-  .ct-timer {
+  .ct-topbar > .user-menu {
     order: 2;
     margin-left: auto;
+    min-width: 0;
   }
-  .ct-right {
+  .ct-lb-toggle {
     order: 3;
-    flex: 0 0 100%;
-    justify-content: space-between;
+  }
+  .ct-timer {
+    order: 4;
+    margin-left: auto;
   }
   .ct-strip {
-    order: 4;
+    order: 5;
     flex: 0 0 100%;
     justify-content: center;
+  }
+}
+
+/* ── Ultra-narrow (≤350, e.g. the Galaxy Z Fold cover screen) ────────────
+   The toggle and timer no longer fit on one line, so the toggle takes row 2 on
+   its own and the timer drops onto row 3, left of the (scrollable) strip. */
+@media (max-width: 350px) {
+  .ct-lb-toggle {
+    flex: 0 0 100%;
+    justify-content: flex-start;
+  }
+  .ct-timer {
+    margin-left: 0;
+  }
+  .ct-strip {
+    flex: 1 1 auto;
+    justify-content: flex-start;
   }
 }
