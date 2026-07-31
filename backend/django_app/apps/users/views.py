@@ -308,14 +308,13 @@ class UserContestHistoryView(APIView):
     def get(self, request, username: str):
         from apps.contests.serializers import ContestHistorySerializer
         from apps.contests.services import get_contest_history
-
-        from .pagination import ContestHistoryPagination
+        from core.pagination import ClientPageSizePagination
 
         user = get_object_or_404(User, username=username)
         history = get_contest_history(user)
 
         # APIView has no built-in pagination, so drive the paginator by hand.
-        paginator = ContestHistoryPagination()
+        paginator = ClientPageSizePagination()
         page = paginator.paginate_queryset(history, request, view=self)
         serializer = ContestHistorySerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -335,8 +334,7 @@ class UserSubmissionsView(APIView):
 
     def get(self, request, username: str):
         from apps.submissions.serializers import PublicSubmissionSerializer
-
-        from .pagination import UserSubmissionsPagination
+        from core.pagination import ClientPageSizePagination
 
         user = get_object_or_404(User, username=username)
         submissions = (
@@ -344,7 +342,7 @@ class UserSubmissionsView(APIView):
             .select_related("problem")
             .order_by("-created_at")
         )
-        paginator = UserSubmissionsPagination()
+        paginator = ClientPageSizePagination()
         page = paginator.paginate_queryset(submissions, request, view=self)
         serializer = PublicSubmissionSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)

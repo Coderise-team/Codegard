@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
+from core.pagination import ClientPageSizePagination
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -12,7 +13,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from .models import Contest, ContestScore
-from .pagination import ContestListPagination, ContestPanelPagination
+from .pagination import ContestPanelPagination
 from .serializers import (
     ContestDetailSerializer,
     ContestRegistrantSerializer,
@@ -47,7 +48,7 @@ class ContestViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Contest.objects.prefetch_related("problems").all()
-    pagination_class = ContestListPagination
+    pagination_class = ClientPageSizePagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["title"]
     ordering_fields = ["start_time"]
