@@ -25,7 +25,7 @@
 .ct-strip {
   order: 2;
   flex: 1;
-  justify-content: center;
+  justify-content: safe center;
 }
 .ct-timer {
   order: 3;
@@ -219,7 +219,7 @@
   .ct-strip {
     order: 6;
     flex: 0 0 100%;
-    justify-content: center;
+    justify-content: safe center;
   }
   /* right-align the timer + toggle + user as one cluster on the first row */
   .ct-timer {
@@ -266,26 +266,21 @@
     order: 4;
     margin-left: auto;
   }
+  /* pips centered when they fit, but scrollable (with a reachable start) once
+     there are too many to fit the row */
   .ct-strip {
     order: 5;
     flex: 0 0 100%;
-    justify-content: center;
+    justify-content: safe center;
   }
 }
 
 /* ── Ultra-narrow (≤350, e.g. the Galaxy Z Fold cover screen) ────────────
-   The toggle and timer no longer fit on one line, so the toggle takes row 2 on
-   its own and the timer drops onto row 3, left of the (scrollable) strip. */
+   The toggle + timer no longer fit on one line, so the timer wraps to its own
+   row; keep it left-aligned instead of pinned right. The toggle stays at its
+   natural width (like every other phone) and the pips stay centered. */
 @media (max-width: 350px) {
-  .ct-lb-toggle {
-    flex: 0 0 100%;
-    justify-content: flex-start;
-  }
   .ct-timer {
     margin-left: 0;
-  }
-  .ct-strip {
-    flex: 1 1 auto;
-    justify-content: flex-start;
   }
 }
