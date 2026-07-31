@@ -45,10 +45,17 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
-/* ── Responsive: contest shell + topbar + leaderboard ────────────
-   The workspace stacking itself lives in ProblemWorkspace.css (shared). */
+/* The standings scrim only exists on a phone (see the media query below). */
+.cpp-lb-scrim {
+  display: none;
+}
+
+/* ── Responsive: contest shell + leaderboard overlay ─────────────
+   The workspace stacking lives in ProblemWorkspace.css and the topbar reflow in
+   ContestTopbar.css; here we own the page shell and the phone leaderboard. */
 @media (max-width: 640px) {
-  /* the app container is the scroll surface; nothing widens the page */
+  /* The app container is the scroll surface (body is overflow:hidden globally);
+     the workspace below grows with its content and this scrolls it. */
   .cpp-app {
     height: 100dvh;
     overflow-y: auto;
@@ -57,38 +64,27 @@
   .ct-topbar {
     position: sticky;
     top: 0;
-    gap: 10px;
-    padding: 0 12px;
-  }
-  /* trim the left group: keep the burger + logo mark + a back trophy */
-  .ct-topbar .logo > span:last-child,
-  .ct-topbar .ct-div,
-  .ct-back-title {
-    display: none;
-  }
-  /* timer: keep the clock, drop the label */
-  .ct-timer {
-    padding: 6px 10px;
-  }
-  .ct-timer-lbl {
-    display: none;
-  }
-  /* leaderboard toggle + user chip collapse to icons */
-  .ct-lb-toggle {
-    padding: 0 9px;
-  }
-  .ct-lb-txt {
-    display: none;
-  }
-  .ct-topbar .user-chip .meta {
-    display: none;
   }
 
-  /* the standings stack full-width under the editor with their own scroll */
+  /* The standings slide in from the right and cover the editor on purpose: a
+     quick glance, then close — so idle phones stop polling the board. */
   .cpp-lb {
-    width: 100%;
-    height: 60vh;
-    border-left: 0;
-    border-top: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 86vw);
+    height: auto;
+    z-index: 60;
+    border-left: 1px solid var(--border);
+    border-top: 0;
+    box-shadow: -14px 0 40px rgba(0, 0, 0, 0.5);
+  }
+  .cpp-lb-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0, 0, 0, 0.5);
   }
 }

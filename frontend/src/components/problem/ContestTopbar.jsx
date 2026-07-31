@@ -86,23 +86,25 @@ export default function ContestTopbar({
         })}
       </div>
 
-      <div className="ct-right">
-        <div
-          className={`ct-timer${urgent ? ' urgent' : ''}${
-            state === 'finished' ? ' done' : ''
-          }`}
-        >
-          {state !== 'finished' && <span className="ct-timer-pulse" />}
-          <div className="ct-timer-body">
-            <span className="ct-timer-lbl">
-              {state === 'finished' ? 'Round' : 'Ends in'}
-            </span>
-            <span className="ct-timer-val">
-              {state === 'finished' ? 'Finished' : fmtCountdown(secondsLeft)}
-            </span>
-          </div>
+      {/* A direct child (not nested in ct-right) so the responsive layout can
+          place the timer on the first row while the toggle + user drop below. */}
+      <div
+        className={`ct-timer${urgent ? ' urgent' : ''}${
+          state === 'finished' ? ' done' : ''
+        }`}
+      >
+        {state !== 'finished' && <span className="ct-timer-pulse" />}
+        <div className="ct-timer-body">
+          <span className="ct-timer-lbl">
+            {state === 'finished' ? 'Round' : 'Ends in'}
+          </span>
+          <span className="ct-timer-val">
+            {state === 'finished' ? 'Finished' : fmtCountdown(secondsLeft)}
+          </span>
         </div>
+      </div>
 
+      <div className="ct-right">
         <button
           type="button"
           className={`ct-lb-toggle${showLeaderboard ? ' is-on' : ''}`}

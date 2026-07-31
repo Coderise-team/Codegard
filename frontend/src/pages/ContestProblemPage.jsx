@@ -174,6 +174,15 @@ export default function ContestProblemPage() {
         </div>
       )}
       {toast && <VerdictToast {...toast} onClose={() => setToast(null)} />}
+      {/* Phone only (CSS-gated): tap-anywhere backdrop that closes the
+          leaderboard overlay so an idle phone stops polling the board. */}
+      {showLb && (
+        <div
+          className="cpp-lb-scrim"
+          onClick={() => setShowLb(false)}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }

@@ -6,13 +6,29 @@
   height: var(--topbar-h);
   flex-shrink: 0;
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
+  align-items: center;
   gap: 18px;
   padding: 0 18px;
   background: var(--card);
   border-bottom: 1px solid var(--border);
   z-index: 30;
+}
+/* Four direct children — left group, problem strip, timer, right group — laid
+   out by order so the responsive breakpoints can reflow them into rows. On a
+   wide screen: left | strip (fills, centered) | timer | toggle + user. */
+.ct-left {
+  order: 1;
+}
+.ct-strip {
+  order: 2;
+  flex: 1;
+  justify-content: center;
+}
+.ct-timer {
+  order: 3;
+}
+.ct-right {
+  order: 4;
 }
 .ct-left,
 .ct-right {
@@ -184,4 +200,67 @@
   background: var(--gold-soft);
   border-color: var(--gold-line);
   color: var(--gold-hi);
+}
+
+/* ── Tablet: the problem strip drops to its own centered second row ──────
+   The first row keeps (logo +) contest name + timer + toggle + user on one
+   line, sized to its tallest element (the timer), nothing overflowing. */
+@media (max-width: 1024px) {
+  .ct-topbar {
+    height: auto;
+    min-height: var(--topbar-h);
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .ct-strip {
+    order: 5;
+    flex: 0 0 100%;
+    justify-content: center;
+  }
+  /* right-align the timer + toggle + user as one cluster on the first row */
+  .ct-timer {
+    margin-left: auto;
+  }
+  /* let the contest name ellipsis-truncate instead of widening the row */
+  .ct-left,
+  .ct-back {
+    min-width: 0;
+  }
+}
+
+/* Below ~900 the platform logo no longer fits alongside all the controls on
+   one row (row 1 needs ~850px with it), so drop it. The contest name stays. */
+@media (max-width: 900px) {
+  .ct-left .logo,
+  .ct-div {
+    display: none;
+  }
+}
+
+/* ── Phone: three rows ──────────────────────────────────────────────────
+   Row 1: back (trophy + contest name) and the timer.
+   Row 2: the leaderboard toggle and the user (avatar pinned right).
+   Row 3: the problem strip, centered. (The logo is already gone, see ≤900.) */
+@media (max-width: 640px) {
+  .ct-topbar {
+    gap: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .ct-timer {
+    order: 2;
+    margin-left: auto;
+  }
+  .ct-right {
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: space-between;
+  }
+  .ct-strip {
+    order: 4;
+    flex: 0 0 100%;
+    justify-content: center;
+  }
 }

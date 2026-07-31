@@ -52,16 +52,15 @@
     position: sticky;
     top: 0;
   }
-  /* tighten the topbar: burger + logo mark + title + avatar */
+  /* mobile topbar = burger + problem title only: the platform logo and the
+     avatar are dropped (the other mobile screens don't carry them either) */
   .pp-tb-left {
     flex: 1;
     min-width: 0;
     gap: 10px;
   }
-  .pp-topbar .logo > span:last-child {
-    display: none;
-  }
-  .pp-topbar .user-chip .meta {
+  .pp-topbar .logo,
+  .pp-topbar .user-menu {
     display: none;
   }
 
