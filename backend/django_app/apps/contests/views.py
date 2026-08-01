@@ -3,6 +3,8 @@ from collections import defaultdict
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from core.pagination import ClientPageSizePagination
+from django.core.cache import cache
+from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
@@ -12,6 +14,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
+from .cache import LEADERBOARD_TTL, leaderboard_page_key
 from .models import Contest, ContestScore
 from .pagination import ContestPanelPagination
 from .serializers import (
@@ -21,16 +24,17 @@ from .serializers import (
     ContestWriteSerializer,
     LeaderboardEntrySerializer,
 )
-from .services import get_leaderboard
+from .services import get_leaderboard, get_participant_rank
 
 
 def _leaderboard_rank(contest, user_id):
-    """1-based position of user_id in the contest leaderboard, or None."""
-    user_ids = list(get_leaderboard(contest).values_list("user_id", flat=True))
-    try:
-        return user_ids.index(user_id) + 1
-    except ValueError:
-        return None
+    """Dense rank of user_id in the contest leaderboard, or None.
+
+    Delegates to the DB (see ``get_participant_rank``) — it used to load every
+    participant id into memory and index the list, which got expensive now that
+    the frontend polls my-standing alongside the leaderboard.
+    """
+    return get_participant_rank(contest, user_id)
 
 
 class ContestViewSet(viewsets.ModelViewSet):
@@ -155,9 +159,14 @@ class ContestViewSet(viewsets.ModelViewSet):
         """POST /api/contests/{id}/leave/"""
         contest = self.get_object()
 
-        if contest.status == Contest.Status.ACTIVE:
+        # Leaving is only allowed before the start. Once the contest has begun
+        # the participant owns a row in the standings, and removing them would
+        # rewrite history — including after the contest is over and rated.
+        # Checked against start_time, not `status`: the status column is a
+        # cached value refreshed by a beat and can lag by a minute.
+        if contest.start_time <= timezone.now():
             return Response(
-                {"detail": "Cannot leave an active contest."},
+                {"detail": "Cannot leave a contest that has already started."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -203,14 +212,27 @@ class ContestViewSet(viewsets.ModelViewSet):
         """GET /api/contests/{id}/leaderboard/ — standings, 10 rows per page."""
         contest = self.get_object()
 
+        # The whole envelope is cached, not the queryset: this response is
+        # identical for every viewer, and the window function behind it is the
+        # most expensive query on the contest page.
+        key = leaderboard_page_key(
+            contest.pk,
+            page=request.query_params.get("page", "1"),
+            page_size=request.query_params.get("page_size", ""),
+        )
+        cached = cache.get(key)
+        if cached is not None:
+            return Response(cached)
+
         paginator = ContestPanelPagination()
+        # rank comes from the queryset's dense-rank window — never positional,
+        # so tied rows share a place and the number stays global across pages.
         page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
-        start = paginator.page.start_index()
-        for offset, entry in enumerate(page):
-            entry.rank = start + offset
 
         serializer = LeaderboardEntrySerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        response = paginator.get_paginated_response(serializer.data)
+        cache.set(key, response.data, LEADERBOARD_TTL)
+        return response
 
     @action(
         detail=True,
@@ -227,7 +249,10 @@ class ContestViewSet(viewsets.ModelViewSet):
         ).first()
         score = score_obj.score if score_obj else 0
         solved = score_obj.solved_count if score_obj else 0
-        rank = _leaderboard_rank(contest, request.user.pk) if score_obj else None
+        # Not gated on score_obj: the leaderboard now lists every participant,
+        # so a joined no-show has a real place there and my-standing must agree.
+        # _leaderboard_rank returns None only for genuine non-participants.
+        rank = _leaderboard_rank(contest, request.user.pk)
 
         # All my submissions for this contest in ONE query, grouped in memory.
         verdicts_by_problem = defaultdict(set)

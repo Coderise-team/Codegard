@@ -135,21 +135,21 @@ class ContestWriteSerializer(serializers.ModelSerializer):
 # LEADERBOARD SERIALIZER
 
 
-class LeaderboardEntrySerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
-    rank = serializers.SerializerMethodField()
+class LeaderboardEntrySerializer(serializers.Serializer):
+    """One leaderboard row.
 
-    class Meta:
-        model = ContestScore
-        fields = [
-            "rank",
-            "username",
-            "score",
-            "penalty",
-            "solved_count",
-            "last_ac_at",
-            "rating_delta",
-        ]
+    Takes a participant (a User) carrying the score annotations from
+    ``get_leaderboard`` — not a ContestScore — so registered users with no
+    result serialize as zeros. Field names and shape are unchanged.
+    """
+
+    rank = serializers.SerializerMethodField()
+    username = serializers.CharField(read_only=True)
+    score = serializers.IntegerField(read_only=True)
+    penalty = serializers.IntegerField(read_only=True)
+    solved_count = serializers.IntegerField(read_only=True)
+    last_ac_at = serializers.DateTimeField(read_only=True, allow_null=True)
+    rating_delta = serializers.IntegerField(read_only=True, allow_null=True)
 
     def get_rank(self, obj):
         # Rank is injected via annotated queryset in the view

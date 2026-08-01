@@ -1,25 +1,27 @@
 import logging
 
 from apps.contests.models import Contest
-from apps.contests.serializers import LeaderboardEntrySerializer
-from apps.contests.services import get_leaderboard
 from apps.realtime.events import ContestEvents
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
 
 class ContestConsumer(AsyncJsonWebsocketConsumer):
-    """Live leaderboard + activity feed for a single contest.
+    """Change notifier for a single contest — it signals, it does not carry data.
 
-    A participant connects to ``ws/contests/<id>/`` to follow the standings in
-    real time. Access requires an authenticated participant — the socket closes
+    A participant connects to ``ws/contests/<id>/`` to learn *when* the
+    standings changed; the rows themselves are fetched over the paginated HTTP
+    endpoint. Access requires an authenticated participant — the socket closes
     with 4001 (not authenticated), 4003 (not a participant), or 4004 (no such
-    contest). Once accepted the consumer joins the ``contest_<id>`` group and
-    relays ``leaderboard_update`` / ``problem_solved`` / ``contest_ended``
-    events; the current leaderboard is pushed immediately, and if the contest
-    has already ended it sends ``contest_ended`` and closes.
+    contest).
+
+    Once accepted the consumer joins the ``contest_<id>`` group and relays two
+    payload-free events: ``leaderboard_update`` (something changed, refetch) and
+    ``contest_ended`` (final results, including ELO, are in). Nothing is pushed
+    on connect — the page loads its data over HTTP anyway.
     """
 
     async def connect(self):
@@ -47,17 +49,9 @@ class ContestConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        await self.refresh_contest_status(contest.pk)
-
-        # Send current leaderboard immediately on connect
-        leaderboard = await self.build_leaderboard(contest)
-        await self.send_json(
-            {"type": ContestEvents.LEADERBOARD_UPDATE, "leaderboard": leaderboard}
-        )
-
-        # If the contest has already ended, notify and close.
-        ended = await self.is_contest_finished(contest.pk)
-        if ended:
+        # Opening an old contest whose results are final: say so and close.
+        # Anything short of "rated" keeps the socket open, waiting for the event.
+        if await self.is_contest_rated(contest.pk):
             await self.send_json({"type": ContestEvents.CONTEST_ENDED})
             await self.close()
 
@@ -68,21 +62,8 @@ class ContestConsumer(AsyncJsonWebsocketConsumer):
     # --- channel layer event handlers ---
 
     async def leaderboard_update(self, event):
-        await self.send_json(
-            {
-                "type": ContestEvents.LEADERBOARD_UPDATE,
-                "leaderboard": event["leaderboard"],
-            }
-        )
-
-    async def problem_solved(self, event):
-        await self.send_json(
-            {
-                "type": ContestEvents.PROBLEM_SOLVED,
-                "username": event["username"],
-                "problem_title": event["problem_title"],
-            }
-        )
+        # Signal only: the event type IS the whole message.
+        await self.send_json({"type": ContestEvents.LEADERBOARD_UPDATE})
 
     async def contest_ended(self, event):
         await self.send_json({"type": ContestEvents.CONTEST_ENDED})
@@ -102,19 +83,15 @@ class ContestConsumer(AsyncJsonWebsocketConsumer):
         return Contest.objects.filter(pk=contest_id, participants=user).exists()
 
     @database_sync_to_async
-    def refresh_contest_status(self, contest_id: int) -> None:
-        contest = Contest.objects.get(pk=contest_id)
-        contest.update_status()
+    def is_contest_rated(self, contest_id: int) -> bool:
+        """Contest is over AND its ELO has been applied.
 
-    @database_sync_to_async
-    def is_contest_finished(self, contest_id: int) -> bool:
+        Checked against the clock, not the cached ``status`` field: this
+        consumer no longer refreshes the status on connect, so the column can
+        lag by up to a beat interval. ``end_time`` is the source of truth.
+        """
         return Contest.objects.filter(
-            pk=contest_id, status=Contest.Status.FINISHED
+            pk=contest_id,
+            end_time__lt=timezone.now(),
+            rating_applied=True,
         ).exists()
-
-    @database_sync_to_async
-    def build_leaderboard(self, contest):
-        entries = list(get_leaderboard(contest))
-        for rank, entry in enumerate(entries, start=1):
-            entry.rank = rank
-        return list(LeaderboardEntrySerializer(entries, many=True).data)

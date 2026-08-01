@@ -62,16 +62,17 @@ def test_update_contest_statuses_in_bulk():
 
 
 @pytest.mark.django_db
-def test_update_contest_statuses_broadcasts_ended_and_handles_empty_redis():
+def test_update_contest_statuses_does_not_broadcast_ended():
     """
-    Covers two hard-to-reach branches in update_contest_statuses:
+    The status sweep flips a contest to FINISHED but must NOT send contest_ended.
 
-    - Line 30: _broadcast_contest_ended is called when finished_updated > 0.
-      Contest.save() auto-computes status, so we must bypass it with .update()
-      to set a "wrong" status that the task will transition.
+    Since Step 9 the event rides with apply_finished_contest_ratings — "time is
+    up" is not "final results are in", so the socket stays open until ELO lands.
+    The assert_not_called guards that: if the broadcast is ever put back into the
+    status task, this test fails instead of silently passing.
 
-    - Line 59 (else branch): delta = dict(total_current) runs when Redis has
-      no previous data for the key.
+    Also covers the empty-Redis else branch: delta = dict(total_current) runs
+    when Redis has no previous data for the key.
     """
     now = timezone.now()
     contest = Contest.objects.create(
@@ -80,21 +81,22 @@ def test_update_contest_statuses_broadcasts_ended_and_handles_empty_redis():
         end_time=now - timedelta(hours=1),
     )
     # save() auto-set status=FINISHED; force it back to ACTIVE so the task
-    # actually has work to do (finished_updated > 0 → line 30 is reached).
+    # actually has work to do (finished_updated > 0).
     Contest.objects.filter(pk=contest.pk).update(status=Contest.Status.ACTIVE)
 
     fake_redis = MagicMock()
-    fake_redis.hgetall.return_value = {}  # empty → else branch (line 59) is taken
+    fake_redis.hgetall.return_value = {}  # empty → else branch is taken
 
     with (
         patch("apps.contests.tasks.Redis") as mock_redis_cls,
-        patch("channels.layers.get_channel_layer", return_value=None),
+        patch("apps.contests.tasks._broadcast_contest_ended") as broadcast,
     ):
         mock_redis_cls.from_url.return_value = fake_redis
         update_contest_statuses()
 
     contest.refresh_from_db()
     assert contest.status == Contest.Status.FINISHED
+    broadcast.assert_not_called()  # the event belongs to the ratings task now
 
 
 # --- contest_ended broadcast -----------------------------------------------

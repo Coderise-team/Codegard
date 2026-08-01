@@ -164,6 +164,12 @@ class AvatarUploadSerializer(serializers.ModelSerializer):
 class EmailOrUsernameTokenObtainSerializer(TokenObtainPairSerializer):
     """Allow JWT authentication using either username or email."""
 
+    # One generic message for every failed login. Saying which half was wrong
+    # would let an attacker probe which usernames/emails exist on the platform.
+    default_error_messages = {
+        "no_active_account": "Incorrect username/email or password.",
+    }
+
     def validate(self, attrs):
         login = attrs.get("username", "")
         if "@" in login:
