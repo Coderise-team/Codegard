@@ -47,9 +47,6 @@ DIFFICULTIES = ("easy", "medium", "hard")
 # Number of days included in a user's submission activity timeline.
 ACTIVITY_WINDOW_DAYS = 365
 
-# Number of most-recent submissions returned for a public profile.
-RECENT_SUBMISSIONS_LIMIT = 15
-
 
 class RegisterView(APIView):
     """Register a new user and immediately issue JWT tokens."""
@@ -311,14 +308,13 @@ class UserContestHistoryView(APIView):
     def get(self, request, username: str):
         from apps.contests.serializers import ContestHistorySerializer
         from apps.contests.services import get_contest_history
-
-        from .pagination import ContestHistoryPagination
+        from core.pagination import ClientPageSizePagination
 
         user = get_object_or_404(User, username=username)
         history = get_contest_history(user)
 
         # APIView has no built-in pagination, so drive the paginator by hand.
-        paginator = ContestHistoryPagination()
+        paginator = ClientPageSizePagination()
         page = paginator.paginate_queryset(history, request, view=self)
         serializer = ContestHistorySerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -327,7 +323,9 @@ class UserContestHistoryView(APIView):
 class UserSubmissionsView(APIView):
     """Latest submissions for a user, for the ProfilePage RecentSubmissions block.
 
-    GET /api/users/{username}/submissions/ -> list, newest first, capped.
+    GET /api/users/{username}/submissions/ -> paginated, newest first.
+    Response is the standard {count, next, previous, results} envelope; the page
+    size defaults to 20 and can be set with ?page_size= (dashboard asks for 6).
     Source code is intentionally omitted (see PublicSubmissionSerializer).
     Any authenticated user can view anyone's submissions (like stats/streak).
     """
@@ -336,14 +334,18 @@ class UserSubmissionsView(APIView):
 
     def get(self, request, username: str):
         from apps.submissions.serializers import PublicSubmissionSerializer
+        from core.pagination import ClientPageSizePagination
 
         user = get_object_or_404(User, username=username)
         submissions = (
             Submission.objects.filter(user=user)
             .select_related("problem")
-            .order_by("-created_at")[:RECENT_SUBMISSIONS_LIMIT]
+            .order_by("-created_at")
         )
-        return Response(PublicSubmissionSerializer(submissions, many=True).data)
+        paginator = ClientPageSizePagination()
+        page = paginator.paginate_queryset(submissions, request, view=self)
+        serializer = PublicSubmissionSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class UserDetailView(RetrieveAPIView):

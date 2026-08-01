@@ -1080,6 +1080,12 @@
   text-transform: uppercase;
   color: var(--fg2);
 }
+.daily-flame .rec {
+  margin-top: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg3);
+}
 
 .streak-grid {
   display: flex;
@@ -1246,6 +1252,11 @@
   gap: 13px;
   padding: 13px var(--pad);
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: 0.12s;
+}
+.up-row:hover {
+  background: var(--card-2);
 }
 .up-row:last-child {
   border-bottom: 0;

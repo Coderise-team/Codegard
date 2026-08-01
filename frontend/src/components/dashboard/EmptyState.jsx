@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 
 /**
@@ -7,16 +8,10 @@ import Icons from '../Icons';
  *   icon  — key from Icons (default "doc")
  *   title — heading
  *   sub   — supporting line
- *   cta   — optional button label
- *   href  — button link (default "#")
+ *   cta   — optional button label; only rendered together with `to`
+ *   to    — router path the button navigates to
  */
-export default function EmptyState({
-  icon = 'doc',
-  title,
-  sub,
-  cta,
-  href = '#',
-}) {
+export default function EmptyState({ icon = 'doc', title, sub, cta, to }) {
   const Icon = Icons[icon] || Icons.doc;
   return (
     <section className="card">
@@ -26,10 +21,10 @@ export default function EmptyState({
         </div>
         <div className="et">{title}</div>
         <div className="es">{sub}</div>
-        {cta && (
-          <a className="btn btn-primary btn-sm" href={href}>
+        {cta && to && (
+          <Link className="btn btn-primary btn-sm" to={to}>
             {cta}
-          </a>
+          </Link>
         )}
       </div>
     </section>

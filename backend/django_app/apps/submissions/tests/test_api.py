@@ -266,7 +266,7 @@ class TestPublicSubmissions:
             user=other, problem=problem, code="x", language="python"
         )
         data = user_client.get(_user_subs_url(other.username)).json()
-        assert [row["id"] for row in data] == [s.pk]
+        assert [row["id"] for row in data["results"]] == [s.pk]
 
     def test_newest_first(self, user_client, user, problem):
         old = Submission.objects.create(
@@ -280,26 +280,29 @@ class TestPublicSubmissions:
             created_at=timezone.now() - timedelta(hours=1)
         )
         data = user_client.get(_user_subs_url(user.username)).json()
-        assert [row["id"] for row in data] == [new.pk, old.pk]
+        assert [row["id"] for row in data["results"]] == [new.pk, old.pk]
 
     def test_code_is_not_exposed(self, user_client, other, problem):
         Submission.objects.create(
             user=other, problem=problem, code="secret_source", language="python"
         )
-        row = user_client.get(_user_subs_url(other.username)).json()[0]
+        row = user_client.get(_user_subs_url(other.username)).json()["results"][0]
         assert "code" not in row
         assert "stderr" not in row
         assert row["problem_title"] == "Two Sum"
 
-    def test_capped_at_limit(self, user_client, user, problem):
-        from apps.users.views import RECENT_SUBMISSIONS_LIMIT
-
+    def test_paginated_default_and_page_size(self, user_client, user, problem):
         Submission.objects.bulk_create(
             Submission(user=user, problem=problem, code="x", language="python")
-            for _ in range(RECENT_SUBMISSIONS_LIMIT + 5)
+            for _ in range(25)
         )
+        # Default page size is 20; count reflects the full set.
         data = user_client.get(_user_subs_url(user.username)).json()
-        assert len(data) == RECENT_SUBMISSIONS_LIMIT
+        assert data["count"] == 25
+        assert len(data["results"]) == 20
+        # The dashboard block asks for a smaller page.
+        page = user_client.get(_user_subs_url(user.username), {"page_size": 6}).json()
+        assert len(page["results"]) == 6
 
 
 # ---------------------------------------------------------------------------

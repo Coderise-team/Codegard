@@ -14,7 +14,7 @@ const formatRuntime = (ms) => (ms == null ? '—' : `${ms} ms`);
  */
 export default function RecentSubmissions({ username }) {
   const I = Icons;
-  const { data, loading, error } = useUserSubmissions(username);
+  const { data, loading, error } = useUserSubmissions(username, MAX_ROWS);
 
   if (data && data.length === 0) {
     return (
@@ -32,9 +32,6 @@ export default function RecentSubmissions({ username }) {
         <span className="t">
           <I.list size={16} /> Recent submissions
         </span>
-        <button className="more">
-          All <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd flush">
         {loading && <div className="list-msg">Loading…</div>}

@@ -32,9 +32,6 @@ export default function DailyChallenge() {
         <span className="t">
           <I.flame size={16} style={{ color: 'var(--tle)' }} /> Daily challenge
         </span>
-        <button className="more">
-          All <I.chevRight size={13} />
-        </button>
       </div>
       <div className="card-bd">
         {loading && <div className="list-msg">Loading…</div>}
@@ -68,6 +65,7 @@ export default function DailyChallenge() {
                 <I.flame size={22} />
                 <span className="n">{data.streak.current_streak}</span>
                 <span className="u">streak</span>
+                <span className="rec">best {data.streak.longest_streak}</span>
               </div>
             </div>
 

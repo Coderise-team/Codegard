@@ -276,8 +276,8 @@ function NoContest() {
       <div className="hero-foot">
         <div className="hero-stand" />
         <div className="hero-cta">
-          <Link className="btn btn-primary" to="/contests">
-            <I.trophy size={15} /> Browse contests
+          <Link className="btn btn-primary" to="/problems">
+            <I.list size={15} /> Practice
           </Link>
         </div>
       </div>

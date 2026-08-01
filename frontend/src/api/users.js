@@ -34,11 +34,14 @@ export async function getStreak(username) {
   return data;
 }
 
-// GET users/{username}/contest-history/ -> finished contests, newest first
+// GET users/{username}/contest-history/ -> finished contests, newest first.
+// Paginated {count, next, previous, results}; the dashboard block wants 5.
 // [{ id, title, subtitle, end_time, rank, solved, rating_delta, rating_after }]
 export async function getContestHistory(username) {
-  const { data } = await client.get(`users/${username}/contest-history/`);
-  return data;
+  const { data } = await client.get(`users/${username}/contest-history/`, {
+    params: { page_size: 5 },
+  });
+  return data.results;
 }
 
 // GET users/{username}/difficulty/ -> solved/total per difficulty
@@ -49,9 +52,12 @@ export async function getDifficultyBreakdown(username) {
 }
 
 // GET users/{username}/submissions/ -> latest submissions (no source code),
-// newest first, capped. [{ id, problem, problem_title, verdict,
-// verdict_display, language_display, execution_time_ms, created_at }]
-export async function getUserSubmissions(username) {
-  const { data } = await client.get(`users/${username}/submissions/`);
-  return data;
+// newest first. Paginated {count, next, previous, results}; the dashboard block
+// wants 6. [{ id, problem, problem_title, verdict, verdict_display,
+// language_display, execution_time_ms, created_at }]
+export async function getUserSubmissions(username, pageSize) {
+  const { data } = await client.get(`users/${username}/submissions/`, {
+    params: pageSize ? { page_size: pageSize } : {},
+  });
+  return data.results;
 }

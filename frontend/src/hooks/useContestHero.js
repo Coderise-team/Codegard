@@ -27,8 +27,11 @@ export function useContestHero() {
         if (!active) return;
 
         if (activeContests.length > 0) {
-          const contest = await getContest(activeContests[0].id);
-          const standing = await getMyStanding(contest.id);
+          const id = activeContests[0].id;
+          const [contest, standing] = await Promise.all([
+            getContest(id),
+            getMyStanding(id),
+          ]);
           if (!active) return;
           setError(null);
           setState('live');
