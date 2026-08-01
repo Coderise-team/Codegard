@@ -131,9 +131,11 @@ class ContestViewSet(viewsets.ModelViewSet):
         contest = self.get_object()
         contest.update_status()
 
-        if contest.status == Contest.Status.FINISHED:
+        # Registration is a pre-start action: once the round is live (or over)
+        # the roster is locked, so late joins are rejected.
+        if contest.status != Contest.Status.PENDING:
             return Response(
-                {"detail": "Cannot join a finished contest."},
+                {"detail": "Registration closes when the contest starts."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -153,10 +155,13 @@ class ContestViewSet(viewsets.ModelViewSet):
     def leave(self, request, pk=None):
         """POST /api/contests/{id}/leave/"""
         contest = self.get_object()
+        contest.update_status()
 
-        if contest.status == Contest.Status.ACTIVE:
+        # Mirror of join: the roster locks at the start, so a participant can
+        # only withdraw while the round is still pending.
+        if contest.status != Contest.Status.PENDING:
             return Response(
-                {"detail": "Cannot leave an active contest."},
+                {"detail": "You cannot leave a contest once it has started."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
