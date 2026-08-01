@@ -187,10 +187,10 @@ class TestContestJoin:
         assert response.status_code == status.HTTP_200_OK
         assert contest.participants.filter(pk=user.pk).exists()
 
-    def test_user_can_join_active_contest(self, auth_client, active_contest, user):
+    def test_user_cannot_join_active_contest(self, auth_client, active_contest):
         url = reverse("contests-join", args=[active_contest.pk])
         response = auth_client.post(url)
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_user_cannot_join_finished_contest(self, auth_client, finished_contest):
         url = reverse("contests-join", args=[finished_contest.pk])
@@ -229,6 +229,14 @@ class TestContestLeave:
     def test_user_cannot_leave_active_contest(self, auth_client, active_contest, user):
         active_contest.participants.add(user)
         url = reverse("contests-leave", args=[active_contest.pk])
+        response = auth_client.post(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_user_cannot_leave_finished_contest(
+        self, auth_client, finished_contest, user
+    ):
+        finished_contest.participants.add(user)
+        url = reverse("contests-leave", args=[finished_contest.pk])
         response = auth_client.post(url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
