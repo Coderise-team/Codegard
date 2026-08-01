@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import ContestTopbar from '../components/problem/ContestTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
@@ -117,11 +117,22 @@ export default function ContestProblemPage() {
     );
   }
 
-  // Solving is for registered participants. A non-participant is in the wrong
-  // place — send them to the contest page, which is where they register and
-  // where the solo catalogue (/problems/:id) is one click away for upsolving.
+  // Solving is for registered participants only, and the roster locks at the
+  // start — so a non-participant can't slip in mid-round. Say so plainly (a
+  // silent redirect looks like a bug) and point them at the contest page, the
+  // one place they can still be during the round: it carries the live standings
+  // and puts the solo catalogue (/problems/:id) one click away for upsolving.
   if (contest && !contest.is_joined) {
-    return <Navigate to={`/contests/${id}`} replace />;
+    return (
+      <NotFoundPage
+        code={null}
+        navTitle="Contest"
+        title="You're not in this round"
+        sub="Only registered participants can open the problems, and registration closes once the contest starts. You can still follow the standings on the contest page."
+        to={`/contests/${id}`}
+        cta="Back to contest"
+      />
+    );
   }
 
   // The workspace needs both the statement and the language templates (the
