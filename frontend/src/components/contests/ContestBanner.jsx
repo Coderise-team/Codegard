@@ -54,25 +54,30 @@ export default function ContestBanner({
 
   const your = D.yourProbs[state] || [];
 
-  // "Enter round" only means something once you're in it: a non-registered
-  // viewer gets Register instead (joining is allowed while a contest is live).
-  // It lands on the first problem not yet solved (all solved -> the first one),
-  // so it never drops you on a done task.
+  // "Enter round" lands on the first problem not yet solved (all solved -> the
+  // first one), so it never drops you on a done task.
   const firstUnsolvedIdx = D.problems.findIndex(
     (_, i) => (your[i] || 'open') !== 'solved'
   );
   const enterLetter =
     D.problems[firstUnsolvedIdx >= 0 ? firstUnsolvedIdx : 0]?.id;
+
+  // Registration is a pre-start action, so the CTA turns on the contest phase:
+  //  - upcoming  -> register / unregister freely
+  //  - live      -> a participant enters the round; a non-participant gets no
+  //                 CTA (the roster is locked, there is nothing to join or open)
+  //  - finished  -> nothing
   let cta;
-  if (state === 'live' && registered) {
-    cta = enterLetter ? (
-      <Link
-        className="btn btn-primary"
-        to={`/contests/${contestId}/problems/${enterLetter}`}
-      >
-        <I.play size={15} /> Enter round
-      </Link>
-    ) : null;
+  if (state === 'live') {
+    cta =
+      registered && enterLetter ? (
+        <Link
+          className="btn btn-primary"
+          to={`/contests/${contestId}/problems/${enterLetter}`}
+        >
+          <I.play size={15} /> Enter round
+        </Link>
+      ) : null;
   } else if (state === 'finished') {
     cta = null;
   } else if (registered) {

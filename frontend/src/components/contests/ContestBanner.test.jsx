@@ -112,11 +112,12 @@ describe('ContestBanner', () => {
     expect(pip.getAttribute('href')).toBe('/contests/5/problems/A');
   });
 
-  it('live not registered: pips are inert and the cta is Register', () => {
+  it('live not registered: pips are inert and there is no cta (roster locked)', () => {
     const { container } = renderRouted({ registered: false });
 
     expect(container.querySelector('.hpip.s-solved').tagName).toBe('SPAN');
     expect(container.querySelector('a.btn-primary')).toBeNull();
-    expect(container.querySelector('.reg-pill.go')).toBeTruthy();
+    expect(container.querySelector('.reg-pill.go')).toBeNull();
+    expect(container.querySelector('.cp-cta')).toBeNull();
   });
 });
