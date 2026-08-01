@@ -45,11 +45,7 @@ export default function PastContests({ username }) {
               const hasDelta = c.rating_delta != null;
               const up = c.rating_delta >= 0;
               return (
-                <Link
-                  key={c.id}
-                  className="lrow crow"
-                  to={`/contests/${c.id}`}
-                >
+                <Link key={c.id} className="lrow crow" to={`/contests/${c.id}`}>
                   <div className="lr-main">
                     <div className="lr-title">{c.title}</div>
                     <div className="lr-sub">

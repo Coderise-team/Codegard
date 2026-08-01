@@ -301,9 +301,7 @@ class TestPublicSubmissions:
         assert data["count"] == 25
         assert len(data["results"]) == 20
         # The dashboard block asks for a smaller page.
-        page = user_client.get(
-            _user_subs_url(user.username), {"page_size": 6}
-        ).json()
+        page = user_client.get(_user_subs_url(user.username), {"page_size": 6}).json()
         assert len(page["results"]) == 6
 
 
