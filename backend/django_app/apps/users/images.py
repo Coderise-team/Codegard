@@ -1,8 +1,8 @@
 """Avatar image processing: turn an uploaded image into the two files we store.
 
-Replaces sorl-thumbnail. We need exactly one master copy and one square
-thumbnail, both WEBP, produced in a single pass while the image is still in
-memory — no round-trip to storage to re-read the source just to crop it.
+We need exactly one master copy and one square thumbnail, both WEBP, produced
+in a single pass while the image is still in memory — no round-trip to storage
+to re-read the source just to crop it.
 """
 
 import io
@@ -46,8 +46,8 @@ def process_avatar(source):
     image.thumbnail((MASTER_MAX_DIM_PX, MASTER_MAX_DIM_PX), Image.Resampling.LANCZOS)
 
     # Thumbnail: crop a centred square FROM THE MASTER (already <=1024px, more
-    # than enough for 192px). fit() scales and centre-crops — the exact thing
-    # sorl's crop="center" did.
+    # than enough for 192px). fit() scales and centre-crops down to an exact
+    # square.
     thumb = ImageOps.fit(
         image,
         (THUMB_SIZE_PX, THUMB_SIZE_PX),
