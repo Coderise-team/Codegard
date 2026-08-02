@@ -275,12 +275,14 @@ def test_total_excludes_inactive_and_ignores_page():
 @pytest.mark.django_db
 def test_avatar_absolute_or_null():
     with_av = _user("withav", 1500)
-    with_av.avatar = "avatars/abc.webp"
+    # The API serves the thumbnail, so that's the field a row's avatar reads.
+    with_av.avatar_thumb = "avatars/thumbs/abc.webp"
     with_av.save()
     _user("noav", 1400)
     rows = _auth(with_av).get(reverse(URL)).json()["results"]
     by_name = {r["username"]: r["avatar"] for r in rows}
     assert by_name["withav"].startswith("http")  # absolute URL
+    assert "thumbs" in by_name["withav"]  # thumbnail, not the master
     assert by_name["noav"] is None
 
 
