@@ -7,14 +7,17 @@ import io
 from unittest import mock
 
 import pytest
+from apps.users.admin import UserAdmin
 from apps.users.images import THUMB_SIZE_PX, process_avatar
 from apps.users.signals import (
     _delete_file,
     stash_old_avatar_on_change,
 )
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory
 from PIL import Image
 
 AVATAR_URL = "/api/users/avatar/"
@@ -258,3 +261,54 @@ def test_standings_avatar_null_without_avatar(user_client, user):
     resp = user_client.get("/api/users/standings/")
     assert resp.status_code == 200
     assert resp.data["you"]["avatar"] is None
+
+
+# --- odds and ends ----------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_admin_clear_avatar_action_removes_both_files(user, other, fs_storage):
+    """The admin 'Clear avatar' action nulls both fields; the cleanup signals
+    then drop both files from storage. Users without an avatar are skipped."""
+    _give_avatar(user)
+    master, thumb = user.avatar.name, user.avatar_thumb.name
+    # `other` has no avatar -> the action skips it (the empty-user branch).
+
+    User = get_user_model()
+    admin = UserAdmin(User, AdminSite())
+    request = RequestFactory().post("/admin/")
+    # message_user needs the messages framework wired up; the action's file
+    # cleanup is what we're testing, so stub the user-facing message out.
+    with mock.patch.object(admin, "message_user"):
+        admin.clear_avatar(request, User.objects.filter(pk__in=[user.pk, other.pk]))
+
+    user.refresh_from_db()
+    assert not user.avatar
+    assert not user.avatar_thumb
+    assert not default_storage.exists(master)
+    assert not default_storage.exists(thumb)
+
+
+@pytest.mark.parametrize("mode", ["P", "L"])
+def test_process_avatar_handles_non_rgb_modes(mode):
+    """Palette (P) and grayscale (L) sources are normalised before encoding."""
+    buf = io.BytesIO()
+    Image.new(mode, (300, 300)).save(buf, format="PNG")
+    buf.seek(0)
+    upload = SimpleUploadedFile("x.png", buf.read(), content_type="image/png")
+
+    _master, thumb = process_avatar(upload)
+    assert Image.open(io.BytesIO(thumb.read())).format == "WEBP"
+
+
+@pytest.mark.django_db
+def test_stash_skips_when_old_row_is_missing(fs_storage):
+    """pk is set but no such row exists (e.g. a forced-pk insert) -> the handler
+    returns without stashing anything."""
+    User = get_user_model()
+    ghost = User(pk=999_999, username="ghost", email="ghost@test.com")
+    ghost.avatar = "avatars/whatever.webp"
+
+    stash_old_avatar_on_change(User, ghost)
+
+    assert getattr(ghost, "_avatar_files_to_delete", None) is None
