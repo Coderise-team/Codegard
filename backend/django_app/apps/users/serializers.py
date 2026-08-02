@@ -53,6 +53,8 @@ class UserSerializer(serializers.ModelSerializer):
     globalRank = serializers.SerializerMethodField()
     nextTier = serializers.SerializerMethodField()
     joined = serializers.DateTimeField(source="date_joined", read_only=True)
+    # The API serves the thumbnail; the master copy stays server-side only.
+    avatar = serializers.ImageField(source="avatar_thumb", read_only=True)
 
     class Meta:
         model = User
@@ -156,6 +158,9 @@ class EmailOrUsernameTokenObtainSerializer(TokenObtainPairSerializer):
 class UserMeSerializer(serializers.ModelSerializer):
     """The authenticated user's own profile (read) — also feeds the settings form."""
 
+    # The API serves the thumbnail; the master copy stays server-side only.
+    avatar = serializers.ImageField(source="avatar_thumb", read_only=True)
+
     class Meta:
         model = User
         fields = ["username", "avatar", "bio", "first_name", "last_name"]
@@ -228,7 +233,9 @@ class StandingsRowSerializer(serializers.ModelSerializer):
     maxRating = serializers.IntegerField(source="max_rating", read_only=True)
     globalRank = serializers.IntegerField(source="global_rank", read_only=True)
     delta = serializers.IntegerField(read_only=True, allow_null=True)
-    avatar = serializers.SerializerMethodField()
+    # Denormalised thumbnail URL — no per-row query, so the leaderboard can
+    # finally carry avatars. DRF builds the absolute URL and returns null itself.
+    avatar = serializers.ImageField(source="avatar_thumb", read_only=True)
 
     class Meta:
         model = User
@@ -240,11 +247,3 @@ class StandingsRowSerializer(serializers.ModelSerializer):
             "globalRank",
             "delta",
         ]
-
-    def get_avatar(self, obj):
-        # Absolute URL (needs request in context) or null; no thumbnails here —
-        # sorl.thumbnail would fire a query per row.
-        if not obj.avatar:
-            return None
-        request = self.context.get("request")
-        return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
