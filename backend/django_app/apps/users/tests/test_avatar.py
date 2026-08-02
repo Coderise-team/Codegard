@@ -106,6 +106,48 @@ def test_too_large_file_is_rejected(user_client):
     assert resp.status_code == 400
 
 
+def _oversized_real_image(target_bytes=5 * 1024 * 1024 + 1):
+    """A genuine, decodable PNG whose file size exceeds the limit.
+
+    Random-noise pixels don't compress, so the encoded PNG stays large. This
+    matters: a fake (non-decodable) file is rejected by DRF's ImageField first,
+    so only a *real* oversized image actually reaches our own size check.
+    """
+    import os
+
+    side = 1600  # 1600*1600*3 ≈ 7.3 MB of noise -> PNG stays well over 5 MB
+    image = Image.frombytes("RGB", (side, side), os.urandom(side * side * 3))
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    assert buf.tell() > target_bytes  # guard: the fixture is genuinely oversized
+    buf.seek(0)
+    return SimpleUploadedFile("real-big.png", buf.read(), content_type="image/png")
+
+
+@pytest.mark.django_db
+def test_oversized_real_image_hits_our_size_limit(user_client):
+    """A valid image over 5 MB must be rejected by OUR size check (not DRF's
+    generic image validator), so the error names the size limit."""
+    resp = user_client.post(
+        AVATAR_URL, {"avatar": _oversized_real_image()}, format="multipart"
+    )
+    assert resp.status_code == 400
+    assert "too large" in str(resp.data).lower()  # our message, not DRF's
+
+
+@pytest.mark.django_db
+def test_disallowed_content_type_is_rejected(user_client):
+    """A real, decodable image whose content type is outside the whitelist
+    (e.g. BMP) passes DRF's image validator but must fail OUR type check."""
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 100)).save(buf, format="BMP")
+    buf.seek(0)
+    bmp = SimpleUploadedFile("x.bmp", buf.read(), content_type="image/bmp")
+    resp = user_client.post(AVATAR_URL, {"avatar": bmp}, format="multipart")
+    assert resp.status_code == 400
+    assert "unsupported image type" in str(resp.data).lower()  # our message
+
+
 @pytest.mark.django_db
 def test_non_image_is_rejected(user_client):
     bad = SimpleUploadedFile(
