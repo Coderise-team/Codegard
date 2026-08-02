@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     "django_filters",
     "channels",
     "storages",
-    "sorl.thumbnail",
     # local
     "apps.users",
     "apps.problems",
