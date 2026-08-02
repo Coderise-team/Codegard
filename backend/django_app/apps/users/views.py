@@ -82,9 +82,7 @@ class AvatarUploadView(APIView):
         user.avatar_thumb = thumb
         user.save(update_fields=["avatar", "avatar_thumb"])
 
-        return Response(
-            {"avatar": request.build_absolute_uri(user.avatar_thumb.url)}
-        )
+        return Response({"avatar": request.build_absolute_uri(user.avatar_thumb.url)})
 
 
 class LogoutView(APIView):

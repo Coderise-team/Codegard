@@ -43,9 +43,7 @@ def process_avatar(source):
         image = image.convert("RGB")
 
     # Master: shrink in place to fit the box. thumbnail() mutates `image`.
-    image.thumbnail(
-        (MASTER_MAX_DIM_PX, MASTER_MAX_DIM_PX), Image.Resampling.LANCZOS
-    )
+    image.thumbnail((MASTER_MAX_DIM_PX, MASTER_MAX_DIM_PX), Image.Resampling.LANCZOS)
 
     # Thumbnail: crop a centred square FROM THE MASTER (already <=1024px, more
     # than enough for 192px). fit() scales and centre-crops — the exact thing
