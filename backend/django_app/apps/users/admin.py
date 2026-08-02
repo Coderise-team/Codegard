@@ -1,26 +1,28 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
-from sorl.thumbnail import get_thumbnail
 
 from .models import User
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    fieldsets = DjangoUserAdmin.fieldsets + (("Profile", {"fields": ("avatar",)}),)
+    fieldsets = DjangoUserAdmin.fieldsets + (
+        ("Profile", {"fields": ("avatar", "avatar_thumb")}),
+    )
+    # Avatars are set by users through the API, not uploaded here — view only.
+    readonly_fields = DjangoUserAdmin.readonly_fields + ("avatar", "avatar_thumb")
+    actions = ["clear_avatar"]
 
-    def save_model(self, request, obj, form, change):
-        """
-        When an avatar is uploaded via admin, generate thumbnails immediately
-        so they appear in R2 under `media/thumbnails/...`.
-        """
-
-        super().save_model(request, obj, form, change)
-        if "avatar" in getattr(form, "changed_data", []):
-            try:
-                if obj.avatar:
-                    get_thumbnail(obj.avatar, "128x128", crop="center", quality=85)
-                    get_thumbnail(obj.avatar, "256x256", crop="center", quality=85)
-            except Exception:
-                # Don't block saving the user if thumbnail upload fails.
-                pass
+    @admin.action(description="Clear avatar")
+    def clear_avatar(self, request, queryset):
+        """Moderation action: drop both avatar files. The cleanup signals delete
+        the actual files from storage once the row is saved."""
+        cleared = 0
+        for user in queryset:
+            if not (user.avatar or user.avatar_thumb):
+                continue
+            user.avatar = None
+            user.avatar_thumb = None
+            user.save(update_fields=["avatar", "avatar_thumb"])
+            cleared += 1
+        self.message_user(request, f"Cleared {cleared} avatar(s).")
