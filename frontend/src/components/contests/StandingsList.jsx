@@ -15,7 +15,7 @@ const profileHref = (username) => `/users/${username}`;
  *   state         — 'live' | 'finished' (adds the rating-delta column when finished)
  *   panel         — useContestPanel result { rows, hasMore, loading, error, loadMore }
  *   problemsCount — total problems, for the solved/total cell
- *   you           — current user's username; highlights own rows + links to /profile
+ *   you           — current user's username; highlights own rows
  *   myStanding    — my-standing payload; pins my row under the list when it
  *                   hasn't been scrolled into view yet (live only)
  */
