@@ -97,15 +97,6 @@ def test_thumbnail_is_192_webp_and_master_within_1024(user_client, user, fs_stor
     assert master.format == "WEBP"
 
 
-@pytest.mark.django_db
-def test_too_large_file_is_rejected(user_client):
-    big = SimpleUploadedFile(
-        "big.png", b"\x89PNG" + b"0" * (5 * 1024 * 1024 + 1), content_type="image/png"
-    )
-    resp = user_client.post(AVATAR_URL, {"avatar": big}, format="multipart")
-    assert resp.status_code == 400
-
-
 def _oversized_real_image(target_bytes=5 * 1024 * 1024 + 1):
     """A genuine, decodable PNG whose file size exceeds the limit.
 
