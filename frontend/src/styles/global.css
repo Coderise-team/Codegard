@@ -110,6 +110,23 @@ code,
   flex-shrink: 0;
 }
 
+/* Every avatar box the Avatar component renders, whatever its size class:
+   anchors the picture over the initials. Deliberately not `overflow: hidden` —
+   the profile avatar hangs its camera button outside the box on purpose. */
+.avatar-box {
+  position: relative;
+}
+.avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  /* Opaque, so initials can't show through a picture with a transparent area. */
+  background: var(--card-2);
+}
+
 /* ── Icon button ────────────────────────────────────────────── */
 .icon-btn {
   width: 34px;
