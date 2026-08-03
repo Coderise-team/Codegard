@@ -56,7 +56,8 @@ describe('ContestLeaderboard', () => {
     const [first, own] = container.querySelectorAll('.cp-row');
     expect(first.getAttribute('href')).toBe('/users/alice');
     expect(own.classList.contains('you')).toBe(true);
-    expect(own.getAttribute('href')).toBe('/profile'); // own row -> my profile
+    // one profile route for everyone, own row included (shareable url)
+    expect(own.getAttribute('href')).toBe('/users/bob');
   });
 
   it('hides the LIVE marker after the round', () => {
@@ -74,7 +75,7 @@ describe('ContestLeaderboard', () => {
     const mine = container.querySelector('.cp-row.you');
     expect(mine.querySelector('.cp-rk').textContent).toBe('17');
     expect(mine.textContent).toContain('carol');
-    expect(mine.getAttribute('href')).toBe('/profile');
+    expect(mine.getAttribute('href')).toBe('/users/carol');
   });
 
   it('shows loading and empty states', () => {

@@ -12,3 +12,6 @@
 *.html text eol=lf
 *.json text eol=lf
 *.md   text eol=lf
+
+# Dotfiles Prettier reads and checks, but which no *.ext rule above matches.
+.prettierrc text eol=lf

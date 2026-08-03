@@ -11,10 +11,21 @@ Formula:
 """
 
 from django.db import transaction
-from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import (
+    Count,
+    F,
+    FilteredRelation,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+    Window,
+)
+from django.db.models.functions import Coalesce, DenseRank
 from django.utils import timezone
 
+from .cache import bust_leaderboard_cache
 from .models import Contest, ContestScore
 
 BASE_POINTS = 100
@@ -92,16 +103,104 @@ def calculate_score(user, contest: Contest) -> ContestScore:
     return contest_score
 
 
-def get_leaderboard(contest: Contest):
-    """
-    Return leaderboard queryset for a contest.
-    Sorted by: score DESC → penalty ASC → last_ac_at ASC → id ASC
+def get_scored_rows(contest: Contest):
+    """ContestScore rows for a contest, in leaderboard order.
+
+    This is the RATED set: a row only exists once a user has submitted, so
+    registered-but-never-submitted no-shows are absent by construction — which
+    is exactly who ELO must skip. Used by ``apply_contest_ratings``.
     """
     return (
         ContestScore.objects.filter(contest=contest)
         .select_related("user")
         .order_by("-score", "penalty", "last_ac_at", "id")
     )
+
+
+# Leaderboard ranking key, shared by the dense-rank window and the single-user
+# rank count. Deliberately WITHOUT `id`: ties must share a place.
+_RANKING_KEY = [
+    F("score").desc(),
+    F("penalty").asc(),
+    F("last_ac_at").asc(nulls_last=True),
+]
+
+
+def _participant_rows(contest: Contest):
+    """Participants of a contest with their result annotations, unranked.
+
+    Shared base for the leaderboard page and the single-user rank lookup. The
+    score is pulled in via a filtered join and coalesced to 0 when the user has
+    no ContestScore row yet (registered but never submitted).
+    """
+    return contest.participants.annotate(
+        cs=FilteredRelation(
+            "contest_scores",
+            condition=Q(contest_scores__contest=contest),
+        ),
+    ).annotate(
+        score=Coalesce("cs__score", Value(0)),
+        penalty=Coalesce("cs__penalty", Value(0)),
+        solved_count=Coalesce("cs__solved_count", Value(0)),
+        last_ac_at=F("cs__last_ac_at"),
+        rating_delta=F("cs__rating_delta"),
+    )
+
+
+def get_leaderboard(contest: Contest):
+    """Every registered participant, with their result attached if they have one.
+
+    Built from ``participants`` rather than ContestScore: a row in the latter
+    only appears on the first AC, so someone who joined and solved nothing used
+    to be missing from the table entirely. No rows are created here — the score
+    is pulled in through a filtered join and coalesced to 0 when absent.
+
+    Ordered by score DESC → penalty ASC → last_ac_at ASC (nulls last, so people
+    with nothing solved sink to the bottom) → id, the last key only there to
+    keep row order stable across paginated requests.
+
+    ``rank`` is a DENSE rank over the same key WITHOUT ``id``: equal results
+    share a place and the next one is +1 (1, 2, 2, 3). It is a window over the
+    whole table, so the number is global rather than per-page.
+    """
+    return (
+        _participant_rows(contest)
+        .annotate(rank=Window(expression=DenseRank(), order_by=_RANKING_KEY))
+        .order_by(
+            "-score",
+            "penalty",
+            F("last_ac_at").asc(nulls_last=True),
+            "id",
+        )
+    )
+
+
+def get_participant_rank(contest: Contest, user_id: int) -> int | None:
+    """Dense rank of one participant, or None if they aren't in the contest.
+
+    The window from ``get_leaderboard`` can't be reused here: a ``WHERE`` on the
+    user is applied BEFORE the window, so the rank would be computed over that
+    single row and always come out 1. Instead we count, in the DB, how many
+    DISTINCT better results exist — same dense semantics, constant query count.
+    """
+    rows = _participant_rows(contest)
+    me = rows.filter(pk=user_id).values("score", "penalty", "last_ac_at").first()
+    if me is None:
+        return None
+
+    better = Q(score__gt=me["score"]) | Q(score=me["score"], penalty__lt=me["penalty"])
+    same_score_and_penalty = Q(score=me["score"], penalty=me["penalty"])
+    if me["last_ac_at"] is not None:
+        # Earlier last AC wins the tie (NULLs compare false, i.e. rank below me).
+        better |= same_score_and_penalty & Q(last_ac_at__lt=me["last_ac_at"])
+    else:
+        # I have no AC at all: anyone who does is ahead of me on this key.
+        better |= same_score_and_penalty & Q(last_ac_at__isnull=False)
+
+    ahead = (
+        rows.filter(better).values("score", "penalty", "last_ac_at").distinct().count()
+    )
+    return ahead + 1
 
 
 def get_contest_history(user):
@@ -192,7 +291,9 @@ def apply_contest_ratings(contest: Contest) -> int:
             .values_list("user_id", flat=True)
             .distinct()
         )
-        scored = list(get_leaderboard(contest))  # ContestScore rows, in place order
+        # get_scored_rows, NOT get_leaderboard: the latter now includes every
+        # registered participant, and pure no-shows must stay unrated.
+        scored = list(get_scored_rows(contest))  # ContestScore rows, in place order
         scored_uids = {cs.user_id for cs in scored}
         # Submitted but solved nothing → last place, no ContestScore yet.
         zero_ids = [uid for uid in submitter_ids if uid not in scored_uids]
@@ -202,6 +303,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         if len(ordered_uids) < 2:
             contest.rating_applied = True
             contest.save(update_fields=["rating_applied"])
+            transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
             return 0
 
         # 4. Lock users (stable order, anti-deadlock) and snapshot ratings BEFORE.
@@ -257,5 +359,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         # 7. Mark done in the same transaction.
         contest.rating_applied = True
         contest.save(update_fields=["rating_applied"])
+        # Every row just grew a rating_delta — the cached pages are all wrong.
+        transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
 
     return len(ordered_uids)

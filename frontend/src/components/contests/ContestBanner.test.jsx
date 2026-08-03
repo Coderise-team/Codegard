@@ -101,11 +101,12 @@ describe('ContestBanner', () => {
     expect(container.querySelector('.cp-cta')).toBeNull();
   });
 
-  it('live registered: Enter round and pips link into the round', () => {
+  it('live registered: Enter round targets the first unsolved, pips link in', () => {
     const { container } = renderRouted();
 
+    // A is solved, B attempted -> Enter round drops you on the first unsolved (B)
     expect(container.querySelector('a.btn-primary').getAttribute('href')).toBe(
-      '/contests/5/problems/A'
+      '/contests/5/problems/B'
     );
     const pip = container.querySelector('.hpip.s-solved');
     expect(pip.tagName).toBe('A');

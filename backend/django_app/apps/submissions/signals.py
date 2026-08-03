@@ -2,12 +2,15 @@
 
 When the judge writes a verdict onto a ``Submission``, these signal receivers
 fan the change out to the rest of the platform: recompute the author's contest
-score on a first AC, and push realtime updates over the WebSocket channel layer
-(submission status, leaderboard, "problem solved" ticker). All broadcasts run in
-``transaction.on_commit`` so nothing is sent until the DB write is durable.
+score on a first AC, push the verdict to the submission socket, and signal the
+contest group that the standings moved (a bare signal — viewers refetch the
+leaderboard over HTTP). All sends run in ``transaction.on_commit`` so nothing
+leaves until the DB write is durable.
 """
 
+from apps.contests.cache import bust_leaderboard_cache
 from apps.contests.services import calculate_score
+from apps.realtime.broadcast import group_send
 from apps.realtime.events import ContestEvents, SubmissionEvents
 from django.db import transaction
 from django.db.models.signals import post_save, pre_save
@@ -35,8 +38,8 @@ def _recalculate_contest_score_on_ac(
     sender, instance: Submission, created: bool, **kwargs
 ):
     """On the first accepted submission for a contest problem, recompute the
-    author's contest score and broadcast the "problem solved" + leaderboard
-    updates. Ignores non-contest submissions, non-AC verdicts, and repeat ACs."""
+    author's contest score and tell viewers the standings moved. Ignores
+    non-contest submissions, non-AC verdicts, and repeat ACs."""
     if not instance.contest:
         return
     if instance.verdict != Submission.Verdict.AC:
@@ -48,8 +51,14 @@ def _recalculate_contest_score_on_ac(
 
     calculate_score(instance.user, instance.contest)
     contest = instance.contest
-    transaction.on_commit(lambda: _broadcast_problem_solved(instance))
-    transaction.on_commit(lambda: _broadcast_leaderboard(contest))
+
+    def _publish():
+        # Bust BEFORE signalling: clients refetch the moment the signal lands,
+        # and a stale page served then would stick around for a whole TTL.
+        bust_leaderboard_cache(contest.pk)
+        _signal_leaderboard_changed(contest)
+
+    transaction.on_commit(_publish)
 
 
 @receiver(post_save, sender=Submission)
@@ -66,15 +75,8 @@ def _broadcast_verdict_update(sender, instance: Submission, **kwargs):
 
 def _broadcast_submission_update(submission: Submission) -> None:
     """Send the verdict to the ``submission_<pk>`` channel group (the author's
-    live submission view). No-op if the channel layer isn't configured."""
-    from asgiref.sync import async_to_sync
-    from channels.layers import get_channel_layer
-
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return
-
-    async_to_sync(channel_layer.group_send)(
+    live submission view)."""
+    group_send(
         f"submission_{submission.pk}",
         {
             "type": SubmissionEvents.SUBMISSION_UPDATE,
@@ -84,44 +86,14 @@ def _broadcast_submission_update(submission: Submission) -> None:
     )
 
 
-def _broadcast_leaderboard(contest):
-    """Recompute the ranked leaderboard and push it to the ``contest_<pk>``
-    group so every viewer's standings refresh live. No-op without a channel layer."""
-    from apps.contests.serializers import LeaderboardEntrySerializer
-    from apps.contests.services import get_leaderboard
-    from asgiref.sync import async_to_sync
-    from channels.layers import get_channel_layer
+def _signal_leaderboard_changed(contest) -> None:
+    """Tell the contest group the standings moved — without carrying them.
 
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return
-
-    entries = list(get_leaderboard(contest))
-    for rank, entry in enumerate(entries, start=1):
-        entry.rank = rank
-    data = list(LeaderboardEntrySerializer(entries, many=True).data)
-
-    async_to_sync(channel_layer.group_send)(
+    The socket is a change notifier only: viewers refetch the paginated HTTP
+    leaderboard themselves. Pushing the full table here would mean two shapes
+    (flat list over WS, pages over HTTP) for one table on the frontend.
+    """
+    group_send(
         f"contest_{contest.pk}",
-        {"type": ContestEvents.LEADERBOARD_UPDATE, "leaderboard": data},
-    )
-
-
-def _broadcast_problem_solved(submission: Submission) -> None:
-    """Announce "<user> solved <problem>" to the ``contest_<pk>`` group for the
-    live activity ticker. No-op if the channel layer isn't configured."""
-    from asgiref.sync import async_to_sync
-    from channels.layers import get_channel_layer
-
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        return
-
-    async_to_sync(channel_layer.group_send)(
-        f"contest_{submission.contest_id}",
-        {
-            "type": ContestEvents.PROBLEM_SOLVED,
-            "username": submission.user.username,
-            "problem_title": submission.problem.title,
-        },
+        {"type": ContestEvents.LEADERBOARD_UPDATE},
     )

@@ -22,7 +22,11 @@ class SubmissionConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         user = self.scope["user"]
+        # accept() before close() on every rejection: until the handshake is
+        # accepted Channels just refuses the connection and the browser sees a
+        # generic 1006 — our 4001/4003/4004 codes would never reach the client.
         if not user.is_authenticated:
+            await self.accept()
             await self.close(code=4001)
             return
 
@@ -31,10 +35,12 @@ class SubmissionConsumer(AsyncJsonWebsocketConsumer):
 
         submission = await self.get_submission()
         if submission is None:
+            await self.accept()
             await self.close(code=4004)
             return
 
         if submission.user_id != user.pk:
+            await self.accept()
             await self.close(code=4003)
             return
 

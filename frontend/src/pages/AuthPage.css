@@ -92,8 +92,13 @@
 
 /* ── Floating label field ────────────────────────────────────── */
 .auth-field {
-  position: relative;
   margin: 20px 0;
+}
+
+/* Holds the input + floating label + reveal toggle; the absolute label/eye
+   anchor here (fixed input height) so a field error below can't shift them. */
+.auth-field-box {
+  position: relative;
 }
 
 .auth-field input {
@@ -193,6 +198,17 @@
   padding: 9px 13px;
   margin-bottom: 12px;
   text-align: center;
+}
+
+/* Per-field error card, sits just under its input. */
+.auth-field-error {
+  margin-top: 8px;
+  padding: 7px 11px;
+  font-size: 12px;
+  color: var(--wa);
+  background: var(--wa-soft);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
 }
 
 /* ── Submit button ───────────────────────────────────────────── */

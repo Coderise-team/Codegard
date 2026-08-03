@@ -1,0 +1,114 @@
+import pytest
+from apps.realtime.routing import websocket_urlpatterns
+from apps.submissions.models import Submission
+from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
+from channels.routing import URLRouter
+from channels.testing import WebsocketCommunicator
+
+
+def make_communicator(user, submission_id):
+    app = URLRouter(websocket_urlpatterns)
+    communicator = WebsocketCommunicator(app, f"/ws/submissions/{submission_id}/")
+    communicator.scope["user"] = user
+    return communicator
+
+
+async def _assert_rejected_with_code(communicator, expected_code: int) -> None:
+    """The consumer calls accept() before close(code=...) so the client gets the
+    custom code as a proper close frame: connect() succeeds, the close arrives
+    as the next output frame."""
+    connected, _ = await communicator.connect()
+    assert connected  # accept() was called first
+    close_msg = await communicator.receive_output(timeout=1)
+    assert close_msg["type"] == "websocket.close"
+    assert close_msg.get("code") == expected_code
+
+
+# user, other, problem and submission come from conftest.
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_unauthenticated_user_is_rejected(submission):
+    from django.contrib.auth.models import AnonymousUser
+
+    app = URLRouter(websocket_urlpatterns)
+    communicator = WebsocketCommunicator(app, f"/ws/submissions/{submission.pk}/")
+    communicator.scope["user"] = AnonymousUser()
+    await _assert_rejected_with_code(communicator, 4001)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_nonexistent_submission_is_rejected(user):
+    communicator = make_communicator(user, submission_id=99999)
+    await _assert_rejected_with_code(communicator, 4004)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_wrong_owner_is_rejected(other, submission):
+    communicator = make_communicator(other, submission.pk)
+    await _assert_rejected_with_code(communicator, 4003)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_connect_sends_initial_status(user, submission):
+    communicator = make_communicator(user, submission.pk)
+    try:
+        connected, _ = await communicator.connect()
+        assert connected
+
+        msg = await communicator.receive_json_from()
+        assert msg["type"] == "submission_update"
+        assert msg["submission_id"] == submission.pk
+        assert msg["verdict"] is None  # still pending
+    finally:
+        await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_submission_update_forwarded(user, submission):
+    communicator = make_communicator(user, submission.pk)
+    try:
+        await communicator.connect()
+        await communicator.receive_json_from()  # consume initial
+
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send(
+            f"submission_{submission.pk}",
+            {
+                "type": "submission_update",
+                "submission_id": submission.pk,
+                "verdict": Submission.Verdict.AC,
+            },
+        )
+
+        msg = await communicator.receive_json_from()
+        assert msg["type"] == "submission_update"
+        assert msg["verdict"] == Submission.Verdict.AC
+    finally:
+        await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_reconnect_gets_current_verdict(user, submission):
+    """On reconnect the client immediately receives the current verdict."""
+    await database_sync_to_async(Submission.objects.filter(pk=submission.pk).update)(
+        verdict=Submission.Verdict.WA
+    )
+
+    communicator = make_communicator(user, submission.pk)
+    try:
+        connected, _ = await communicator.connect()
+        assert connected
+
+        msg = await communicator.receive_json_from()
+        assert msg["type"] == "submission_update"
+        assert msg["verdict"] == Submission.Verdict.WA
+    finally:
+        await communicator.disconnect()
