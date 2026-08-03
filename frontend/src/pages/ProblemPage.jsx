@@ -5,14 +5,12 @@ import SoloTopbar from '../components/problem/SoloTopbar';
 import ProblemWorkspace from '../components/problem/ProblemWorkspace';
 import VerdictToast from '../components/problem/VerdictToast';
 import NotFoundPage from './NotFoundPage';
-import { createSubmission, getSubmission } from '../api/submissions';
-import { waitForVerdict } from '../api/verdict';
 import { isNotFound } from '../utils/errors';
-import { toastFor } from '../utils/submissionToast';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useProblem } from '../hooks/useProblem';
 import { useLanguages } from '../hooks/useLanguages';
 import { useProblemSubmissions } from '../hooks/useProblemSubmissions';
+import { useSubmitFlow } from '../hooks/useSubmitFlow';
 import './ProblemPage.css';
 
 /**
@@ -27,49 +25,10 @@ export default function ProblemPage() {
   const { data: problem, loading, error } = useProblem(id);
   const { data: languages, loading: langsLoading } = useLanguages();
   const { data: submissions, reload } = useProblemSubmissions(id);
-  const [busy, setBusy] = useState(null);
-  const [toast, setToast] = useState(null);
-
-  const handleSubmit = async (code, language) => {
-    setBusy('submit');
-    setToast(null);
-
-    let created;
-    try {
-      created = await createSubmission({ problem: Number(id), code, language });
-    } catch {
-      setBusy(null);
-      setToast({
-        label: 'Submission failed',
-        detail: 'Could not send your solution — please try again.',
-      });
-      return;
-    }
-    if (created.status !== 'queued') {
-      setBusy(null);
-      setToast({
-        label: 'Submission failed',
-        detail: 'The judge queue is unavailable — please try again later.',
-      });
-      reload();
-      return;
-    }
-
-    reload(); // the new row shows up as Pending right away
-    try {
-      await waitForVerdict(created.id);
-      const judged = await getSubmission(created.id);
-      setToast(toastFor(judged));
-    } catch {
-      setToast({
-        label: 'Still judging…',
-        detail: 'The verdict will appear in the Submissions tab.',
-      });
-    } finally {
-      setBusy(null);
-      reload();
-    }
-  };
+  const { busy, toast, setToast, submit } = useSubmitFlow(
+    (code, language) => ({ problem: Number(id), code, language }),
+    reload
+  );
 
   // A problem that isn't there is a 404, not a failure — anything else (server
   // down, connection dropped) has to say so instead of blaming the URL.
@@ -101,7 +60,7 @@ export default function ProblemPage() {
           languages={languages}
           busy={busy}
           statusText={busy ? 'Judging…' : undefined}
-          onSubmit={handleSubmit}
+          onSubmit={submit}
         />
       ) : (
         <div className="pp-empty">

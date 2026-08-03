@@ -1,0 +1,90 @@
+/* ContestProblemPage.css — contest-mode problem workspace styles */
+
+/* ── Shell ──────────────────────────────────────────────────── */
+.cpp-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.cpp-empty {
+  text-align: center;
+  color: var(--fg2);
+  padding: 48px 20px;
+  font-size: 13.5px;
+}
+
+/* Sidebar — the shared shell Sidebar is an off-canvas drawer here on ALL
+   widths (the workspace has no room for a fixed column). Overrides the
+   Dashboard.css ≤960 icon-only collapse, hence the .cpp-app scoping. */
+.cpp-app .side {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 232px;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+}
+.cpp-app .side.open {
+  transform: translateX(0);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+.cpp-app .side .nav-link span,
+.cpp-app .side .logo > span:last-child,
+.cpp-app .nav-mini .mid {
+  display: block;
+}
+.cpp-app .side-scrim.show {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* The standings scrim only exists on a phone (see the media query below). */
+.cpp-lb-scrim {
+  display: none;
+}
+
+/* ── Responsive: contest shell + leaderboard overlay ─────────────
+   The workspace stacking lives in ProblemWorkspace.css and the topbar reflow in
+   ContestTopbar.css; here we own the page shell and the phone leaderboard. */
+@media (max-width: 640px) {
+  /* The app container is the scroll surface (body is overflow:hidden globally);
+     the workspace below grows with its content and this scrolls it. */
+  .cpp-app {
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: clip;
+  }
+  .ct-topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  /* The standings slide in from the right and cover the editor on purpose: a
+     quick glance, then close — so idle phones stop polling the board. */
+  .cpp-lb {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 86vw);
+    height: auto;
+    z-index: 60;
+    border-left: 1px solid var(--border);
+    border-top: 0;
+    box-shadow: -14px 0 40px rgba(0, 0, 0, 0.5);
+  }
+  .cpp-lb-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0, 0, 0, 0.5);
+  }
+}

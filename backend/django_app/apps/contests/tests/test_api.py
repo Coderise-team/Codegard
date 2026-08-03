@@ -156,10 +156,13 @@ class TestContestJoin:
         assert response.status_code == status.HTTP_200_OK
         assert contest.participants.filter(pk=user.pk).exists()
 
-    def test_user_can_join_active_contest(self, user_client, active_contest, user):
+    def test_user_cannot_join_active_contest(self, user_client, active_contest, user):
+        """Registration closes at the start: a late join into a running contest
+        is 400, checked by start_time (mirror of leave)."""
         url = reverse("contests-join", args=[active_contest.pk])
         response = user_client.post(url)
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not active_contest.participants.filter(pk=user.pk).exists()
 
     def test_user_cannot_join_finished_contest(self, user_client, finished_contest):
         url = reverse("contests-join", args=[finished_contest.pk])

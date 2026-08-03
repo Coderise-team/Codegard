@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Navbar from '../components/layout/Navbar';
 import Icons from '../components/Icons';
@@ -9,7 +9,10 @@ import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContest, contestState } from '../hooks/useContest';
 import { useContestPanel } from '../hooks/useContestPanel';
 import { useMyStanding } from '../hooks/useMyStanding';
+import { useLeaderboardSignal } from '../hooks/useLeaderboardSignal';
+import { useThrottledSignal } from '../hooks/useThrottledSignal';
 import { joinContest, leaveContest } from '../api/contests';
+import { indexToLetter } from '../utils/contestLetters';
 import {
   formatDuration,
   formatFullDate,
@@ -17,15 +20,6 @@ import {
   timeAgo,
 } from '../utils/time';
 import './ContestPage.css';
-
-// Contest problems are labelled by position: A, B, … Z, AA, AB, …
-const pip = (i) => {
-  let label = '';
-  for (let n = i; n >= 0; n = Math.floor(n / 26) - 1) {
-    label = String.fromCharCode(65 + (n % 26)) + label;
-  }
-  return label;
-};
 
 /**
  * ContestPage — a single-contest event page (compact density, violet accent).
@@ -66,13 +60,45 @@ export default function ContestPage() {
     if (prevState === 'soon' && state === 'live') reload();
   }
 
-  const standing = useMyStanding(id, state === 'live' || state === 'finished');
+  // Live standings: open the contest channel while the panel is open and the
+  // round is live or finished. Collapsed -> no socket, so no refetch (that is
+  // "don't update while collapsed", for free). It stays open through the
+  // finished window on purpose: ELO is applied ~a minute after the end, and
+  // `contest_ended` (which the server sends once, after rating, then closes) is
+  // how the deltas get pulled in without a manual refresh — the hook stops
+  // reconnecting on its own once that arrives. Variant B: the socket only
+  // signals; a paced signal (throttle + jitter) refetches over HTTP.
+  const { signal, ended } = useLeaderboardSignal(
+    id,
+    showPanel && (state === 'live' || state === 'finished')
+  );
+  const paced = useThrottledSignal(signal);
+
+  const standing = useMyStanding(
+    id,
+    state === 'live' || state === 'finished',
+    paced
+  );
 
   // The side panel slice: who registered before the start, the standings
   // during and after. Pages are appended as the panel scrolls.
   const kind =
     state == null ? null : state === 'soon' ? 'registrants' : 'leaderboard';
   const panel = useContestPanel(id, kind);
+
+  // A paced bump means the standings changed — refetch every loaded page in
+  // place, so a viewer scrolled down the list is refreshed where they are
+  // instead of being thrown back to the top.
+  const { reloadLoaded } = panel;
+  useEffect(() => {
+    if (paced) reloadLoaded();
+  }, [paced, reloadLoaded]);
+
+  // The round closed: the server applied ELO and sent contest_ended, so pull
+  // the final standings once more to show the rating deltas that just landed.
+  useEffect(() => {
+    if (ended) reloadLoaded();
+  }, [ended, reloadLoaded]);
 
   // Optimistic registration: flip locally, call the API, revert on failure.
   // The participants count follows the flip (±1 against the server value).
@@ -126,10 +152,10 @@ export default function ContestPage() {
     problems:
       state === 'soon'
         ? Array.from({ length: contest.problems_count }, (_, i) => ({
-            id: pip(i),
+            id: indexToLetter(i),
           }))
         : contest.problems.map((p, i) => ({
-            id: pip(i),
+            id: indexToLetter(i),
             title: p.title,
             solvedBy: p.solved_count,
           })),
@@ -139,7 +165,10 @@ export default function ContestPage() {
   const crumb = (
     <span className="cp-crumb">
       <Icons.trophy size={16} />
-      <span className="dim">Contests&nbsp;/</span> {contest?.title ?? '…'}
+      <Link className="cp-crumb-link" to="/contests">
+        Contests
+      </Link>
+      <span className="dim">&nbsp;/</span> {contest?.title ?? '…'}
     </span>
   );
 
@@ -163,6 +192,7 @@ export default function ContestPage() {
             <>
               <ContestBanner
                 D={D}
+                contestId={id}
                 state={state}
                 seconds={seconds}
                 registered={registered}

@@ -134,11 +134,14 @@ class ContestViewSet(viewsets.ModelViewSet):
     def join(self, request, pk=None):
         """POST /api/contests/{id}/join/"""
         contest = self.get_object()
-        contest.update_status()
 
-        if contest.status == Contest.Status.FINISHED:
+        # Registration is a pre-start action: once the round has started the
+        # roster is locked, so late joins are rejected. Checked against
+        # start_time, not `status`, which is a cached value that can lag (see
+        # leave).
+        if contest.start_time <= timezone.now():
             return Response(
-                {"detail": "Cannot join a finished contest."},
+                {"detail": "Registration closes when the contest starts."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

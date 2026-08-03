@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import Icons from '../Icons';
 import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
+import LangSelect from './LangSelect';
+import './ProblemWorkspace.css';
 
 // Monaco is heavy — load it (and its chunk) only when the workspace renders.
 const CodeEditor = lazy(() => import('./CodeEditor'));
@@ -19,6 +21,8 @@ const CodeEditor = lazy(() => import('./CodeEditor'));
  *   busy        — falsy | 'submit', forwarded to the ActionBar
  *   statusText  — optional ActionBar status override (defaults to
  *                 "{language} · ready")
+ *   canSubmit   — gate on the Submit button (default true); false disables it
+ *                 without touching Reset (e.g. a contest that has ended)
  *   onSubmit    — called with (code, languageId)
  *   rail        — optional right-side slot (contest leaderboard later)
  */
@@ -28,6 +32,7 @@ export default function ProblemWorkspace({
   languages,
   busy,
   statusText,
+  canSubmit = true,
   onSubmit,
   rail,
 }) {
@@ -77,21 +82,11 @@ export default function ProblemWorkspace({
       <section className="pp-pane pp-editor-pane" style={{ flex: 1 }}>
         <div className="pp-editor-toolbar">
           <div className="pp-et-left">
-            <label className="pp-lang-select">
-              <span className="pp-lang-ic" />
-              <select
-                value={langId}
-                onChange={(e) => setLangId(e.target.value)}
-                aria-label="Language"
-              >
-                {languages.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </select>
-              <Icons.chevDown size={14} style={{ color: 'var(--fg2)' }} />
-            </label>
+            <LangSelect
+              languages={languages}
+              value={langId}
+              onChange={setLangId}
+            />
           </div>
           <div className="pp-et-right">
             <button className="pp-tool-link">
@@ -109,6 +104,7 @@ export default function ProblemWorkspace({
         <ActionBar
           busy={busy}
           statusText={statusText ?? `${lang.name} · ready`}
+          submitDisabled={!canSubmit}
           onSubmit={() => onSubmit(code, langId)}
           onReset={() => setCode(lang.template)}
         />

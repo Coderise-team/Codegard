@@ -1,0 +1,51 @@
+/* ContestLeaderboard.css - the workspace leaderboard wrapper + its header. The
+   standings table itself is StandingsList (shared with the contest page). */
+
+.cpp-lb {
+  flex-shrink: 0;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+}
+
+.cpp-lb-hd {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.cpp-lb-hd .t {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.cpp-lb-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--wa);
+}
+.cpp-lb-live .d {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wa);
+  animation: cpp-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cpp-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}

@@ -67,6 +67,12 @@ function LiveHero({ contest, standing, now }) {
   );
   const urgent = remaining < 5 * 60;
 
+  // Only a registered participant may open the round: a non-participant sees
+  // the live hero as a read-only teaser whose only way in is Details (the
+  // contest page, where the leaderboard lives). Registration itself is closed
+  // once the round is live, so there is no join affordance here either.
+  const joined = contest.is_joined;
+
   const statusById = Object.fromEntries(
     standing.problems.map((p) => [p.id, p.status])
   );
@@ -76,6 +82,14 @@ function LiveHero({ contest, standing, now }) {
     title: p.title,
     status: statusById[p.id] || 'open',
   }));
+
+  // "Enter round" drops the solver on the first problem they haven't solved
+  // yet (all solved -> the first one), so it never lands on a done task.
+  const firstUnsolved =
+    problems.find((p) => p.status !== 'solved') ?? problems[0];
+  const enterTo = firstUnsolved
+    ? `/contests/${contest.id}/problems/${firstUnsolved.label}`
+    : `/contests/${contest.id}`;
 
   return (
     <section className="hero">
@@ -120,8 +134,13 @@ function LiveHero({ contest, standing, now }) {
       <div className="hero-probs">
         {problems.map((p) => {
           const St = Icons[STATUS_ICON[p.status]] || I.chevRight;
+          // Clickable only for a participant; otherwise an inert preview pip.
+          const Tag = joined ? Link : 'span';
+          const linkProps = joined
+            ? { to: `/contests/${contest.id}/problems/${p.label}` }
+            : {};
           return (
-            <a key={p.id} className={`hpip s-${p.status}`} href="#">
+            <Tag key={p.id} className={`hpip s-${p.status}`} {...linkProps}>
               <span className="lid">{p.label}</span>
               <span className="ld">
                 <span className="nm">{p.title}</span>
@@ -132,7 +151,7 @@ function LiveHero({ contest, standing, now }) {
               >
                 <St size={15} />
               </span>
-            </a>
+            </Tag>
           );
         })}
       </div>
@@ -153,10 +172,11 @@ function LiveHero({ contest, standing, now }) {
           </div>
         </div>
         <div className="hero-cta">
-          {/* Points into the round workspace once contest mode exists. */}
-          <a className="btn btn-primary" href="#">
-            <I.play size={15} /> Enter round
-          </a>
+          {joined && (
+            <Link className="btn btn-primary" to={enterTo}>
+              <I.play size={15} /> Enter round
+            </Link>
+          )}
           <Link className="btn" to={`/contests/${contest.id}`}>
             Details
           </Link>

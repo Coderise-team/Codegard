@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import UserMenu from '../layout/UserMenu';
+import './SoloTopbar.css';
 
 /**
  * SoloTopbar — workspace top bar for solo problem solving (no contest chrome).

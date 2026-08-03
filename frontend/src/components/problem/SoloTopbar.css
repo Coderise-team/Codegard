@@ -1,0 +1,65 @@
+/* SoloTopbar.css - workspace top bar for solo problem solving.
+   Owned by the component, so any page that mounts it gets the styles. */
+
+.pp-topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+.pp-tb-left,
+.pp-tb-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pp-tb-div {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+.pp-tb-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User chip — mirrors the .tbar scoping from Dashboard.css, since the
+   shared UserMenu sits inside .pp-topbar here */
+.pp-topbar .user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  transition: 0.13s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp-topbar .user-chip:hover {
+  background: var(--card-2);
+}
+.pp-topbar .user-chip .meta {
+  text-align: right;
+  line-height: 1.3;
+}
+.pp-topbar .user-chip .handle {
+  font-size: 13px;
+  font-weight: 700;
+}
+.pp-topbar .user-chip .avatar {
+  width: 32px;
+  height: 32px;
+}

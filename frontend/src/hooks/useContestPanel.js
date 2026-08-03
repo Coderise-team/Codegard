@@ -62,6 +62,30 @@ export function useContestPanel(id, kind) {
   // e.g. after a registration so the own row appears in the list.
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  // Refetches EVERY page loaded so far and replaces the list in one go — used
+  // for a live standings refresh, so a viewer who scrolled down is not thrown
+  // back to page 1: the rows they were reading are updated in place. One batch
+  // (Promise.all) rather than page-1-then-reset.
+  const reloadLoaded = useCallback(() => {
+    if (!id || !kind) return;
+    const gen = genRef.current;
+    const upTo = pageRef.current;
+    Promise.all(
+      Array.from({ length: upTo }, (_, i) =>
+        FETCHERS[kind](id, { page: i + 1 })
+      )
+    )
+      .then((pages) => {
+        if (gen !== genRef.current) return; // slice changed mid-flight → drop
+        setRows(pages.flatMap((p) => p.results));
+        setTotal(pages[0].count);
+        setHasMore(Boolean(pages[pages.length - 1].next));
+      })
+      .catch((err) => {
+        if (gen === genRef.current) setError(err);
+      });
+  }, [id, kind]);
+
   const loadMore = useCallback(() => {
     if (fetchingRef.current || !hasMore) return;
     fetchingRef.current = true;
@@ -82,5 +106,14 @@ export function useContestPanel(id, kind) {
       });
   }, [id, kind, hasMore]);
 
-  return { rows, total, hasMore, loading, error, loadMore, reload };
+  return {
+    rows,
+    total,
+    hasMore,
+    loading,
+    error,
+    loadMore,
+    reload,
+    reloadLoaded,
+  };
 }

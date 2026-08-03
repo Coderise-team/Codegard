@@ -152,6 +152,33 @@ class TestSubmissionList:
         results = response.data.get("results", response.data)
         assert len(results) == 0
 
+    def test_filter_by_contest_excludes_training(
+        self, user_client, user, problem, active_contest
+    ):
+        contest_sub = Submission.objects.create(
+            user=user,
+            problem=problem,
+            contest=active_contest,
+            code="x",
+            language=Submission.Language.PYTHON,
+        )
+        # A training attempt at the same problem (no contest).
+        Submission.objects.create(
+            user=user,
+            problem=problem,
+            code="x",
+            language=Submission.Language.PYTHON,
+        )
+        url = reverse("submissions-list")
+
+        scoped = user_client.get(url, {"contest": active_contest.pk})
+        results = scoped.data.get("results", scoped.data)
+        assert [r["id"] for r in results] == [contest_sub.pk]
+
+        # Filtering only by problem (the training page) still sees both.
+        both = user_client.get(url, {"problem": problem.pk})
+        assert len(both.data.get("results", both.data)) == 2
+
     def test_retrieve_own_submission(self, user_client, submission):
         url = reverse("submissions-detail", args=[submission.pk])
         response = user_client.get(url)

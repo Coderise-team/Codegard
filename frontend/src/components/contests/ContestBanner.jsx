@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { fmtCountdown } from '../../utils/time';
 
@@ -10,13 +11,15 @@ import { fmtCountdown } from '../../utils/time';
  *
  * Props:
  *   D          — contest data object
+ *   contestId  — the round id, for the problem-strip and Enter-round links
  *   state      — 'soon' | 'live' | 'finished'
  *   seconds    — countdown seconds for the current state
- *   registered — boolean (soon state)
+ *   registered — boolean; gates entering the problems
  *   onToggle   — () => void; registers or unregisters
  */
 export default function ContestBanner({
   D,
+  contestId,
   state,
   seconds,
   registered,
@@ -51,13 +54,30 @@ export default function ContestBanner({
 
   const your = D.yourProbs[state] || [];
 
+  // "Enter round" lands on the first problem not yet solved (all solved -> the
+  // first one), so it never drops you on a done task.
+  const firstUnsolvedIdx = D.problems.findIndex(
+    (_, i) => (your[i] || 'open') !== 'solved'
+  );
+  const enterLetter =
+    D.problems[firstUnsolvedIdx >= 0 ? firstUnsolvedIdx : 0]?.id;
+
+  // Registration is a pre-start action, so the CTA turns on the contest phase:
+  //  - upcoming  -> register / unregister freely
+  //  - live      -> a participant enters the round; a non-participant gets no
+  //                 CTA (the roster is locked, there is nothing to join or open)
+  //  - finished  -> nothing
   let cta;
   if (state === 'live') {
-    cta = (
-      <a className="btn btn-primary" href="#">
-        <I.play size={15} /> Enter round
-      </a>
-    );
+    cta =
+      registered && enterLetter ? (
+        <Link
+          className="btn btn-primary"
+          to={`/contests/${contestId}/problems/${enterLetter}`}
+        >
+          <I.play size={15} /> Enter round
+        </Link>
+      ) : null;
   } else if (state === 'finished') {
     cta = null;
   } else if (registered) {
@@ -138,10 +158,15 @@ export default function ContestBanner({
                       : st === 'locked'
                         ? null
                         : I.chevRight;
-                const href = st === 'locked' ? undefined : '#';
-                const Tag = href ? 'a' : 'span';
+                // Clickable only for a registered participant; a locked slot and
+                // a non-participant both render as an inert pip.
+                const clickable = registered && st !== 'locked';
+                const Tag = clickable ? Link : 'span';
+                const linkProps = clickable
+                  ? { to: `/contests/${contestId}/problems/${p.id}` }
+                  : {};
                 return (
-                  <Tag key={p.id} className={`hpip s-${st}`} href={href}>
+                  <Tag key={p.id} className={`hpip s-${st}`} {...linkProps}>
                     <span className="lid">{p.id}</span>
                     <span className="ld">
                       <span className="nm">{p.title}</span>

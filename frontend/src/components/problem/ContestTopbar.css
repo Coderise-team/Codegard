@@ -1,0 +1,286 @@
+/* ContestTopbar.css - workspace top bar for solving inside a contest:
+   back-to-round link, A/B/C problem strip and the round countdown.
+   Owned by the component, so any page that mounts it gets the styles. */
+
+.ct-topbar {
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  z-index: 30;
+}
+/* Five direct children — left group, problem strip, timer, toggle, user — laid
+   out by order so the responsive breakpoints can reflow them into rows. On a
+   wide screen: left | strip (fills, centered) | timer | toggle | user. */
+.ct-left {
+  order: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.ct-strip {
+  order: 2;
+  flex: 1;
+  justify-content: safe center;
+}
+.ct-timer {
+  order: 3;
+}
+.ct-lb-toggle {
+  order: 4;
+}
+.ct-topbar > .user-menu {
+  order: 5;
+}
+.ct-div {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+
+/* Back to the round (its standings) — doubles as a breadcrumb. */
+.ct-back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 260px;
+  transition: color 0.13s;
+}
+.ct-back-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ct-back:hover {
+  color: var(--gold);
+}
+
+/* Problem strip: compact letter pills, the active one lit in the accent. */
+.ct-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+}
+.ct-pip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg2);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: 0.13s;
+}
+.ct-pip:hover {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.ct-pip.current {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
+}
+
+/* Status dot: solved -> green (glow), attempted -> amber, untouched -> grey. */
+.ct-pip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg3);
+  flex-shrink: 0;
+}
+.ct-pip.s-solved .ct-pip-dot {
+  background: var(--ac);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+.ct-pip.s-attempted .ct-pip-dot {
+  background: var(--tle);
+}
+
+/* Round countdown — a boxed "Ends in" label over a big mono clock, with a
+   pulsing dot; the clock turns red in the final five minutes. */
+.ct-timer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+}
+.ct-timer-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: ct-pulse 1.6s ease-in-out infinite;
+}
+.ct-timer.urgent .ct-timer-pulse {
+  background: var(--wa);
+}
+@keyframes ct-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.ct-timer-body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.ct-timer-lbl {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.ct-timer-val {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.ct-timer.urgent .ct-timer-val {
+  color: var(--wa);
+}
+.ct-timer.done {
+  padding-left: 0;
+  background: transparent;
+  border-color: transparent;
+}
+.ct-timer.done .ct-timer-val {
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--fg2);
+}
+
+/* Show/hide the standings rail. */
+.ct-lb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--fg2);
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.14s;
+}
+.ct-lb-toggle svg {
+  color: var(--gold);
+}
+.ct-lb-toggle:hover {
+  color: var(--fg);
+  border-color: var(--gold-line);
+}
+.ct-lb-toggle.is-on {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
+}
+
+/* ── Tablet: the problem strip drops to its own centered second row ──────
+   The first row keeps (logo +) contest name + timer + toggle + user on one
+   line, sized to its tallest element (the timer), nothing overflowing. */
+@media (max-width: 1024px) {
+  .ct-topbar {
+    height: auto;
+    min-height: var(--topbar-h);
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  /* order 6 so the strip sits after the user (order 5) — otherwise they share
+     a row and the user is pushed below the pips */
+  .ct-strip {
+    order: 6;
+    flex: 0 0 100%;
+    justify-content: safe center;
+  }
+  /* right-align the timer + toggle + user as one cluster on the first row */
+  .ct-timer {
+    margin-left: auto;
+  }
+  /* let the contest name ellipsis-truncate instead of widening the row */
+  .ct-left,
+  .ct-back {
+    min-width: 0;
+  }
+}
+
+/* Below ~900 the platform logo no longer fits alongside all the controls on
+   one row (row 1 needs ~850px with it), so drop it. The contest name stays. */
+@media (max-width: 900px) {
+  .ct-left .logo,
+  .ct-div {
+    display: none;
+  }
+}
+
+/* ── Phone: three rows ──────────────────────────────────────────────────
+   The narrowest phones (360px) can't fit the contest name and the timer on one
+   line, so pair the name with the user instead — that always fits — and put the
+   timer with the toggle on the next line.
+   Row 1: back (trophy + contest name), then the user (pinned right).
+   Row 2: the leaderboard toggle, then the timer (pinned right).
+   Row 3: the problem strip, centered. (The logo is already gone, see ≤900.) */
+@media (max-width: 640px) {
+  .ct-topbar {
+    gap: 8px 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .ct-topbar > .user-menu {
+    order: 2;
+    margin-left: auto;
+    min-width: 0;
+  }
+  .ct-lb-toggle {
+    order: 3;
+  }
+  .ct-timer {
+    order: 4;
+    margin-left: auto;
+  }
+  /* pips centered when they fit, but scrollable (with a reachable start) once
+     there are too many to fit the row */
+  .ct-strip {
+    order: 5;
+    flex: 0 0 100%;
+    justify-content: safe center;
+  }
+}
+
+/* ── Ultra-narrow (≤350, e.g. the Galaxy Z Fold cover screen) ────────────
+   The toggle + timer no longer fit on one line, so the timer wraps to its own
+   row; keep it left-aligned instead of pinned right. The toggle stays at its
+   natural width (like every other phone) and the pips stay centered. */
+@media (max-width: 350px) {
+  .ct-timer {
+    margin-left: 0;
+  }
+}

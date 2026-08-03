@@ -93,18 +93,15 @@ function SubmissionsTab({ submissions }) {
       <table className="pp-subs-table">
         <thead>
           <tr>
-            <th>#</th>
             <th>Verdict</th>
             <th>Language</th>
             <th>Time</th>
-            <th>Memory</th>
             <th>When</th>
           </tr>
         </thead>
         <tbody>
           {submissions.map((s) => (
             <tr key={s.id}>
-              <td className="pp-sid">#{s.id}</td>
               <td>
                 {s.verdict ? (
                   <span
@@ -124,9 +121,6 @@ function SubmissionsTab({ submissions }) {
               <td>{s.language_display}</td>
               <td className="mono pp-fg2">
                 {fmtMetric(s.execution_time_ms, 'ms')}
-              </td>
-              <td className="mono pp-fg2">
-                {fmtMetric(s.memory_used_mb, 'MB')}
               </td>
               <td className="pp-fg2">{timeAgo(s.created_at)}</td>
             </tr>

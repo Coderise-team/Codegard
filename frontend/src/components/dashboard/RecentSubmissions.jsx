@@ -40,7 +40,6 @@ export default function RecentSubmissions({ username }) {
           <table className="subtab">
             <thead>
               <tr>
-                <th>#</th>
                 <th>Problem</th>
                 <th>Verdict</th>
                 <th>Lang</th>
@@ -51,7 +50,6 @@ export default function RecentSubmissions({ username }) {
             <tbody>
               {data.slice(0, MAX_ROWS).map((s) => (
                 <tr key={s.id}>
-                  <td className="st-id">#{s.id}</td>
                   <td className="st-title">{s.problem_title}</td>
                   <td>
                     {s.verdict ? (

@@ -22,6 +22,15 @@
   color: var(--fg2);
   font-weight: 500;
 }
+/* Breadcrumb root back to the hub — white, violet on hover, no underline. */
+.cp-crumb-link {
+  color: var(--fg);
+  text-decoration: none;
+  transition: color 0.13s;
+}
+.cp-crumb-link:hover {
+  color: var(--gold);
+}
 
 /* ============================================================
    STAGE — the full-bleed violet gradient banner
@@ -313,141 +322,10 @@
   background: var(--wa);
   animation: pulse 1.4s ease-in-out infinite;
 }
-.cp-aside-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* table header + shared column layout */
-.cp-thead {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fg3);
-}
-.cp-user {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cp-cell {
-  flex: 0 0 auto;
-  width: 42px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-.cp-c-pen {
-  width: 54px;
-}
-.cp-tier {
-  flex: 0 0 auto;
-  width: 82px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cp-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  position: relative;
-  font-size: 13.5px;
-  color: var(--fg);
-  text-decoration: none;
-  transition: background 0.13s;
-}
-.cp-row + .cp-row {
-  border-top: 1px solid rgba(30, 34, 50, 0.5);
-}
-.cp-row .cp-user {
-  font-weight: 600;
-}
-.cp-row .cp-cell,
-.cp-row .cp-tier {
-  font-family: var(--mono);
-  font-size: 12.5px;
-  color: var(--fg2);
-}
-.cp-row .cp-pts {
-  font-weight: 700;
-  color: var(--gold);
-  font-size: 13.5px;
-}
-.cp-rk {
-  width: 22px;
-  flex: 0 0 auto;
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-}
-.cp-row.r1 .cp-rk {
-  color: var(--gold);
-}
-.cp-row.r2 .cp-rk,
-.cp-row.r3 .cp-rk {
-  color: var(--fg);
-}
-.cp-row .cp-dl {
-  font-weight: 700;
-}
-.cp-row .cp-dl.up {
-  color: var(--ac);
-}
-.cp-row .cp-dl.down {
-  color: var(--wa);
-}
-.cp-row.you {
-  background: var(--gold-soft);
-}
-.cp-row.you::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--gold);
-}
-.cp-row:hover {
-  background: var(--card-2);
-}
-.cp-row:hover .cp-user {
-  color: var(--gold-hi);
-}
-.cp-row.you:hover {
-  background: color-mix(in srgb, var(--gold) 22%, transparent);
-}
-.cp-gap {
-  text-align: center;
-  color: var(--fg3);
-  font-family: var(--mono);
-  padding: 4px 0;
-}
-
-.cp-msg {
-  padding: 18px 16px;
-  font-size: 12.5px;
-  color: var(--fg2);
-}
-.cp-sentinel {
-  height: 1px;
-}
+/* The standings table (header, rows, cells: .cp-thead / .cp-row / .cp-cell …)
+   lives in StandingsList.css now, so the contest page aside and the in-workspace
+   rail share one source of truth. Imported here via the StandingsList component
+   that ContestAside renders. */
 
 /* collapsed tab, glued to the right edge */
 .cp-aside-tab {

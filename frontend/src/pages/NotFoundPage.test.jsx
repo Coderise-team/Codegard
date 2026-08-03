@@ -34,4 +34,19 @@ describe('NotFoundPage', () => {
     expect(screen.getByText('No such problem.')).toBeInTheDocument();
     expect(screen.queryByText('Page not found')).not.toBeInTheDocument();
   });
+
+  it('as an access gate: hides the code and points at a custom destination', () => {
+    renderPage({
+      code: null,
+      title: "You're not in this round",
+      cta: 'Back to contest',
+      to: '/contests/5',
+    });
+
+    expect(screen.queryByText('404')).not.toBeInTheDocument();
+    expect(screen.getByText("You're not in this round")).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Back to contest' })
+    ).toHaveAttribute('href', '/contests/5');
+  });
 });
