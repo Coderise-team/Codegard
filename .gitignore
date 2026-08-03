@@ -216,3 +216,7 @@ data/
 # Local working docs (task plans, design mocks) — not part of the app
 /plans/
 /mocks/
+
+# User-uploaded media (avatars, ...) — only exists locally when R2 is disabled;
+# in prod it lives in R2. Never commit uploaded files.
+backend/django_app/media/

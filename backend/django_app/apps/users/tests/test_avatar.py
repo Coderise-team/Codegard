@@ -1,34 +1,32 @@
-"""
-Avatar tests: upload (API endpoint stores the image and returns thumbnails) and
-cleanup (replace / clear / user-delete remove the source file and drop sorl's
-thumbnail references).
-
-Note on thumbnails: we assert thumbnail cleanup via sorl's KV store rather than
-raw thumbnail-file existence. In tests we swap STORAGES to a temp FileSystem
-backend, but sorl serializes the storage of each cached thumbnail at creation
-time, so a deleted thumbnail's file may be looked up in a different location
-than the test's default_storage. In production storage is constant (R2), so the
-files themselves are removed. The KV-store assertion reliably proves that
-`thumbnail_delete` ran and purged the thumbnail references.
+"""Avatar tests: upload (endpoint cuts a master + 192px thumbnail, stores both,
+returns the thumbnail URL) and cleanup (replace / clear / user-delete remove
+BOTH files). The API serves only the thumbnail; the master stays server-side.
 """
 
 import io
 from unittest import mock
 
 import pytest
-from apps.users.signals import _delete_avatar
+from apps.users.admin import UserAdmin
+from apps.users.images import THUMB_SIZE_PX, process_avatar
+from apps.users.signals import (
+    _delete_file,
+    stash_old_avatar_on_change,
+)
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory
 from PIL import Image
-from rest_framework.test import APIClient
-from sorl.thumbnail import default as sorl_default
-from sorl.thumbnail import get_thumbnail
-from sorl.thumbnail.images import ImageFile
+
+AVATAR_URL = "/api/users/avatar/"
 
 
 @pytest.fixture
 def fs_storage(settings, tmp_path):
+    """Swap the default storage to a throwaway FileSystem backend so tests can
+    assert real file existence without touching R2."""
     settings.STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -38,116 +36,168 @@ def fs_storage(settings, tmp_path):
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
         },
     }
-    settings.THUMBNAIL_PREFIX = "thumbnails/"
-
-    # sorl caches its storage/kvstore in module-level LazyObjects that don't
-    # react to a per-test STORAGES swap. Reset them so sorl uses the test storage.
-    from django.utils.functional import empty
-
-    for attr in ("storage", "kvstore", "engine", "backend"):
-        obj = getattr(sorl_default, attr)
-        if hasattr(obj, "_wrapped"):
-            obj._wrapped = empty
     return settings
 
 
-def _image_file(name="avatar.png", color=(255, 0, 0)):
+def _image_upload(name="avatar.png", size=(400, 400), color=(255, 0, 0), fmt="PNG"):
     buf = io.BytesIO()
-    Image.new("RGB", (400, 400), color=color).save(buf, format="PNG")
+    Image.new("RGB", size, color).save(buf, format=fmt)
     buf.seek(0)
-    return SimpleUploadedFile(name, buf.read(), content_type="image/png")
+    return SimpleUploadedFile(name, buf.read(), content_type=f"image/{fmt.lower()}")
 
 
-def _make_user_with_avatar(username, color=(255, 0, 0)):
-    User = get_user_model()
-    user = User.objects.create_user(
-        username=username, email=f"{username}@test.com", password="pass"
-    )
-    user.avatar = _image_file(color=color)
-    user.save()
-    # Generate thumbnails so the source gets thumbnail references in the KV store.
-    get_thumbnail(user.avatar, "128x128", crop="center", quality=85)
-    get_thumbnail(user.avatar, "256x256", crop="center", quality=85)
+def _give_avatar(user, color=(255, 0, 0)):
+    """Attach an avatar the same way the endpoint does: cut both files, assign
+    both fields, save with the avatar update_fields."""
+    master, thumb = process_avatar(_image_upload(color=color))
+    user.avatar = master
+    user.avatar_thumb = thumb
+    user.save(update_fields=["avatar", "avatar_thumb"])
     return user
 
 
-def _source_has_thumbnail_refs(name: str) -> bool:
-    """True if sorl still tracks thumbnails for the given source name."""
-    return sorl_default.kvstore.get(ImageFile(name)) is not None
+def _open_stored(field):
+    with field.storage.open(field.name, "rb") as fh:
+        return Image.open(io.BytesIO(fh.read()))
+
+
+# --- upload -----------------------------------------------------------------
 
 
 @pytest.mark.django_db
-def test_avatar_upload_stores_image_and_generates_thumbnails(fs_storage):
-    user = get_user_model().objects.create_user(
-        username="u_upload", email="u_upload@test.com", password="pass"
-    )
-    client = APIClient()
-    client.force_authenticate(user=user)
+def test_upload_stores_both_files_and_returns_thumb(user_client, user, fs_storage):
+    resp = user_client.post(AVATAR_URL, {"avatar": _image_upload()}, format="multipart")
 
-    response = client.post(
-        "/api/users/avatar/",
-        data={"avatar": _image_file()},
-        format="multipart",
-    )
+    assert resp.status_code == 200
+    assert resp.data["avatar"]
+    assert "thumbnails" not in resp.data  # the old two-size block is gone
 
-    assert response.status_code == 200
-    assert response.data["avatar"]
-    assert response.data["thumbnails"]["128"]
-    assert response.data["thumbnails"]["256"]
-
-
-@pytest.mark.django_db
-def test_old_avatar_and_thumbnails_deleted_on_replace(fs_storage):
-    user = _make_user_with_avatar("u_replace")
-    old_avatar = user.avatar.name
-
-    assert default_storage.exists(old_avatar)
-    assert _source_has_thumbnail_refs(old_avatar)
-
-    user.avatar = _image_file(color=(0, 255, 0))
-    user.save()
-
-    assert not default_storage.exists(old_avatar)
-    assert not _source_has_thumbnail_refs(old_avatar)
+    user.refresh_from_db()
+    assert user.avatar and user.avatar_thumb
     assert default_storage.exists(user.avatar.name)
+    assert default_storage.exists(user.avatar_thumb.name)
+    # The served URL is the thumbnail, not the master.
+    assert user.avatar_thumb.name in resp.data["avatar"]
 
 
 @pytest.mark.django_db
-def test_avatar_and_thumbnails_deleted_on_clear(fs_storage):
-    user = _make_user_with_avatar("u_clear")
-    old_avatar = user.avatar.name
+def test_thumbnail_is_192_webp_and_master_within_1024(user_client, user, fs_storage):
+    resp = user_client.post(
+        AVATAR_URL, {"avatar": _image_upload(size=(1600, 900))}, format="multipart"
+    )
+    assert resp.status_code == 200
+    user.refresh_from_db()
 
-    assert default_storage.exists(old_avatar)
-    assert _source_has_thumbnail_refs(old_avatar)
+    thumb = _open_stored(user.avatar_thumb)
+    assert thumb.size == (THUMB_SIZE_PX, THUMB_SIZE_PX)
+    assert thumb.format == "WEBP"
+
+    master = _open_stored(user.avatar)
+    assert max(master.size) <= 1024
+    assert master.format == "WEBP"
+
+
+def _oversized_real_image(target_bytes=5 * 1024 * 1024 + 1):
+    """A genuine, decodable PNG whose file size exceeds the limit.
+
+    Random-noise pixels don't compress, so the encoded PNG stays large. This
+    matters: a fake (non-decodable) file is rejected by DRF's ImageField first,
+    so only a *real* oversized image actually reaches our own size check.
+    """
+    import os
+
+    side = 1600  # 1600*1600*3 ≈ 7.3 MB of noise -> PNG stays well over 5 MB
+    image = Image.frombytes("RGB", (side, side), os.urandom(side * side * 3))
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    assert buf.tell() > target_bytes  # guard: the fixture is genuinely oversized
+    buf.seek(0)
+    return SimpleUploadedFile("real-big.png", buf.read(), content_type="image/png")
+
+
+@pytest.mark.django_db
+def test_oversized_real_image_hits_our_size_limit(user_client):
+    """A valid image over 5 MB must be rejected by OUR size check (not DRF's
+    generic image validator), so the error names the size limit."""
+    resp = user_client.post(
+        AVATAR_URL, {"avatar": _oversized_real_image()}, format="multipart"
+    )
+    assert resp.status_code == 400
+    assert "too large" in str(resp.data).lower()  # our message, not DRF's
+
+
+@pytest.mark.django_db
+def test_disallowed_content_type_is_rejected(user_client):
+    """A real, decodable image whose content type is outside the whitelist
+    (e.g. BMP) passes DRF's image validator but must fail OUR type check."""
+    buf = io.BytesIO()
+    Image.new("RGB", (100, 100)).save(buf, format="BMP")
+    buf.seek(0)
+    bmp = SimpleUploadedFile("x.bmp", buf.read(), content_type="image/bmp")
+    resp = user_client.post(AVATAR_URL, {"avatar": bmp}, format="multipart")
+    assert resp.status_code == 400
+    assert "unsupported image type" in str(resp.data).lower()  # our message
+
+
+@pytest.mark.django_db
+def test_non_image_is_rejected(user_client):
+    bad = SimpleUploadedFile(
+        "evil.png", b"definitely not an image", content_type="image/png"
+    )
+    resp = user_client.post(AVATAR_URL, {"avatar": bad}, format="multipart")
+    assert resp.status_code == 400
+
+
+# --- cleanup: both files ----------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_replace_deletes_both_old_files(user, fs_storage):
+    _give_avatar(user, color=(255, 0, 0))
+    old_master, old_thumb = user.avatar.name, user.avatar_thumb.name
+    assert default_storage.exists(old_master)
+    assert default_storage.exists(old_thumb)
+
+    _give_avatar(user, color=(0, 255, 0))
+
+    assert not default_storage.exists(old_master)
+    assert not default_storage.exists(old_thumb)
+    assert default_storage.exists(user.avatar.name)
+    assert default_storage.exists(user.avatar_thumb.name)
+
+
+@pytest.mark.django_db
+def test_clear_deletes_both_files(user, fs_storage):
+    _give_avatar(user)
+    master, thumb = user.avatar.name, user.avatar_thumb.name
 
     user.avatar = None
-    user.save()
+    user.avatar_thumb = None
+    user.save(update_fields=["avatar", "avatar_thumb"])
 
-    assert not default_storage.exists(old_avatar)
-    assert not _source_has_thumbnail_refs(old_avatar)
+    assert not default_storage.exists(master)
+    assert not default_storage.exists(thumb)
 
 
 @pytest.mark.django_db
-def test_avatar_and_thumbnails_deleted_on_user_delete(fs_storage):
-    user = _make_user_with_avatar("u_delete")
-    old_avatar = user.avatar.name
-
-    assert default_storage.exists(old_avatar)
-    assert _source_has_thumbnail_refs(old_avatar)
+def test_user_delete_removes_both_files(user, fs_storage):
+    _give_avatar(user)
+    master, thumb = user.avatar.name, user.avatar_thumb.name
 
     user.delete()
 
-    assert not default_storage.exists(old_avatar)
-    assert not _source_has_thumbnail_refs(old_avatar)
+    assert not default_storage.exists(master)
+    assert not default_storage.exists(thumb)
+
+
+# --- cleanup: guards & safety (preserved from the old suite) ----------------
 
 
 @pytest.mark.django_db
-def test_save_without_avatar_in_update_fields_skips_lookup(fs_storage):
-    """
-    A save() whose update_fields can't touch the avatar (e.g. an ELO update)
-    must not run the old-avatar SELECT — the guard short-circuits first.
-    """
-    user = _make_user_with_avatar("u_guard")
+def test_save_without_avatar_in_update_fields_skips_lookup(user, fs_storage):
+    """A save() whose update_fields can't touch either avatar field must not run
+    the old-file SELECT — the guard short-circuits first."""
+    _give_avatar(user)
 
     User = get_user_model()
     with mock.patch.object(User.objects, "filter", wraps=User.objects.filter) as filt:
@@ -158,59 +208,140 @@ def test_save_without_avatar_in_update_fields_skips_lookup(fs_storage):
 
 
 @pytest.mark.django_db
-def test_failed_save_keeps_old_avatar(fs_storage):
-    """
-    Safety: deletion happens in post_save, so if the save() fails AFTER pre_save
-    (post_save never fires), the old file must stay — the DB row still points to it.
-    """
-    from apps.users.signals import stash_old_avatar_on_change
+def test_failed_save_keeps_old_files(user, fs_storage):
+    """Deletion happens in post_save, so if the save() fails after pre_save
+    (post_save never fires), both old files must stay — the row still points
+    to them."""
+    _give_avatar(user)
+    old_master, old_thumb = user.avatar.name, user.avatar_thumb.name
 
-    user = _make_user_with_avatar("u_fail")
-    old_avatar = user.avatar.name
-    assert default_storage.exists(old_avatar)
-
-    # New avatar assigned, pre_save runs and stashes the old file...
-    user.avatar = _image_file(color=(0, 0, 255))
+    # New avatar assigned, pre_save stashes the old files...
+    master, thumb = process_avatar(_image_upload(color=(0, 0, 255)))
+    user.avatar = master
+    user.avatar_thumb = thumb
     stash_old_avatar_on_change(get_user_model(), user)
 
-    # ...but the DB write fails, so post_save (which deletes) is never called.
-    assert default_storage.exists(old_avatar)  # old file untouched
-    assert getattr(user, "_avatar_to_delete", None)  # still pending deletion
+    # ...but the DB write "fails", so post_save (which deletes) never runs.
+    assert default_storage.exists(old_master)
+    assert default_storage.exists(old_thumb)
+    stash = getattr(user, "_avatar_files_to_delete", None)
+    assert stash and len(stash) == 2  # both files still pending deletion
 
 
-# --- _delete_avatar edge cases (error handling) ---
-
-
-def test_delete_avatar_noop_for_empty():
-    """Empty avatar -> early return, no storage calls."""
-    with (
-        mock.patch("apps.users.signals.thumbnail_delete") as td,
-        mock.patch.object(default_storage, "delete") as sd,
-    ):
-        _delete_avatar("")
-        _delete_avatar(None)
-    td.assert_not_called()
+def test_delete_file_noop_for_empty():
+    with mock.patch.object(default_storage, "delete") as sd:
+        _delete_file("")
+        _delete_file(None)
     sd.assert_not_called()
 
 
-def test_delete_avatar_swallows_thumbnail_error(caplog):
-    """thumbnail_delete failure is logged, not raised."""
+def test_delete_file_swallows_storage_error(caplog):
+    """A storage.delete failure is logged, never raised."""
     with (
-        mock.patch(
-            "apps.users.signals.thumbnail_delete", side_effect=RuntimeError("boom")
-        ),
-        mock.patch.object(default_storage, "exists", return_value=False),
-    ):
-        _delete_avatar("avatars/x.png")  # must not raise
-    assert "Failed to delete thumbnails" in caplog.text
-
-
-def test_delete_avatar_swallows_storage_error(caplog):
-    """default_storage.delete failure is logged, not raised."""
-    with (
-        mock.patch("apps.users.signals.thumbnail_delete"),
         mock.patch.object(default_storage, "exists", return_value=True),
         mock.patch.object(default_storage, "delete", side_effect=OSError("disk fail")),
     ):
-        _delete_avatar("avatars/x.png")  # must not raise
-    assert "Failed to delete avatar" in caplog.text
+        _delete_file("avatars/x.webp")  # must not raise
+    assert "Failed to delete avatar file" in caplog.text
+
+
+# --- the API serves the thumbnail everywhere --------------------------------
+
+
+@pytest.mark.django_db
+def test_me_serves_thumbnail_url(user_client, user, fs_storage):
+    _give_avatar(user)
+    resp = user_client.get("/api/users/me/")
+    assert resp.status_code == 200
+    assert user.avatar_thumb.name in resp.data["avatar"]
+    assert "thumbs" in resp.data["avatar"]  # thumbnail, not the master
+
+
+@pytest.mark.django_db
+def test_me_avatar_null_without_avatar(user_client, user):
+    resp = user_client.get("/api/users/me/")
+    assert resp.status_code == 200
+    assert resp.data["avatar"] is None
+
+
+@pytest.mark.django_db
+def test_profile_serves_thumbnail_url(user_client, user, fs_storage):
+    _give_avatar(user)
+    resp = user_client.get(f"/api/users/{user.username}/")
+    assert resp.status_code == 200
+    assert user.avatar_thumb.name in resp.data["avatar"]
+    assert "thumbs" in resp.data["avatar"]
+
+
+@pytest.mark.django_db
+def test_profile_avatar_null_without_avatar(user_client, user):
+    resp = user_client.get(f"/api/users/{user.username}/")
+    assert resp.status_code == 200
+    assert resp.data["avatar"] is None
+
+
+@pytest.mark.django_db
+def test_standings_serves_thumbnail_url(user_client, user, fs_storage):
+    _give_avatar(user)
+    resp = user_client.get("/api/users/standings/")
+    assert resp.status_code == 200
+    assert user.avatar_thumb.name in resp.data["you"]["avatar"]
+    assert "thumbs" in resp.data["you"]["avatar"]
+
+
+@pytest.mark.django_db
+def test_standings_avatar_null_without_avatar(user_client, user):
+    resp = user_client.get("/api/users/standings/")
+    assert resp.status_code == 200
+    assert resp.data["you"]["avatar"] is None
+
+
+# --- odds and ends ----------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_admin_clear_avatar_action_removes_both_files(user, other, fs_storage):
+    """The admin 'Clear avatar' action nulls both fields; the cleanup signals
+    then drop both files from storage. Users without an avatar are skipped."""
+    _give_avatar(user)
+    master, thumb = user.avatar.name, user.avatar_thumb.name
+    # `other` has no avatar -> the action skips it (the empty-user branch).
+
+    User = get_user_model()
+    admin = UserAdmin(User, AdminSite())
+    request = RequestFactory().post("/admin/")
+    # message_user needs the messages framework wired up; the action's file
+    # cleanup is what we're testing, so stub the user-facing message out.
+    with mock.patch.object(admin, "message_user"):
+        admin.clear_avatar(request, User.objects.filter(pk__in=[user.pk, other.pk]))
+
+    user.refresh_from_db()
+    assert not user.avatar
+    assert not user.avatar_thumb
+    assert not default_storage.exists(master)
+    assert not default_storage.exists(thumb)
+
+
+@pytest.mark.parametrize("mode", ["P", "L"])
+def test_process_avatar_handles_non_rgb_modes(mode):
+    """Palette (P) and grayscale (L) sources are normalised before encoding."""
+    buf = io.BytesIO()
+    Image.new(mode, (300, 300)).save(buf, format="PNG")
+    buf.seek(0)
+    upload = SimpleUploadedFile("x.png", buf.read(), content_type="image/png")
+
+    _master, thumb = process_avatar(upload)
+    assert Image.open(io.BytesIO(thumb.read())).format == "WEBP"
+
+
+@pytest.mark.django_db
+def test_stash_skips_when_old_row_is_missing(fs_storage):
+    """pk is set but no such row exists (e.g. a forced-pk insert) -> the handler
+    returns without stashing anything."""
+    User = get_user_model()
+    ghost = User(pk=999_999, username="ghost", email="ghost@test.com")
+    ghost.avatar = "avatars/whatever.webp"
+
+    stash_old_avatar_on_change(User, ghost)
+
+    assert getattr(ghost, "_avatar_files_to_delete", None) is None

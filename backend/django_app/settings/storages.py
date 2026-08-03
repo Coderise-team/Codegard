@@ -5,6 +5,7 @@ This module is imported from settings/base.py to optionally override STORAGES.
 """
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 env = environ.Env()
 
@@ -14,16 +15,21 @@ R2_SECRET_ACCESS_KEY = env("R2_SECRET_ACCESS_KEY", default="")
 R2_BUCKET_NAME = env("R2_BUCKET_NAME", default="")
 R2_CUSTOM_DOMAIN = env("R2_CUSTOM_DOMAIN", default="")
 
-R2_QUERYSTRING_AUTH = env.bool(
-    "R2_QUERYSTRING_AUTH", default=not bool(R2_CUSTOM_DOMAIN)
-)
-R2_QUERYSTRING_EXPIRE = env.int("R2_QUERYSTRING_EXPIRE", default=604800)
-
 R2_ENABLED = all(
     [R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME]
 )
 
 if R2_ENABLED:
+    # Avatars are public content served straight from R2. We never sign URLs,
+    # so a public domain is mandatory — without it the unsigned links 404.
+    # Fail loudly at startup rather than quietly serving broken images.
+    if not R2_CUSTOM_DOMAIN:
+        raise ImproperlyConfigured(
+            "R2 is enabled but R2_CUSTOM_DOMAIN is not set. Public (unsigned) "
+            "URLs need a public bucket domain — configure R2 public access and "
+            "set R2_CUSTOM_DOMAIN."
+        )
+
     storage_options = {
         "access_key": R2_ACCESS_KEY_ID,
         "secret_key": R2_SECRET_ACCESS_KEY,
@@ -34,11 +40,9 @@ if R2_ENABLED:
         "default_acl": None,
         "file_overwrite": False,
         "location": "media",
-        "querystring_auth": R2_QUERYSTRING_AUTH,
-        **({"custom_domain": R2_CUSTOM_DOMAIN} if R2_CUSTOM_DOMAIN else {}),
-        **(
-            {"querystring_expire": R2_QUERYSTRING_EXPIRE} if R2_QUERYSTRING_AUTH else {}
-        ),
+        # Public content — never sign, so browsers and the CDN can cache it.
+        "querystring_auth": False,
+        "custom_domain": R2_CUSTOM_DOMAIN,
     }
 
     STORAGES = {
@@ -57,25 +61,3 @@ else:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
         },
     }
-
-
-THUMBNAIL_QUALITY = 85
-THUMBNAIL_FORMAT = "WEBP"
-THUMBNAIL_PRESERVE_FORMAT = False
-THUMBNAIL_COLORSPACE = "RGB"
-
-THUMBNAIL_PREFIX = "thumbnails/"
-THUMBNAIL_CACHE_TIMEOUT = 60 * 60 * 24 * 30
-
-# IMPORTANT:
-# Do not set THUMBNAIL_STORAGE to a raw backend path like "storages.backends.s3.S3Storage".
-# That makes sorl-thumbnail instantiate a brand-new storage without our R2 OPTIONS, which
-# results in Unauthorized/AccessDenied when uploading thumbnails.
-#
-# By leaving THUMBNAIL_STORAGE unset, sorl-thumbnail will use Django's default storage
-# (which is already configured above via STORAGES["default"]).
-
-THUMBNAIL_KVSTORE = "sorl.thumbnail.kvstores.cached_db_kvstore.KVStore"
-
-THUMBNAIL_DEBUG = False
-THUMBNAIL_UPSCALE = False

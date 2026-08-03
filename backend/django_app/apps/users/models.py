@@ -12,12 +12,21 @@ def user_avatar_upload_to(_instance, filename: str) -> str:
     return f"avatars/{uuid.uuid4().hex}{ext}"
 
 
+def user_avatar_thumb_upload_to(_instance, _filename: str) -> str:
+    # The thumbnail is always re-encoded to WEBP, so the incoming filename's
+    # extension is irrelevant — the name is fixed to .webp.
+    return f"avatars/thumbs/{uuid.uuid4().hex}.webp"
+
+
 class User(AbstractUser):
     """Platform account: auth plus the competitive-profile fields (avatar, bio,
     current and peak ELO rating)."""
 
     email = models.EmailField(unique=True)
     avatar = models.ImageField(upload_to=user_avatar_upload_to, blank=True, null=True)
+    avatar_thumb = models.ImageField(
+        upload_to=user_avatar_thumb_upload_to, blank=True, null=True
+    )
     bio = models.TextField(blank=True, null=True)
     elo_rating = models.IntegerField(default=1200, db_index=True)
     max_rating = models.IntegerField(default=1200, db_index=True)
