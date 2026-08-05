@@ -12,10 +12,13 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,image/gif';
  * AvatarUpload — camera button laid over the profile avatar, shown to the owner
  * only. Clicking it opens the file picker and uploads the chosen image.
  *
- * The uploaded picture is not rendered anywhere yet (avatars are still drawn as
- * initials across the app); this only stores it.
+ * Props:
+ *   onUploaded — a new picture is stored, so the profile should be reloaded.
+ *     The shell (sidebar, topbar) picks it up from the auth store on its own,
+ *     but the banner draws whatever the profile request returned, and that
+ *     answer is now out of date.
  */
-export default function AvatarUpload() {
+export default function AvatarUpload({ onUploaded }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -38,6 +41,7 @@ export default function AvatarUpload() {
     try {
       const { avatar } = await uploadAvatar(file);
       setUser({ avatar });
+      onUploaded?.();
     } catch {
       setError('Upload failed. Please try again.');
     } finally {

@@ -31,13 +31,17 @@ beforeEach(() => {
 
 describe('AvatarUpload', () => {
   it('uploads the picked image and keeps the stored user in step', async () => {
-    const { container } = render(<AvatarUpload />);
+    const onUploaded = vi.fn();
+    const { container } = render(<AvatarUpload onUploaded={onUploaded} />);
     const file = imageFile();
 
     pick(container, file);
 
     await waitFor(() => expect(uploadAvatar).toHaveBeenCalledWith(file));
     expect(setUser).toHaveBeenCalledWith({ avatar: '/media/avatars/abc.webp' });
+    // The banner still shows the picture the profile request returned, so it
+    // has to be asked again.
+    expect(onUploaded).toHaveBeenCalled();
   });
 
   it('turns down an oversized image without spending the upload', async () => {
@@ -51,11 +55,13 @@ describe('AvatarUpload', () => {
 
   it('reports a failed upload and leaves the stored user alone', async () => {
     uploadAvatar.mockRejectedValue(new Error('Network Error'));
-    const { container } = render(<AvatarUpload />);
+    const onUploaded = vi.fn();
+    const { container } = render(<AvatarUpload onUploaded={onUploaded} />);
 
     pick(container, imageFile());
 
     expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
     expect(setUser).not.toHaveBeenCalled();
+    expect(onUploaded).not.toHaveBeenCalled();
   });
 });
