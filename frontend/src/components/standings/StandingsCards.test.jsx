@@ -5,6 +5,7 @@ import { StandingRow, PodiumCard, StHead } from './StandingsCards';
 
 const coder = (over = {}) => ({
   username: 'n3ptune',
+  avatar: null,
   elo_rating: 1700, // Expert band
   maxRating: 1812,
   globalRank: 5,
@@ -74,6 +75,15 @@ describe('StandingRow', () => {
     expect(zero.querySelector('.st-delta.flat').textContent).toBe('0');
   });
 
+  it('shows the picture of a coder who has one', () => {
+    const { container } = render(
+      <StandingRow u={coder({ avatar: '/media/avatars/thumbs/abc.webp' })} />
+    );
+    expect(container.querySelector('.avatar-img').getAttribute('src')).toBe(
+      '/media/avatars/thumbs/abc.webp'
+    );
+  });
+
   it('dashes the peak rating when it is missing', () => {
     const { container } = render(
       <StandingRow u={coder({ maxRating: null })} />
@@ -92,6 +102,24 @@ describe('PodiumCard', () => {
     );
     expect(container.querySelector('.pod-2')).toBeTruthy();
     expect(container.querySelector('.pod-medal').textContent).toBe('2');
+  });
+
+  it('swaps the picture along with the coder it revolves to', () => {
+    const users = [
+      coder({ username: 'ann', avatar: '/media/avatars/thumbs/ann.webp' }),
+      coder({ username: 'bob', avatar: '/media/avatars/thumbs/bob.webp' }),
+    ];
+    const { container } = render(<PodiumCard place={1} users={users} />);
+
+    expect(container.querySelector('.avatar-img').getAttribute('src')).toBe(
+      '/media/avatars/thumbs/ann.webp'
+    );
+
+    act(() => vi.advanceTimersByTime(4000));
+
+    expect(container.querySelector('.avatar-img').getAttribute('src')).toBe(
+      '/media/avatars/thumbs/bob.webp'
+    );
   });
 
   it('has no revolver when one coder holds the place alone', () => {
