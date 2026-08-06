@@ -72,9 +72,14 @@ export default function PrivacyPage() {
 
         <h2 id="who-we-are">1. Who we are</h2>
         <p>
-          Codegard is an online platform where users solve programming problems,
-          take part in contests, and track their rating. The service is
-          developed and operated by the Coderise team. We are the party
+          Codegard is an online competitive programming platform. Users solve
+          algorithmic problems and take part in timed contests; each submission
+          is run and graded automatically, and results feed into a rating that
+          reflects a user&apos;s performance over time. Profiles, ratings, and
+          contest standings are shown on public leaderboards.
+        </p>
+        <p>
+          The service is developed and operated by the Coderise team, which is
           responsible for the personal data described in this policy (the
           &quot;data controller&quot;).
         </p>
