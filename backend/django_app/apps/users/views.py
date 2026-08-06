@@ -22,9 +22,9 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
-from sorl.thumbnail import get_thumbnail
 
 from . import oauth
+from .images import process_avatar
 from .models import EloHistory, User
 from .oauth import OAuthError
 from .pagination import StandingsPagination
@@ -75,21 +75,14 @@ class AvatarUploadView(APIView):
     def post(self, request):
         serializer = AvatarUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = request.user
-        user.avatar = serializer.validated_data["avatar"]
-        user.save(update_fields=["avatar"])
-        thumb_128 = get_thumbnail(user.avatar, "128x128", crop="center", quality=85)
-        thumb_256 = get_thumbnail(user.avatar, "256x256", crop="center", quality=85)
+        master, thumb = process_avatar(serializer.validated_data["avatar"])
 
-        return Response(
-            {
-                "avatar": user.avatar.url,
-                "thumbnails": {
-                    "128": thumb_128.url,
-                    "256": thumb_256.url,
-                },
-            }
-        )
+        user = request.user
+        user.avatar = master
+        user.avatar_thumb = thumb
+        user.save(update_fields=["avatar", "avatar_thumb"])
+
+        return Response({"avatar": request.build_absolute_uri(user.avatar_thumb.url)})
 
 
 class LogoutView(APIView):
