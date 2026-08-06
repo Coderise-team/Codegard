@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icons from '../Icons';
 import { uploadAvatar } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
@@ -7,6 +8,9 @@ import { useAuthStore } from '../../store/authStore';
 // before it is uploaded; the backend enforces them again on arrival.
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED = 'image/jpeg,image/png,image/webp,image/gif';
+
+// How long an error card stays up before it fades on its own.
+const ERROR_VISIBLE_MS = 5000;
 
 /**
  * AvatarUpload — camera button laid over the profile avatar, shown to the owner
@@ -21,8 +25,16 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,image/gif';
 export default function AvatarUpload({ onUploaded }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  // An object, not a bare string: two identical failures in a row have to count
+  // as two events, or the second one would inherit the first one's dying timer.
   const [error, setError] = useState(null);
   const setUser = useAuthStore((s) => s.setUser);
+
+  useEffect(() => {
+    if (!error) return undefined;
+    const timer = setTimeout(() => setError(null), ERROR_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const onPick = async (event) => {
     const file = event.target.files?.[0];
@@ -32,7 +44,7 @@ export default function AvatarUpload({ onUploaded }) {
     if (!file) return;
 
     if (file.size > MAX_SIZE_BYTES) {
-      setError('Image is larger than 5 MB.');
+      setError({ text: 'Image is larger than 5 MB.' });
       return;
     }
 
@@ -43,7 +55,7 @@ export default function AvatarUpload({ onUploaded }) {
       setUser({ avatar });
       onUploaded?.();
     } catch {
-      setError('Upload failed. Please try again.');
+      setError({ text: 'Upload failed. Please try again.' });
     } finally {
       setBusy(false);
     }
@@ -68,11 +80,32 @@ export default function AvatarUpload({ onUploaded }) {
         hidden
         onChange={onPick}
       />
-      {(busy || error) && (
-        <div className={`avatar-note${error ? ' is-error' : ''}`} role="status">
-          {error ?? 'Uploading…'}
+      {busy && (
+        <div className="avatar-note" role="status">
+          Uploading…
         </div>
       )}
+      {error &&
+        createPortal(
+          <div className="avatar-toast-wrap">
+            <div className="avatar-toast" role="alert">
+              <div className="avatar-toast-icon">
+                <Icons.xBold size={18} />
+              </div>
+              <div className="avatar-toast-text">{error.text}</div>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setError(null)}
+                aria-label="Dismiss"
+                style={{ width: 28, height: 28 }}
+              >
+                <Icons.x size={14} />
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

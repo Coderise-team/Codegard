@@ -53,6 +53,17 @@ describe('AvatarUpload', () => {
     expect(uploadAvatar).not.toHaveBeenCalled();
   });
 
+  it('lets the error card be dismissed by hand', async () => {
+    const { container } = render(<AvatarUpload />);
+
+    pick(container, imageFile(6 * 1024 * 1024));
+    const card = await screen.findByText(/larger than 5 MB/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /dismiss/i }));
+
+    expect(card).not.toBeInTheDocument();
+  });
+
   it('reports a failed upload and leaves the stored user alone', async () => {
     uploadAvatar.mockRejectedValue(new Error('Network Error'));
     const onUploaded = vi.fn();

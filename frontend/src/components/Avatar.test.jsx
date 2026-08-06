@@ -16,6 +16,8 @@ describe('Avatar', () => {
     );
     // The badge stays underneath, so a slow load never shows an empty square.
     expect(screen.getByText('N3')).toBeInTheDocument();
+    // Marks the box so its owner can drop badge dressing under a photo.
+    expect(container.querySelector('.avatar-box.has-picture')).not.toBeNull();
   });
 
   it('shows only the initials when there is no avatar', () => {

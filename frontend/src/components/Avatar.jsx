@@ -18,6 +18,9 @@ const initialsOf = (username) => (username ?? '').slice(0, 2).toUpperCase();
  *   username  — source of the initials
  *   className — the caller's avatar box class (.avatar, .pavatar, .st-av, ...)
  *   children  — extras drawn on top of the box (the owner's camera button)
+ *
+ * While a picture is up the box also carries `has-picture`, so a caller can
+ * drop badge dressing (rings, tinted glow) that would fight a photo.
  */
 export default function Avatar({
   src,
@@ -32,7 +35,9 @@ export default function Avatar({
   const showPicture = Boolean(src) && failedSrc !== src;
 
   return (
-    <div className={`${className} avatar-box`}>
+    <div
+      className={`${className} avatar-box${showPicture ? ' has-picture' : ''}`}
+    >
       {/* Hidden from screen readers: every place that draws an avatar prints
           the username right next to it, so the badge is decoration. */}
       <span aria-hidden="true">{initialsOf(username)}</span>
