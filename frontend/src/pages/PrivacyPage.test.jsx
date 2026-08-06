@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 
 import PrivacyPage from './PrivacyPage';
@@ -37,5 +37,33 @@ describe('PrivacyPage', () => {
       'href',
       '/'
     );
+  });
+
+  it('sets a descriptive document title', () => {
+    renderPage();
+
+    expect(document.title).toBe('Privacy Policy — Codegard');
+  });
+
+  it('offers a table of contents that jumps to sections', () => {
+    renderPage();
+
+    const toc = screen.getByRole('navigation', { name: /table of contents/i });
+    expect(
+      within(toc).getByRole('link', {
+        name: 'Google user data and Limited Use',
+      })
+    ).toHaveAttribute('href', '#google-user-data');
+  });
+
+  it('links out to the third-party providers privacy policies', () => {
+    renderPage();
+
+    expect(
+      screen.getByRole('link', { name: /Google Privacy Policy/i })
+    ).toHaveAttribute('href', 'https://policies.google.com/privacy');
+    expect(
+      screen.getByRole('link', { name: /Cloudflare Privacy Policy/i })
+    ).toHaveAttribute('href', 'https://www.cloudflare.com/privacypolicy/');
   });
 });

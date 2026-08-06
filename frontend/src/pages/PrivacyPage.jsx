@@ -291,7 +291,9 @@ export default function PrivacyPage() {
           To exercise any of these rights, contact us at{' '}
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. We aim to
           comply with applicable data protection laws, including the GDPR for
-          users in the European Economic Area.
+          users in the European Economic Area. If you are in the EEA or the UK,
+          you also have the right to lodge a complaint with your local data
+          protection supervisory authority.
         </p>
 
         <h2 id="transfers">11. Data storage and international transfers</h2>
