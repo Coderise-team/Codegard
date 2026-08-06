@@ -1,0 +1,91 @@
+/* Standalone legal page — matches the app's dark theme but carries no app shell,
+   so it stays readable for a signed-out reader (e.g. a Google reviewer). */
+
+.privacy {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui);
+}
+
+.privacy-top {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+}
+
+.privacy-brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.privacy-brand:hover {
+  color: var(--gold-hi);
+}
+
+.privacy-doc {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  line-height: 1.7;
+}
+
+.privacy-doc h1 {
+  font-size: 32px;
+  margin: 0 0 6px;
+}
+
+.privacy-updated {
+  color: var(--fg2);
+  margin: 0 0 32px;
+  font-size: 14px;
+}
+
+.privacy-doc h2 {
+  font-size: 20px;
+  margin: 36px 0 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.privacy-doc p {
+  margin: 0 0 14px;
+}
+
+.privacy-doc ul {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.privacy-doc li {
+  margin: 0 0 6px;
+}
+
+.privacy-doc a {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+.privacy-doc a:hover {
+  color: var(--gold-hi);
+}
+
+.privacy-doc code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+}
+
+@media (max-width: 600px) {
+  .privacy-doc {
+    padding: 28px 16px 60px;
+  }
+
+  .privacy-doc h1 {
+    font-size: 26px;
+  }
+}
