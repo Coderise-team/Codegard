@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './PrivacyPage.css';
 
@@ -7,7 +8,34 @@ import './PrivacyPage.css';
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
 const LAST_UPDATED = 'August 6, 2026';
 
+// Section id → table-of-contents label. The order here is the order on the page.
+const SECTIONS = [
+  ['who-we-are', 'Who we are'],
+  ['data-we-collect', 'What data we collect'],
+  ['how-we-use', 'How we use your data'],
+  ['legal-basis', 'Legal basis for processing'],
+  ['google-user-data', 'Google user data and Limited Use'],
+  ['sharing', 'Who we share data with'],
+  ['public-info', 'Public information'],
+  ['retention', 'Data retention and account deletion'],
+  ['cookies', 'Cookies and local storage'],
+  ['your-rights', 'Your rights'],
+  ['transfers', 'Data storage and international transfers'],
+  ['security', 'Security'],
+  ['children', 'Children'],
+  ['changes', 'Changes to this policy'],
+  ['contact', 'Contact us'],
+];
+
 export default function PrivacyPage() {
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'Privacy Policy — Codegard';
+    return () => {
+      document.title = previous;
+    };
+  }, []);
+
   return (
     <div className="privacy">
       <header className="privacy-top">
@@ -32,7 +60,17 @@ export default function PrivacyPage() {
           at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
-        <h2>1. Who we are</h2>
+        <nav className="privacy-toc" aria-label="Table of contents">
+          <ol>
+            {SECTIONS.map(([id, label]) => (
+              <li key={id}>
+                <a href={`#${id}`}>{label}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <h2 id="who-we-are">1. Who we are</h2>
         <p>
           Codegard is an online platform where users solve programming problems,
           take part in contests, and track their rating. The service is
@@ -41,7 +79,7 @@ export default function PrivacyPage() {
           &quot;data controller&quot;).
         </p>
 
-        <h2>2. What data we collect</h2>
+        <h2 id="data-we-collect">2. What data we collect</h2>
         <p>
           <strong>Account data (when you register directly):</strong>
         </p>
@@ -94,7 +132,7 @@ export default function PrivacyPage() {
           information, or any other data not listed above.
         </p>
 
-        <h2>3. How we use your data</h2>
+        <h2 id="how-we-use">3. How we use your data</h2>
         <p>We use your data only to run the service:</p>
         <ul>
           <li>create and manage your account</li>
@@ -109,7 +147,29 @@ export default function PrivacyPage() {
           <strong>not</strong> sell it.
         </p>
 
-        <h2>4. Google user data and Limited Use</h2>
+        <h2 id="legal-basis">4. Legal basis for processing</h2>
+        <p>
+          Where data protection law (such as the GDPR) applies, we rely on the
+          following legal bases:
+        </p>
+        <ul>
+          <li>
+            <strong>Performance of a service</strong> — to create your account,
+            sign you in, run submissions, and provide the platform&apos;s core
+            features.
+          </li>
+          <li>
+            <strong>Legitimate interests</strong> — to keep the service secure,
+            prevent abuse, and diagnose technical problems.
+          </li>
+          <li>
+            <strong>Consent</strong> — where we ask for it, for example when you
+            choose to upload an optional avatar. You can withdraw consent at any
+            time.
+          </li>
+        </ul>
+
+        <h2 id="google-user-data">5. Google user data and Limited Use</h2>
         <p>
           Our use of information received from Google APIs adheres to the{' '}
           <a
@@ -140,7 +200,7 @@ export default function PrivacyPage() {
         </ul>
         <p>The same principles apply to information we receive from GitHub.</p>
 
-        <h2>5. Who we share data with</h2>
+        <h2 id="sharing">6. Who we share data with</h2>
         <p>
           We do <strong>not</strong> sell your data and we do{' '}
           <strong>not</strong> share it with anyone for advertising. Your data
@@ -150,11 +210,35 @@ export default function PrivacyPage() {
         <ul>
           <li>
             <strong>Google</strong> and <strong>GitHub</strong> — used solely
-            for sign-in, when you choose them.
+            for sign-in, when you choose them. See the{' '}
+            <a
+              href="https://policies.google.com/privacy"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Google Privacy Policy
+            </a>{' '}
+            and the{' '}
+            <a
+              href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub Privacy Statement
+            </a>
+            .
           </li>
           <li>
             <strong>Cloudflare</strong> — delivers our website and protects it
-            from abuse.
+            from abuse. See the{' '}
+            <a
+              href="https://www.cloudflare.com/privacypolicy/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Cloudflare Privacy Policy
+            </a>
+            .
           </li>
           <li>
             <strong>Cloudflare R2</strong> — stores your avatar image.
@@ -165,7 +249,7 @@ export default function PrivacyPage() {
           rights, safety, and integrity of Codegard and its users.
         </p>
 
-        <h2>6. Public information</h2>
+        <h2 id="public-info">7. Public information</h2>
         <p>
           Some information is visible to other users by design: your username,
           avatar, rating, and contest results appear on public profiles and
@@ -173,7 +257,7 @@ export default function PrivacyPage() {
           publicly.
         </p>
 
-        <h2>7. How long we keep data and how to delete your account</h2>
+        <h2 id="retention">8. Data retention and account deletion</h2>
         <p>
           We keep your personal data for as long as your account exists. If you
           delete your account, we delete your personal data (including your
@@ -186,7 +270,7 @@ export default function PrivacyPage() {
           contact us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
-        <h2>8. Cookies and local storage</h2>
+        <h2 id="cookies">9. Cookies and local storage</h2>
         <p>
           We use cookies and browser local storage only to keep you signed in —
           they store your authentication tokens. We do <strong>not</strong> use
@@ -194,7 +278,7 @@ export default function PrivacyPage() {
           block it in your browser, you will be signed out.
         </p>
 
-        <h2>9. Your rights</h2>
+        <h2 id="your-rights">10. Your rights</h2>
         <p>Depending on where you live, you may have the right to:</p>
         <ul>
           <li>access the personal data we hold about you</li>
@@ -210,7 +294,7 @@ export default function PrivacyPage() {
           users in the European Economic Area.
         </p>
 
-        <h2>10. Data storage and international transfers</h2>
+        <h2 id="transfers">11. Data storage and international transfers</h2>
         <p>
           Your data may be stored and processed on servers operated by our
           infrastructure providers (such as Cloudflare), which may be located
@@ -218,14 +302,16 @@ export default function PrivacyPage() {
           safeguards are in place for such transfers.
         </p>
 
-        <h2>11. Security</h2>
+        <h2 id="security">12. Security</h2>
         <p>
-          We take reasonable measures to protect your data. However, no method
-          of transmission or storage over the Internet is completely secure, so
-          we cannot guarantee absolute security.
+          We take reasonable measures to protect your data: it is transmitted
+          over encrypted HTTPS connections, and passwords are stored only in
+          hashed form. However, no method of transmission or storage over the
+          Internet is completely secure, so we cannot guarantee absolute
+          security.
         </p>
 
-        <h2>12. Children</h2>
+        <h2 id="children">13. Children</h2>
         <p>
           Codegard is intended for users aged <strong>13 and older</strong>. We
           do not knowingly collect personal data from children under 13. Where
@@ -235,7 +321,7 @@ export default function PrivacyPage() {
           will remove it.
         </p>
 
-        <h2>13. Changes to this policy</h2>
+        <h2 id="changes">14. Changes to this policy</h2>
         <p>
           We may update this Privacy Policy from time to time. We will post the
           new version on this page and update the &quot;Last updated&quot; date
@@ -244,7 +330,7 @@ export default function PrivacyPage() {
           policy.
         </p>
 
-        <h2>14. Contact us</h2>
+        <h2 id="contact">15. Contact us</h2>
         <p>
           For any questions or requests about this Privacy Policy or your data,
           email us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.

@@ -6,6 +6,7 @@
      so this standalone page owns its own scroll area instead. */
   height: 100vh;
   overflow-y: auto;
+  scroll-behavior: smooth;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--ui);
@@ -50,6 +51,45 @@
   margin: 36px 0 12px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
+  /* Anchor jumps from the table of contents land with a little breathing room. */
+  scroll-margin-top: 16px;
+}
+
+/* Table of contents */
+.privacy-toc {
+  margin: 8px 0 12px;
+  padding: 16px 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+.privacy-toc ol {
+  margin: 0;
+  padding-left: 20px;
+  columns: 2;
+  column-gap: 28px;
+}
+
+.privacy-toc li {
+  margin: 0 0 6px;
+  break-inside: avoid;
+}
+
+.privacy-toc a {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.privacy-toc a:hover {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .privacy-toc ol {
+    columns: 1;
+  }
 }
 
 .privacy-doc p {
