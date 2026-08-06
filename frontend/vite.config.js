@@ -13,11 +13,14 @@ export default defineConfig(({ mode }) => {
   }
 
   // Dev only: serve API on the same origin as the app so prod's relative
-  // /api works unchanged and no CORS is needed.
+  // /api works unchanged and no CORS is needed. /media is uploaded files
+  // (avatars): locally Django hands them out, in prod they live in R2 and the
+  // urls point straight at the bucket, so nothing proxies them there.
   const proxyTarget = env.VITE_DEV_PROXY_TARGET;
   const proxy = proxyTarget
     ? {
         '/api': { target: proxyTarget, changeOrigin: false },
+        '/media': { target: proxyTarget, changeOrigin: false },
         '/ws': { target: proxyTarget, changeOrigin: false, ws: true },
       }
     : undefined;
