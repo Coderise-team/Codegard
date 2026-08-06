@@ -2,7 +2,10 @@
    so it stays readable for a signed-out reader (e.g. a Google reviewer). */
 
 .privacy {
-  min-height: 100vh;
+  /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
+     so this standalone page owns its own scroll area instead. */
+  height: 100vh;
+  overflow-y: auto;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--ui);
