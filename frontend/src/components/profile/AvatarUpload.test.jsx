@@ -64,15 +64,32 @@ describe('AvatarUpload', () => {
     expect(card).not.toBeInTheDocument();
   });
 
-  it('reports a failed upload and leaves the stored user alone', async () => {
+  it('says the server is out of reach when nothing answered', async () => {
+    // An axios error from a dropped connection carries no response at all.
     uploadAvatar.mockRejectedValue(new Error('Network Error'));
     const onUploaded = vi.fn();
     const { container } = render(<AvatarUpload onUploaded={onUploaded} />);
 
     pick(container, imageFile());
 
-    expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/check your connection/i)
+    ).toBeInTheDocument();
     expect(setUser).not.toHaveBeenCalled();
     expect(onUploaded).not.toHaveBeenCalled();
+  });
+
+  it('repeats the reason the server gave for turning the file down', async () => {
+    uploadAvatar.mockRejectedValue({
+      response: { data: { avatar: ['Upload a valid image.'] } },
+    });
+    const { container } = render(<AvatarUpload />);
+
+    pick(container, imageFile());
+
+    // "Try again" is useless advice for a file that will never be an image.
+    expect(
+      await screen.findByText('Upload a valid image.')
+    ).toBeInTheDocument();
   });
 });

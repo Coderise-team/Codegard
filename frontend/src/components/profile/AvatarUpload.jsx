@@ -13,6 +13,27 @@ const ACCEPTED = 'image/jpeg,image/png,image/webp,image/gif';
 const ERROR_VISIBLE_MS = 5000;
 
 /**
+ * Turn a failed upload into something worth reading.
+ *
+ * The endpoint names the real reason (not an image, unsupported type, too
+ * large) under the `avatar` field, and that reason decides what the owner
+ * should do next — picking a different file, or simply trying again. Only a
+ * connection that never reached the server earns "try again".
+ */
+function uploadErrorText(error) {
+  if (!error?.response) {
+    return 'Could not reach the server. Check your connection and try again.';
+  }
+  const body = error.response.data;
+  const reason = body?.avatar ?? body?.detail;
+  const text = (Array.isArray(reason) ? reason : [reason])
+    .filter(Boolean)
+    .map(String)
+    .join(' ');
+  return text || 'Upload failed. Please try again.';
+}
+
+/**
  * AvatarUpload — camera button laid over the profile avatar, shown to the owner
  * only. Clicking it opens the file picker and uploads the chosen image.
  *
@@ -54,8 +75,8 @@ export default function AvatarUpload({ onUploaded }) {
       const { avatar } = await uploadAvatar(file);
       setUser({ avatar });
       onUploaded?.();
-    } catch {
-      setError({ text: 'Upload failed. Please try again.' });
+    } catch (failure) {
+      setError({ text: uploadErrorText(failure) });
     } finally {
       setBusy(false);
     }
