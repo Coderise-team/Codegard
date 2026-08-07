@@ -44,6 +44,29 @@ describe('AvatarUpload', () => {
     expect(onUploaded).toHaveBeenCalled();
   });
 
+  it('covers the avatar while the upload is in flight', async () => {
+    let finish;
+    uploadAvatar.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+    const { container } = render(<AvatarUpload />);
+
+    pick(container, imageFile());
+
+    expect(
+      await screen.findByRole('status', { name: /uploading/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /change photo/i })
+    ).toBeDisabled();
+
+    finish({ avatar: '/media/avatars/thumbs/abc.webp' });
+
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+  });
+
   it('turns down an oversized image without spending the upload', async () => {
     const { container } = render(<AvatarUpload />);
 

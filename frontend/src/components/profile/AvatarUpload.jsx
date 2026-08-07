@@ -102,8 +102,8 @@ export default function AvatarUpload({ onUploaded }) {
         onChange={onPick}
       />
       {busy && (
-        <div className="avatar-note" role="status">
-          Uploading…
+        <div className="avatar-busy" role="status" aria-label="Uploading">
+          <span className="spin" />
         </div>
       )}
       {error &&
