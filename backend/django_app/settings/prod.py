@@ -1,7 +1,20 @@
 # ruff: noqa: F403, F405
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 DEBUG = False
+
+# Uploaded files (avatars) must live in R2 here. Nothing serves /media/ in
+# production — Django only hands files out under DEBUG, and nginx answers an
+# image request with the app shell — so a deploy without R2 would write files
+# onto the container's disk where nobody can ever read them, and avatars would
+# quietly stop appearing. Fail at startup instead.
+if not R2_ENABLED:
+    raise ImproperlyConfigured(
+        "R2 storage is required in production: set R2_ACCOUNT_ID, "
+        "R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME."
+    )
 
 SECRET_KEY = env("SECRET_KEY")
 
