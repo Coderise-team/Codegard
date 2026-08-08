@@ -7,6 +7,13 @@ SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
+# Origins allowed to send unsafe requests (the admin login, any form POST).
+# Mandatory behind the proxy: nginx forwards X-Forwarded-Proto https, so Django
+# expects an https origin and rejects everything else with 403 — an empty list
+# means nobody can log into the admin. Full scheme + host, e.g.
+# https://codegard.dev.
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
+
 DATABASES = {"default": env.db("DATABASE_URL")}
 
 _redis_url = f"redis://:{env('REDIS_PASSWORD')}@redis:6379/0"
