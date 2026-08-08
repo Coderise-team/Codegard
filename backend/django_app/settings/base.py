@@ -159,11 +159,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Allowed frontend origins for CORS.
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
-
 # Usernames reserved for API routes.
 RESERVED_USERNAMES = {
     "me",

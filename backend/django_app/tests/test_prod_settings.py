@@ -23,6 +23,7 @@ PROD_ENV = {
     "DATABASE_URL": "postgres://user:pass@postgres:5432/codegard",
     "REDIS_PASSWORD": "redis-pass",
     "LOG_LEVEL": "INFO",
+    "CORS_ALLOWED_ORIGINS": "",
 }
 
 
@@ -84,3 +85,23 @@ def test_log_level_read_from_env(monkeypatch):
 def test_missing_log_level_refuses_to_start(monkeypatch):
     with pytest.raises(ImproperlyConfigured):
         load_prod_settings(monkeypatch, LOG_LEVEL=None)
+
+
+def test_empty_cors_variable_allows_no_origin(monkeypatch):
+    """An empty variable must not smuggle in a blank origin."""
+    prod = load_prod_settings(monkeypatch)
+
+    assert prod.CORS_ALLOWED_ORIGINS == []
+
+
+def test_cors_origins_read_from_env(monkeypatch):
+    prod = load_prod_settings(
+        monkeypatch, CORS_ALLOWED_ORIGINS="https://a.example,https://b.example"
+    )
+
+    assert prod.CORS_ALLOWED_ORIGINS == ["https://a.example", "https://b.example"]
+
+
+def test_missing_cors_variable_refuses_to_start(monkeypatch):
+    with pytest.raises(ImproperlyConfigured):
+        load_prod_settings(monkeypatch, CORS_ALLOWED_ORIGINS=None)

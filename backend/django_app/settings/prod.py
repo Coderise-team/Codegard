@@ -13,6 +13,11 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 DATABASES = {"default": env.db("DATABASE_URL")}
 
+# Normally empty: nginx serves the app and the API from one origin, so the
+# browser never makes a cross-origin call. Blanks are dropped so an empty
+# variable stays an empty list instead of one bogus origin.
+CORS_ALLOWED_ORIGINS = [origin for origin in env.list("CORS_ALLOWED_ORIGINS") if origin]
+
 _redis_url = f"redis://:{env('REDIS_PASSWORD')}@redis:6379/0"
 
 CELERY_BROKER_URL = _redis_url
