@@ -22,6 +22,7 @@ PROD_ENV = {
     "CSRF_TRUSTED_ORIGINS": "https://codegard.dev,https://www.codegard.dev",
     "DATABASE_URL": "postgres://user:pass@postgres:5432/codegard",
     "REDIS_PASSWORD": "redis-pass",
+    "LOG_LEVEL": "INFO",
 }
 
 
@@ -52,3 +53,34 @@ def test_missing_csrf_trusted_origins_refuses_to_start(monkeypatch):
     """No silent default: booting without the list would 403 every admin login."""
     with pytest.raises(ImproperlyConfigured):
         load_prod_settings(monkeypatch, CSRF_TRUSTED_ORIGINS=None)
+
+
+def test_logging_writes_everything_to_the_console(monkeypatch):
+    """The container's output is the log — a file handler would die with it."""
+    prod = load_prod_settings(monkeypatch)
+
+    handlers = prod.LOGGING["handlers"]
+    assert set(handlers) == {"console"}
+    assert handlers["console"]["class"] == "logging.StreamHandler"
+    assert prod.LOGGING["root"]["handlers"] == ["console"]
+
+
+def test_failed_requests_are_logged(monkeypatch):
+    """django.request carries the traceback of a 500; silence there is the bug
+    this whole block exists to fix."""
+    prod = load_prod_settings(monkeypatch)
+
+    request_logger = prod.LOGGING["loggers"]["django.request"]
+    assert request_logger["handlers"] == ["console"]
+    assert request_logger["level"] == "WARNING"
+
+
+def test_log_level_read_from_env(monkeypatch):
+    prod = load_prod_settings(monkeypatch, LOG_LEVEL="WARNING")
+
+    assert prod.LOGGING["root"]["level"] == "WARNING"
+
+
+def test_missing_log_level_refuses_to_start(monkeypatch):
+    with pytest.raises(ImproperlyConfigured):
+        load_prod_settings(monkeypatch, LOG_LEVEL=None)

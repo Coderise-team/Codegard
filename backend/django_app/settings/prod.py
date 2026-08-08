@@ -7,11 +7,8 @@ SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-# Origins allowed to send unsafe requests (the admin login, any form POST).
 # Mandatory behind the proxy: nginx forwards X-Forwarded-Proto https, so Django
-# expects an https origin and rejects everything else with 403 — an empty list
-# means nobody can log into the admin. Full scheme + host, e.g.
-# https://codegard.dev.
+# expects an https origin and 403s the admin login without a match here.
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 
 DATABASES = {"default": env.db("DATABASE_URL")}
@@ -47,3 +44,41 @@ SECURE_SSL_REDIRECT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+# Console only: the container's output is the log, and a file inside it would
+# die with the container. Without this block Django is silent about 500s.
+LOG_LEVEL = env("LOG_LEVEL")
+
+LOGGING = {
+    "version": 1,
+    # Keeps loggers third-party packages set up at import time alive.
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
+    # Pinned to WARNING regardless of LOG_LEVEL: failed requests (500s with a
+    # traceback, 4xx) and security events are the ones we can never afford to
+    # miss, however quiet the rest is turned down.
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
