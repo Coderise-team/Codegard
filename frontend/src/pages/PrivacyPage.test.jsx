@@ -30,13 +30,15 @@ describe('PrivacyPage', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('links the brand back to the home page', () => {
+  it('links the brand logo back to the home page', () => {
     renderPage();
 
-    expect(screen.getByRole('link', { name: 'Codegard' })).toHaveAttribute(
-      'href',
-      '/'
-    );
+    // The header uses the shared Codegard logo (C / Code / gard spans), so match
+    // the only link that points home rather than a specific text label.
+    const home = screen
+      .getAllByRole('link')
+      .find((a) => a.getAttribute('href') === '/');
+    expect(home).toBeDefined();
   });
 
   it('sets a descriptive document title', () => {
