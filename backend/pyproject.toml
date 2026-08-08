@@ -45,10 +45,13 @@ python_classes = ["Test*", "*Tests", "*TestCase"]
 python_functions = ["test_*"]
 
 [tool.coverage.run]
+# Entry points and production settings never run under the test settings, so
+# coverage can only ever report them as dead weight.
 omit = [
     "django_app/config/asgi.py",
     "django_app/config/wsgi.py",
     "django_app/manage.py",
+    "django_app/settings/prod.py",
     "django_app/**/migrations/*.py",
 ]
 
