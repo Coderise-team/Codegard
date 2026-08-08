@@ -55,9 +55,10 @@ describe('AvatarUpload', () => {
 
     pick(container, imageFile());
 
-    expect(
-      await screen.findByRole('status', { name: /uploading/i })
-    ).toBeInTheDocument();
+    // The wording is what a screen reader announces; the veil and spinner are
+    // the same news for everyone else.
+    expect(await screen.findByText('Uploading…')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /change photo/i })
     ).toBeDisabled();

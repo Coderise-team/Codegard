@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import Icons from '../Icons';
 import { uploadAvatar } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
+import './AvatarUpload.css';
 
 // Mirrors the backend limits so an oversized or non-image file is rejected
 // before it is uploaded; the backend enforces them again on arrival.
@@ -102,8 +103,11 @@ export default function AvatarUpload({ onUploaded }) {
         onChange={onPick}
       />
       {busy && (
-        <div className="avatar-busy" role="status" aria-label="Uploading">
+        <div className="avatar-busy" role="status">
           <span className="spin" />
+          {/* Read out loud: a live region announces its text, and a spinner
+              has none. */}
+          <span className="sr-only">Uploading…</span>
         </div>
       )}
       {error &&
@@ -116,10 +120,9 @@ export default function AvatarUpload({ onUploaded }) {
               <div className="avatar-toast-text">{error.text}</div>
               <button
                 type="button"
-                className="icon-btn"
+                className="icon-btn avatar-toast-close"
                 onClick={() => setError(null)}
                 aria-label="Dismiss"
-                style={{ width: 28, height: 28 }}
               >
                 <Icons.x size={14} />
               </button>
