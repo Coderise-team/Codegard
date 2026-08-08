@@ -2,6 +2,14 @@ from .dev import *
 
 DEBUG = False
 
+# Never R2: storages.py picks the backend from whatever R2 keys sit in the
+# developer's own .env, which made the suite behave differently per machine and
+# left an upload one oversight away from landing in the live bucket.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
 CELERY_TASK_ALWAYS_EAGER = True
 
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app != "debug_toolbar"]

@@ -187,6 +187,13 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PYTHONPATH: /app/django_app:/shared
       DJANGO_SETTINGS_MODULE: settings.test
+      # Blank out R2 so the suite runs the same on every machine: storages.py
+      # reads these at import time and would otherwise follow each developer's
+      # own .env.
+      R2_ACCOUNT_ID: ""
+      R2_ACCESS_KEY_ID: ""
+      R2_SECRET_ACCESS_KEY: ""
+      R2_BUCKET_NAME: ""
     volumes:
       - ./backend:/app
       - ./shared:/shared
