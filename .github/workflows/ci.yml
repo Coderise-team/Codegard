@@ -194,3 +194,10 @@ jobs:
         env:
           VITE_API_URL: /api
         run: npm run test:run
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
