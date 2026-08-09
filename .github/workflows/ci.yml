@@ -90,7 +90,6 @@ jobs:
           SECRET_KEY: ci-insecure-key
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/codegard
           REDIS_URL: redis://localhost:6379/0
-          CELERY_BROKER_URL: redis://localhost:6379/0
           GOOGLE_OAUTH_CLIENT_ID: ""
           GOOGLE_OAUTH_CLIENT_SECRET: ""
           GITHUB_OAUTH_CLIENT_ID: ""
