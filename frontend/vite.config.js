@@ -49,6 +49,12 @@ export default defineConfig(({ mode }) => {
         // into markup have nothing to assert line by line, and their sheer
         // length would drown the number that matters. Behaviour still gets
         // tested through the components that own state.
+        //
+        // KEEP THIS LIST UP TO DATE. It is written out by hand, so a new
+        // markup-only component lands in the count until it is named here and
+        // drags the number down for no reason. Anything that holds state,
+        // branches or talks to the API belongs in the count instead — write a
+        // test for it rather than adding it below.
         exclude: [
           'src/**/*.test.{js,jsx}',
           'src/test/**',
