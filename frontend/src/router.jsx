@@ -11,6 +11,7 @@ import ContestProblemPage from './pages/ContestProblemPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivacyPage from './pages/PrivacyPage';
+import LandingPage from './pages/LandingPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import PrivateRoute from './components/PrivateRoute';
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
       // including a signed-out Google verification reviewer, so it sits outside
       // both PrivateRoute and GuestRoute.
       { path: '/privacy', element: <PrivacyPage /> },
+      // Temporary home for the landing page while it is being built, so it can
+      // be opened without displacing the dashboard. It moves to "/" once the
+      // root route learns to choose between the two.
+      { path: '/landing', element: <LandingPage /> },
       {
         element: <PrivateRoute />,
         children: [
