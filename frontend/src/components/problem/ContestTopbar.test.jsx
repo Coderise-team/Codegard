@@ -32,7 +32,7 @@ const renderBar = (props) =>
         contest={contest()}
         currentLetter="B"
         now={Date.now()}
-        user={{ username: 'me', initials: 'ME' }}
+        user={{ username: 'me', avatar: null }}
         statuses={{ 11: 'solved', 12: 'attempted' }}
         showLeaderboard={false}
         onToggleLeaderboard={() => {}}

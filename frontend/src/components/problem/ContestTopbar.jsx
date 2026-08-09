@@ -19,7 +19,7 @@ import './ContestTopbar.css';
  *   now           — ticking clock in ms, kept in the page's state (the React
  *                   Compiler caches a render-time Date.now(), so live time has
  *                   to arrive as a prop)
- *   user          — { username, initials } for the user menu
+ *   user          — { username, avatar } for the user menu
  *   showLeaderboard    — whether the standings rail is open (lights the toggle)
  *   onToggleLeaderboard — show/hide the standings rail
  *   onMenuClick   — open the sidebar drawer (burger button)

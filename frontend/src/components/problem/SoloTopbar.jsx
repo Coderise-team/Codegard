@@ -8,7 +8,7 @@ import './SoloTopbar.css';
  *
  * Props:
  *   title       — problem title shown next to the logo
- *   user        — { username, initials } for the user menu
+ *   user        — { username, avatar } for the user menu
  *   onMenuClick — open the sidebar drawer (burger button)
  */
 export default function SoloTopbar({ title, user, onMenuClick }) {

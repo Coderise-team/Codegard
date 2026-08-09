@@ -39,7 +39,7 @@ vi.mock('../hooks/useThrottledSignal', () => ({
   useThrottledSignal: hooks.useThrottledSignal,
 }));
 vi.mock('../hooks/useCurrentUser', () => ({
-  useCurrentUser: () => ({ username: 'me', initials: 'ME' }),
+  useCurrentUser: () => ({ username: 'me', avatar: null }),
 }));
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal()),
