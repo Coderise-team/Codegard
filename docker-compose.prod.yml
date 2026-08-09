@@ -226,8 +226,6 @@ services:
         condition: service_completed_successfully
       backend:
         condition: service_healthy
-      judge:
-        condition: service_healthy
     networks:
       - codegard_net
     restart: unless-stopped
