@@ -61,6 +61,27 @@ services:
       retries: 5
       start_period: 30s
 
+  # Runs once per deploy and exits: gathers the admin's CSS and JS into the
+  # volume nginx serves. Without it the admin loads unstyled, since the request
+  # falls through to the SPA and comes back as HTML.
+  collectstatic:
+    build:
+      context: ./backend
+      target: web
+    # Skips the image's entrypoint (migrations); collecting files needs no DB.
+    entrypoint: []
+    command: python django_app/manage.py collectstatic --noinput
+    environment:
+      DJANGO_SETTINGS_MODULE: settings.prod
+      PYTHONPATH: /app/django_app:/shared
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./shared:/shared
+      - static_files:/app/django_app/staticfiles
+    env_file: .env
+    networks:
+      - codegard_net
+
   celery-worker:
     build:
       context: ./backend
@@ -199,7 +220,10 @@ services:
       - "80:80"
     volumes:
       - ./infra/nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_files:/usr/share/nginx/static:ro
     depends_on:
+      collectstatic:
+        condition: service_completed_successfully
       backend:
         condition: service_healthy
       judge:
@@ -215,3 +239,4 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  static_files:
