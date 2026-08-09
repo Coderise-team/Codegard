@@ -36,7 +36,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
           </p>
         </div>
 
-        <div className="podium">
+        <div className="lp-podium">
           {podium.map((p, i) => (
             <div key={p.handle} className={`pd pd-${p.rank} rv rv-d${i + 1}`}>
               <span className="pd-rank">{ordinal(p.rank)}</span>
@@ -48,8 +48,8 @@ export default function GlobalStandings({ podium, table, ladder }) {
           ))}
         </div>
 
-        <div className="st-table rv rv-d2">
-          <div className="st-h">
+        <div className="rank-table rv rv-d2">
+          <div className="rank-h">
             <span>#</span>
             <span>Coder</span>
             <span>Tier</span>
@@ -57,7 +57,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
             <span className="n">Last</span>
           </div>
           {table.map((r) => (
-            <div key={r.handle} className={`st-r${r.you ? ' me' : ''}`}>
+            <div key={r.handle} className={`rank-r${r.you ? ' me' : ''}`}>
               <span className="rk">{r.rank}</span>
               <span className="bu">
                 <span
@@ -75,7 +75,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
                 <span className="bh">
                   {r.handle}
                   {r.you ? (
-                    <span className="you-tag" style={{ marginLeft: 8 }}>
+                    <span className="lp-you-tag" style={{ marginLeft: 8 }}>
                       YOU
                     </span>
                   ) : null}
@@ -91,7 +91,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
               </span>
             </div>
           ))}
-          <div className="st-foot">
+          <div className="rank-foot">
             <a href="/standings">Open the full leaderboard</a>
           </div>
         </div>

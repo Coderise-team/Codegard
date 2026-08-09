@@ -53,13 +53,13 @@ function StepVisual({ step }) {
           </div>
         </div>
         <div className="verdicts">
-          <span className="vd ac">AC</span>
-          <span className="vd wa">WA</span>
-          <span className="vd tle">TLE</span>
-          <span className="vd tle">MLE</span>
-          <span className="vd ne">OLE</span>
-          <span className="vd wa">RE</span>
-          <span className="vd ne">CE</span>
+          <span className="lp-vd ac">AC</span>
+          <span className="lp-vd wa">WA</span>
+          <span className="lp-vd tle">TLE</span>
+          <span className="lp-vd tle">MLE</span>
+          <span className="lp-vd ne">OLE</span>
+          <span className="lp-vd wa">RE</span>
+          <span className="lp-vd ne">CE</span>
         </div>
       </div>
 
@@ -117,10 +117,10 @@ export default function HowItWorks({ steps }) {
                 <div key={s.t} className={`how-step${i === step ? ' on' : ''}`}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <span>
-                    <span className="st-t" style={{ display: 'block' }}>
+                    <span className="step-t" style={{ display: 'block' }}>
                       {s.t}
                     </span>
-                    <span className="st-d" style={{ display: 'block' }}>
+                    <span className="step-d" style={{ display: 'block' }}>
                       {s.d}
                     </span>
                   </span>

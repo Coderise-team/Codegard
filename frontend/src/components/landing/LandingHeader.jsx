@@ -51,7 +51,7 @@ export function LandingNav() {
 /** Hero — split layout: copy on the left, animated editor on the right. */
 export function LandingHero({ data }) {
   return (
-    <header className="hero">
+    <header className="lp-hero">
       <div className="wrap hero-split">
         <div className="rv in">
           <span className="eyebrow">

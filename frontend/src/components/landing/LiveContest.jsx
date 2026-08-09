@@ -118,7 +118,7 @@ export default function LiveContest({ contest }) {
                     <span className="bh">
                       {r.handle}
                       {r.you ? (
-                        <span className="you-tag" style={{ marginLeft: 8 }}>
+                        <span className="lp-you-tag" style={{ marginLeft: 8 }}>
                           YOU
                         </span>
                       ) : null}
