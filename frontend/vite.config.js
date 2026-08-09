@@ -38,6 +38,39 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',
+      coverage: {
+        provider: 'v8',
+        // lcov is what a coverage service reads; text is for the terminal.
+        reporter: ['text', 'lcov'],
+        // Count everything shipped, not only the files a test happened to
+        // import — otherwise an untested component simply goes unmentioned.
+        include: ['src/**/*.{js,jsx}'],
+        // The view layer is left out on purpose: files that only turn props
+        // into markup have nothing to assert line by line, and their sheer
+        // length would drown the number that matters. Behaviour still gets
+        // tested through the components that own state.
+        exclude: [
+          'src/**/*.test.{js,jsx}',
+          'src/test/**',
+          'src/main.jsx',
+          'src/router.jsx',
+          'src/data/**',
+          'src/components/dashboard/**',
+          'src/components/problems/**',
+          'src/components/problem/ActionBar.jsx',
+          'src/components/problem/CodeEditor.jsx',
+          'src/components/problem/ProblemPanel.jsx',
+          'src/components/problem/ProblemWorkspace.jsx',
+          'src/components/problem/SoloTopbar.jsx',
+          'src/components/problem/VerdictToast.jsx',
+          'src/components/problem/bits.jsx',
+          'src/pages/ContestsPage.jsx',
+          'src/pages/Dashboard.jsx',
+          'src/pages/ProblemPage.jsx',
+          'src/pages/ProblemsPage.jsx',
+          'src/pages/ProfilePage.jsx',
+        ],
+      },
     },
   };
 });
