@@ -18,6 +18,9 @@ DATABASES = {"default": env.db("DATABASE_URL")}
 # variable stays an empty list instead of one bogus origin.
 CORS_ALLOWED_ORIGINS = [origin for origin in env.list("CORS_ALLOWED_ORIGINS") if origin]
 
+# First in the chain: everything downstream reads REMOTE_ADDR already corrected.
+MIDDLEWARE = ["core.middleware.RealClientIPMiddleware", *MIDDLEWARE]
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 SECURE_HSTS_SECONDS = 31536000
