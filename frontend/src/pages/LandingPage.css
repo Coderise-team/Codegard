@@ -18,13 +18,23 @@
   --lp-w: 1180px;
   --nav-h: 64px;
   position: relative;
-  min-height: 100vh;
-  /* Desktop-only by decision: below this the layout scrolls sideways
-     instead of reflowing. */
-  min-width: 1280px;
+  /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
+     so this page owns its scroll area. Sticky sections and the parallax
+     background are anchored to it, not to the window. */
+  height: 100vh;
+  overflow: auto;
   font-size: 15px;
   scroll-behavior: smooth;
   isolation: isolate;
+}
+
+/* Desktop-only by decision: the full-width bands keep the layout width and the
+   page scrolls sideways on a narrow window instead of reflowing. */
+.lp-nav,
+.lp-hero,
+.lp section,
+.lp-foot {
+  min-width: 1280px;
 }
 .lp ::selection {
   background: var(--gold-soft);

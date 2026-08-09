@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
+import { useLandingScroll } from './scrollContext';
 
 /** Brand lockup, links back to the landing root. */
 export function LandingLogo({ href = '/' }) {
@@ -17,13 +18,16 @@ export function LandingLogo({ href = '/' }) {
 
 /** Sticky marketing header — gains a border once the page scrolls. */
 export function LandingNav() {
+  const scrollEl = useLandingScroll();
   const [stuck, setStuck] = useState(false);
+
   useEffect(() => {
-    const on = () => setStuck(window.scrollY > 8);
+    if (!scrollEl) return undefined;
+    const on = () => setStuck(scrollEl.scrollTop > 8);
     on();
-    window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, []);
+    scrollEl.addEventListener('scroll', on, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', on);
+  }, [scrollEl]);
 
   return (
     <nav className={stuck ? 'lp-nav stuck' : 'lp-nav'}>

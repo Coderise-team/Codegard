@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import highlightPython from '../../utils/highlightPython';
 import { DEMO_CODE } from './content';
+import { useLandingScroll } from './scrollContext';
 
 /** Right-hand visual: one pane per step, cross-fading as the section is scrubbed. */
 function StepVisual({ step }) {
@@ -83,24 +84,40 @@ function StepVisual({ step }) {
  * advance with scroll progress through its tall wrapper.
  */
 export default function HowItWorks({ steps }) {
+  const scrollEl = useLandingScroll();
   const ref = useRef(null);
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const on = () => {
+    if (!scrollEl) return undefined;
+    let raf = 0;
+
+    // How far the section has travelled past the top of the scroll area,
+    // over the distance it can travel while pinned.
+    const measure = () => {
+      raf = 0;
       const el = ref.current;
       if (!el) return;
-      const r = el.getBoundingClientRect();
-      const p = Math.min(
-        0.9999,
-        Math.max(0, -r.top / (el.offsetHeight - window.innerHeight))
-      );
-      setStep(Math.floor(p * steps.length));
+      const distance = el.offsetHeight - scrollEl.clientHeight;
+      if (distance <= 0) return;
+      const travelled =
+        scrollEl.getBoundingClientRect().top - el.getBoundingClientRect().top;
+      const progress = Math.min(0.9999, Math.max(0, travelled / distance));
+      setStep(Math.floor(progress * steps.length));
     };
-    on();
-    window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, [steps.length]);
+
+    // Reading geometry forces layout, so it happens once per frame at most.
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(measure);
+    };
+
+    measure();
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      scrollEl.removeEventListener('scroll', onScroll);
+    };
+  }, [scrollEl, steps.length]);
 
   return (
     <section className="how" id="how" ref={ref}>
