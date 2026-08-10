@@ -1,5 +1,14 @@
 name: codegard-prod
 
+# Docker keeps container output forever by default, so on a long-running server
+# the logs quietly eat the disk. Capped at three 50 MB files per service, which
+# is weeks of history at our volume.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,6 +18,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -23,6 +33,7 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -51,6 +62,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -79,6 +91,7 @@ services:
       - ./shared:/shared
       - static_files:/app/django_app/staticfiles
     env_file: .env
+    logging: *logging
     networks:
       - codegard_net
 
@@ -99,6 +112,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -126,6 +140,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -153,6 +168,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -184,6 +200,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -209,6 +226,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
@@ -238,6 +256,7 @@ services:
         condition: service_completed_successfully
       backend:
         condition: service_healthy
+    logging: *logging
     networks:
       - codegard_net
     restart: unless-stopped
