@@ -34,7 +34,17 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    # noeviction on purpose: the judge queue lives here, and the alternative is
+    # Redis quietly dropping other people's submissions to make room. Full means
+    # writes are refused and the submit page says so, which is recoverable.
+    # The journal costs one second of writes on a crash instead of minutes.
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory ${REDIS_MAXMEMORY:?REDIS_MAXMEMORY is required}
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
     volumes:
       - redis_data:/data
     # Holds the live judge queue.
