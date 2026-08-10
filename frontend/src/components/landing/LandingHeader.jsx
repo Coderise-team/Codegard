@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
-import { useLandingScroll } from './scrollContext';
+import { useLandingScroll } from '../../hooks/useLandingScroll';
 
 /** Brand lockup, links back to the landing root. */
 export function LandingLogo({ href = '/' }) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LandingNav, LandingHero } from '../components/landing/LandingHeader';
-import { LandingScrollContext } from '../components/landing/scrollContext';
+import { LandingScrollContext } from '../hooks/useLandingScroll';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import LiveContest from '../components/landing/LiveContest';
 import HowItWorks from '../components/landing/HowItWorks';
@@ -11,7 +11,7 @@ import {
   FinalCta,
   LandingFooter,
 } from '../components/landing/LandingBlocks';
-import landingDataDefault from '../components/landing/content';
+import landingDataDefault from '../utils/landingContent';
 import './LandingPage.css';
 
 /**
@@ -30,7 +30,7 @@ import './LandingPage.css';
  * only — no per-frame layout. prefers-reduced-motion disables all of it.
  *
  * Props:
- *   data — landing content; see components/landing/content.js
+ *   data — landing content; see utils/landingContent.js
  */
 export default function LandingPage({ data = landingDataDefault }) {
   // The scroll area is kept in state rather than a ref so that the sections

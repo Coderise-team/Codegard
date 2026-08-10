@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import PythonCode from './PythonCode';
-import { DEMO_CODE } from './content';
+import { DEMO_CODE } from '../../utils/landingContent';
 
 /**
  * The hero submission demo, on a loop:

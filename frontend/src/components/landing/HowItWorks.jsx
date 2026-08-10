@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import PythonCode from './PythonCode';
-import { DEMO_CODE } from './content';
-import { useLandingScroll } from './scrollContext';
+import { DEMO_CODE } from '../../utils/landingContent';
+import { useLandingScroll } from '../../hooks/useLandingScroll';
 
 // The editor pane shows the opening of the demo solution, not all of it.
 const CODE_PREVIEW = DEMO_CODE.split('\n').slice(0, 7).join('\n');
