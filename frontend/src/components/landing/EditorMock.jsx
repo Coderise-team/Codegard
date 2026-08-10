@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import PythonCode from './PythonCode';
 import { DEMO_CODE } from './content';
-
-export const REDUCED_MOTION =
-  typeof window !== 'undefined' &&
-  window.matchMedia &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * The hero submission demo, on a loop:
  *   typing → press → running → verdict → (pause) → typing…
  * Reduced motion pins it to the finished "verdict" frame.
  */
-function useSubmitCycle() {
-  const [n, setN] = useState(REDUCED_MOTION ? DEMO_CODE.length : 0);
-  const [phase, setPhase] = useState(REDUCED_MOTION ? 'verdict' : 'typing');
+function useSubmitCycle(reduced) {
+  const [n, setN] = useState(0);
+  const [phase, setPhase] = useState('typing');
 
   useEffect(() => {
-    if (REDUCED_MOTION) return undefined;
+    if (reduced) return undefined;
     const timers = [];
     let stopped = false;
     const at = (ms, fn) => timers.push(setTimeout(fn, ms));
@@ -46,14 +42,17 @@ function useSubmitCycle() {
       stopped = true;
       timers.forEach((t) => (t.clear ? t.clear() : clearTimeout(t)));
     };
-  }, []);
+  }, [reduced]);
 
+  // Nothing animates under reduced motion, so the demo shows its last frame.
+  if (reduced) return { n: DEMO_CODE.length, phase: 'verdict' };
   return { n, phase };
 }
 
 /** Editor mock used by the hero: gutter, highlighted code, action bar, verdict. */
 export default function EditorMock() {
-  const { n, phase } = useSubmitCycle();
+  const reduced = useReducedMotion();
+  const { n, phase } = useSubmitCycle(reduced);
   const shown = DEMO_CODE.slice(0, n);
   const totalLines = DEMO_CODE.split('\n').length;
   const currentLine = shown.split('\n').length;
@@ -82,7 +81,7 @@ export default function EditorMock() {
         </div>
         <div className="ed-code">
           <PythonCode code={shown} />
-          {phase === 'typing' && !REDUCED_MOTION ? (
+          {phase === 'typing' && !reduced ? (
             <span className="ed-caret" />
           ) : null}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { REDUCED_MOTION } from './EditorMock';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 const ROW_H = 58; // must match .brow height + gap in LandingPage.css
 
@@ -9,6 +9,7 @@ const ROW_H = 58; // must match .brow height + gap in LandingPage.css
  * gains points on an interval; reduced motion keeps it still.
  */
 export default function LiveContest({ contest }) {
+  const reduced = useReducedMotion();
   const [rows, setRows] = useState(contest.board);
   const [bump, setBump] = useState(null);
   const [left, setLeft] = useState(contest.secondsLeft);
@@ -19,7 +20,7 @@ export default function LiveContest({ contest }) {
   }, []);
 
   useEffect(() => {
-    if (REDUCED_MOTION) return undefined;
+    if (reduced) return undefined;
     const iv = setInterval(() => {
       setRows((r) => {
         const i = Math.floor(Math.random() * r.length);
@@ -38,7 +39,7 @@ export default function LiveContest({ contest }) {
       });
     }, 3400);
     return () => clearInterval(iv);
-  }, []);
+  }, [reduced]);
 
   const order = [...rows].sort((a, b) => b.pts - a.pts);
   const pos = {};
