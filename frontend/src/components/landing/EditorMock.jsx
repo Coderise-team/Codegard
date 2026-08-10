@@ -3,6 +3,18 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 import PythonCode from './PythonCode';
 import { DEMO_CODE } from '../../utils/landingContent';
 
+// What happens after the code is typed out, each delay counted from the step
+// before it: the button presses, the judge runs, the verdict lands.
+const AFTER_TYPING = [
+  ['press', 520],
+  ['running', 240],
+  ['verdict', 1340],
+];
+
+const START_DELAY = 500; // quiet moment before the first character
+const RESTART_DELAY = 6900; // how long the verdict stays up before a rerun
+const TYPING_TICK = 26;
+
 /**
  * The hero submission demo, on a loop:
  *   typing → press → running → verdict → (pause) → typing…
@@ -14,33 +26,46 @@ function useSubmitCycle(reduced) {
 
   useEffect(() => {
     if (reduced) return undefined;
-    const timers = [];
-    let stopped = false;
-    const at = (ms, fn) => timers.push(setTimeout(fn, ms));
 
-    const run = () => {
-      if (stopped) return;
+    // Each step schedules only the next one, so exactly one timer is pending
+    // at any moment however long the page stays open.
+    let timer = 0;
+    let interval = 0;
+
+    function type() {
       setN(0);
       setPhase('typing');
-      let i = 0;
-      const iv = setInterval(() => {
-        i += 1 + Math.floor(Math.random() * 2);
-        if (i >= DEMO_CODE.length) {
-          clearInterval(iv);
-          setN(DEMO_CODE.length);
-          at(520, () => setPhase('press'));
-          at(760, () => setPhase('running'));
-          at(2100, () => setPhase('verdict'));
-          at(9000, run);
-        } else setN(i);
-      }, 26);
-      timers.push({ clear: () => clearInterval(iv) });
-    };
+      let typed = 0;
+      interval = setInterval(() => {
+        // One or two characters a tick, so the typing does not look metronomic.
+        typed += 1 + Math.floor(Math.random() * 2);
+        if (typed < DEMO_CODE.length) {
+          setN(typed);
+          return;
+        }
+        clearInterval(interval);
+        interval = 0;
+        setN(DEMO_CODE.length);
+        advance(0);
+      }, TYPING_TICK);
+    }
 
-    at(500, run);
+    function advance(step) {
+      if (step === AFTER_TYPING.length) {
+        timer = setTimeout(type, RESTART_DELAY);
+        return;
+      }
+      const [next, delay] = AFTER_TYPING[step];
+      timer = setTimeout(() => {
+        setPhase(next);
+        advance(step + 1);
+      }, delay);
+    }
+
+    timer = setTimeout(type, START_DELAY);
     return () => {
-      stopped = true;
-      timers.forEach((t) => (t.clear ? t.clear() : clearTimeout(t)));
+      clearTimeout(timer);
+      clearInterval(interval);
     };
   }, [reduced]);
 
