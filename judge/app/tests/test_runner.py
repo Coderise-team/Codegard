@@ -3,7 +3,7 @@ from unittest.mock import patch
 from schemas.request import ProblemTestCasePayload, SubmissionRequest
 from schemas.response import VerdictEnum
 
-from app.core.runner import run_submission
+from app.core.runner import STDERR_LIMIT_CHARS, TRUNCATION_NOTE, run_submission
 
 from .conftest import make_sandbox_result
 
@@ -92,3 +92,18 @@ class TestRunSubmission:
 
         assert result.stderr is not None
         assert "NameError" in result.stderr
+
+    @patch("app.core.runner.determine_verdict")
+    @patch("app.core.runner.run_in_sandbox")
+    def test_endless_stderr_is_trimmed(self, mock_sandbox, mock_verdict):
+        """A runaway process must not push megabytes through Redis and the DB."""
+        mock_sandbox.return_value = make_sandbox_result(
+            stderr="boom\n" * 100_000, exit_code=1
+        )
+        mock_verdict.return_value = VerdictEnum.RE
+
+        result = run_submission(make_request())
+
+        assert len(result.stderr) == STDERR_LIMIT_CHARS + len(TRUNCATION_NOTE)
+        assert result.stderr.startswith("boom")
+        assert result.stderr.endswith(TRUNCATION_NOTE)
