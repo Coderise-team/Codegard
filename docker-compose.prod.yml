@@ -63,7 +63,10 @@ services:
     build:
       context: ./backend
       target: web
-    command: gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application --bind 0.0.0.0:8000 --workers 4
+    command: >
+      gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS:?GUNICORN_WORKERS is required}
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
@@ -119,7 +122,9 @@ services:
     build:
       context: ./backend
       target: web
-    command: celery -A config worker -l info
+    # Celery defaults to one process per core, which on a small box quietly
+    # competes with the judge for the same cores.
+    command: celery -A config worker -l info --concurrency=${CELERY_CONCURRENCY:?CELERY_CONCURRENCY is required}
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
@@ -243,7 +248,12 @@ services:
     build:
       context: ./judge
       target: web
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --workers 2
+    # Each worker judges one submission at a time in a container of its own, and
+    # every one of those takes a whole core. More workers means a faster queue
+    # and a slower site, so this number is picked per machine, not guessed here.
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8001
+      --workers ${JUDGE_WORKERS:?JUDGE_WORKERS is required}
     environment:
       PYTHONPATH: /shared
       PYTHONUNBUFFERED: "1"
