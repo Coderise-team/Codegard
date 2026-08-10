@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import highlightPython from '../../utils/highlightPython';
 import { DEMO_CODE } from './content';
 import { useLandingScroll } from './scrollContext';

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LandingNav, LandingHero } from '../components/landing/LandingHeader';
 import { LandingScrollContext } from '../components/landing/scrollContext';
 import LiveContest from '../components/landing/LiveContest';

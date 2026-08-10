@@ -1,5 +1,3 @@
-import React from 'react';
-
 const TierChip = ({ tier, color, fill = '1A' }) => (
   <span
     className="pd-tier"

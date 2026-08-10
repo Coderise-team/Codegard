@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Icons from '../Icons';
 import { LandingLogo } from './LandingHeader';
 
@@ -15,12 +15,17 @@ export function JudgeSection({ items }) {
           <h2 className="sec-t">How a submission is decided.</h2>
         </div>
         <div className="judge">
-          {items.map((j, i) => (
-            <div key={j.t} className={`jc rv rv-d${i + 1}`}>
-              <span className="ic">{Icons[j.icon]({ s: 19 })}</span>
-              <span className="tx">{j.t}</span>
-            </div>
-          ))}
+          {items.map((j, i) => {
+            const Icon = Icons[j.icon];
+            return (
+              <div key={j.t} className={`jc rv rv-d${i + 1}`}>
+                <span className="ic">
+                  <Icon size={19} />
+                </span>
+                <span className="tx">{j.t}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -49,7 +54,9 @@ export function FaqSection({ items }) {
                 onClick={() => setOpen(open === i ? -1 : i)}
               >
                 {f.q}
-                <span className="ch">{Icons.chevDown({ s: 18 })}</span>
+                <span className="ch">
+                  <Icons.chevDown size={18} />
+                </span>
               </button>
               <div className="faq-a">
                 <p>{f.a}</p>
@@ -78,7 +85,8 @@ export function FinalCta() {
         </p>
         <div className="hero-cta">
           <a className="btn btn-lg btn-primary" href="/register">
-            Create account{Icons.send({ s: 17 })}
+            Create account
+            <Icons.send size={17} />
           </a>
           <a className="btn btn-lg" href="/contests">
             See upcoming contests

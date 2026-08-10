@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import highlightPython from '../../utils/highlightPython';
 import { DEMO_CODE } from './content';
 

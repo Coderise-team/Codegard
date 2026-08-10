@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { REDUCED_MOTION } from './EditorMock';
 
 const ROW_H = 58; // must match .brow height + gap in LandingPage.css

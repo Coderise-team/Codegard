@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
 import { useLandingScroll } from './scrollContext';
@@ -75,7 +75,8 @@ export function LandingHero({ data }) {
           <p className="hero-sub">{data.sub}</p>
           <div className="hero-cta">
             <a className="btn btn-lg btn-primary" href="/register">
-              Start solving{Icons.send({ s: 17 })}
+              Start solving
+              <Icons.send size={17} />
             </a>
             <a className="btn btn-lg" href="/problems">
               Browse problems
