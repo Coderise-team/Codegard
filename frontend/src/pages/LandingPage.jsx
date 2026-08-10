@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LandingNav, LandingHero } from '../components/landing/LandingHeader';
 import { LandingScrollContext } from '../components/landing/scrollContext';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 import LiveContest from '../components/landing/LiveContest';
 import HowItWorks from '../components/landing/HowItWorks';
 import GlobalStandings from '../components/landing/GlobalStandings';
@@ -61,25 +62,7 @@ export default function LandingPage({ data = landingDataDefault }) {
     };
   }, [scrollEl]);
 
-  // scroll reveals
-  useEffect(() => {
-    if (!scrollEl) return undefined;
-    const els = Array.from(scrollEl.querySelectorAll('.rv:not(.in)'));
-    if (!els.length) return undefined;
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add('in');
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { root: scrollEl, rootMargin: '0px 0px -12% 0px', threshold: 0.12 }
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [scrollEl]);
+  useScrollReveal(scrollEl);
 
   return (
     <LandingScrollContext.Provider value={scrollEl}>
