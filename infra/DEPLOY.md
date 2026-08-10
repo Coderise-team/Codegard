@@ -79,5 +79,12 @@ submission.
 ## 6. Watching it
 
 - `make prod-logs` — everything, live.
-- Flower (Celery tasks) is not exposed. Reach it over an SSH tunnel:
-  `ssh -L 5555:localhost:5555 <user>@<server>`, then open `localhost:5555`.
+- Flower (Celery tasks) is not exposed. Run this **from your own machine** — it
+  forwards your local port to Flower's port on the server's loopback:
+
+  ```bash
+  ssh -N -L 5555:localhost:5555 <user>@<server>
+  ```
+
+  Then open `http://localhost:5555` in your own browser. The tunnel lives as
+  long as the command runs.

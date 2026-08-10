@@ -167,7 +167,9 @@ services:
     build:
       context: ./backend
       target: web
-    command: sh -c "celery -A config flower --port=5555 --url_prefix=flower --basic_auth=$${FLOWER_USER}:$${FLOWER_PASSWORD}"
+    # No url_prefix: nginx no longer proxies Flower, and the prefix would 404
+    # the tunnelled root. Basic auth stays as a second lock behind the tunnel.
+    command: sh -c "celery -A config flower --port=5555 --basic_auth=$${FLOWER_USER}:$${FLOWER_PASSWORD}"
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
@@ -175,6 +177,10 @@ services:
     volumes:
       - ./shared:/shared
     env_file: .env
+    # Bound to the server's own loopback, so the panel is reachable only from
+    # the machine itself — that is, through an SSH tunnel, never from outside.
+    ports:
+      - "127.0.0.1:5555:5555"
     depends_on:
       redis:
         condition: service_healthy
