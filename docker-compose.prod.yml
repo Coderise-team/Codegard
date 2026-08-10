@@ -200,6 +200,9 @@ services:
     volumes:
       - ./shared:/shared
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      redis:
+        condition: service_healthy
     networks:
       - codegard_net
     restart: unless-stopped
