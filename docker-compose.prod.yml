@@ -18,6 +18,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # oom_score_adj tilts the kernel's choice when memory runs out: it kills the
+    # highest number first. Every service sets one, so they form a single scale.
+    # Last thing on the machine we let die.
+    oom_score_adj: -900
     logging: *logging
     networks:
       - codegard_net
@@ -33,6 +37,8 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    # Holds the live judge queue.
+    oom_score_adj: -800
     logging: *logging
     networks:
       - codegard_net
@@ -62,6 +68,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Losing it takes the whole site down.
+    oom_score_adj: -500
     logging: *logging
     networks:
       - codegard_net
@@ -91,6 +99,8 @@ services:
       - ./shared:/shared
       - static_files:/app/django_app/staticfiles
     env_file: .env
+    # Runs for seconds and exits anyway.
+    oom_score_adj: 500
     logging: *logging
     networks:
       - codegard_net
@@ -112,6 +122,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # A killed task is redelivered on the next round.
+    oom_score_adj: 100
     logging: *logging
     networks:
       - codegard_net
@@ -140,6 +152,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Verdicts wait in Redis until it is back.
+    oom_score_adj: 0
     logging: *logging
     networks:
       - codegard_net
@@ -168,6 +182,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Just an alarm clock; it catches up after a restart.
+    oom_score_adj: 200
     logging: *logging
     networks:
       - codegard_net
@@ -200,6 +216,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # First to go: nobody notices a missing dashboard.
+    oom_score_adj: 500
     logging: *logging
     networks:
       - codegard_net
@@ -226,6 +244,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # Submissions keep piling up in the queue while it is gone.
+    oom_score_adj: -100
     logging: *logging
     networks:
       - codegard_net
@@ -256,6 +276,8 @@ services:
         condition: service_completed_successfully
       backend:
         condition: service_healthy
+    # The only door in.
+    oom_score_adj: -400
     logging: *logging
     networks:
       - codegard_net
