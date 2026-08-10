@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import highlightPython from '../../utils/highlightPython';
+import PythonCode from './PythonCode';
 import { DEMO_CODE } from './content';
 
 export const REDUCED_MOTION =
@@ -81,7 +81,7 @@ export default function EditorMock() {
           ))}
         </div>
         <div className="ed-code">
-          <span dangerouslySetInnerHTML={{ __html: highlightPython(shown) }} />
+          <PythonCode code={shown} />
           {phase === 'typing' && !REDUCED_MOTION ? (
             <span className="ed-caret" />
           ) : null}

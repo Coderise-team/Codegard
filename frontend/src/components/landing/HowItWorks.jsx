@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import highlightPython from '../../utils/highlightPython';
+import PythonCode from './PythonCode';
 import { DEMO_CODE } from './content';
 import { useLandingScroll } from './scrollContext';
+
+// The editor pane shows the opening of the demo solution, not all of it.
+const CODE_PREVIEW = DEMO_CODE.split('\n').slice(0, 7).join('\n');
 
 /** Right-hand visual: one pane per step, cross-fading as the section is scrubbed. */
 function StepVisual({ step }) {
@@ -31,14 +34,9 @@ function StepVisual({ step }) {
 
       <div className={`how-pane${step === 1 ? ' on' : ''}`}>
         <span className="hp-label">Editor</span>
-        <div
-          className="hp-code"
-          dangerouslySetInnerHTML={{
-            __html: highlightPython(
-              DEMO_CODE.split('\n').slice(0, 7).join('\n')
-            ),
-          }}
-        />
+        <div className="hp-code">
+          <PythonCode code={CODE_PREVIEW} />
+        </div>
       </div>
 
       <div className={`how-pane${step === 2 ? ' on' : ''}`}>
