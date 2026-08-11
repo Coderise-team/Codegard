@@ -388,82 +388,91 @@
     transparent 60%
   );
 }
+/* Toolbar, language picker and Report link all follow ProblemWorkspace.css. */
 .lp .ed-top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  height: 42px;
-  padding: 0 14px;
+  padding: 9px 14px;
   border-bottom: 1px solid var(--border);
-  background: var(--card-2);
+  background: var(--card);
   position: relative;
   z-index: 1;
 }
-.lp .ed-dots {
+.lp .ed-lang {
   display: flex;
-  gap: 6px;
-}
-.lp .ed-dots i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--border-2);
-}
-.lp .ed-title {
-  font-size: 12.5px;
-  color: var(--fg2);
-  font-weight: 500;
-}
-.lp .ed-title b {
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
   color: var(--fg);
+  font-size: 13px;
   font-weight: 600;
 }
-.lp .ed-lang {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 11.5px;
+.lp .ed-lang svg {
   color: var(--fg2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 3px 10px;
 }
+.lp .ed-lang-ic {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #3776ab, #ffd43b);
+  flex-shrink: 0;
+}
+.lp .ed-report {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+/* The code surface copies what CodeEditor gives Monaco: its own darker
+   background, JetBrains Mono at 13/21, dimmed line numbers with the accent on
+   the active one, and no rule between the gutter and the code. */
 .lp .ed-body {
   display: flex;
   position: relative;
   z-index: 1;
   height: 322px;
   overflow: hidden;
+  background: #0f121a;
 }
 .lp .ed-gutter {
-  flex: 0 0 46px;
-  padding: 14px 0;
+  flex: 0 0 52px;
+  padding: 14px 12px 14px 0;
   text-align: right;
   font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 22px;
-  color: var(--fg3);
-  user-select: none;
+  font-size: 13px;
+  line-height: 21px;
+  color: #444b5c;
   border-right: 1px solid var(--border);
+  user-select: none;
 }
 .lp .ed-gutter .cur {
-  color: var(--gold-hi);
+  color: var(--gold);
 }
 .lp .ed-code {
   flex: 1;
-  padding: 14px 16px;
+  padding: 14px 16px 14px 0;
   font-family: var(--mono);
-  font-size: 12.9px;
-  line-height: 22px;
+  font-size: 13px;
+  line-height: 21px;
+  color: #abb2bf;
   white-space: pre;
   overflow: hidden;
   tab-size: 4;
 }
 .lp .ed-caret {
   display: inline-block;
-  width: 7.6px;
-  height: 15px;
+  width: 7.8px;
+  height: 16px;
   vertical-align: -3px;
-  background: var(--gold-hi);
+  background: #c4b5fd;
   animation: lp-blink 1.05s steps(1) infinite;
 }
 @keyframes lp-blink {
@@ -476,122 +485,87 @@
     opacity: 0;
   }
 }
+/* Action bar: same proportions and the same two buttons as the product. */
 .lp .ed-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  height: 52px;
-  padding: 0 14px;
+  padding: 11px 14px;
   border-top: 1px solid var(--border);
-  background: var(--card-2);
+  background: var(--card);
   position: relative;
   z-index: 1;
 }
 .lp .ed-status {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--fg2);
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.lp .ed-status .sp {
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--border-2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: lp-spin 0.7s linear infinite;
-}
-@keyframes lp-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  font-size: 12.5px;
+  color: var(--fg2);
 }
 .lp .ed-actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.lp .ed-sub {
-  display: inline-flex;
-  align-items: center;
+/* The landing scales .btn up for its own calls to action; inside the mock the
+   buttons keep the size they have in the app (see global.css .btn-sm). */
+.lp .ed-shell .btn-sm {
+  height: 32px;
+  padding: 0 13px;
+  font-size: 12.5px;
   gap: 8px;
-  height: 34px;
-  padding: 0 16px;
-  border-radius: var(--r-sm);
-  border: 1px solid transparent;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #12091f;
-  background: linear-gradient(135deg, var(--gold-hi), var(--gold));
-  box-shadow: 0 6px 20px var(--accent-glow-2);
-  transition: 0.2s;
 }
-.lp .ed-sub.pressed {
+.lp .ed-shell .btn-primary.pressed {
   transform: scale(0.96);
   filter: brightness(0.9);
 }
-.lp .verdict {
+
+/* Verdict arrives as the product's toast does: over the workspace, top right. */
+.lp .ed-toast {
   position: absolute;
-  right: 14px;
-  bottom: 66px;
+  top: 66px;
+  right: 16px;
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 15px;
+  gap: 13px;
+  width: 260px;
+  padding: 14px 16px;
   border-radius: var(--r);
-  border: 1px solid color-mix(in srgb, var(--ac) 45%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ac) 16%, var(--card-2)),
-    var(--card)
-  );
-  box-shadow: 0 14px 44px rgba(34, 197, 94, 0.22);
-  animation: lp-verdict-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--card);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  animation: lp-toast-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
-@keyframes lp-verdict-in {
+@keyframes lp-toast-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 12px, 0) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateX(40px) scale(0.96);
   }
 }
-.lp .verdict .pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+.lp .ed-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--ac-soft);
   color: var(--ac);
 }
-.lp .verdict .pill i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ac);
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+.lp .ed-toast-big {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ac);
 }
-.lp .verdict .m {
-  display: flex;
-  gap: 14px;
-  font-family: var(--mono);
+.lp .ed-toast-sub {
+  display: block;
   font-size: 12px;
   color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-  border-left: 1px solid var(--border-2);
-  padding-left: 12px;
-}
-.lp .verdict .m b {
-  color: var(--fg);
-  font-weight: 600;
+  margin-top: 2px;
 }
 
 /* ============================================================
@@ -1048,10 +1022,10 @@
 }
 .lp .hp-code {
   font-family: var(--mono);
-  font-size: 12.6px;
-  line-height: 22px;
+  font-size: 13px;
+  line-height: 21px;
   white-space: pre;
-  color: var(--fg);
+  color: #abb2bf;
 }
 .lp .hp-big {
   font-family: var(--mono);
@@ -1802,7 +1776,10 @@
 }
 
 /* ============================================================
-   CODE TOKEN COLOURS — used by the editor mock and the how-it-works pane
+   CODE TOKEN COLOURS
+   The same values CodeEditor gives Monaco (see its theme), so the mock and the
+   real editor paint the sample identically. Function names have no rule there
+   and keep the default foreground here too.
    ============================================================ */
 .lp .tk-comment {
   color: #5c6370;
@@ -1819,7 +1796,4 @@
 }
 .lp .tk-builtin {
   color: #56b6c2;
-}
-.lp .tk-func {
-  color: #61afef;
 }

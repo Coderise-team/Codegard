@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Icons from '../Icons';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import PythonCode from './PythonCode';
 import { DEMO_CODE } from '../../utils/landingContent';
@@ -74,7 +75,12 @@ function useSubmitCycle(reduced) {
   return { n, phase };
 }
 
-/** Editor mock used by the hero: gutter, highlighted code, action bar, verdict. */
+/**
+ * Editor mock used by the hero. It reproduces the editor pane of the problem
+ * workspace: the toolbar with the language picker and Report, the code with its
+ * gutter, and the action bar with Reset and Submit. The verdict arrives the way
+ * it does in the product, as a toast floating over the workspace.
+ */
 export default function EditorMock() {
   const reduced = useReducedMotion();
   const { n, phase } = useSubmitCycle(reduced);
@@ -85,15 +91,15 @@ export default function EditorMock() {
   return (
     <div className="ed-shell">
       <div className="ed-top">
-        <div className="ed-dots">
-          <i />
-          <i />
-          <i />
-        </div>
-        <div className="ed-title">
-          <b>A · Two Sum</b> &nbsp;·&nbsp; 1s / 256 MB
-        </div>
-        <div className="ed-lang">Python 3</div>
+        <span className="ed-lang">
+          <span className="ed-lang-ic" />
+          Python 3
+          <Icons.chevDown size={14} />
+        </span>
+        <span className="ed-report">
+          <Icons.flag size={14} />
+          Report
+        </span>
       </div>
 
       <div className="ed-body">
@@ -113,36 +119,35 @@ export default function EditorMock() {
       </div>
 
       {phase === 'verdict' ? (
-        <div className="verdict">
-          <span className="pill">
-            <i />
-            Accepted
+        <div className="ed-toast">
+          <span className="ed-toast-icon">
+            <Icons.checkBold size={20} />
           </span>
-          <span className="m">
-            <span>
-              <b>38</b> ms
-            </span>
-            <span>
-              <b>17.4</b> MB
-            </span>
+          <span>
+            <span className="ed-toast-big">Accepted</span>
+            <span className="ed-toast-sub">38 ms</span>
           </span>
         </div>
       ) : null}
 
       <div className="ed-bar">
         <div className="ed-status">
-          {phase === 'running' ? (
-            <>
-              <span className="sp" />
-              Running on judge…
-            </>
-          ) : null}
-          {phase === 'verdict' ? 'Submission #4 · 09:12:44' : null}
-          {phase === 'typing' || phase === 'press' ? 'Draft saved' : null}
+          <Icons.terminal size={14} />
+          {phase === 'running' ? 'Judging…' : 'Python 3 · ready'}
         </div>
         <div className="ed-actions">
-          <span className="btn btn-sm btn-ghost">Run</span>
-          <span className={phase === 'press' ? 'ed-sub pressed' : 'ed-sub'}>
+          <span className="btn btn-ghost btn-sm">
+            <Icons.reset size={15} />
+            Reset
+          </span>
+          <span
+            className={`btn btn-primary btn-sm${phase === 'press' ? ' pressed' : ''}`}
+          >
+            {phase === 'running' ? (
+              <span className="spin" />
+            ) : (
+              <Icons.send size={15} />
+            )}
             Submit
           </span>
         </div>
