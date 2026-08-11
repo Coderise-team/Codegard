@@ -1,10 +1,15 @@
 // =============================================================
-// Codegard — Landing page content + mock data.
-// Marketing copy, the demo submission, the live-contest board and
-// the global-rating sample rows all live here so the components
-// stay presentational. Tier colors are SEMANTIC (the rank ladder),
-// matching utils/ranks.js.
+// Codegard — landing page content.
+// Marketing copy, the demo submission, the live-contest board and the
+// global-rating sample rows all live here so the components stay
+// presentational.
+//
+// Everything here has to be true of the product. The sample rows follow the
+// real scoring rules (100 points per solved problem, penalty in minutes) and
+// the tiers come from the shared rank ladder rather than a copy of it.
 // =============================================================
+
+import { CG_RANKS, cgRankFor } from './ranks';
 
 export const DEMO_CODE = [
   'class Solution:',
@@ -18,17 +23,48 @@ export const DEMO_CODE = [
   '        return []',
 ].join('\n');
 
-const landingData = {
+const POINTS_PER_PROBLEM = 100;
+
+/** A contest row: the score follows from the number of solved problems. */
+const participant = (handle, initials, solved, penalty, last, you = false) => ({
+  handle,
+  initials,
+  solved,
+  pts: solved * POINTS_PER_PROBLEM,
+  pen: penalty,
+  last,
+  you,
+});
+
+/** A rating row: the tier and its colour follow from the rating itself. */
+const coder = (rank, handle, initials, rating, delta, you = false) => {
+  const tier = cgRankFor(rating);
+  return {
+    rank,
+    handle,
+    initials,
+    rating,
+    delta,
+    tier: tier.name,
+    color: tier.color,
+    you,
+  };
+};
+
+const landingContent = {
   hero: {
-    eyebrow: 'Free · rated contests every week',
+    eyebrow: 'Free · every problem, every contest',
     lines: ['Write code.', 'Get judged.', 'Climb the rating.'],
-    sub: 'Codegard runs the problems, the live contests and the Elo ladder that ranks everyone who solves them.',
-    note: 'No card, no trial. Every problem and every contest is free.',
+    sub: 'Timed contests with a live leaderboard. Every submission gets a verdict in seconds.',
+    note: 'No card, no trial. Nothing here is paid for.',
   },
 
-  // live contest board (rows re-sort as points come in)
+  // Live contest board. Points are 100 per solved problem, so the board moves
+  // a whole problem at a time; the penalty is in minutes, counted from the
+  // start of the round.
   contest: {
     name: 'Div. 2 · Round 418',
+    lengthSeconds: 3 * 3600,
     secondsLeft: 1 * 3600 + 23 * 60 + 45,
     problems: [
       { id: 'A', state: 'solved' },
@@ -38,180 +74,50 @@ const landingData = {
       { id: 'E', state: '' },
     ],
     board: [
-      {
-        handle: 'n3ptune',
-        initials: 'NP',
-        you: true,
-        pts: 1840,
-        solved: 4,
-        pen: 2,
-        last: '00:41',
-      },
-      {
-        handle: 'hexraven',
-        initials: 'HR',
-        pts: 2020,
-        solved: 5,
-        pen: 1,
-        last: '00:12',
-      },
-      {
-        handle: 'voidwolf',
-        initials: 'VW',
-        pts: 1955,
-        solved: 4,
-        pen: 0,
-        last: '00:29',
-      },
-      {
-        handle: 'segfaultx',
-        initials: 'SX',
-        pts: 1780,
-        solved: 4,
-        pen: 3,
-        last: '00:55',
-      },
-      {
-        handle: 'lambdacore',
-        initials: 'LC',
-        pts: 1610,
-        solved: 3,
-        pen: 1,
-        last: '01:04',
-      },
-      {
-        handle: 'turingfox',
-        initials: 'TF',
-        pts: 1540,
-        solved: 3,
-        pen: 2,
-        last: '01:18',
-      },
+      participant('n3ptune', 'NP', 4, 203, '01:41', true),
+      participant('hexraven', 'HR', 5, 214, '01:12'),
+      participant('voidwolf', 'VW', 4, 168, '01:29'),
+      participant('segfaultx', 'SX', 4, 247, '01:55'),
+      participant('lambdacore', 'LC', 3, 132, '01:04'),
+      participant('turingfox', 'TF', 3, 158, '01:18'),
     ],
   },
 
   steps: [
     {
       t: 'Pick a problem',
-      d: 'Statement, limits, samples and tags on one screen. Filter by topic or by rating.',
+      d: 'Statement, limits, samples and tags on one screen. Filter the catalogue by tag or by difficulty.',
     },
     {
       t: 'Write the solution',
-      d: 'Editor with your language, sample input at hand, run before you commit.',
+      d: 'The editor sits next to the statement, with the sample cases in reach.',
     },
     {
       t: 'Submit to the judge',
-      d: 'One verdict comes back with runtime and memory. No guessing which test failed.',
+      d: 'One verdict comes back, with the runtime and the memory it took.',
     },
     {
       t: 'Move the rating',
-      d: 'Every rated contest recomputes your Elo and your place in the global ladder.',
+      d: 'Every rated contest recomputes your rating and your place in the global ladder.',
     },
   ],
 
-  // global rating — order is 2nd / 1st / 3rd; CSS puts them on the podium
+  // Global rating — the order is 2nd / 1st / 3rd; CSS puts them on the podium.
   podium: [
-    {
-      rank: 2,
-      handle: 'quantumlynx',
-      initials: 'QL',
-      rating: 3187,
-      tier: 'Kernel',
-      color: '#F87171',
-    },
-    {
-      rank: 1,
-      handle: 'hexraven',
-      initials: 'HR',
-      rating: 3241,
-      tier: 'Kernel',
-      color: '#F87171',
-    },
-    {
-      rank: 3,
-      handle: 'eulergate',
-      initials: 'EG',
-      rating: 3126,
-      tier: 'Kernel',
-      color: '#F87171',
-    },
+    coder(2, 'quantumlynx', 'QL', 2571),
+    coder(1, 'hexraven', 'HR', 2603),
+    coder(3, 'eulergate', 'EG', 2498),
   ],
   table: [
-    {
-      rank: 4,
-      handle: 'dijkstraflux',
-      initials: 'DF',
-      rating: 3044,
-      delta: 28,
-      tier: 'Architect',
-      color: '#FB923C',
-    },
-    {
-      rank: 5,
-      handle: 'voidwolf',
-      initials: 'VW',
-      rating: 2971,
-      delta: -12,
-      tier: 'Architect',
-      color: '#FB923C',
-    },
-    {
-      rank: 6,
-      handle: 'cipherzero',
-      initials: 'CZ',
-      rating: 2884,
-      delta: 44,
-      tier: 'Architect',
-      color: '#FB923C',
-    },
-    {
-      rank: 7,
-      handle: 'modulowave',
-      initials: 'MW',
-      rating: 2790,
-      delta: 9,
-      tier: 'Architect',
-      color: '#FB923C',
-    },
-    {
-      rank: 8,
-      handle: 'gaussnode',
-      initials: 'GN',
-      rating: 2612,
-      delta: -31,
-      tier: 'Grandmaster',
-      color: '#F472B6',
-    },
-    {
-      rank: 9,
-      handle: 'heapifyx',
-      initials: 'HX',
-      rating: 2455,
-      delta: 17,
-      tier: 'Grandmaster',
-      color: '#F472B6',
-    },
-    {
-      rank: 214,
-      handle: 'n3ptune',
-      initials: 'NP',
-      rating: 2147,
-      delta: 35,
-      tier: 'Master',
-      color: '#A78BFA',
-      you: true,
-    },
+    coder(4, 'dijkstraflux', 'DF', 2388, 28),
+    coder(5, 'voidwolf', 'VW', 2301, -12),
+    coder(6, 'cipherzero', 'CZ', 2246, 44),
+    coder(7, 'modulowave', 'MW', 2174, 9),
+    coder(8, 'gaussnode', 'GN', 2088, -31),
+    coder(9, 'heapifyx', 'HX', 2015, 17),
+    coder(214, 'n3ptune', 'NP', 1863, 35, true),
   ],
-  ladder: [
-    { name: 'Trainee', min: 0, color: '#7E8796' },
-    { name: 'Junior', min: 1000, color: '#22C55E' },
-    { name: 'Specialist', min: 1300, color: '#2DD4BF' },
-    { name: 'Expert', min: 1600, color: '#38BDF8' },
-    { name: 'Master', min: 1900, color: '#A78BFA' },
-    { name: 'Grandmaster', min: 2300, color: '#F472B6' },
-    { name: 'Architect', min: 2700, color: '#FB923C' },
-    { name: 'Kernel', min: 3100, color: '#F87171' },
-  ],
+  ladder: CG_RANKS,
 
   judge: [
     { icon: 'cpu', t: 'Every run happens in an isolated sandbox.' },
@@ -219,36 +125,36 @@ const landingData = {
     { icon: 'flag', t: 'Full verdict set: AC, WA, TLE, MLE, OLE, RE, CE.' },
     {
       icon: 'trophy',
-      t: 'Contest standings update live; rating is recomputed when the round closes.',
+      t: 'Contest standings update live; the rating is recomputed when the round closes.',
     },
   ],
 
   faq: [
     {
       q: 'Does Codegard cost anything?',
-      a: 'No. Every problem, every contest and the full rating system are open to all accounts.',
+      a: 'No. Every problem, every contest and the rating are open to every account.',
     },
     {
-      q: 'Which languages can I submit?',
-      a: 'Python, C++, Java, Go, Rust, C# and JavaScript. Each language gets its own time multiplier so the limits stay fair.',
+      q: 'Which language can I submit?',
+      a: 'Python. Every submission runs in its own sandbox, under the time and memory limit the problem sets.',
     },
     {
-      q: 'How is the rating calculated?',
-      a: 'Elo over rated contests. Your result is compared to the expected result against everyone in the round, then your rating moves. Practice submissions never touch it.',
+      q: 'How is a contest scored?',
+      a: 'A solved problem is worth 100 points, whichever problem it is. Ties are broken by penalty: the minutes from the start of the round to each accepted solution, plus ten minutes for every wrong attempt on a problem you go on to solve.',
     },
     {
-      q: 'What happens if I join a contest late?',
-      a: 'You start with the time that is left. Points scale with the moment you solve, so a late start costs score but not participation.',
+      q: 'How does my rating change?',
+      a: 'Every account starts at 1200. A rated contest recomputes it when the round closes, from how you placed against everyone else in it. Solving outside a contest never moves it.',
     },
     {
-      q: 'Can I see other solutions after a contest?',
-      a: 'Yes. Editorials and accepted submissions open when the round ends and the standings are frozen.',
+      q: 'What comes back from the judge?',
+      a: 'One verdict for the submission, with the runtime and the memory it used. Accepted means every test passed, including the ones you cannot see.',
     },
     {
       q: 'Do I need to install anything?',
-      a: 'No. Everything runs in the browser, including the editor and the judge.',
+      a: 'No. The editor and the judge both live in the browser.',
     },
   ],
 };
 
-export default landingData;
+export default landingContent;
