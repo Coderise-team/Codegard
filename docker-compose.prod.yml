@@ -278,10 +278,14 @@ services:
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8001
       --workers ${JUDGE_WORKERS:?JUDGE_WORKERS is required}
+    # Named variables instead of the whole .env: this is the one service with a
+    # line to the host's Docker socket, and it has no business holding the
+    # database password, the Django key or the OAuth secrets. Redis is all it
+    # ever talks to.
     environment:
       PYTHONPATH: /shared
       PYTHONUNBUFFERED: "1"
-    env_file: .env
+      REDIS_URL: ${REDIS_URL:?REDIS_URL is required}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:

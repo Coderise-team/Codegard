@@ -250,7 +250,6 @@ services:
     volumes:
       - ./shared:/shared
       - /var/run/docker.sock:/var/run/docker.sock
-    env_file: .env
     ports:
       - "8001:8001"
     depends_on:
@@ -289,7 +288,6 @@ services:
       PYTHONPATH: /shared
     volumes:
       - ./shared:/shared
-    env_file: .env
     networks:
       - codegard_net
 
