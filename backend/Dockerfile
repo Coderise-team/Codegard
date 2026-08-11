@@ -27,6 +27,17 @@ EXPOSE 8000
 
 FROM base AS web
 
+# Production runs as a plain user, so a break-in through the app does not start
+# out owning the container. The static directory is created here on purpose:
+# the named volume mounted over it inherits this ownership, and collectstatic
+# would otherwise write into a root-owned mount.
+RUN groupadd --system --gid 10001 app \
+    && useradd --system --uid 10001 --gid app --home-dir /app app \
+    && mkdir -p /app/django_app/staticfiles \
+    && chown -R app:app /app /shared
+
+USER app
+
 EXPOSE 8000
 
 
