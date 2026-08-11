@@ -436,6 +436,13 @@
   overflow: hidden;
   background: #0f121a;
 }
+/* Rule between the line numbers and the code. Monaco has no option for it, so
+   it is drawn on the gutter element the editor renders (.margin). If a future
+   Monaco renames that element the rule simply stops applying — nothing breaks.
+   The landing's editor mock repeats this line, keep the two in step. */
+.pp-editor-host .monaco-editor .margin {
+  border-right: 1px solid var(--border);
+}
 .pp-editor-loading {
   flex: 1;
   display: grid;
