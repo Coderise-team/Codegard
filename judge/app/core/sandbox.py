@@ -19,7 +19,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-_PYTHON_IMAGE = "python:3.13-slim"
+SANDBOX_IMAGE = "python:3.13-slim"
 _CPU_QUOTA = 100_000
 _CPU_PERIOD = 100_000
 _TIMEOUT_BUFFER_SEC = 2.0
@@ -90,7 +90,7 @@ def run_in_sandbox(
 
     try:
         container = client.containers.run(
-            image=_PYTHON_IMAGE,
+            image=SANDBOX_IMAGE,
             command=_build_command(code, stdin),
             mem_limit=f"{memory_limit_mb}m",
             cpu_quota=_CPU_QUOTA,
