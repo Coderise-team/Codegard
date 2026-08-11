@@ -30,6 +30,25 @@ services:
       timeout: 3s
       retries: 5
 
+  migrate:
+    build:
+      context: ./backend
+      target: dev
+    command: python django_app/manage.py migrate --noinput
+    environment:
+      DJANGO_SETTINGS_MODULE: settings.dev
+      PYTHONPATH: /app/django_app:/shared
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./backend/django_app:/app/django_app
+      - ./shared:/shared
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - codegard_net
+
   backend:
     build:
       context: ./backend
@@ -49,6 +68,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - codegard_net
     healthcheck:
@@ -87,6 +108,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - codegard_net
     healthcheck:
@@ -123,6 +146,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - codegard_net
     healthcheck:
@@ -158,6 +183,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - codegard_net
     healthcheck:

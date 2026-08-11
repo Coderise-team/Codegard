@@ -59,6 +59,29 @@ services:
       timeout: 3s
       retries: 5
 
+  # Runs once per deploy and exits. Migrations used to run inside every service
+  # on start: five containers taking turns on a lock, slow and noisy, and Flower
+  # touching the database for no reason.
+  migrate:
+    build:
+      context: ./backend
+      target: web
+    command: python django_app/manage.py migrate --noinput
+    environment:
+      DJANGO_SETTINGS_MODULE: settings.prod
+      PYTHONPATH: /app/django_app:/shared
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./shared:/shared
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    oom_score_adj: -500
+    logging: *logging
+    networks:
+      - codegard_net
+
   backend:
     build:
       context: ./backend
@@ -81,6 +104,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     # Losing it takes the whole site down.
     oom_score_adj: -500
     logging: *logging
@@ -101,8 +126,6 @@ services:
     build:
       context: ./backend
       target: web
-    # Skips the image's entrypoint (migrations); collecting files needs no DB.
-    entrypoint: []
     command: python django_app/manage.py collectstatic --noinput
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
@@ -137,6 +160,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     # A killed task is redelivered on the next round.
     oom_score_adj: 100
     logging: *logging
@@ -167,6 +192,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     # Verdicts wait in Redis until it is back.
     oom_score_adj: 0
     logging: *logging
@@ -197,6 +224,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     # Just an alarm clock; it catches up after a restart.
     oom_score_adj: 200
     logging: *logging
