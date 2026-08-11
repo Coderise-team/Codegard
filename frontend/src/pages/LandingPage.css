@@ -444,8 +444,10 @@
 }
 .lp .ed-gutter {
   flex: 0 0 52px;
-  padding: 14px 12px 14px 0;
-  text-align: right;
+  padding: 14px 0;
+  /* Centred in its column: the sample never goes past one digit, so Monaco's
+     right alignment would leave the numbers hanging on the rule. */
+  text-align: center;
   font-family: var(--mono);
   font-size: 13px;
   line-height: 21px;
