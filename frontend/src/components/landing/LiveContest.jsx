@@ -3,16 +3,30 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 const ROW_H = 58; // must match .brow height + gap in LandingPage.css
 
+const POINTS_PER_PROBLEM = 100;
+const PROBLEM_COUNT = 5;
+const SOLVE_EVERY = 3400;
+const BUMP_FOR = 1400;
+
+const pad = (value) => String(value).padStart(2, '0');
+const asHoursMinutes = (seconds) =>
+  `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}`;
+
 /**
  * Live contest section: a running countdown next to a standings board whose
- * rows re-sort as points come in. The board is a mock — a random participant
- * gains points on an interval; reduced motion keeps it still.
+ * rows re-sort as solutions come in. The board is a sample, not live data —
+ * somebody who still has problems left solves one every few seconds, worth a
+ * flat 100 points as in a real round, until the whole board is finished.
+ * Reduced motion keeps it still.
  */
 export default function LiveContest({ contest }) {
   const reduced = useReducedMotion();
   const [rows, setRows] = useState(contest.board);
   const [bump, setBump] = useState(null);
   const [left, setLeft] = useState(contest.secondsLeft);
+
+  // How far the round had already run when the page opened.
+  const elapsedOnOpen = contest.lengthSeconds - contest.secondsLeft;
 
   useEffect(() => {
     const iv = setInterval(() => setLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
@@ -21,34 +35,55 @@ export default function LiveContest({ contest }) {
 
   useEffect(() => {
     if (reduced) return undefined;
+    const openedAt = Date.now();
+    let fade = 0;
     const iv = setInterval(() => {
-      setRows((r) => {
-        const i = Math.floor(Math.random() * r.length);
-        const next = r.map((x, k) =>
-          k === i
-            ? {
-                ...x,
-                pts: x.pts + 40 + Math.floor(Math.random() * 90),
-                solved: Math.min(5, x.solved + 1),
-              }
-            : x
-        );
-        setBump(next[i].handle);
-        setTimeout(() => setBump(null), 1400);
-        return next;
-      });
-    }, 3400);
-    return () => clearInterval(iv);
-  }, [reduced]);
+      // Where the round stands right now, so an accepted solution lands at a
+      // believable minute instead of leaving the row's own clock behind.
+      const intoRound =
+        elapsedOnOpen + Math.floor((Date.now() - openedAt) / 1000);
 
-  const order = [...rows].sort((a, b) => b.pts - a.pts);
+      setRows((current) => {
+        const unfinished = current.filter((r) => r.solved < PROBLEM_COUNT);
+        if (!unfinished.length) return current;
+
+        const solver =
+          unfinished[Math.floor(Math.random() * unfinished.length)].handle;
+        setBump(solver);
+        clearTimeout(fade);
+        fade = setTimeout(() => setBump(null), BUMP_FOR);
+
+        return current.map((row) =>
+          row.handle === solver
+            ? {
+                ...row,
+                solved: row.solved + 1,
+                pts: row.pts + POINTS_PER_PROBLEM,
+                // Penalty carries the minutes spent reaching this solution.
+                pen: row.pen + Math.floor(intoRound / 60),
+                last: asHoursMinutes(intoRound),
+              }
+            : row
+        );
+      });
+    }, SOLVE_EVERY);
+    return () => {
+      clearInterval(iv);
+      clearTimeout(fade);
+    };
+  }, [reduced, elapsedOnOpen]);
+
+  // The real leaderboard orders by score, then by the smaller penalty, then by
+  // whoever got there first (see contests/services.py).
+  const order = [...rows].sort(
+    (a, b) => b.pts - a.pts || a.pen - b.pen || a.last.localeCompare(b.last)
+  );
   const pos = {};
   order.forEach((r, i) => {
     pos[r.handle] = i;
   });
 
-  const pad = (v) => String(v).padStart(2, '0');
-  const clock = `${pad(Math.floor(left / 3600))}:${pad(Math.floor((left % 3600) / 60))}:${pad(left % 60)}`;
+  const clock = `${asHoursMinutes(left)}:${pad(left % 60)}`;
 
   return (
     <section className="sec contest-sec" id="contests">
@@ -61,8 +96,8 @@ export default function LiveContest({ contest }) {
           <h2 className="sec-t">The clock is part of the problem.</h2>
           <p className="sec-sub">
             Rounds open at a fixed time and everyone gets the same statement at
-            the same second. Points decay while the timer runs, and the board
-            moves the moment a submission is accepted.
+            the same second. The board moves the moment a submission is
+            accepted, and the minutes you spend get counted against the tie.
           </p>
 
           <div className="round-card">
