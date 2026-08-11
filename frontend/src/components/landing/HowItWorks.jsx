@@ -132,11 +132,9 @@ export default function HowItWorks({ steps }) {
                 <div key={s.t} className={`how-step${i === step ? ' on' : ''}`}>
                   <span className="num">{String(i + 1).padStart(2, '0')}</span>
                   <span>
-                    <span className="step-t" style={{ display: 'block' }}>
-                      {s.t}
-                    </span>
-                    <span className="step-d" style={{ display: 'block' }}>
-                      {s.d}
+                    <span className="step-t">{s.t}</span>
+                    <span className="step-d">
+                      <span>{s.d}</span>
                     </span>
                   </span>
                 </div>

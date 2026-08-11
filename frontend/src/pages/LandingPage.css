@@ -605,21 +605,30 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    60% 50% at 78% 40%,
+    60% 50% at 22% 40%,
     var(--gold-soft),
     transparent 70%
   );
   pointer-events: none;
 }
+/* Board on the left, copy on the right — the sections alternate sides down the
+   page, so this one mirrors the hero above it and the solo section below.
+   The copy stays first in the markup, where it reads first. */
 .lp .contest-grid {
   display: grid;
-  grid-template-columns: 432px 1fr;
+  grid-template-columns: 1fr 432px;
   gap: 64px;
   align-items: start;
 }
 .lp .contest-copy {
+  grid-column: 2;
+  grid-row: 1;
   position: sticky;
   top: 120px;
+}
+.lp .board {
+  grid-column: 1;
+  grid-row: 1;
 }
 .lp .round-card {
   margin-top: 34px;
@@ -888,12 +897,14 @@
   display: flex;
   align-items: center;
 }
+/* Same column rhythm as the contest and solo sections. The width comes from
+   .wrap; setting it here used to override that and push the copy into the
+   left edge of the screen. */
 .lp .how-grid {
   display: grid;
-  grid-template-columns: 440px 1fr;
-  gap: 70px;
+  grid-template-columns: 432px 1fr;
+  gap: 64px;
   align-items: center;
-  width: 100%;
 }
 .lp .how-steps {
   display: flex;
@@ -921,23 +932,28 @@
   transition: color 0.35s;
 }
 .lp .how-step .step-t {
+  display: block;
   font-size: 16px;
   font-weight: 600;
   color: var(--fg2);
   transition: color 0.35s;
 }
+/* The description opens to whatever height its text needs: the row grows from
+   0fr to 1fr, so no fixed height can clip a longer step. */
 .lp .how-step .step-d {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 5px;
   font-size: 13.5px;
   color: var(--fg3);
-  margin-top: 5px;
   line-height: 1.55;
-  max-height: 0;
   opacity: 0;
-  overflow: hidden;
   transition:
-    max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.4s,
-    margin 0.4s;
+    grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s;
+}
+.lp .how-step .step-d > span {
+  overflow: hidden;
 }
 .lp .how-step.on .num {
   color: var(--gold-hi);
@@ -946,12 +962,13 @@
   color: var(--fg);
 }
 .lp .how-step.on .step-d {
-  max-height: 80px;
+  grid-template-rows: 1fr;
   opacity: 1;
 }
 .lp .how-vis {
   position: relative;
-  height: 420px;
+  /* Give way on a short window instead of running past the pinned screen. */
+  height: min(420px, 52vh);
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--card);
