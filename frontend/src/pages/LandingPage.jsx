@@ -4,6 +4,7 @@ import { LandingScrollContext } from '../hooks/useLandingScroll';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import LiveContest from '../components/landing/LiveContest';
 import HowItWorks from '../components/landing/HowItWorks';
+import SoloPractice from '../components/landing/SoloPractice';
 import GlobalStandings from '../components/landing/GlobalStandings';
 import {
   JudgeSection,
@@ -79,6 +80,7 @@ export default function LandingPage({ data = landingDataDefault }) {
         <LandingHero data={data.hero} />
         <LiveContest contest={data.contest} />
         <HowItWorks steps={data.steps} />
+        <SoloPractice solo={data.solo} />
         <GlobalStandings
           podium={data.podium}
           table={data.table}

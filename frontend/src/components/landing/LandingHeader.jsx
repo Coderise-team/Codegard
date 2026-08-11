@@ -36,6 +36,7 @@ export function LandingNav() {
         <div className="nav-links">
           <a href="#contests">Contests</a>
           <a href="#how">How it works</a>
+          <a href="#solo">Solo</a>
           <a href="#rating">Rating</a>
           <a href="#faq">FAQ</a>
         </div>

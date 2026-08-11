@@ -110,6 +110,45 @@ const landingContent = {
       'You do not have to race, and you do not have to compete with anyone.',
     body: 'Open the catalogue and take whatever you like: filter by tag, by difficulty, or go straight for the problem the fewest people have solved. Nothing is timed, nothing is rated, nobody is watching. What matters in programming is regularity: take the daily challenge and beat your own record for days in a row.',
     note: 'For an interview, for an olympiad, or just to keep your hands warm.',
+    // Sorted by the share of attempts that pass, hardest first — the view the
+    // copy points at.
+    catalogue: [
+      {
+        id: 512,
+        title: 'Minimum Spanning Forest',
+        tags: ['graphs', 'dsu'],
+        difficulty: 'Hard',
+        acceptance: 12.8,
+      },
+      {
+        id: 337,
+        title: 'Palindromic Partitions',
+        tags: ['dp', 'strings'],
+        difficulty: 'Hard',
+        acceptance: 19.5,
+      },
+      {
+        id: 128,
+        title: 'Segment Sum Queries',
+        tags: ['segment tree'],
+        difficulty: 'Medium',
+        acceptance: 34.2,
+      },
+      {
+        id: 61,
+        title: 'Balanced Brackets',
+        tags: ['stack'],
+        difficulty: 'Easy',
+        acceptance: 58.9,
+      },
+      {
+        id: 12,
+        title: 'Two Sum',
+        tags: ['hash map'],
+        difficulty: 'Easy',
+        acceptance: 71.3,
+      },
+    ],
   },
 
   // Global rating — the order is 2nd / 1st / 3rd; CSS puts them on the podium.

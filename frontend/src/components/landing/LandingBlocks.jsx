@@ -116,6 +116,7 @@ export function LandingFooter() {
               <span className="h">This page</span>
               <a href="#contests">Contests</a>
               <a href="#how">How it works</a>
+              <a href="#solo">Solo</a>
               <a href="#rating">Rating</a>
               <a href="#faq">FAQ</a>
             </div>
