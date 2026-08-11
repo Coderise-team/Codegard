@@ -64,15 +64,14 @@ services:
   # touching the database for no reason.
   migrate:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     command: python django_app/manage.py migrate --noinput
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     depends_on:
       postgres:
@@ -84,7 +83,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     command: >
       gunicorn -k uvicorn.workers.UvicornWorker config.asgi:application
@@ -96,8 +96,6 @@ services:
       # Unbuffered: Python holds piped output back otherwise, so a crash takes
       # the last (most interesting) lines with it.
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     depends_on:
       postgres:
@@ -124,7 +122,8 @@ services:
   # falls through to the SPA and comes back as HTML.
   collectstatic:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     command: python django_app/manage.py collectstatic --noinput
     environment:
@@ -132,7 +131,6 @@ services:
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
     volumes:
-      - ./shared:/shared
       - static_files:/app/django_app/staticfiles
     env_file: .env
     # Runs for seconds and exits anyway.
@@ -143,7 +141,8 @@ services:
 
   celery-worker:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     # Celery defaults to one process per core, which on a small box quietly
     # competes with the judge for the same cores.
@@ -152,8 +151,6 @@ services:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     depends_on:
       postgres:
@@ -177,15 +174,14 @@ services:
 
   judge-results-consumer:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     command: python django_app/manage.py consume_judge_results
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     depends_on:
       postgres:
@@ -209,15 +205,14 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     command: celery -A config beat -l info --pidfile=/tmp/celerybeat.pid
     environment:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     depends_on:
       postgres:
@@ -241,7 +236,8 @@ services:
 
   flower:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: web
     # No url_prefix: nginx no longer proxies Flower, and the prefix would 404
     # the tunnelled root. Basic auth stays as a second lock behind the tunnel.
@@ -250,8 +246,6 @@ services:
       DJANGO_SETTINGS_MODULE: settings.prod
       PYTHONPATH: /app/django_app:/shared
       PYTHONUNBUFFERED: "1"
-    volumes:
-      - ./shared:/shared
     env_file: .env
     # Bound to the server's own loopback, so the panel is reachable only from
     # the machine itself — that is, through an SSH tunnel, never from outside.
@@ -275,7 +269,8 @@ services:
 
   judge:
     build:
-      context: ./judge
+      context: .
+      dockerfile: judge/Dockerfile
       target: web
     # Each worker judges one submission at a time in a container of its own, and
     # every one of those takes a whole core. More workers means a faster queue
@@ -288,7 +283,6 @@ services:
       PYTHONUNBUFFERED: "1"
     env_file: .env
     volumes:
-      - ./shared:/shared
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       redis:

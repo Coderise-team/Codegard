@@ -32,7 +32,8 @@ services:
 
   migrate:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: python django_app/manage.py migrate --noinput
     environment:
@@ -51,7 +52,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir django_app
     environment:
@@ -93,7 +95,8 @@ services:
 
   celery-worker:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: celery -A config worker -l info
     environment:
@@ -130,7 +133,8 @@ services:
 
   judge-results-consumer:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: python django_app/manage.py consume_judge_results
     environment:
@@ -168,7 +172,8 @@ services:
 
   celery-beat:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: celery -A config beat -l info --pidfile=/tmp/celerybeat.pid
     environment:
@@ -205,7 +210,8 @@ services:
 
   backend-test:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: test
     command: run-tests
     profiles:
@@ -233,7 +239,8 @@ services:
 
   judge:
     build:
-      context: ./judge
+      context: .
+      dockerfile: judge/Dockerfile
       target: web
     command: uvicorn app.main:app --host 0.0.0.0 --port 8001
     environment:
@@ -272,7 +279,8 @@ services:
 
   judge-test:
     build:
-      context: ./judge
+      context: .
+      dockerfile: judge/Dockerfile
       target: test
     command: run-tests
     profiles:
@@ -300,7 +308,8 @@ services:
 
   flower:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: sh -c "celery -A config flower --port=5555 --basic_auth=$${FLOWER_USER}:$${FLOWER_PASSWORD}"
     environment:

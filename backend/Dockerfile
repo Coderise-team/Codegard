@@ -1,16 +1,20 @@
+# Built from the repository root, because the schemas in shared/ have to end up
+# inside the image: an image that needs files from the host cannot be pushed to
+# a registry and pulled on a server.
 FROM python:3.13-slim AS base
 
 WORKDIR /app
 
-ENV PYTHONPATH=/app/django_app
+ENV PYTHONPATH=/app/django_app:/shared
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
 
 RUN uv pip install --system --no-cache .
 
-COPY . .
+COPY backend/ ./
+COPY shared/ /shared/
 
 
 FROM base AS dev
