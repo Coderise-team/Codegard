@@ -78,8 +78,8 @@ export function LandingHero({ data }) {
               Start solving
               <Icons.send size={17} />
             </a>
-            <a className="btn btn-lg" href="/problems">
-              Browse problems
+            <a className="btn btn-lg" href="#how">
+              See how it works
             </a>
           </div>
           <p className="hero-note">{data.note}</p>

@@ -78,24 +78,25 @@ export function FinalCta() {
           Start now
         </span>
         <h2>
-          Your rating starts at <span className="g">the next submission.</span>
+          Your rating starts at <span className="g">your first contest.</span>
         </h2>
         <p className="sec-sub">
-          Create an account, open a problem, send it to the judge.
+          Solve problems, join live contests, watch your rating move.
         </p>
         <div className="hero-cta">
           <a className="btn btn-lg btn-primary" href="/register">
-            Create account
+            Register and start solving
             <Icons.send size={17} />
           </a>
-          <a className="btn btn-lg" href="/contests">
-            See upcoming contests
-          </a>
         </div>
+        <p className="hero-note">Free. No card, no limits.</p>
       </div>
     </section>
   );
 }
+
+// Same address the privacy policy gives, so a reader gets one contact.
+const CONTACT_EMAIL = 'codegard.team@gmail.com';
 
 export function LandingFooter() {
   return (
@@ -109,12 +110,14 @@ export function LandingFooter() {
             </p>
           </div>
           <div className="foot-cols">
+            {/* Everything inside the product needs an account, so the footer
+                points at this page's own sections instead of dead ends. */}
             <div className="foot-col">
-              <span className="h">Platform</span>
-              <a href="/problems">Problems</a>
-              <a href="/contests">Contests</a>
-              <a href="/standings">Standings</a>
-              <a href="/profile">Profile</a>
+              <span className="h">This page</span>
+              <a href="#contests">Contests</a>
+              <a href="#how">How it works</a>
+              <a href="#rating">Rating</a>
+              <a href="#faq">FAQ</a>
             </div>
             <div className="foot-col">
               <span className="h">Account</span>
@@ -124,7 +127,6 @@ export function LandingFooter() {
             <div className="foot-col">
               <span className="h">Legal</span>
               <a href="/privacy">Privacy policy</a>
-              <a href="/privacy#terms">Terms of use</a>
             </div>
           </div>
         </div>
@@ -132,7 +134,7 @@ export function LandingFooter() {
           <span>© 2026 Codegard</span>
           <span className="sp">
             <a href="/privacy">Privacy policy</a>
-            <a href="mailto:hi@codegard.io">hi@codegard.io</a>
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </span>
         </div>
       </div>
