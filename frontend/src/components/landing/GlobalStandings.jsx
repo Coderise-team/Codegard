@@ -107,6 +107,19 @@ export default function GlobalStandings({ podium, table, ladder }) {
             </div>
           ))}
         </div>
+
+        <p className="stand-note rv rv-d3">
+          Everyone has a tier. You can be a Junior or a Trainee, or you can
+          climb all the way to the top and become an Architect, or the Kernel of
+          the platform.
+        </p>
+
+        <p className="stand-note rv rv-d3">
+          We built you a dashboard that holds the whole picture, so you can
+          follow your own numbers and your opponents&apos; on their profile
+          pages. Look back at the contests you entered, at the attempts you have
+          made, and watch your rating move on the chart.
+        </p>
       </div>
     </section>
   );

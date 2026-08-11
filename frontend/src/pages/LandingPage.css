@@ -1360,6 +1360,17 @@
   color: var(--fg2);
 }
 
+/* Closing notes under the ladder: centred, quieter than the section lead. */
+.lp .stand-note {
+  margin: 22px auto 0;
+  max-width: 68ch;
+  text-align: center;
+  color: var(--fg2);
+  font-size: 15px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
 /* ---------- ladder strip ---------- */
 .lp .ladder {
   display: flex;
