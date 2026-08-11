@@ -55,8 +55,8 @@ const landingContent = {
   hero: {
     eyebrow: 'Free · every problem, every contest',
     lines: ['Write code.', 'Get judged.', 'Climb the rating.'],
-    sub: 'Timed contests with a live leaderboard. Every submission gets a verdict in seconds.',
-    note: 'No card, no trial. Nothing here is paid for.',
+    sub: 'Compete against other programmers and earn a rating, or sharpen your skills in a calm solo mode. Either way the verdict comes back in seconds.',
+    note: 'Sign in with Google or GitHub, or make an account in ten seconds.',
   },
 
   // Live contest board. Points are 100 per solved problem, so the board moves
@@ -83,24 +83,34 @@ const landingContent = {
     ],
   },
 
+  // The four steps walk through a contest, start to finish; solving at your own
+  // pace is the solo section's story, so it stays out of here.
   steps: [
     {
-      t: 'Pick a problem',
-      d: 'Statement, limits, samples and tags on one screen. Filter the catalogue by tag or by difficulty.',
+      t: 'Pick your order',
+      d: 'The problems open together and nobody tells you where to start. Take the cheap ones first, or gamble on the hard one.',
     },
     {
       t: 'Write the solution',
-      d: 'The editor sits next to the statement, with the sample cases in reach.',
+      d: 'The editor is the one from VS Code, sitting next to the statement. Drag the divider and give each side the room you want. Everything here is built to keep you comfortable while you write.',
     },
     {
-      t: 'Submit to the judge',
-      d: 'One verdict comes back, with the runtime and the memory it took.',
+      t: 'Send it to the judge',
+      d: 'An answer comes back in seconds: the verdict, the time it ran, the memory it took.',
     },
     {
       t: 'Move the rating',
-      d: 'Every rated contest recomputes your rating and your place in the global ladder.',
+      d: 'When the round ends you get your rating, and your place on the global leaderboard moves.',
     },
   ],
+
+  solo: {
+    eyebrow: 'Solo practice',
+    title:
+      'You do not have to race, and you do not have to compete with anyone.',
+    body: 'Open the catalogue and take whatever you like: filter by tag, by difficulty, or go straight for the problem the fewest people have solved. Nothing is timed, nothing is rated, nobody is watching. What matters in programming is regularity: take the daily challenge and beat your own record for days in a row.',
+    note: 'For an interview, for an olympiad, or just to keep your hands warm.',
+  },
 
   // Global rating — the order is 2nd / 1st / 3rd; CSS puts them on the podium.
   podium: [
@@ -119,40 +129,41 @@ const landingContent = {
   ],
   ladder: CG_RANKS,
 
+  // What the judge does, told at the level a visitor needs. How the sandbox is
+  // locked down is deliberately not spelled out here.
   judge: [
-    { icon: 'cpu', t: 'Every run happens in an isolated sandbox.' },
-    { icon: 'clock', t: 'Each problem carries its own time and memory limit.' },
-    { icon: 'flag', t: 'Full verdict set: AC, WA, TLE, MLE, OLE, RE, CE.' },
+    { icon: 'cpu', t: 'Your code runs in an isolated sandbox.' },
     {
-      icon: 'trophy',
-      t: 'Contest standings update live; the rating is recomputed when the round closes.',
+      icon: 'clock',
+      t: 'Every problem carries its own time and memory limit, and the run is cut off the moment it goes past.',
     },
+    {
+      icon: 'list',
+      t: 'Submissions line up in a queue and wait their turn. If the judge goes down mid-run, the queue is picked back up instead of lost.',
+    },
+    { icon: 'flag', t: 'Full verdict set: AC, WA, TLE, MLE, OLE, RE, CE.' },
   ],
 
   faq: [
     {
       q: 'Does Codegard cost anything?',
-      a: 'No. Every problem, every contest and the rating are open to every account.',
+      a: 'No. Every problem, every contest and the rating are open to everyone. All you need is an account.',
     },
     {
       q: 'Which language can I submit?',
-      a: 'Python. Every submission runs in its own sandbox, under the time and memory limit the problem sets.',
+      a: 'Python for now. We are working on more, so your favourite will most likely be here soon.',
     },
     {
       q: 'How is a contest scored?',
-      a: 'A solved problem is worth 100 points, whichever problem it is. Ties are broken by penalty: the minutes from the start of the round to each accepted solution, plus ten minutes for every wrong attempt on a problem you go on to solve.',
+      a: 'A solved problem is worth 100 points, whichever problem it is. When two people finish level, the smaller penalty wins: the minutes from the start of the round to each of your accepted solutions, plus ten minutes for every rejected try on the way there.',
     },
     {
       q: 'How does my rating change?',
       a: 'Every account starts at 1200. A rated contest recomputes it when the round closes, from how you placed against everyone else in it. Solving outside a contest never moves it.',
     },
     {
-      q: 'What comes back from the judge?',
-      a: 'One verdict for the submission, with the runtime and the memory it used. Accepted means every test passed, including the ones you cannot see.',
-    },
-    {
-      q: 'Do I need to install anything?',
-      a: 'No. The editor and the judge both live in the browser.',
+      q: 'What do the verdicts mean?',
+      a: 'AC every test passed. WA the answer was wrong. TLE too slow. MLE too much memory. OLE the output was too large. RE the program crashed. CE it did not compile.',
     },
   ],
 };

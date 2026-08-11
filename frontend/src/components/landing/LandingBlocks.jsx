@@ -12,7 +12,7 @@ export function JudgeSection({ items }) {
             <i />
             Under the hood
           </span>
-          <h2 className="sec-t">How a submission is decided.</h2>
+          <h2 className="sec-t">What happens after you press Submit.</h2>
         </div>
         <div className="judge">
           {items.map((j, i) => {
@@ -85,7 +85,7 @@ export function FinalCta() {
         </p>
         <div className="hero-cta">
           <a className="btn btn-lg btn-primary" href="/register">
-            Register and start solving
+            Create account
             <Icons.send size={17} />
           </a>
         </div>

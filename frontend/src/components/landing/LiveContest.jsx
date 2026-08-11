@@ -93,11 +93,11 @@ export default function LiveContest({ contest }) {
             <i />
             Live contests
           </span>
-          <h2 className="sec-t">The clock is part of the problem.</h2>
+          <h2 className="sec-t">Every second you spend goes on the record.</h2>
           <p className="sec-sub">
-            Rounds open at a fixed time and everyone gets the same statement at
-            the same second. The board moves the moment a submission is
-            accepted, and the minutes you spend get counted against the tie.
+            Each round runs to a fixed clock. The longer a problem takes you,
+            the worse it counts, so solve early if you want to finish above the
+            rest.
           </p>
 
           <div className="round-card">
