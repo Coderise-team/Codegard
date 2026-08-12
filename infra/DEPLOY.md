@@ -61,15 +61,14 @@ stay behind the proxy.
    http to https.
 5. Cloudflare dashboard → SSL/TLS → set the mode to **Full (strict)**. Anything
    less leaves the last hop unencrypted or unverified.
-6. `make prod-restart`, then check `https://<domain>` and that plain http
-   redirects.
+6. `make prod-down && make prod`, then check `https://<domain>` and that plain
+   http redirects.
 
 ## 5. First run
 
 ```bash
-make prod-up-build
-docker compose -f docker-compose.prod.yml run --rm backend \
-  python django_app/manage.py createsuperuser
+make prod-build-up
+make prod-superuser
 ```
 
 Then log into `/admin/`, add problems, and remember the house rule: **never
