@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
+from django.contrib.postgres.search import TrigramWordSimilarity
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
 from django.shortcuts import get_object_or_404, redirect
@@ -398,6 +399,15 @@ class PasswordChangeView(APIView):
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
+# Username trigram search knobs. Tuned on the real user table: exact, prefix
+# (3+ chars) and one-letter typos score >= 0.4, while unrelated names stay
+# <= 0.17. 0.3 sits in that gap and is a touch more forgiving than the title
+# threshold (0.35) because usernames are single short tokens that get mistyped.
+# Per project rule these are constants, not env vars.
+MIN_TRIGRAM_LENGTH = 3
+USERNAME_SEARCH_THRESHOLD = 0.3
+
+
 class StandingsView(ListAPIView):
     """GET /api/users/standings/ — the global ELO leaderboard.
 
@@ -478,6 +488,23 @@ class StandingsView(ListAPIView):
             qs = qs.filter(elo_rating__gte=floor)
             if ceil is not None:
                 qs = qs.filter(elo_rating__lt=ceil)
+
+        # Typo-tolerant username search, applied OUTSIDE _annotated (like the tier
+        # filter) so global_rank/delta subqueries stay global. Composes with tier.
+        # When active (3+ chars) it ranks by relevance, then the rating order.
+        # `you`/`total` in the envelope are computed separately and stay untouched.
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if len(search) < MIN_TRIGRAM_LENGTH:
+                qs = qs.filter(username__istartswith=search)
+            else:
+                qs = (
+                    qs.annotate(
+                        username_similarity=TrigramWordSimilarity(search, "username")
+                    )
+                    .filter(username_similarity__gte=USERNAME_SEARCH_THRESHOLD)
+                    .order_by("-username_similarity", self._ordering(), "id")
+                )
         return qs
 
     def list(self, request, *args, **kwargs):
