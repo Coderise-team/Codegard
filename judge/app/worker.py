@@ -8,6 +8,7 @@ from schemas.response import SubmissionResponse, VerdictEnum
 
 from app.config import get_settings, worker_identity
 from app.core.runner import run_submission
+from app.core.sandbox import list_sandbox_owners, remove_sandbox
 
 logger = logging.getLogger(__name__)
 
@@ -111,18 +112,40 @@ async def recover_orphans(redis: Redis) -> None:
         logger.warning("Recovered %s submission(s) from workers that are gone", count)
 
 
+async def sweep_sandboxes(redis: Redis) -> None:
+    """Throw away the sandboxes of workers that are gone.
+
+    Judged straight from a running submission's container, this would be
+    dangerous; it is safe because the same word of life decides here as
+    everywhere else, and a sandbox is only taken once nobody is left waiting
+    for what it holds. Docker is spoken to from a thread — its client knows
+    nothing of waiting politely.
+    """
+    settings = get_settings()
+    me = worker_identity()
+    removed = 0
+    for container_id, owner in await asyncio.to_thread(list_sandbox_owners):
+        if owner == me or await redis.exists(settings.heartbeat_key(owner)):
+            continue
+        await asyncio.to_thread(remove_sandbox, container_id)
+        removed += 1
+    if removed:
+        logger.warning("Removed %s sandbox(es) left by workers that are gone", removed)
+
+
 async def maintenance_loop(redis: Redis) -> None:
     """Keep saying we are here, and keep watch for those who stopped saying it.
 
     On a loop rather than at startup alone: a worker can die at a moment when
-    nothing else is starting, and its submissions would wait for the next
-    deploy to be noticed.
+    nothing else is starting, and what it left would wait for the next deploy
+    to be noticed.
     """
     settings = get_settings()
     while True:
         try:
             await announce(redis)
             await recover_orphans(redis)
+            await sweep_sandboxes(redis)
         except asyncio.CancelledError:
             raise
         except Exception:

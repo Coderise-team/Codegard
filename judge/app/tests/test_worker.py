@@ -14,6 +14,7 @@ from app.worker import (
     handle_one,
     maintenance_loop,
     recover_orphans,
+    sweep_sandboxes,
     withdraw,
 )
 
@@ -171,6 +172,57 @@ async def test_recover_orphans_reaches_a_container_that_no_longer_exists():
     assert redis.lmove.await_args_list[0].args[0] == left_behind
 
 
+def _redis_answering(*workers):
+    redis = AsyncMock()
+
+    async def exists(key):
+        return int(key in {f"judge:workers:{worker}" for worker in workers})
+
+    redis.exists = exists
+    return redis
+
+
+async def test_sweep_throws_away_a_sandbox_nobody_is_waiting_for():
+    redis = _redis_answering()
+
+    with (
+        patch("app.worker.list_sandbox_owners", return_value=[("abc", "box:9:dead")]),
+        patch("app.worker.remove_sandbox") as thrown_away,
+    ):
+        await sweep_sandboxes(redis)
+
+    thrown_away.assert_called_once_with("abc")
+
+
+async def test_sweep_spares_a_sandbox_whose_worker_still_answers():
+    redis = _redis_answering("box:9:alive")
+
+    with (
+        patch("app.worker.list_sandbox_owners", return_value=[("abc", "box:9:alive")]),
+        patch("app.worker.remove_sandbox") as thrown_away,
+    ):
+        await sweep_sandboxes(redis)
+
+    thrown_away.assert_not_called()
+
+
+async def test_sweep_never_touches_the_submission_we_are_judging():
+    """Our own sandbox is running our own submission, and our word of life may
+    not have reached Redis yet."""
+    redis = _redis_answering()
+
+    with (
+        patch(
+            "app.worker.list_sandbox_owners",
+            return_value=[("abc", worker_identity())],
+        ),
+        patch("app.worker.remove_sandbox") as thrown_away,
+    ):
+        await sweep_sandboxes(redis)
+
+    thrown_away.assert_not_called()
+
+
 async def test_maintenance_loop_keeps_going_after_a_failed_pass():
     redis = AsyncMock()
     passes = 0
@@ -186,13 +238,15 @@ async def test_maintenance_loop_keeps_going_after_a_failed_pass():
             "app.worker.announce",
             new=AsyncMock(side_effect=[RuntimeError("redis blip"), None]),
         ) as mark,
-        patch("app.worker.recover_orphans", new=AsyncMock()) as sweep,
+        patch("app.worker.recover_orphans", new=AsyncMock()) as requeue,
+        patch("app.worker.sweep_sandboxes", new=AsyncMock()) as sweep,
         patch("app.worker.asyncio.sleep", stop_on_second),
         pytest.raises(asyncio.CancelledError),
     ):
         await maintenance_loop(redis)
 
     assert mark.await_count == 2
+    assert requeue.await_count == 1
     assert sweep.await_count == 1
 
 

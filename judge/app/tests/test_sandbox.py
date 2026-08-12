@@ -1,11 +1,19 @@
 import base64
 import time
+from unittest.mock import MagicMock
 
 import docker.errors
 import pytest
 import requests
 
-from app.core.sandbox import run_in_sandbox
+from app.config import worker_identity
+from app.core.sandbox import (
+    OWNER_LABEL,
+    SANDBOX_LABEL,
+    list_sandbox_owners,
+    remove_sandbox,
+    run_in_sandbox,
+)
 
 from .conftest import make_mock_docker_client
 
@@ -114,6 +122,16 @@ class TestRunInSandbox:
         assert kwargs["read_only"] is True
         assert kwargs["pids_limit"] == 20
 
+    def test_sandbox_is_stamped_as_ours_and_signed_by_its_worker(self, monkeypatch):
+        client = make_mock_docker_client()
+        _patch(monkeypatch, client)
+
+        run_in_sandbox("pass", "", 1000, 256)
+
+        labels = client.containers.run.call_args.kwargs["labels"]
+        assert labels[SANDBOX_LABEL] == "1"
+        assert labels[OWNER_LABEL] == worker_identity()
+
     def test_code_and_stdin_passed_as_base64(self, monkeypatch):
         client = make_mock_docker_client()
         _patch(monkeypatch, client)
@@ -166,3 +184,53 @@ class TestRunInSandbox:
         _patch(monkeypatch, client)
 
         run_in_sandbox("pass", "", 1000, 256)  # Must not raise
+
+
+class TestSandboxHousekeeping:
+    def test_lists_sandboxes_with_the_worker_that_asked_for_them(self, monkeypatch):
+        client = make_mock_docker_client()
+        left_behind = MagicMock()
+        left_behind.id = "abc123"
+        left_behind.labels = {SANDBOX_LABEL: "1", OWNER_LABEL: "box:9:deadbeef"}
+        client.containers.list.return_value = [left_behind]
+        _patch(monkeypatch, client)
+
+        assert list_sandbox_owners() == [("abc123", "box:9:deadbeef")]
+        assert client.containers.list.call_args.kwargs["all"] is True
+        assert client.containers.list.call_args.kwargs["filters"] == {
+            "label": SANDBOX_LABEL
+        }
+
+    def test_a_sandbox_without_an_owner_is_still_listed(self, monkeypatch):
+        client = make_mock_docker_client()
+        nameless = MagicMock()
+        nameless.id = "abc123"
+        nameless.labels = {SANDBOX_LABEL: "1"}
+        client.containers.list.return_value = [nameless]
+        _patch(monkeypatch, client)
+
+        assert list_sandbox_owners() == [("abc123", "")]
+
+    def test_remove_forces_the_container_out(self, monkeypatch):
+        client = make_mock_docker_client()
+        _patch(monkeypatch, client)
+
+        remove_sandbox("abc123")
+
+        client.containers.get.return_value.remove.assert_called_once_with(force=True)
+
+    def test_remove_says_nothing_about_one_that_is_already_gone(self, monkeypatch):
+        client = make_mock_docker_client()
+        client.containers.get.side_effect = docker.errors.NotFound("gone")
+        _patch(monkeypatch, client)
+
+        remove_sandbox("abc123")  # Must not raise
+
+    def test_remove_survives_a_docker_that_refuses(self, monkeypatch):
+        client = make_mock_docker_client()
+        client.containers.get.return_value.remove.side_effect = docker.errors.APIError(
+            "busy"
+        )
+        _patch(monkeypatch, client)
+
+        remove_sandbox("abc123")  # Must not raise
