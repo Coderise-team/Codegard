@@ -302,16 +302,18 @@
   border: 1.5px solid var(--border);
   border-radius: 50%;
   cursor: pointer;
-  color: var(--fg2);
+  /* Both marks sit at full strength in rest — Google's is drawn in its own
+     brand colours, and a currentColor mark next to it has to match that or the
+     pair reads as one button on and one off. Hover moves the button, not the
+     logo. */
+  color: var(--fg);
   transition:
     border-color 0.15s,
-    color 0.15s,
     background 0.15s;
   padding: 0;
 }
 .auth-oauth-btn:hover {
   border-color: var(--border-2);
-  color: var(--fg);
   background: #1a1e2e;
 }
 
