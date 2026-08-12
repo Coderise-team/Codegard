@@ -52,6 +52,24 @@ const coder = (rank, handle, initials, rating, delta, max, you = false) => {
   };
 };
 
+/**
+ * The visitor's own standing, shared by the profile card in "How it works" and
+ * by the highlighted row in the global leaderboard, so the page cannot
+ * contradict itself. The history is the last twelve rated rounds, ending on the
+ * current rating.
+ */
+const you = {
+  handle: 'n3ptune',
+  initials: 'NP',
+  rank: 5,
+  rating: 2358,
+  delta: 35,
+  max: 2371,
+  history: [
+    2104, 2158, 2131, 2196, 2242, 2219, 2287, 2264, 2318, 2371, 2323, 2358,
+  ],
+};
+
 const landingContent = {
   hero: {
     eyebrow: 'Free · every problem, every contest',
@@ -168,13 +186,22 @@ const landingContent = {
   ],
   table: [
     coder(4, 'dijkstraflux', 'DF', 2388, 28, 2402),
-    coder(5, 'voidwolf', 'VW', 2301, -12, 2355),
-    coder(6, 'cipherzero', 'CZ', 2246, 44, 2246),
-    coder(7, 'modulowave', 'MW', 2174, 9, 2210),
-    coder(8, 'gaussnode', 'GN', 2088, -31, 2154),
-    coder(9, 'heapifyx', 'HX', 2015, 17, 2015),
-    coder(214, 'n3ptune', 'NP', 1863, 35, 1888, true),
+    coder(
+      you.rank,
+      you.handle,
+      you.initials,
+      you.rating,
+      you.delta,
+      you.max,
+      true
+    ),
+    coder(6, 'voidwolf', 'VW', 2301, -12, 2355),
+    coder(7, 'cipherzero', 'CZ', 2246, 44, 2246),
+    coder(8, 'modulowave', 'MW', 2174, 9, 2210),
+    coder(9, 'gaussnode', 'GN', 2088, -31, 2154),
+    coder(10, 'heapifyx', 'HX', 2015, 17, 2015),
   ],
+  you,
   ladder: CG_RANKS,
 
   // What the judge does, told at the level a visitor needs. How the sandbox is

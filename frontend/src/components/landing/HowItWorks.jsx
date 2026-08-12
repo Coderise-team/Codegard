@@ -1,34 +1,93 @@
 import { useState, useEffect, useRef } from 'react';
+import Icons from '../Icons';
 import PythonCode from './PythonCode';
+import { StatusGlyph } from './bits';
 import { DEMO_CODE } from '../../utils/landingContent';
+import { cgRankFor } from '../../utils/ranks';
 import { useLandingScroll } from '../../hooks/useLandingScroll';
 
 // The editor pane shows the opening of the demo solution, not all of it.
 const CODE_PREVIEW = DEMO_CODE.split('\n').slice(0, 7).join('\n');
 
-/** Right-hand visual: one pane per step, cross-fading as the section is scrubbed. */
-function StepVisual({ step }) {
+// The rating ring, in the geometry the dashboard card draws it.
+const RING_R = 86;
+const RING_C = 2 * Math.PI * RING_R;
+
+/** Rating history, drawn the way the dashboard draws it: line, fill, last point. */
+function Sparkline({ history }) {
+  const W = 300,
+    H = 56,
+    pad = 4;
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const span = max - min || 1;
+  const x = (i) => pad + (i * (W - 2 * pad)) / (history.length - 1);
+  const y = (rating) => pad + (1 - (rating - min) / span) * (H - 2 * pad);
+  const line = history
+    .map(
+      (rating, i) =>
+        `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(rating).toFixed(1)}`
+    )
+    .join(' ');
+  const area = `${line} L${x(history.length - 1).toFixed(1)} ${H} L${x(0).toFixed(1)} ${H} Z`;
+
+  return (
+    <div className="hp-spark">
+      <div className="shd">
+        <span className="k">Rating · last {history.length}</span>
+        <span className="v">
+          {min}–{max}
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lpSparkFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--gold)" stopOpacity="0.22" />
+            <stop offset="1" stopColor="var(--gold)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path className="ar" d={area} />
+        <path className="ln" d={line} vectorEffect="non-scaling-stroke" />
+        <circle
+          className="dot"
+          cx={x(history.length - 1)}
+          cy={y(history[history.length - 1])}
+          r="3.5"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Right-hand visual: one pane per step, cross-fading as the section is
+ * scrubbed. Each pane is a small copy of the screen that step happens on — the
+ * catalogue, the editor, the verdict, the rating ring.
+ */
+function StepVisual({ step, catalogue, you }) {
+  const tier = cgRankFor(you.rating);
+  const filled = Math.max(
+    0,
+    Math.min(1, (you.rating - tier.floor) / (tier.ceil - tier.floor))
+  );
+
   return (
     <div className="how-vis rv rv-d1">
       <div className={`how-pane${step === 0 ? ' on' : ''}`}>
         <span className="hp-label">Problemset</span>
         <div className="hp-list">
-          <div className="hp-item">
-            <span className="dot ac" />
-            Two Sum<span className="k">800</span>
-          </div>
-          <div className="hp-item">
-            <span className="dot gd" />
-            Segment Sum Queries<span className="k">1500</span>
-          </div>
-          <div className="hp-item">
-            <span className="dot" />
-            Minimum Spanning Forest<span className="k">2100</span>
-          </div>
-          <div className="hp-item">
-            <span className="dot" />
-            Palindromic Partitions<span className="k">1700</span>
-          </div>
+          {catalogue.map((problem) => (
+            <div key={problem.id} className="hp-item hp-prob">
+              <StatusGlyph status={problem.status} />
+              <span className="hp-prob-id">{problem.id}</span>
+              <span className="hp-prob-t">{problem.title}</span>
+              <span className={`df d-${problem.difficulty.toLowerCase()}`}>
+                {problem.difficulty}
+              </span>
+              <span className="k">{problem.acceptance.toFixed(1)}%</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -39,39 +98,102 @@ function StepVisual({ step }) {
         </div>
       </div>
 
+      {/* The verdict comes back as the toast the workspace throws up, and the
+          chips carry the same three colours the product gives the verdicts. */}
       <div className={`how-pane${step === 2 ? ' on' : ''}`}>
         <span className="hp-label">Judge</span>
-        <div className="hp-list">
-          <div className="hp-item">
-            <span className="dot ac" />
-            Accepted<span className="k">38 ms · 17.4 MB</span>
-          </div>
-          <div className="hp-item">
-            <span className="dot" />
-            Isolated sandbox<span className="k">1s / 256 MB</span>
-          </div>
+        <div className="hp-toast">
+          <span className="hp-toast-icon">
+            <Icons.checkBold size={20} />
+          </span>
+          <span>
+            <span className="hp-toast-big">Accepted</span>
+            <span className="hp-toast-sub">38 ms</span>
+          </span>
         </div>
         <div className="verdicts">
           <span className="lp-vd ac">AC</span>
           <span className="lp-vd wa">WA</span>
           <span className="lp-vd tle">TLE</span>
           <span className="lp-vd tle">MLE</span>
-          <span className="lp-vd ne">OLE</span>
+          <span className="lp-vd tle">OLE</span>
           <span className="lp-vd wa">RE</span>
-          <span className="lp-vd ne">CE</span>
+          <span className="lp-vd wa">CE</span>
         </div>
       </div>
 
-      <div className={`how-pane${step === 3 ? ' on' : ''}`}>
-        <span className="hp-label">Rating after Round 418</span>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
-          <span className="hp-big">2147</span>
-          <span className="hp-delta">+35</span>
+      {/* The dashboard's standing card: the ELO ring, the handle with the last
+          change, the global rank and peak, the tier bar and the history. */}
+      <div className={`how-pane hp-rate${step === 3 ? ' on' : ''}`}>
+        <div className="hp-card-hd">
+          <span className="t">
+            <Icons.award size={15} />
+            Your standing
+          </span>
+          <span className="more">
+            Profile
+            <Icons.chevRight size={13} />
+          </span>
         </div>
-        <div className="hp-bar">
-          <span style={{ width: '62%' }} />
+
+        <div className="hp-card-bd">
+          <div className="hp-ring">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <defs>
+                <linearGradient id="lpRingGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="var(--gold-hi)" />
+                  <stop offset="1" stopColor="var(--gold)" />
+                </linearGradient>
+              </defs>
+              <circle
+                className="track"
+                cx="100"
+                cy="100"
+                r={RING_R}
+                strokeWidth="14"
+              />
+              <circle
+                className="meter"
+                cx="100"
+                cy="100"
+                r={RING_R}
+                strokeWidth="14"
+                strokeDasharray={RING_C}
+                strokeDashoffset={RING_C * (1 - filled)}
+              />
+            </svg>
+            <div className="hp-ring-c">
+              <span className="elo">{you.rating}</span>
+              <span className="lab">ELO Rating</span>
+              <span className="rk">{tier.name}</span>
+            </div>
+          </div>
+
+          <div className="hp-meta">
+            <div className="hp-name">
+              {you.handle}
+              <span className="hp-last">
+                <Icons.arrowUp size={12} />+{you.delta}
+              </span>
+            </div>
+            <div className="hp-sub">
+              Global rank <b>#{you.rank}</b> · max {you.max}
+            </div>
+
+            <div className="hp-tier">
+              <div className="lbl">
+                <span>{tier.floor}</span>
+                <span>→ {tier.nextName}</span>
+                <span>{tier.ceil}</span>
+              </div>
+              <div className="track">
+                <div className="fill" style={{ width: `${filled * 100}%` }} />
+              </div>
+            </div>
+
+            <Sparkline history={you.history} />
+          </div>
         </div>
-        <div className="hp-label">Master · 153 points to Grandmaster</div>
       </div>
     </div>
   );
@@ -80,8 +202,14 @@ function StepVisual({ step }) {
 /**
  * "How it works" — the section pins to the viewport and the four steps
  * advance with scroll progress through its tall wrapper.
+ *
+ * Props:
+ *   steps     — the four steps; see utils/landingContent.js
+ *   catalogue — problems for the problemset pane
+ *   you       — the visitor's own rating row, so the rating pane agrees with
+ *               the leaderboard further down the page
  */
-export default function HowItWorks({ steps }) {
+export default function HowItWorks({ steps, catalogue, you }) {
   const scrollEl = useLandingScroll();
   const ref = useRef(null);
   const [step, setStep] = useState(0);
@@ -141,7 +269,7 @@ export default function HowItWorks({ steps }) {
               ))}
             </div>
           </div>
-          <StepVisual step={step} />
+          <StepVisual step={step} catalogue={catalogue} you={you} />
         </div>
       </div>
     </section>

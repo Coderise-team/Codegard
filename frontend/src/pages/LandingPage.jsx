@@ -79,7 +79,11 @@ export default function LandingPage({ data = landingDataDefault }) {
         <LandingNav />
         <LandingHero data={data.hero} />
         <LiveContest contest={data.contest} />
-        <HowItWorks steps={data.steps} />
+        <HowItWorks
+          steps={data.steps}
+          catalogue={data.solo.catalogue.slice(0, 4)}
+          you={data.you}
+        />
         <SoloPractice solo={data.solo} />
         <GlobalStandings
           podium={data.podium}

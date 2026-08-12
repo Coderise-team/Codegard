@@ -1,18 +1,7 @@
 import Icons from '../Icons';
+import { StatusGlyph } from './bits';
 
 const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
-
-/** Solved / attempted / untouched glyph, as the catalogue draws it. */
-function StatusGlyph({ status }) {
-  return (
-    <span className={`solo-st ${status}`}>
-      <span className="ic">
-        {status === 'solved' ? <Icons.checkBold size={14} /> : null}
-        {status === 'attempted' ? <Icons.bolt size={13} /> : null}
-      </span>
-    </span>
-  );
-}
 
 /**
  * Catalogue sample, following ProblemsPage: the difficulty filter and the tag

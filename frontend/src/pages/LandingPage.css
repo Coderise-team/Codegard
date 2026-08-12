@@ -948,7 +948,7 @@
 .lp .how-vis {
   position: relative;
   /* Give way on a short window instead of running past the pinned screen. */
-  height: min(420px, 52vh);
+  height: min(500px, 64vh);
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--card);
@@ -1012,19 +1012,33 @@
   margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
-.lp .hp-item .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--fg3);
+/* A problem in the problemset pane. One grid, as in the catalogue, so the
+   difficulty starts on the same line in every row instead of drifting with the
+   title and crowding the acceptance. */
+.lp .hp-prob {
+  display: grid;
+  grid-template-columns: 20px 40px minmax(0, 1fr) 104px 64px;
+  gap: 12px;
 }
-.lp .hp-item .dot.ac {
-  background: var(--ac);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+.lp .hp-prob-id {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
 }
-.lp .hp-item .dot.gd {
-  background: var(--gold);
-  box-shadow: 0 0 10px var(--accent-glow);
+.lp .hp-prob-t {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .hp-prob .df {
+  font-size: 11.5px;
+}
+.lp .hp-prob .k {
+  margin-left: 0;
+  justify-self: end;
+  color: var(--gold-hi);
 }
 .lp .hp-code {
   font-family: var(--mono);
@@ -1033,32 +1047,232 @@
   white-space: pre;
   color: #abb2bf;
 }
-.lp .hp-big {
+/* The verdict, as the workspace throws it up after a submission. */
+.lp .hp-toast {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+}
+.lp .hp-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+.lp .hp-toast-big {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ac);
+}
+.lp .hp-toast-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+
+/* Rating pane: the dashboard's standing card, top to bottom. */
+.lp .hp-rate {
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 0;
+  padding: 0;
+}
+/* The dashboard runs this card in its swap layout: ring on the left, the
+   numbers in a column on the right. */
+.lp .hp-card-bd {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 22px 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+.lp .hp-meta {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.lp .hp-card-hd {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .hp-card-hd .t {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.lp .hp-card-hd .t svg {
+  color: var(--fg2);
+}
+.lp .hp-card-hd .more {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+.lp .hp-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 700;
+}
+.lp .hp-last {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ac);
+}
+.lp .hp-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--fg2);
+}
+.lp .hp-sub b {
+  color: var(--gold);
+}
+.lp .hp-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(232px, 40vh);
+  aspect-ratio: 1;
+}
+.lp .hp-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.lp .hp-ring .track {
+  fill: none;
+  stroke: var(--card-2);
+}
+.lp .hp-ring .meter {
+  fill: none;
+  stroke: url(#lpRingGrad);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+.lp .hp-ring-c {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.lp .hp-ring-c .elo {
   font-family: var(--mono);
   font-size: 52px;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+.lp .hp-ring-c .lab {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-top: 7px;
+}
+.lp .hp-ring-c .rk {
+  margin-top: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
   color: var(--gold-hi);
 }
-.lp .hp-delta {
-  font-family: var(--mono);
-  font-size: 15px;
-  color: var(--ac);
-  font-weight: 700;
+.lp .hp-tier {
+  width: 100%;
+  margin-top: 20px;
 }
-.lp .hp-bar {
+.lp .hp-tier .lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--fg2);
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-tier .track {
   height: 6px;
   border-radius: 4px;
   background: var(--card-2);
   overflow: hidden;
-  border: 1px solid var(--border);
 }
-.lp .hp-bar span {
-  display: block;
+.lp .hp-tier .fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--gold), var(--btn-hi-h));
   border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-hi));
+}
+
+/* Rating history under the bar. */
+.lp .hp-spark {
+  width: 100%;
+  margin-top: 20px;
+}
+.lp .hp-spark .shd {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.lp .hp-spark .shd .k {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.lp .hp-spark .shd .v {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-spark svg {
+  display: block;
+  width: 100%;
+  height: 56px;
+  overflow: visible;
+}
+.lp .hp-spark .ln {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+}
+.lp .hp-spark .ar {
+  fill: url(#lpSparkFill);
+}
+.lp .hp-spark .dot {
+  fill: var(--gold-hi);
+  stroke: var(--card);
+  stroke-width: 2;
 }
 
 /* ============================================================
@@ -1228,32 +1442,8 @@
   color: var(--gold-hi);
 }
 
-/* Status glyph: a filled disc for solved, for attempted, an empty ring for
-   everything still untouched. */
-.lp .solo-st {
+.lp .solo-row .lp-st {
   grid-column: 1;
-  display: grid;
-  place-items: center;
-}
-.lp .solo-st .ic {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-}
-.lp .solo-st.solved .ic {
-  color: var(--ac);
-  background: var(--ac-soft);
-}
-.lp .solo-st.attempted .ic {
-  color: var(--tle);
-  background: var(--tle-soft);
-}
-.lp .solo-st.todo .ic {
-  width: 18px;
-  height: 18px;
-  border: 1.5px solid var(--border-2);
 }
 .lp .solo-id {
   grid-column: 2;
@@ -1854,9 +2044,31 @@
   border-color: color-mix(in srgb, var(--tle) 45%, transparent);
   background: var(--tle-soft);
 }
-.lp-vd.ne {
-  color: var(--fg2);
-  border-color: var(--border-2);
+/* Status glyph in front of a problem: a tinted disc once the problem has been
+   touched, an empty ring while it has not. */
+.lp-st {
+  display: grid;
+  place-items: center;
+}
+.lp-st .ic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.lp-st.solved .ic {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+.lp-st.attempted .ic {
+  color: var(--tle);
+  background: var(--tle-soft);
+}
+.lp-st.todo .ic {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-2);
 }
 
 /* ============================================================
