@@ -3,6 +3,7 @@ from collections import defaultdict
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from core.pagination import ClientPageSizePagination
+from django.contrib.postgres.search import TrigramWordSimilarity
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import filters, status, viewsets
@@ -25,6 +26,13 @@ from .serializers import (
     LeaderboardEntrySerializer,
 )
 from .services import get_leaderboard, get_participant_rank
+
+# Trigram title search knobs — same reasoning as the problem catalog: queries
+# under 3 chars have no useful trigram signal, and 0.35 word-similarity cleanly
+# separates real matches (incl. typos) from long titles that merely share a few
+# trigrams. Per project rule these are constants, not env vars.
+MIN_TRIGRAM_LENGTH = 3
+TITLE_SEARCH_THRESHOLD = 0.35
 
 
 def _leaderboard_rank(contest, user_id):
@@ -53,10 +61,11 @@ class ContestViewSet(viewsets.ModelViewSet):
 
     queryset = Contest.objects.prefetch_related("problems").all()
     pagination_class = ClientPageSizePagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["title"]
+    filter_backends = [filters.OrderingFilter]
     ordering_fields = ["start_time"]
-    ordering = ["-start_time"]
+    # No view-level `ordering` default: the model Meta already orders by
+    # -start_time, and leaving it off lets a search rank by similarity without
+    # OrderingFilter forcing -start_time back on top. An explicit ?ordering wins.
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -81,6 +90,25 @@ class ContestViewSet(viewsets.ModelViewSet):
         status_filter = self.request.query_params.get("status")
         if status_filter in ["pending", "active", "finished"]:
             queryset = queryset.filter(status=status_filter)
+
+        # Typo-tolerant title search. Composes with the status slice above; when
+        # active (3+ chars) it ranks by relevance, then falls back to newest.
+        # Otherwise we set -start_time explicitly: the aggregate annotations below
+        # drop the model's Meta ordering, and an explicit ?ordering still wins
+        # because OrderingFilter runs after get_queryset.
+        search = (self.request.query_params.get("search") or "").strip()
+        if search and len(search) >= MIN_TRIGRAM_LENGTH:
+            queryset = (
+                queryset.annotate(
+                    title_similarity=TrigramWordSimilarity(search, "title")
+                )
+                .filter(title_similarity__gte=TITLE_SEARCH_THRESHOLD)
+                .order_by("-title_similarity", "-start_time")
+            )
+        else:
+            if search:  # 1–2 chars: prefix match, keep the newest-first order
+                queryset = queryset.filter(title__istartswith=search)
+            queryset = queryset.order_by("-start_time")
 
         # Annotations to avoid N+1 queries
         queryset = queryset.annotate(
