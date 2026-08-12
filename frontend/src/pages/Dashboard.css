@@ -751,6 +751,9 @@
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+  /* The meter's glow reaches past the arc, and an svg clips to its own box —
+     without this the glow is cut into a square around the ring. */
+  overflow: visible;
 }
 .ring-wrap .track {
   fill: none;

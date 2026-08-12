@@ -1168,6 +1168,8 @@
   width: 100%;
   height: 100%;
   transform: rotate(-90deg);
+  /* The glow reaches past the arc; without this the svg clips it square. */
+  overflow: visible;
 }
 .lp .hp-ring .track {
   fill: none;
