@@ -63,6 +63,8 @@ class Problem(models.Model):
                 fields=["title"],
                 opclasses=["gin_trgm_ops"],
             ),
+            # Catalog default sort is -created_at.
+            models.Index(fields=["created_at"], name="problem_created_at"),
         ]
 
     def __str__(self):

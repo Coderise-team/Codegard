@@ -59,6 +59,10 @@ class Contest(models.Model):
                 fields=["title"],
                 opclasses=["gin_trgm_ops"],
             ),
+            # ELO beat task scans end_time < now AND rating_applied = False.
+            models.Index(
+                fields=["end_time", "rating_applied"], name="contest_end_rating"
+            ),
         ]
 
     def __str__(self):
@@ -134,6 +138,14 @@ class ContestScore(models.Model):
     class Meta:
         unique_together = ("user", "contest")
         ordering = ["-score", "penalty", "last_ac_at"]
+        indexes = [
+            # Leaderboard: filter by contest, sort by (-score, penalty, last_ac_at)
+            # — the exact tuple get_leaderboard uses.
+            models.Index(
+                fields=["contest", "-score", "penalty", "last_ac_at"],
+                name="cscore_leaderboard",
+            ),
+        ]
 
     def __str__(self):
         return (
