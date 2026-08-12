@@ -1,3 +1,4 @@
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 
@@ -55,6 +56,14 @@ class Problem(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Trigram GIN index backing the typo-tolerant title search.
+            GinIndex(
+                name="problem_title_trgm",
+                fields=["title"],
+                opclasses=["gin_trgm_ops"],
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.difficulty})"

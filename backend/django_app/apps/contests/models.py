@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
 
@@ -50,6 +51,14 @@ class Contest(models.Model):
                 condition=models.Q(end_time__gt=models.F("start_time")),
                 name="check_start_before_end",
             )
+        ]
+        indexes = [
+            # Trigram GIN index backing the typo-tolerant title search.
+            GinIndex(
+                name="contest_title_trgm",
+                fields=["title"],
+                opclasses=["gin_trgm_ops"],
+            ),
         ]
 
     def __str__(self):
