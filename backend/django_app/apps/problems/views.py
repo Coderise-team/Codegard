@@ -99,8 +99,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
                 output_field=FloatField(),
             )
         )
-        # Default order (newest first); ?ordering overrides this via OrderingFilter.
-        return queryset.order_by("-created_at")
+        # Default order (newest first) with a constant `id` tiebreaker so pages
+        # don't shuffle at their seams; ?ordering overrides via OrderingFilter.
+        return queryset.order_by("-created_at", "id")
 
     def _user_status_annotation(self):
         """solved / attempted / todo for request.user, in one query (no N+1).

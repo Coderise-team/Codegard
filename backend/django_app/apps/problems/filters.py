@@ -17,6 +17,23 @@ MIN_TRIGRAM_LENGTH = 3
 TITLE_SEARCH_THRESHOLD = 0.35
 
 
+class TiebreakOrderingFilter(django_filters.OrderingFilter):
+    """OrderingFilter that appends a constant ``id`` tiebreaker to any explicit
+    ordering. The primary field alone (difficulty, acceptance) leaves rows with
+    equal values in an undefined order, so infinite scroll drops or duplicates
+    rows at page seams. ``id`` ascending — direction fixed regardless of the main
+    field — makes the order total and stable. No ordering requested → untouched,
+    so the view's default (-created_at, id) and search ranking still apply.
+    """
+
+    def filter(self, qs, value):
+        if not value:
+            return qs
+        ordering = [self.get_ordering_value(param) for param in value]
+        ordering.append("id")
+        return qs.order_by(*ordering)
+
+
 class ProblemFilter(django_filters.FilterSet):
     """Declarative filtering/ordering for the problems catalog.
 
@@ -43,7 +60,7 @@ class ProblemFilter(django_filters.FilterSet):
     #   name       -> title (plain text field, sorts directly)
     #   difficulty -> difficulty_rank (easy<medium<hard, not alphabetical)
     #   acceptance -> acceptance_rate (ac/total, not the raw CharField)
-    ordering = django_filters.OrderingFilter(
+    ordering = TiebreakOrderingFilter(
         fields=(
             ("id", "id"),
             ("title", "name"),
