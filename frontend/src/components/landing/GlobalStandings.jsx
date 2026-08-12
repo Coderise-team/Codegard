@@ -1,22 +1,43 @@
-const TierChip = ({ tier, color, fill = '1A' }) => (
-  <span
-    className="pd-tier"
-    style={{ color, borderColor: `${color}66`, background: color + fill }}
-  >
-    <i style={{ background: color }} />
-    {tier}
-  </span>
-);
+import Icons from '../Icons';
+
+/** Tier pill, built the way StandingsCards builds it: dot, name, tinted edge. */
+function TierBadge({ name, color }) {
+  return (
+    <span
+      className="st-tier"
+      style={{
+        color,
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
+        borderColor: `color-mix(in srgb, ${color} 34%, transparent)`,
+      }}
+    >
+      <i style={{ background: color }} />
+      {name}
+    </span>
+  );
+}
+
+/** Last rating change, with the arrow the standings page draws. */
+function Delta({ d }) {
+  const up = d > 0;
+  return (
+    <span className={`st-delta ${up ? 'up' : 'down'}`}>
+      {up ? <Icons.arrowUp size={13} /> : <Icons.arrowDown size={13} />}
+      {Math.abs(d)}
+    </span>
+  );
+}
 
 /**
- * Global rating section — the counterpart to the live contest board:
- * static, ranked, with a metallic top-3 podium (semantic gold/silver/bronze,
- * independent of the violet accent), the ranked table below it and the
+ * Global rating section — the counterpart to the live contest board: static,
+ * ranked, with the metallic top-three podium, the ranked rows below it and the
  * tier ladder as a footer strip.
+ *
+ * The podium tiles and the rows follow StandingsCards / StandingsPage.css: a
+ * medal for the place, the accent avatar, the tier pill, the rating, its last
+ * change and the peak.
  */
 export default function GlobalStandings({ podium, table, ladder }) {
-  const ordinal = (r) => (r === 1 ? '1st' : r === 2 ? '2nd' : '3rd');
-
   return (
     <section className="sec stand metal" id="rating">
       <div className="wrap">
@@ -34,63 +55,67 @@ export default function GlobalStandings({ podium, table, ladder }) {
           </p>
         </div>
 
-        <div className="lp-podium">
-          {podium.map((p, i) => (
-            <div key={p.handle} className={`pd pd-${p.rank} rv rv-d${i + 1}`}>
-              <span className="pd-rank">{ordinal(p.rank)}</span>
-              <span className="pd-av">{p.initials}</span>
-              <span className="pd-h">{p.handle}</span>
-              <span className="pd-r">{p.rating}</span>
-              <TierChip tier={p.tier} color={p.color} />
-            </div>
-          ))}
-        </div>
-
-        <div className="rank-table rv rv-d2">
-          <div className="rank-h">
-            <span>#</span>
-            <span>Coder</span>
-            <span>Tier</span>
-            <span className="n">Rating</span>
-            <span className="n">Last</span>
+        {/* One panel around the whole leaderboard, the way the standings page
+            holds it, so the podium and the rows read as one surface instead of
+            floating on the section background. */}
+        <div className="rank-panel rv rv-d1">
+          <div className="rank-top">
+            <span className="ttl">
+              <Icons.trophy size={14} />
+              Global standings
+            </span>
+            <span className="rank-sort">Sorted by rating</span>
           </div>
-          {table.map((r) => (
-            <div key={r.handle} className={`rank-r${r.you ? ' me' : ''}`}>
-              <span className="rk">{r.rank}</span>
-              <span className="bu">
-                <span
-                  className="bav"
-                  style={
-                    r.you
-                      ? undefined
-                      : {
-                          background: `linear-gradient(150deg, ${r.color}, ${r.color}AA)`,
-                        }
-                  }
-                >
-                  {r.initials}
+
+          <div className="lp-podium">
+            {podium.map((p, i) => (
+              <div
+                key={p.handle}
+                className={`pod pod-${p.rank} rv rv-d${i + 1}`}
+              >
+                <span className="pod-medal">{p.rank}</span>
+                <span className="pod-av">{p.initials}</span>
+                <span className="pod-h">{p.handle}</span>
+                <TierBadge name={p.tier} color={p.color} />
+                <span className="pod-rating">{p.rating}</span>
+                <span className="pod-sub">
+                  <Delta d={p.delta} />
+                  <span className="pod-max">
+                    max <b>{p.max}</b>
+                  </span>
                 </span>
-                <span className="bh">
-                  {r.handle}
-                  {r.you ? (
-                    <span className="lp-you-tag" style={{ marginLeft: 8 }}>
-                      YOU
-                    </span>
-                  ) : null}
-                </span>
-              </span>
-              <TierChip tier={r.tier} color={r.color} fill="14" />
-              <span className="n rt" style={{ color: r.color }}>
-                {r.rating}
-              </span>
-              <span className={`n dl ${r.delta > 0 ? 'up' : 'dn'}`}>
-                {r.delta > 0 ? '+' : ''}
-                {r.delta}
-              </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="rank-rows">
+            <div className="rank-h">
+              <span>#</span>
+              <span>Coder</span>
+              <span>Tier</span>
+              <span className="num">Rating</span>
+              <span className="num">Last</span>
+              <span className="num">Max</span>
             </div>
-          ))}
-          <div className="rank-foot">
-            <a href="/standings">Open the full leaderboard</a>
+
+            {table.map((r) => (
+              <div key={r.handle} className={`st-row${r.you ? ' you' : ''}`}>
+                <span className="rn">{r.rank}</span>
+                <span className="st-user">
+                  <span className="st-av">{r.initials}</span>
+                  <span className="nm">{r.handle}</span>
+                  {r.you ? <span className="lp-you-tag">YOU</span> : null}
+                </span>
+                <span className="st-tier-c">
+                  <TierBadge name={r.tier} color={r.color} />
+                </span>
+                <span className="st-rating num">{r.rating}</span>
+                <span className="num">
+                  <Delta d={r.delta} />
+                </span>
+                <span className="st-max num">{r.max}</span>
+              </div>
+            ))}
           </div>
         </div>
 

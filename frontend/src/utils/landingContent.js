@@ -37,7 +37,7 @@ const participant = (handle, initials, solved, penalty, last, you = false) => ({
 });
 
 /** A rating row: the tier and its colour follow from the rating itself. */
-const coder = (rank, handle, initials, rating, delta, you = false) => {
+const coder = (rank, handle, initials, rating, delta, max, you = false) => {
   const tier = cgRankFor(rating);
   return {
     rank,
@@ -45,6 +45,7 @@ const coder = (rank, handle, initials, rating, delta, you = false) => {
     initials,
     rating,
     delta,
+    max,
     tier: tier.name,
     color: tier.color,
     you,
@@ -155,18 +156,18 @@ const landingContent = {
 
   // Global rating — the order is 2nd / 1st / 3rd; CSS puts them on the podium.
   podium: [
-    coder(2, 'quantumlynx', 'QL', 2571),
-    coder(1, 'hexraven', 'HR', 2603),
-    coder(3, 'eulergate', 'EG', 2498),
+    coder(2, 'quantumlynx', 'QL', 2571, -9, 2604),
+    coder(1, 'hexraven', 'HR', 2603, 18, 2641),
+    coder(3, 'eulergate', 'EG', 2498, 31, 2498),
   ],
   table: [
-    coder(4, 'dijkstraflux', 'DF', 2388, 28),
-    coder(5, 'voidwolf', 'VW', 2301, -12),
-    coder(6, 'cipherzero', 'CZ', 2246, 44),
-    coder(7, 'modulowave', 'MW', 2174, 9),
-    coder(8, 'gaussnode', 'GN', 2088, -31),
-    coder(9, 'heapifyx', 'HX', 2015, 17),
-    coder(214, 'n3ptune', 'NP', 1863, 35, true),
+    coder(4, 'dijkstraflux', 'DF', 2388, 28, 2402),
+    coder(5, 'voidwolf', 'VW', 2301, -12, 2355),
+    coder(6, 'cipherzero', 'CZ', 2246, 44, 2246),
+    coder(7, 'modulowave', 'MW', 2174, 9, 2210),
+    coder(8, 'gaussnode', 'GN', 2088, -31, 2154),
+    coder(9, 'heapifyx', 'HX', 2015, 17, 2015),
+    coder(214, 'n3ptune', 'NP', 1863, 35, 1888, true),
   ],
   ladder: CG_RANKS,
 

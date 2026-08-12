@@ -643,9 +643,15 @@
   padding: 0 11px;
   border-radius: var(--r-sm);
   border: 1px solid transparent;
+  background: transparent;
   color: var(--fg2);
   font-size: 13px;
   font-weight: 700;
+  transition: 0.13s;
+}
+.lp .rc-pip:hover {
+  background: var(--card-2);
+  color: var(--fg);
 }
 .lp .rc-pip.current {
   background: var(--gold-soft);
@@ -1202,271 +1208,383 @@
   margin-right: auto;
   text-align: center;
 }
+/* Same metal names the standings page uses, so the two are read side by side. */
 .lp .metal {
-  --m-gold-hi: #ffe873;
-  --m-gold: #ffd700;
-  --m-gold-lo: #c9a200;
-  --m-silver-hi: #ececec;
-  --m-silver: #c0c0c0;
-  --m-silver-lo: #8c8c8c;
-  --m-bronze-hi: #e39a55;
-  --m-bronze: #cd7f32;
-  --m-bronze-lo: #96591f;
+  --metal-gold-hi: #ffe873;
+  --metal-gold: #ffd700;
+  --metal-silver-hi: #ececec;
+  --metal-silver: #c0c0c0;
+  --metal-bronze-hi: #e39a55;
+  --metal-bronze: #cd7f32;
 }
+
+/* The leaderboard panel: one surface holding the podium and the ranked rows,
+   as the standings page holds them. Extra headroom at the top leaves the
+   raised winner tile room to sit without touching the header. */
+.lp .rank-panel {
+  margin-top: 52px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  box-shadow: 0 30px 80px -34px rgba(0, 0, 0, 0.8);
+}
+.lp .rank-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .rank-top .ttl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.lp .rank-sort {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+/* Podium tiles, following StandingsPage.css: the winner sits in the middle and
+   lifted, each tile carries its own metal, and the avatar keeps the accent. */
 .lp-podium {
   display: grid;
   grid-template-columns: 1fr 1.14fr 1fr;
   gap: 18px;
   align-items: end;
-  margin-top: 58px;
+  padding: 40px 22px 0;
 }
-.lp .pd {
+.lp .pod {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r);
   background: var(--card);
-  padding: 24px 22px 22px;
+  padding: 22px 18px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  text-align: center;
+  gap: 10px;
   transition:
-    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.3s;
+    background 0.16s,
+    border-color 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
 }
-.lp .pd:hover {
-  transform: translateY(-4px);
-}
-.lp .pd-1 {
+/* Each tile carries its own metal, so hover is one rule instead of three. */
+.lp .pod-1 {
+  --metal: var(--metal-gold);
   order: 2;
-  padding-top: 34px;
-  border-color: color-mix(in srgb, var(--m-gold) 52%, transparent);
+  transform: translateY(-14px);
+  border-color: color-mix(in srgb, var(--metal-gold) 55%, transparent);
   background:
     radial-gradient(
       120% 130% at 50% 0%,
-      color-mix(in srgb, var(--m-gold) 13%, transparent),
+      color-mix(in srgb, var(--metal-gold) 15%, transparent),
       transparent 62%
     ),
     var(--card);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--m-gold) 34%, transparent),
-    0 24px 60px -24px color-mix(in srgb, var(--m-gold) 34%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--metal-gold) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-gold) 20%, transparent);
 }
-.lp .pd-2 {
+.lp .pod-2 {
+  --metal: var(--metal-silver);
   order: 1;
-  border-color: color-mix(in srgb, var(--m-silver) 38%, transparent);
+  border-color: color-mix(in srgb, var(--metal-silver) 42%, transparent);
   background:
     radial-gradient(
       120% 130% at 50% 0%,
-      color-mix(in srgb, var(--m-silver) 9%, transparent),
+      color-mix(in srgb, var(--metal-silver) 11%, transparent),
       transparent 62%
     ),
     var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-silver) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-silver) 20%, transparent);
 }
-.lp .pd-3 {
+.lp .pod-3 {
+  --metal: var(--metal-bronze);
   order: 3;
-  border-color: color-mix(in srgb, var(--m-bronze) 38%, transparent);
+  border-color: color-mix(in srgb, var(--metal-bronze) 42%, transparent);
   background:
     radial-gradient(
       120% 130% at 50% 0%,
-      color-mix(in srgb, var(--m-bronze) 9%, transparent),
+      color-mix(in srgb, var(--metal-bronze) 11%, transparent),
       transparent 62%
     ),
     var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-bronze) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-bronze) 20%, transparent);
 }
-.lp .pd-rank {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+
+/* Hover is the same recipe, just more of it: brighter rim, deeper wash, wider
+   glow, all in the tile's own metal. The gold tile already rides high, so it
+   lifts from where it is. */
+.lp .pod:hover {
+  border-color: color-mix(in srgb, var(--metal) 78%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal) 26%, transparent),
+      transparent 66%
+    ),
+    var(--card-2);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal) 65%, transparent),
+    0 22px 60px color-mix(in srgb, var(--metal) 34%, transparent);
+  transform: translateY(-3px);
 }
-.lp .pd-1 .pd-rank {
-  color: var(--m-gold);
+.lp .pod-1:hover {
+  transform: translateY(-17px);
 }
-.lp .pd-2 .pd-rank {
-  color: var(--m-silver);
-}
-.lp .pd-3 .pd-rank {
-  color: var(--m-bronze);
-}
-.lp .pd-av {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+
+.lp .pod-medal {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
-  font-size: 19px;
+  font-family: var(--mono);
   font-weight: 800;
+  font-size: 15px;
 }
-.lp .pd-1 .pd-av {
-  width: 70px;
-  height: 70px;
-  border-radius: 19px;
-  font-size: 22px;
-  background: linear-gradient(
-    155deg,
-    var(--m-gold-hi),
-    var(--m-gold) 58%,
-    var(--m-gold-lo)
-  );
+.lp .pod-1 .pod-medal {
+  background: linear-gradient(150deg, var(--metal-gold-hi), var(--metal-gold));
   color: #3a2a08;
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--m-gold) 30%, transparent);
 }
-.lp .pd-2 .pd-av {
+.lp .pod-2 .pod-medal {
   background: linear-gradient(
-    155deg,
-    var(--m-silver-hi),
-    var(--m-silver) 58%,
-    var(--m-silver-lo)
+    150deg,
+    var(--metal-silver-hi),
+    var(--metal-silver)
   );
   color: #2a2e36;
 }
-.lp .pd-3 .pd-av {
+.lp .pod-3 .pod-medal {
   background: linear-gradient(
-    155deg,
-    var(--m-bronze-hi),
-    var(--m-bronze) 58%,
-    var(--m-bronze-lo)
+    150deg,
+    var(--metal-bronze-hi),
+    var(--metal-bronze)
   );
   color: #3a2410;
 }
-.lp .pd-h {
-  font-size: 16px;
-  font-weight: 600;
+.lp .pod-av {
+  width: 56px;
+  height: 56px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0d0f14;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
 }
-.lp .pd-r {
+.lp .pod-h {
+  font-size: 15px;
+  font-weight: 700;
+}
+.lp .pod-rating {
   font-family: var(--mono);
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
 }
-.lp .pd-1 .pd-r {
-  font-size: 38px;
-  color: var(--m-gold-hi);
+.lp .pod-1 .pod-rating {
+  color: var(--metal-gold-hi);
 }
-.lp .pd-tier {
+.lp .pod-2 .pod-rating {
+  color: var(--metal-silver-hi);
+}
+.lp .pod-3 .pod-rating {
+  color: var(--metal-bronze-hi);
+}
+.lp .pod-sub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+}
+.lp .pod-max {
+  color: var(--fg2);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.lp .pod-max b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Tier pill and delta, shared by the podium and the rows. */
+.lp .st-tier {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   height: 24px;
-  padding: 0 11px;
+  padding: 0 10px;
   border-radius: 20px;
   font-size: 11.5px;
   font-weight: 600;
   border: 1px solid;
+  white-space: nowrap;
 }
-.lp .pd-tier i {
+.lp .st-tier i {
   width: 7px;
   height: 7px;
   border-radius: 50%;
 }
-
-/* Shared by the rating table below; the global leaderboard does carry avatars,
-   unlike the contest board. */
-.lp .bu {
-  display: flex;
+.lp .st-delta {
+  display: inline-flex;
   align-items: center;
-  gap: 11px;
-  min-width: 0;
-}
-.lp .bav {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  font-size: 11.5px;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 13px;
   font-weight: 700;
-  color: #0d0f14;
-  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
-  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
-.lp .bh {
-  font-size: 13.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.lp .st-delta.up {
+  color: var(--ac);
+}
+.lp .st-delta.down {
+  color: var(--wa);
 }
 
-.lp .rank-table {
-  margin-top: 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--card);
-  overflow: hidden;
+/* Ranked rows. On the standings page every row is its own card rather than a
+   line in one table, and the columns come from --st-cols there. */
+.lp .rank-rows {
+  --st-cols: 56px minmax(0, 1fr) 172px 104px 92px 88px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 26px 22px 22px;
 }
 .lp .rank-h,
-.lp .rank-r {
+.lp .st-row {
   display: grid;
-  grid-template-columns: 64px 1fr 168px 108px 92px;
+  grid-template-columns: var(--st-cols);
   align-items: center;
-  gap: 12px;
-  padding: 0 20px;
+  gap: 14px;
 }
 .lp .rank-h {
-  height: 40px;
-  border-bottom: 1px solid var(--border);
+  padding: 4px 18px 2px;
   font-size: 10.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg3);
   font-weight: 700;
-  background: var(--card-2);
 }
-.lp .rank-h .n,
-.lp .rank-r .n {
+.lp .rank-h .num,
+.lp .st-row .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.lp .rank-r {
-  height: 60px;
-  border-top: 1px solid var(--border);
+.lp .st-row {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 18px;
   transition:
-    background 0.2s,
-    box-shadow 0.2s;
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
 }
-.lp .rank-r:first-child {
-  border-top: 0;
-}
-.lp .rank-r:hover {
+.lp .st-row:hover {
+  border-color: var(--border-2);
   background: var(--card-2);
 }
-.lp .rank-r.me {
-  background: radial-gradient(
-    120% 200% at 0% 50%,
-    var(--gold-soft),
-    transparent 44%
-  );
-}
-.lp .rank-r .rk {
+.lp .st-row .rn {
   font-family: var(--mono);
   font-size: 14px;
   font-weight: 700;
   color: var(--fg2);
   font-variant-numeric: tabular-nums;
+  padding-left: 6px;
 }
-.lp .rank-r .rt {
+.lp .st-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.lp .st-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d0f14;
+  flex: 0 0 auto;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
+}
+.lp .st-user .nm {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .st-rating {
   font-family: var(--mono);
   font-size: 16px;
   font-weight: 700;
+  color: var(--fg);
   font-variant-numeric: tabular-nums;
 }
-.lp .rank-r .dl {
+.lp .st-max {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 13px;
+  color: var(--fg2);
   font-variant-numeric: tabular-nums;
 }
-.lp .rank-r .dl.up {
-  color: var(--ac);
+/* Your own row: tinted, edged with the accent, and the rating lights up. */
+.lp .st-row.you {
+  border-color: var(--gold-line);
+  background:
+    radial-gradient(120% 200% at 0% 50%, var(--gold-soft), transparent 42%),
+    var(--card);
 }
-.lp .rank-r .dl.dn {
-  color: var(--wa);
+.lp .st-row.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gold);
+}
+.lp .st-row.you:hover {
+  border-color: var(--gold);
+  background:
+    radial-gradient(
+      130% 220% at 0% 50%,
+      color-mix(in srgb, var(--gold) 30%, transparent),
+      transparent 48%
+    ),
+    var(--card-2);
+  box-shadow:
+    0 0 0 1px var(--gold-line),
+    0 10px 30px var(--accent-glow);
+}
+.lp .st-row.you .st-rating {
+  color: var(--gold-hi);
 }
 .lp-you-tag {
+  flex: 0 0 auto;
   font-family: var(--mono);
   font-size: 9px;
   font-weight: 800;
@@ -1477,18 +1595,6 @@
   padding: 1px 6px;
   border-radius: 20px;
 }
-.lp .rank-foot {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  border-top: 1px solid var(--border);
-  background: var(--card-2);
-  font-size: 13px;
-  color: var(--fg2);
-}
-
 /* Closing notes under the ladder: centred, quieter than the section lead. */
 .lp .stand-note {
   margin: 22px auto 0;
