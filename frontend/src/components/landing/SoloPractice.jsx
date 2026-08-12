@@ -2,10 +2,26 @@ import Icons from '../Icons';
 
 const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
 
+/** Solved / attempted / untouched glyph, as the catalogue draws it. */
+function StatusGlyph({ status }) {
+  return (
+    <span className={`solo-st ${status}`}>
+      <span className="ic">
+        {status === 'solved' ? <Icons.checkBold size={14} /> : null}
+        {status === 'attempted' ? <Icons.bolt size={13} /> : null}
+      </span>
+    </span>
+  );
+}
+
 /**
- * Catalogue sample: the filter bar and a handful of problem rows, in the shape
- * the real problem set uses — status, id, title, tags, difficulty, acceptance.
- * Rows are ordered by acceptance so the hardest to pass sits on top.
+ * Catalogue sample, following ProblemsPage: the difficulty filter and the tag
+ * dropdown on top, then the sort bar whose labels stand over the columns, then
+ * a problem per row-card — status, id, title with its tags, difficulty and the
+ * share of attempts that pass.
+ *
+ * Rows are ordered by acceptance, hardest to pass on top, so the Acceptance
+ * column carries the sort marker.
  */
 function CatalogueMock({ rows }) {
   return (
@@ -13,20 +29,39 @@ function CatalogueMock({ rows }) {
       <div className="solo-cat-top">
         <span className="solo-seg">
           {DIFFICULTIES.map((level) => (
-            <span key={level} className={level === 'All' ? 'on' : undefined}>
+            <span
+              key={level}
+              className={`${level === 'All' ? 'on' : ''} d-${level.toLowerCase()}`}
+            >
+              {level === 'All' ? null : <span className="sdot" />}
               {level}
             </span>
           ))}
         </span>
-        <span className="solo-sort">
-          Acceptance
-          <Icons.arrowUp size={12} />
+        <span className="solo-tags-btn">
+          <Icons.grid size={14} />
+          Tags
+          <Icons.chevDown size={13} />
         </span>
       </div>
 
-      <div className="solo-rows">
+      <div className="solo-list">
+        <div className="solo-sort">
+          <span className="solo-sort-lbl">Sort by</span>
+          <span className="col-id">#</span>
+          <span className="col-name">Problem</span>
+          <span className="col-diff">Difficulty</span>
+          <span className="col-acc on">
+            Acceptance
+            <i>
+              <Icons.arrowUp size={12} />
+            </i>
+          </span>
+        </div>
+
         {rows.map((problem) => (
           <div key={problem.id} className="solo-row">
+            <StatusGlyph status={problem.status} />
             <span className="solo-id">{problem.id}</span>
             <span className="solo-main">
               <span className="solo-title">{problem.title}</span>

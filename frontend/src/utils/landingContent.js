@@ -114,7 +114,8 @@ const landingContent = {
     body: 'Open the catalogue and take whatever you like: filter by tag, by difficulty, or go straight for the problem the fewest people have solved. Nothing is timed, nothing is rated, nobody is watching. What matters in programming is regularity: take the daily challenge and beat your own record for days in a row.',
     note: 'For an interview, for an olympiad, or just to keep your hands warm.',
     // Sorted by the share of attempts that pass, hardest first — the view the
-    // copy points at.
+    // copy points at. The status is the one the catalogue keeps per problem:
+    // solved, attempted or still untouched.
     catalogue: [
       {
         id: 512,
@@ -122,6 +123,7 @@ const landingContent = {
         tags: ['graphs', 'dsu'],
         difficulty: 'Hard',
         acceptance: 12.8,
+        status: 'todo',
       },
       {
         id: 337,
@@ -129,6 +131,7 @@ const landingContent = {
         tags: ['dp', 'strings'],
         difficulty: 'Hard',
         acceptance: 19.5,
+        status: 'attempted',
       },
       {
         id: 128,
@@ -136,6 +139,7 @@ const landingContent = {
         tags: ['segment tree'],
         difficulty: 'Medium',
         acceptance: 34.2,
+        status: 'todo',
       },
       {
         id: 61,
@@ -143,6 +147,7 @@ const landingContent = {
         tags: ['stack'],
         difficulty: 'Easy',
         acceptance: 58.9,
+        status: 'solved',
       },
       {
         id: 12,
@@ -150,6 +155,7 @@ const landingContent = {
         tags: ['hash map'],
         difficulty: 'Easy',
         acceptance: 71.3,
+        status: 'solved',
       },
     ],
   },

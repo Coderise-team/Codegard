@@ -1100,49 +1100,170 @@
   background: var(--bg);
 }
 .lp .solo-seg span {
-  padding: 4px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   color: var(--fg2);
+  white-space: nowrap;
 }
 .lp .solo-seg span.on {
-  color: var(--gold-hi);
-  background: var(--gold-soft);
+  background: var(--card-2);
+  color: var(--fg);
 }
-.lp .solo-sort {
+.lp .solo-seg .sdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  padding: 0;
+}
+.lp .solo-seg .d-easy .sdot {
+  background: var(--ac);
+}
+.lp .solo-seg .d-medium .sdot {
+  background: var(--tle);
+}
+.lp .solo-seg .d-hard .sdot {
+  background: var(--wa);
+}
+/* The tag filter, as its button reads before the dropdown is opened. */
+.lp .solo-tags-btn {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  gap: 8px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+  white-space: nowrap;
+  transition: 0.12s;
+}
+.lp .solo-tags-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-2);
+}
+
+/* Sort bar and row-cards share one column grid, so every label in the bar
+   stands over its own column in the cards below (see ProblemsPage.css). */
+.lp .solo-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 16px;
+}
+.lp .solo-sort,
+.lp .solo-row {
+  display: grid;
+  grid-template-columns: 38px 46px minmax(0, 1fr) 106px 88px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+}
+.lp .solo-sort {
+  height: 42px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 10px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 700;
+  color: var(--fg2);
+}
+.lp .solo-sort .solo-sort-lbl {
+  grid-column: 1;
   color: var(--fg3);
+  white-space: nowrap;
+}
+.lp .solo-sort .col-id {
+  grid-column: 2;
+}
+.lp .solo-sort .col-name {
+  grid-column: 3;
+}
+.lp .solo-sort .col-diff {
+  grid-column: 4;
+}
+.lp .solo-sort .col-acc {
+  grid-column: 5;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lp .solo-sort .on {
+  color: var(--gold-hi);
+}
+.lp .solo-sort i {
+  display: inline-flex;
+  color: var(--gold);
 }
 
 .lp .solo-row {
-  display: grid;
-  grid-template-columns: 42px 1fr 78px 62px;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
-  border-top: 1px solid var(--border);
-  transition: background 0.16s;
-}
-.lp .solo-row:first-child {
-  border-top: 0;
+  min-height: 54px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition:
+    transform 0.14s,
+    border-color 0.14s,
+    background 0.14s;
 }
 .lp .solo-row:hover {
+  border-color: var(--border-2);
   background: var(--card-2);
+  transform: translateY(-2px);
+}
+.lp .solo-row:hover .solo-title {
+  color: var(--gold-hi);
+}
+
+/* Status glyph: a filled disc for solved, for attempted, an empty ring for
+   everything still untouched. */
+.lp .solo-st {
+  grid-column: 1;
+  display: grid;
+  place-items: center;
+}
+.lp .solo-st .ic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.lp .solo-st.solved .ic {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+.lp .solo-st.attempted .ic {
+  color: var(--tle);
+  background: var(--tle-soft);
+}
+.lp .solo-st.todo .ic {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-2);
 }
 .lp .solo-id {
+  grid-column: 2;
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--fg3);
+  font-variant-numeric: tabular-nums;
 }
 .lp .solo-main {
+  grid-column: 3;
   min-width: 0;
 }
 .lp .solo-title {
@@ -1152,6 +1273,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.14s;
 }
 .lp .solo-tags {
   display: flex;
@@ -1159,16 +1281,29 @@
   margin-top: 6px;
   flex-wrap: wrap;
 }
+/* A tag in a row is its own filter in the catalogue, and it answers to the
+   pointer separately from the row it sits in. */
+.lp .solo-tags .tag {
+  transition: 0.12s;
+}
+.lp .solo-tags .tag:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+.lp .solo-row .df {
+  grid-column: 4;
+}
 .lp .solo-acc {
+  grid-column: 5;
+  justify-self: end;
   font-family: var(--mono);
   font-size: 12.5px;
-  color: var(--fg2);
-  text-align: right;
+  color: var(--gold-hi);
   font-variant-numeric: tabular-nums;
 }
 .lp .solo-acc .pct {
   color: var(--fg3);
-  margin-left: 1px;
+  font-size: 11px;
 }
 
 /* ============================================================
