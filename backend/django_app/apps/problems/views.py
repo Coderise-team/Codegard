@@ -223,5 +223,7 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
         Feeds the ProblemsPage filter dropdown. Public read (like the list).
         """
-        qs = Tag.objects.annotate(count=Count("problems"))
+        # annotate() adds a GROUP BY that drops Tag.Meta.ordering, so sort
+        # explicitly — the dropdown expects tags alphabetical by name.
+        qs = Tag.objects.annotate(count=Count("problems")).order_by("name")
         return Response(TagSerializer(qs, many=True).data)
