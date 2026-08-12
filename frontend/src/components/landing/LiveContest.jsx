@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import Icons from '../Icons';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
-const ROW_H = 58; // must match .brow height + gap in LandingPage.css
+const ROW_H = 44; // must match .brow height in LandingPage.css
 
 const POINTS_PER_PROBLEM = 100;
 const PROBLEM_COUNT = 5;
@@ -99,77 +100,85 @@ export default function LiveContest({ contest }) {
             the worse it counts, so solve early if you want to finish above the
             rest.
           </p>
+        </div>
 
-          <div className="round-card">
-            <div className="rc-top">
-              <span className="rc-live">
-                <i />
-                Round in progress
-              </span>
-              <span className="rc-name">{contest.name}</span>
-            </div>
-            <div className="rc-timer">
-              <span className="t">{clock}</span>
-              <span className="lbl">Time left</span>
-            </div>
-            <div className="rc-probs">
+        <div className="contest-stack">
+          {/* The round strip as the contest topbar carries it: title, letters
+              with their status, and the countdown, all on one line. It sits on
+              top here for the same reason it does in the product. */}
+          <div className="round-card rv">
+            <span className="rc-name">
+              <Icons.trophy size={15} />
+              {contest.name}
+            </span>
+
+            <div className="rc-strip">
               {contest.problems.map((p) => (
-                <span key={p.id} className={`rc-prob ${p.state}`}>
+                <span
+                  key={p.id}
+                  className={`rc-pip s-${p.status}${
+                    p.id === contest.current ? ' current' : ''
+                  }`}
+                >
+                  <span className="rc-pip-dot" />
                   {p.id}
                 </span>
               ))}
             </div>
-          </div>
-        </div>
 
-        <div className="board rv rv-d1">
-          <div className="board-top">
-            <span className="ttl">
-              Standings · {contest.name.split('·').pop().trim()}
-            </span>
-            <span className="upd">
-              <i />
-              live
-            </span>
+            <div className="rc-timer">
+              <span className="rc-timer-pulse" />
+              <span className="rc-timer-body">
+                <span className="rc-timer-lbl">Ends in</span>
+                <span className="rc-timer-val">{clock}</span>
+              </span>
+            </div>
           </div>
-          <div className="board-head">
-            <span>#</span>
-            <span>Participant</span>
-            <span className="n">Solved</span>
-            <span className="n">Pen.</span>
-            <span className="n">Last AC</span>
-            <span className="n">Points</span>
-          </div>
-          <div className="board-rows">
-            {rows.map((r) => (
-              <div
-                key={r.handle}
-                className={`brow${r.you ? ' you' : ''}${bump === r.handle ? ' bump' : ''}`}
-                style={{ transform: `translateY(${pos[r.handle] * ROW_H}px)` }}
-              >
-                <span className="rk">{pos[r.handle] + 1}</span>
-                <span className="bu">
-                  <span className="bav">{r.initials}</span>
-                  <span style={{ minWidth: 0 }}>
-                    <span className="bh">
-                      {r.handle}
-                      {r.you ? (
-                        <span className="lp-you-tag" style={{ marginLeft: 8 }}>
-                          YOU
-                        </span>
-                      ) : null}
+
+          {/* The standings panel from contest mode: same header, same columns,
+              same row treatment (see ContestLeaderboard and StandingsList). */}
+          <div className="board rv rv-d1">
+            <div className="board-top">
+              <span className="ttl">
+                <Icons.trophy size={14} />
+                Standings
+              </span>
+              <span className="board-live">
+                <span className="d" />
+                LIVE
+              </span>
+            </div>
+            <div className="board-head">
+              <span className="cp-rk">#</span>
+              <span className="cp-user">User</span>
+              <span className="cp-cell">Solved</span>
+              <span className="cp-cell">Pts</span>
+              <span className="cp-cell cp-c-pen">Penalty</span>
+            </div>
+            <div className="board-rows">
+              {rows.map((r) => {
+                const rank = pos[r.handle] + 1;
+                return (
+                  <div
+                    key={r.handle}
+                    className={`brow${r.you ? ' you' : ''}${
+                      rank <= 3 ? ` r${rank}` : ''
+                    }${bump === r.handle ? ' bump' : ''}`}
+                    style={{
+                      transform: `translateY(${rank * ROW_H - ROW_H}px)`,
+                    }}
+                  >
+                    <span className="cp-rk">{rank}</span>
+                    <span className="cp-user">{r.handle}</span>
+                    <span className="cp-cell">
+                      {r.solved}/{PROBLEM_COUNT}
                     </span>
-                    <span className="bt">last AC {r.last}</span>
-                  </span>
-                </span>
-                <span className="n ac">{r.solved}</span>
-                <span className={`n${r.pen ? ' pen' : ''}`}>
-                  {r.pen ? `+${r.pen}` : '—'}
-                </span>
-                <span className="n">{r.last}</span>
-                <span className="pts">{r.pts}</span>
-              </div>
-            ))}
+                    <span className="cp-cell cp-pts">{r.pts}</span>
+                    <span className="cp-cell cp-c-pen">{r.pen}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

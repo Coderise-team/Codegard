@@ -602,109 +602,111 @@
   position: sticky;
   top: 120px;
 }
-.lp .board {
+/* The round strip over the leaderboard, the order the product puts them in. */
+.lp .contest-stack {
   grid-column: 1;
   grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
 }
 .lp .round-card {
-  margin-top: 34px;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  background: var(--card);
-  padding: 18px 20px;
-}
-.lp .round-card .rc-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  /* Same lift as the leaderboard panel below it, so the two read as one unit.
+     The product paints both flat; the gradient is the landing's own touch. */
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  padding: 12px 16px;
 }
-.lp .rc-live {
-  display: inline-flex;
+.lp .rc-name {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--wa);
-  text-transform: uppercase;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
 }
-.lp .rc-live i {
+.lp .rc-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lp .rc-pip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  color: var(--fg2);
+  font-size: 13px;
+  font-weight: 700;
+}
+.lp .rc-pip.current {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
+}
+.lp .rc-pip-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--wa);
-  animation: lp-pulse 1.8s ease-in-out infinite;
+  background: var(--fg3);
+  flex-shrink: 0;
 }
-@keyframes lp-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
-  }
-  50% {
-    opacity: 0.6;
-    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
-  }
+.lp .rc-pip.s-solved .rc-pip-dot {
+  background: var(--ac);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }
-.lp .rc-name {
-  font-size: 15px;
-  font-weight: 600;
+.lp .rc-pip.s-attempted .rc-pip-dot {
+  background: var(--tle);
 }
 .lp .rc-timer {
-  margin-top: 14px;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+}
+.lp .rc-timer-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: lp-pulse 1.6s ease-in-out infinite;
+}
+@keyframes lp-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.lp .rc-timer-body {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  line-height: 1.15;
 }
-.lp .rc-timer .t {
-  font-family: var(--mono);
-  font-size: 38px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  line-height: 1;
-}
-.lp .rc-timer .lbl {
-  font-size: 11px;
-  letter-spacing: 0.12em;
+.lp .rc-timer-lbl {
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--fg2);
   font-weight: 600;
 }
-.lp .rc-probs {
-  margin-top: 16px;
-  display: flex;
-  gap: 7px;
-}
-.lp .rc-prob {
-  flex: 1;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
+.lp .rc-timer-val {
   font-family: var(--mono);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--fg2);
-}
-.lp .rc-prob.solved {
-  border-color: color-mix(in srgb, var(--ac) 45%, transparent);
-  color: var(--ac);
-  background: var(--ac-soft);
-}
-.lp .rc-prob.att {
-  border-color: color-mix(in srgb, var(--tle) 45%, transparent);
-  color: var(--tle);
-  background: var(--tle-soft);
-}
-.lp .rc-prob.cur {
-  border-color: var(--gold-line);
-  color: var(--gold-hi);
-  background: var(--gold-soft);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
 }
 
 .lp .board {
@@ -722,141 +724,137 @@
   border-bottom: 1px solid var(--border);
 }
 .lp .board-top .ttl {
-  font-size: 13.5px;
-  font-weight: 600;
-}
-.lp .board-top .upd {
-  margin-left: auto;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--fg3);
   display: flex;
   align-items: center;
   gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
 }
-.lp .board-top .upd i {
+.lp .board-live {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--wa);
+}
+.lp .board-live .d {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--ac);
-  animation: lp-pulse 2.4s ease-in-out infinite;
+  background: var(--wa);
+  animation: lp-live-pulse 1.4s ease-in-out infinite;
 }
+@keyframes lp-live-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Header and rows use the column widths from StandingsList.css. */
 .lp .board-head,
 .lp .brow {
-  display: grid;
-  grid-template-columns: 52px 1fr 74px 74px 74px 84px;
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 0 14px;
 }
 .lp .board-head {
-  padding: 9px 18px;
+  height: 34px;
   border-bottom: 1px solid var(--border);
-  font-size: 10.5px;
+  font-size: 9.5px;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--fg3);
-  font-weight: 700;
 }
-.lp .board-head .n,
-.lp .brow .n {
-  text-align: right;
+.lp .cp-rk {
+  width: 22px;
+  flex: 0 0 auto;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
+.lp .cp-user {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .cp-cell {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.lp .cp-c-pen {
+  width: 54px;
+}
+
 .lp .board-rows {
   position: relative;
-  height: 352px;
-  padding: 6px 0;
+  height: 264px;
 }
 .lp .brow {
   position: absolute;
-  left: 6px;
-  right: 6px;
-  height: 56px;
-  padding: 0 12px;
-  border-radius: var(--r-sm);
-  border: 1px solid transparent;
+  left: 0;
+  right: 0;
+  height: 44px;
+  font-size: 13.5px;
+  color: var(--fg);
+  border-top: 1px solid rgba(30, 34, 50, 0.5);
   transition:
     transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.4s,
-    border-color 0.4s;
+    background 0.4s;
 }
+.lp .brow .cp-rk {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg2);
+}
+.lp .brow.r1 .cp-rk {
+  color: var(--gold);
+}
+.lp .brow.r2 .cp-rk,
+.lp .brow.r3 .cp-rk {
+  color: var(--fg);
+}
+.lp .brow .cp-user {
+  font-weight: 600;
+}
+.lp .brow .cp-cell {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.lp .brow .cp-pts {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13.5px;
+}
+/* Your row is marked the way the product marks it: a tinted band with an
+   accent edge, no badge. */
 .lp .brow.you {
-  border-color: var(--gold-line);
-  background: radial-gradient(
-    120% 200% at 0% 50%,
-    var(--gold-soft),
-    transparent 46%
-  );
+  background: var(--gold-soft);
+}
+.lp .brow.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
 }
 .lp .brow.bump {
   background: color-mix(in srgb, var(--ac) 12%, transparent);
 }
 .lp .brow.you.bump {
-  background: color-mix(in srgb, var(--ac) 14%, transparent);
-}
-.lp .brow .rk {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-}
-.lp .brow.you .rk {
-  color: var(--gold-hi);
-}
-.lp .bu {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 0;
-}
-.lp .bav {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #0d0f14;
-  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
-  flex: 0 0 auto;
-}
-.lp .bh {
-  font-size: 13.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.lp .bt {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--fg3);
-  margin-top: 2px;
-}
-.lp .brow .n {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--fg2);
-  font-variant-numeric: tabular-nums;
-}
-.lp .brow .n.ac {
-  color: var(--ac);
-}
-.lp .brow .n.pen {
-  color: var(--wa);
-}
-.lp .brow .pts {
-  font-family: var(--mono);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--fg);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.lp .brow.you .pts {
-  color: var(--gold-hi);
+  background: color-mix(in srgb, var(--ac) 16%, transparent);
 }
 
 /* ============================================================
@@ -1364,6 +1362,34 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
+}
+
+/* Shared by the rating table below; the global leaderboard does carry avatars,
+   unlike the contest board. */
+.lp .bu {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.lp .bav {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0d0f14;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
+  flex: 0 0 auto;
+}
+.lp .bh {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lp .rank-table {

@@ -63,15 +63,17 @@ const landingContent = {
   // a whole problem at a time; the penalty is in minutes, counted from the
   // start of the round.
   contest: {
-    name: 'Div. 2 · Round 418',
+    name: 'Codegard Round 12',
     lengthSeconds: 3 * 3600,
     secondsLeft: 1 * 3600 + 23 * 60 + 45,
+    // Letters and their status, as the contest topbar shows them.
+    current: 'C',
     problems: [
-      { id: 'A', state: 'solved' },
-      { id: 'B', state: 'solved' },
-      { id: 'C', state: 'cur' },
-      { id: 'D', state: 'att' },
-      { id: 'E', state: '' },
+      { id: 'A', status: 'solved' },
+      { id: 'B', status: 'solved' },
+      { id: 'C', status: 'open' },
+      { id: 'D', status: 'attempted' },
+      { id: 'E', status: 'open' },
     ],
     board: [
       participant('n3ptune', 'NP', 4, 203, '01:41', true),
