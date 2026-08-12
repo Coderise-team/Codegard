@@ -14,7 +14,7 @@ from django.db.models import (
 from django.http import JsonResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -50,9 +50,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Problem.objects.prefetch_related("test_cases", "tags").all()
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = ProblemFilter
-    search_fields = ["title"]
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
