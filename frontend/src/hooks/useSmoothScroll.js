@@ -11,8 +11,12 @@ const DONE_PX = 0.5;
 // Without it a fast scroll covers no more ground than a slow one and the page
 // feels like it is lagging behind the hand.
 const ACCEL_WINDOW_MS = 60;
-const ACCEL_STEP = 0.45;
-const ACCEL_MAX = 3;
+const ACCEL_STEP = 0.3;
+const ACCEL_MAX = 2;
+// However hard the wheel is spun, the page never has more than this much of a
+// screen queued up ahead of where it currently is — a hard flick should carry
+// you to the next section, not through it.
+const MAX_AHEAD = 0.85;
 
 /**
  * useSmoothScroll — gives the page weight: the wheel sets where the page is
@@ -81,7 +85,12 @@ export function useSmoothScroll(scrollEl, enabled = true) {
           : 1;
       lastNotch = now;
 
-      target = Math.max(0, Math.min(limit(), target + step * accel));
+      const reach = scrollEl.clientHeight * MAX_AHEAD;
+      const queued = Math.max(
+        at - reach,
+        Math.min(at + reach, target + step * accel)
+      );
+      target = Math.max(0, Math.min(limit(), queued));
       if (!raf) raf = requestAnimationFrame(frame);
     };
 
