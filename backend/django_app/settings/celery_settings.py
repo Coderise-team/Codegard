@@ -14,8 +14,11 @@ from celery.schedules import crontab
 
 env = environ.Env()
 
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=CELERY_BROKER_URL)
+# One Redis, one variable. Separate broker/backend variables used to exist and
+# were free to drift apart from the URL the judge listens on, which loses
+# submissions silently.
+CELERY_BROKER_URL = env("REDIS_URL")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 
 # Reliability / observability

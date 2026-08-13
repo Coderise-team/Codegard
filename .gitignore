@@ -222,3 +222,6 @@ data/
 # User-uploaded media (avatars, ...) — only exists locally when R2 is disabled;
 # in prod it lives in R2. Never commit uploaded files.
 backend/django_app/media/
+
+# TLS certificate and key — issued per server, never in git (see infra/DEPLOY.md).
+infra/nginx/certs/

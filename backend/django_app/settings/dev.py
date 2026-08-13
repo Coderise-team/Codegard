@@ -17,6 +17,10 @@ DATABASES = {
 
 INTERNAL_IPS = ["127.0.0.1"]
 
+# Only needed when the browser talks to port 8000 directly; through the Vite
+# proxy the app and the API share an origin and CORS never comes up.
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+
 INSTALLED_APPS += ["debug_toolbar"]
 
 _security_idx = MIDDLEWARE.index("django.middleware.security.SecurityMiddleware")

@@ -4,6 +4,21 @@ from schemas.response import SubmissionResponse, VerdictEnum
 from .sandbox import run_in_sandbox
 from .verdict import determine_verdict
 
+# The sandbox caps output at 64 MB, which is a guard against a runaway process,
+# not a size worth carrying: this text travels through Redis, into a database
+# column and on to the browser. The first lines hold the traceback that the
+# author actually needs.
+STDERR_LIMIT_CHARS = 2000
+TRUNCATION_NOTE = "\n... truncated"
+
+
+def _trim_stderr(stderr: str | None) -> str | None:
+    if not stderr:
+        return None
+    if len(stderr) <= STDERR_LIMIT_CHARS:
+        return stderr
+    return stderr[:STDERR_LIMIT_CHARS] + TRUNCATION_NOTE
+
 
 def run_submission(request: SubmissionRequest) -> SubmissionResponse:
     """Run code against all test cases; stop at first failure."""
@@ -31,5 +46,5 @@ def run_submission(request: SubmissionRequest) -> SubmissionResponse:
         if all_results
         else None,
         memory_used_mb=None,
-        stderr=last_result.stderr if last_result and last_result.stderr else None,
+        stderr=_trim_stderr(last_result.stderr if last_result else None),
     )

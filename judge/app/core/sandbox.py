@@ -17,9 +17,20 @@ import docker
 import docker.errors
 import requests
 
+from app.config import worker_identity
+
 logger = logging.getLogger(__name__)
 
-_PYTHON_IMAGE = "python:3.13-slim"
+SANDBOX_IMAGE = "python:3.13-slim"
+
+# Stamped on every sandbox, because the host has no idea these containers are
+# ours: the judge asks the host's Docker for them the same way a person at a
+# terminal would, so they end up standing beside the whole stack rather than
+# under it. The owner is written down as well — a sandbox outlives the worker
+# that asked for it, and only the worker's own name says who to wait for.
+SANDBOX_LABEL = "codegard.sandbox"
+OWNER_LABEL = "codegard.worker"
+
 _CPU_QUOTA = 100_000
 _CPU_PERIOD = 100_000
 _TIMEOUT_BUFFER_SEC = 2.0
@@ -38,6 +49,7 @@ class SandboxResult:
 
 
 _docker_client: docker.DockerClient | None = None
+_housekeeping_client: docker.DockerClient | None = None
 
 
 def _get_docker_client() -> docker.DockerClient:
@@ -45,6 +57,19 @@ def _get_docker_client() -> docker.DockerClient:
     if _docker_client is None:
         _docker_client = docker.from_env()
     return _docker_client
+
+
+def _get_housekeeping_client() -> docker.DockerClient:
+    """A connection of its own for the clearing up below.
+
+    Judging and clearing up run in separate threads now, and a single client is
+    a single open connection: the library never promises one is safe to drive
+    from two threads at once.
+    """
+    global _housekeeping_client
+    if _housekeeping_client is None:
+        _housekeeping_client = docker.from_env()
+    return _housekeeping_client
 
 
 def _build_command(code: str, stdin: str) -> list[str]:
@@ -90,7 +115,7 @@ def run_in_sandbox(
 
     try:
         container = client.containers.run(
-            image=_PYTHON_IMAGE,
+            image=SANDBOX_IMAGE,
             command=_build_command(code, stdin),
             mem_limit=f"{memory_limit_mb}m",
             cpu_quota=_CPU_QUOTA,
@@ -100,6 +125,7 @@ def run_in_sandbox(
             tmpfs={"/tmp": "size=64m"},
             pids_limit=20,
             user="nobody",
+            labels={SANDBOX_LABEL: "1", OWNER_LABEL: worker_identity()},
             detach=True,
             remove=False,
         )
@@ -160,3 +186,25 @@ def run_in_sandbox(
                 container.remove(force=True)
             except docker.errors.APIError as e:
                 logger.warning("Failed to remove container %s: %s", container.id, e)
+
+
+def list_sandbox_owners() -> list[tuple[str, str]]:
+    """Every sandbox on this host, as (container, the worker that asked for it).
+
+    The clearing up this feeds cannot be left to the sandbox itself: a worker
+    killed mid-judging never reaches the line above, and the container it left
+    behind stays on the host for good.
+    """
+    client = _get_housekeeping_client()
+    containers = client.containers.list(all=True, filters={"label": SANDBOX_LABEL})
+    return [(c.id, c.labels.get(OWNER_LABEL, "")) for c in containers]
+
+
+def remove_sandbox(container_id: str) -> None:
+    client = _get_housekeeping_client()
+    try:
+        client.containers.get(container_id).remove(force=True)
+    except docker.errors.NotFound:
+        pass
+    except docker.errors.APIError as e:
+        logger.warning("Failed to remove sandbox %s: %s", container_id, e)

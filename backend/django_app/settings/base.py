@@ -133,8 +133,8 @@ from .celery_settings import *  # noqa: F403,F401,E402,I001
 
 CELERY_TIMEZONE = TIME_ZONE
 
-# Redis (shared)
-REDIS_URL = env("REDIS_URL", default=CELERY_BROKER_URL)  # noqa: F405
+# The single Redis address: judge queue, Celery, ticket cache, channel layer.
+REDIS_URL = env("REDIS_URL")
 
 # Cache — backs the short-lived WebSocket auth tickets (see apps.realtime).
 # MUST be a shared backend (Redis), not the default LocMemCache: a ticket is
@@ -154,15 +154,10 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [env("REDIS_URL", default="redis://redis:6379/0")],
+            "hosts": [REDIS_URL],
         },
     },
 }
-
-# Allowed frontend origins for CORS.
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
 
 # Usernames reserved for API routes.
 RESERVED_USERNAMES = {
