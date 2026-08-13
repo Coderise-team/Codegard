@@ -1,27 +1,22 @@
-# Deploying Codegard
+# Deployment
 
-Everything here happens on the server and is not part of the images. Run it
-once, in order, when setting up a new machine.
+## Requirements
 
-## 1. Prerequisites
+- VPS with root access and Docker Engine. The judge creates sandbox containers
+  through the host Docker socket; managed container platforms are unsupported.
+- Inbound 22, 80, 443.
+- Domain served by Cloudflare nameservers, proxy enabled.
+- Cloudflare R2 bucket with public access. The backend refuses to start without
+  `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`,
+  `R2_CUSTOM_DOMAIN`.
+- Repository at `/opt/codegard`, or `WorkingDirectory` in
+  `infra/codegard.service` adjusted to match.
+- `.env` filled from `.env.example`. `REDIS_URL` must include the Redis
+  password.
 
-- A VPS with root and Docker (the judge starts containers through the host's
-  Docker socket, so managed platforms are out).
-- Ports 80 and 443 reachable, port 22 for SSH.
-- The domain on Cloudflare nameservers with the proxy (orange cloud) on.
-- `.env` filled from `.env.example`. `REDIS_URL` must carry the Redis password,
-  or the judge will not start.
-- A Cloudflare R2 bucket with public access. Production keeps uploaded avatars
-  there and refuses to start without it: files written inside a container are
-  gone at the next deploy, and nginx serves no `/media/` for them anyway.
-- `docker pull python:3.13-slim` beforehand — otherwise the first submission
-  waits for a 150 MB download.
+## 1. Swap
 
-## 2. Swap file
-
-Without swap the kernel kills a container the moment memory runs out, and the
-victim is usually the largest one, Postgres. Swap trades speed for staying
-alive under a spike.
+Required: without swap the kernel OOM killer fires on the first memory spike.
 
 ```bash
 sudo fallocate -l 2G /swapfile
@@ -29,65 +24,91 @@ sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-sudo sysctl vm.swappiness=10   # only under real pressure, not for routine paging
+sudo sysctl vm.swappiness=10
 echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swappiness.conf
 ```
 
+`swappiness=10` keeps swap for pressure rather than routine paging.
+
+## 2. Memory limits
+
+`mem_limit` is not set in `docker-compose.prod.yml`: correct values depend on
+the host, and an undersized limit kills containers under normal load. Set them
+per service once the host is known.
+
+Baseline for 12 GB / 2 cores:
+
+| service | mem_limit |
+|---|---|
+| postgres | 2g |
+| backend | 2g |
+| judge | 1g |
+| redis | 1g |
+| celery-worker | 768m |
+| judge-results-consumer | 512m |
+| celery-beat | 256m |
+| flower | 256m |
+| nginx | 128m |
+
+Constraints:
+
+- Sandboxes are not covered by these limits. Budget `JUDGE_WORKERS` × the
+  problem's own memory limit on top.
+- Leave ~1/3 of host RAM unallocated for the kernel and page cache.
+- `oom_score_adj` in the compose file only sets kill order; it does not cap
+  usage. Redis is capped separately by `REDIS_MAXMEMORY`.
+- Verify against `docker stats` under load before tightening.
+
 ## 3. Firewall
 
-Two rules matter: SSH stays open, and the site is reachable **only through
-Cloudflare**. Otherwise anyone can hit the origin directly, bypassing the rate
-limits and the cache.
+Allow 80 and 443 from Cloudflare ranges only, plus 22 for SSH. Direct access to
+the origin bypasses Cloudflare's caching and rate limiting.
 
-Allow 80 and 443 from the Cloudflare ranges only, the same list that is in
-`infra/nginx/nginx.prod.conf` (`set_real_ip_from`). Current lists:
-<https://www.cloudflare.com/ips-v4>, <https://www.cloudflare.com/ips-v6>.
+Ranges: <https://www.cloudflare.com/ips-v4>, <https://www.cloudflare.com/ips-v6>.
+The same list is in `infra/nginx/nginx.prod.conf` under `set_real_ip_from` and
+must be kept in sync.
 
-On Oracle Cloud there are **two** firewalls: the security list in the console
-and the one inside the OS. The OS one blocks everything except SSH by default,
-which is the usual reason a site opened in the console still does not answer.
+Oracle Cloud has two firewall layers: the console security list and the OS
+firewall. The OS firewall permits only SSH by default.
 
-## 4. TLS certificate
+## 4. TLS
 
-Cloudflare terminates TLS for visitors; this certificate encrypts the last hop
-from Cloudflare to the server. It is issued by Cloudflare, valid for 15 years,
-and needs no renewal — but it is only trusted by Cloudflare, so the site must
-stay behind the proxy.
+Cloudflare terminates TLS for clients; the origin certificate secures the
+Cloudflare-to-origin hop. Cloudflare Origin CA certificates are valid for 15
+years, require no renewal, and are trusted only by Cloudflare, so the domain
+must stay proxied.
 
-1. Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate.
-2. Save the two files on the server as `infra/nginx/certs/origin.pem` and
-   `infra/nginx/certs/origin.key` (`chmod 600` the key). They are gitignored.
-3. Uncomment in `docker-compose.prod.yml`: the `443:443` port and the `certs`
-   volume.
-4. Uncomment in `infra/nginx/nginx.prod.conf`: the `listen 443 ssl` block with
-   the certificate paths, and the small `server` block above it that redirects
-   http to https.
-5. Cloudflare dashboard → SSL/TLS → set the mode to **Full (strict)**. Anything
-   less leaves the last hop unencrypted or unverified.
-6. `make prod-down && make prod`, then check `https://<domain>` and that plain
-   http redirects.
+1. Cloudflare → SSL/TLS → Origin Server → Create Certificate.
+2. Install as `infra/nginx/certs/origin.pem` and `infra/nginx/certs/origin.key`
+   on the server, `chmod 600` the key. The directory is gitignored.
+3. In `docker-compose.prod.yml`, uncomment the `443:443` port mapping and the
+   `certs` volume.
+4. In `infra/nginx/nginx.prod.conf`, uncomment the `listen 443 ssl` directives
+   and the http-to-https redirect server block.
+5. Cloudflare → SSL/TLS → set encryption mode to **Full (strict)**.
+6. Apply with `make prod-down && make prod` if the stack is already running.
+   Verify `https://<domain>` responds and plain http redirects.
 
 ## 5. First run
 
 ```bash
+docker pull python:3.13-slim   # optional; the judge pulls it on start if absent
 make prod-build-up
 make prod-superuser
 ```
 
-Then log into `/admin/`, add problems, and remember the house rule: **never
-publish a problem without test cases** — a problem with zero tests accepts every
-submission.
+Migrations and `collectstatic` run as one-shot services before the backend
+starts.
 
-## 6. Starting on boot
+Content is managed through `/admin/`. A problem published with zero test cases
+accepts every submission.
 
-`depends_on` only orders things when **compose** starts them. After a reboot the
-containers are started by the Docker daemon from their restart policy, which
-knows nothing about waiting for the database to be ready. It does sort itself
-out — through a couple of minutes of crash-and-restart with the site down — so
-let systemd run compose instead.
+## 6. Start on boot
 
-The unit expects the repository at `/opt/codegard`; edit `WorkingDirectory` if
-it lives elsewhere.
+`depends_on` conditions apply only when compose starts the stack. After a
+reboot the Docker daemon starts containers from their restart policy in
+arbitrary order, which costs several minutes of crash-restart cycles. Run
+compose from systemd instead.
 
 ```bash
 sudo cp infra/codegard.service /etc/systemd/system/
@@ -95,17 +116,18 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now codegard
 ```
 
-Check it survives with `sudo reboot`, then `make prod-ps` once it comes back.
+Verify with `sudo reboot`, then `make prod-ps`.
 
-## 7. Watching it
+## 7. Monitoring
 
-- `make prod-logs` — everything, live.
-- Flower (Celery tasks) is not exposed. Run this **from your own machine** — it
-  forwards your local port to Flower's port on the server's loopback:
+```bash
+make prod-ps      # service state and health
+make prod-logs    # follow all services
+```
 
-  ```bash
-  ssh -N -L 5555:localhost:5555 <user>@<server>
-  ```
+Flower is bound to the server loopback and is not proxied. Reach it over an SSH
+tunnel from a local machine, then open `http://localhost:5555`:
 
-  Then open `http://localhost:5555` in your own browser. The tunnel lives as
-  long as the command runs.
+```bash
+ssh -N -L 5555:localhost:5555 <user>@<server>
+```
