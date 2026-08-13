@@ -137,7 +137,7 @@ export default function LiveContest({ contest }) {
 
           {/* The standings panel from contest mode: same header, same columns,
               same row treatment (see ContestLeaderboard and StandingsList). */}
-          <div className="board rv rv-d1">
+          <div className="board rv">
             <div className="board-top">
               <span className="ttl">
                 <Icons.trophy size={14} />

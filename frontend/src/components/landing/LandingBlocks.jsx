@@ -45,7 +45,7 @@ export function FaqSection({ items }) {
           </span>
           <h2 className="sec-t">Questions before the first submission.</h2>
         </div>
-        <div className="faq rv rv-d1">
+        <div className="faq rv">
           {items.map((f, i) => (
             <div key={f.q} className={`faq-i${open === i ? ' open' : ''}`}>
               <button

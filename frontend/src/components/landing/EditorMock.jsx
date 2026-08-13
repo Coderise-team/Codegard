@@ -89,7 +89,7 @@ export default function EditorMock() {
   const currentLine = shown.split('\n').length;
 
   return (
-    <div className="ed-shell">
+    <div className="ed-shell rv">
       <div className="ed-top">
         <span className="ed-lang">
           <span className="ed-lang-ic" />

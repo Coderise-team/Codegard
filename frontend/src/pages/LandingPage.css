@@ -201,29 +201,20 @@
   text-wrap: pretty;
 }
 
-/* ---------- reveal ---------- */
+/* ---------- reveal ----------
+   Everything in a section comes up together — the copy and the mock beside it
+   are one thought, and letting one trail the other only draws attention to the
+   effect. Long and far enough to read as an arrival rather than a flicker. */
 .lp .rv {
   opacity: 0;
-  transform: translate3d(0, 26px, 0);
+  transform: translate3d(0, 40px, 0);
   transition:
-    opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 1.25s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .lp .rv.in {
   opacity: 1;
   transform: none;
-}
-.lp .rv-d1 {
-  transition-delay: 0.08s;
-}
-.lp .rv-d2 {
-  transition-delay: 0.16s;
-}
-.lp .rv-d3 {
-  transition-delay: 0.24s;
-}
-.lp .rv-d4 {
-  transition-delay: 0.32s;
 }
 
 /* ---------- parallax ----------

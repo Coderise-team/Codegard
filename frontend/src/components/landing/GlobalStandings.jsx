@@ -59,7 +59,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
             holds it, so the podium and the rows read as one surface instead of
             floating on the section background. */}
         <div className="plx">
-          <div className="rank-panel rv rv-d1">
+          <div className="rank-panel rv">
             <div className="rank-top">
               <span className="ttl">
                 <Icons.trophy size={14} />
@@ -69,11 +69,8 @@ export default function GlobalStandings({ podium, table, ladder }) {
             </div>
 
             <div className="lp-podium">
-              {podium.map((p, i) => (
-                <div
-                  key={p.handle}
-                  className={`pod pod-${p.rank} rv rv-d${i + 1}`}
-                >
+              {podium.map((p) => (
+                <div key={p.handle} className={`pod pod-${p.rank}`}>
                   <span className="pod-medal">{p.rank}</span>
                   <span className="pod-av">{p.initials}</span>
                   <span className="pod-h">{p.handle}</span>
@@ -121,7 +118,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
           </div>
         </div>
 
-        <div className="ladder rv rv-d3">
+        <div className="ladder rv">
           {ladder.map((t) => (
             <div key={t.name} className="lad">
               <span className="nm">
@@ -135,13 +132,13 @@ export default function GlobalStandings({ podium, table, ladder }) {
           ))}
         </div>
 
-        <p className="stand-note rv rv-d3">
+        <p className="stand-note rv">
           Everyone has a tier. You can be a Junior or a Trainee, or you can
           climb all the way to the top and become an Architect, or the Kernel of
           the platform.
         </p>
 
-        <p className="stand-note rv rv-d3">
+        <p className="stand-note rv">
           We built you a dashboard that holds the whole picture, so you can
           follow your own numbers and your opponents&apos; on their profile
           pages. Look back at the contests you entered, at the attempts you have
