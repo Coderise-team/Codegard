@@ -16,6 +16,9 @@
 /* ---------- page root ---------- */
 .lp {
   --lp-w: 1180px;
+  /* Breathing room kept on both sides once the window is narrower than the
+     layout, so nothing ever touches the edge of the screen. */
+  --lp-gutter: 24px;
   --nav-h: 64px;
   position: relative;
   /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
@@ -28,14 +31,6 @@
   isolation: isolate;
 }
 
-/* Desktop-only by decision: the full-width bands keep the layout width and the
-   page scrolls sideways on a narrow window instead of reflowing. */
-.lp-nav,
-.lp-hero,
-.lp section,
-.lp-foot {
-  min-width: 1280px;
-}
 .lp ::selection {
   background: var(--gold-soft);
 }
@@ -128,10 +123,14 @@
 
 /* ---------- layout ---------- */
 .lp .wrap {
-  width: var(--lp-w);
+  width: min(var(--lp-w), 100% - 2 * var(--lp-gutter));
   margin: 0 auto;
   position: relative;
   z-index: 2;
+}
+/* Reading width, for a column of prose rather than a layout. */
+.lp .wrap-narrow {
+  width: min(860px, 100% - 2 * var(--lp-gutter));
 }
 .lp section {
   position: relative;

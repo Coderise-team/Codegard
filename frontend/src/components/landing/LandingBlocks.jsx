@@ -37,7 +37,7 @@ export function FaqSection({ items }) {
   const [open, setOpen] = useState(0);
   return (
     <section className="sec-tight band" id="faq">
-      <div className="wrap" style={{ width: 860 }}>
+      <div className="wrap wrap-narrow">
         <div className="rv">
           <span className="eyebrow">
             <i />
