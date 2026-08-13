@@ -3,8 +3,12 @@ import Icons from '../Icons';
 import EditorMock from './EditorMock';
 import { useLandingScroll } from '../../hooks/useLandingScroll';
 
-/** Brand lockup, links back to the landing root. */
-export function LandingLogo({ href = '/' }) {
+/**
+ * Brand lockup. On the landing it points at the top of the page rather than at
+ * the site root: the root belongs to the product, and sending someone back to
+ * the page they are already reading would cost a full reload.
+ */
+export function LandingLogo({ href = '#top' }) {
   return (
     <a href={href} className="logo" style={{ color: 'inherit' }}>
       <span className="mark">C</span>
@@ -34,10 +38,12 @@ export function LandingNav() {
       <div className="nav-in">
         <LandingLogo />
         <div className="nav-links">
+          <a href="#top">Home</a>
           <a href="#contests">Contests</a>
           <a href="#how">How it works</a>
           <a href="#solo">Solo</a>
           <a href="#rating">Rating</a>
+          <a href="#judge">Under the hood</a>
           <a href="#faq">FAQ</a>
         </div>
         <div className="nav-right">
@@ -56,7 +62,7 @@ export function LandingNav() {
 /** Hero — split layout: copy on the left, animated editor on the right. */
 export function LandingHero({ data }) {
   return (
-    <header className="lp-hero">
+    <header className="lp-hero" id="top">
       <div className="wrap hero-split">
         <div className="hero-in">
           <span className="eyebrow">
@@ -78,9 +84,6 @@ export function LandingHero({ data }) {
             <a className="btn btn-lg btn-primary" href="/register">
               Start solving
               <Icons.send size={17} />
-            </a>
-            <a className="btn btn-lg" href="#how">
-              See how it works
             </a>
           </div>
           <p className="hero-note">{data.note}</p>
