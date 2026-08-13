@@ -1,4 +1,6 @@
 # ruff: noqa: F403, F405
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 DEBUG = False
@@ -22,6 +24,17 @@ CORS_ALLOWED_ORIGINS = [origin for origin in env.list("CORS_ALLOWED_ORIGINS") if
 MIDDLEWARE = ["core.middleware.RealClientIPMiddleware", *MIDDLEWARE]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Uploads have to go to R2 here. Storing them on the container's own disk looks
+# like it works: the upload succeeds, and then nginx has no /media/ to serve it
+# from, so the picture 404s with nothing in any log — and the file is gone at
+# the next deploy anyway. Refusing to start says all that at once.
+if STORAGES["default"]["BACKEND"] != "storages.backends.s3.S3Storage":
+    raise ImproperlyConfigured(
+        "Production keeps uploads in R2, and it is not configured. Set "
+        "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME "
+        "and R2_CUSTOM_DOMAIN."
+    )
 
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True

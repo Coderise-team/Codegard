@@ -49,8 +49,9 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
-    @app.get("/health")
-    def health():
+    # healthz, matching the backend's own: one name for the same handle.
+    @app.get("/healthz")
+    def healthz():
         # The upkeep task counts as much as the judging one: without it this
         # worker stops saying it is alive and the others start taking its work.
         tasks = getattr(app.state, "tasks", ())

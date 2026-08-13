@@ -25,6 +25,9 @@ frontend/dist
 data
 backend/django_app/media
 infra/nginx/certs
+# Whatever a local collectstatic left behind. The image gathers its own inside
+# the build, and a stale copy from someone's machine would win over it.
+backend/django_app/staticfiles
 
 # Working documents, not part of any image
 mocks

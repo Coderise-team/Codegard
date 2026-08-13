@@ -13,9 +13,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     # oom_score_adj tilts the kernel's choice when memory runs out: it kills the
@@ -40,11 +40,15 @@ services:
     # The journal costs one second of writes on a crash instead of minutes.
     command: >
       redis-server
-      --requirepass ${REDIS_PASSWORD}
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
       --maxmemory ${REDIS_MAXMEMORY:?REDIS_MAXMEMORY is required}
       --maxmemory-policy noeviction
       --appendonly yes
       --appendfsync everysec
+    # Read by redis-cli on its own, so the health check below does not have to
+    # carry the password on a command line that every ps in the container sees.
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     # Holds the live judge queue.
@@ -54,7 +58,7 @@ services:
       - codegard_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -297,8 +301,11 @@ services:
     networks:
       - codegard_net
     restart: unless-stopped
+    # Asks /healthz rather than knocking on the port: the web server answers
+    # the port even when the judging loop behind it has died, and a judge that
+    # stopped judging would go on looking healthy while the queue piles up.
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8001), timeout=2).close()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz', timeout=2)"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -309,7 +316,7 @@ services:
       context: ./frontend
       target: web
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: ${VITE_API_URL:?VITE_API_URL is required}
     ports:
       - "80:80"
       # - "443:443"

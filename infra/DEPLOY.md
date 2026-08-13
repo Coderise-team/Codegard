@@ -11,6 +11,9 @@ once, in order, when setting up a new machine.
 - The domain on Cloudflare nameservers with the proxy (orange cloud) on.
 - `.env` filled from `.env.example`. `REDIS_URL` must carry the Redis password,
   or the judge will not start.
+- A Cloudflare R2 bucket with public access. Production keeps uploaded avatars
+  there and refuses to start without it: files written inside a container are
+  gone at the next deploy, and nginx serves no `/media/` for them anyway.
 - `docker pull python:3.13-slim` beforehand — otherwise the first submission
   waits for a 150 MB download.
 
@@ -75,7 +78,26 @@ Then log into `/admin/`, add problems, and remember the house rule: **never
 publish a problem without test cases** — a problem with zero tests accepts every
 submission.
 
-## 6. Watching it
+## 6. Starting on boot
+
+`depends_on` only orders things when **compose** starts them. After a reboot the
+containers are started by the Docker daemon from their restart policy, which
+knows nothing about waiting for the database to be ready. It does sort itself
+out — through a couple of minutes of crash-and-restart with the site down — so
+let systemd run compose instead.
+
+The unit expects the repository at `/opt/codegard`; edit `WorkingDirectory` if
+it lives elsewhere.
+
+```bash
+sudo cp infra/codegard.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now codegard
+```
+
+Check it survives with `sudo reboot`, then `make prod-ps` once it comes back.
+
+## 7. Watching it
 
 - `make prod-logs` — everything, live.
 - Flower (Celery tasks) is not exposed. Run this **from your own machine** — it

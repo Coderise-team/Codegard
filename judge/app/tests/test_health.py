@@ -19,20 +19,20 @@ def _client(*finished):
 
 
 def test_health_ok_while_both_tasks_run():
-    response = _client(False, False).get("/health")
+    response = _client(False, False).get("/healthz")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
 def test_health_down_when_judging_stopped():
-    assert _client(True, False).get("/health").status_code == 503
+    assert _client(True, False).get("/healthz").status_code == 503
 
 
 def test_health_down_when_upkeep_stopped():
     """Without upkeep this worker stops saying it is alive, and the others
     start taking submissions out from under it."""
-    assert _client(False, True).get("/health").status_code == 503
+    assert _client(False, True).get("/healthz").status_code == 503
 
 
 def test_health_down_before_anything_started():
@@ -40,4 +40,4 @@ def test_health_down_before_anything_started():
     app.router.lifespan_context = None
     client = TestClient(app, raise_server_exceptions=False)
 
-    assert client.get("/health").status_code == 503
+    assert client.get("/healthz").status_code == 503
