@@ -1067,10 +1067,15 @@
   justify-content: center;
   gap: 14px;
   opacity: 0;
-  transform: translate3d(0, 18px, 0);
+  transform: translate3d(0, 26px, 0);
+  /* One pane hands over to the next slowly enough to be watched: the copy on
+     the left has already changed while the picture is still arriving. The fade
+     is held to a straight line for the same reason the section reveals are —
+     on a curve it finishes in the first fifth of its own duration and reads as
+     a cut rather than a dissolve. */
   transition:
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.62s linear,
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 .lp .how-pane.on {
