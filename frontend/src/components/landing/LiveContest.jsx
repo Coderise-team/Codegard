@@ -102,7 +102,11 @@ export default function LiveContest({ contest }) {
           </p>
         </div>
 
-        <div className="contest-stack plx">
+        {/* The mocks stand for the product's own interface, which is English,
+            and their text is handles, numbers and verdict codes. Keeping a page
+            translator out of them shows a visitor what they will actually see —
+            and keeps it from swapping the text nodes these timers rewrite. */}
+        <div className="contest-stack plx" translate="no">
           {/* The round strip as the contest topbar carries it: title, letters
               with their status, and the countdown, all on one line. It sits on
               top here for the same reason it does in the product. */}

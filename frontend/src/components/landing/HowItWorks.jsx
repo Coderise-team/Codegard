@@ -73,7 +73,7 @@ function StepVisual({ step, catalogue, you }) {
   );
 
   return (
-    <div className="how-vis rv">
+    <div className="how-vis rv" translate="no">
       <div className={`how-pane${step === 0 ? ' on' : ''}`}>
         <span className="hp-label">Problemset</span>
         <div className="hp-list">

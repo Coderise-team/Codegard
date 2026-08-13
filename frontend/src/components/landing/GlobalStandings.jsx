@@ -59,7 +59,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
             holds it, so the podium and the rows read as one surface instead of
             floating on the section background. */}
         <div className="plx">
-          <div className="rank-panel rv">
+          <div className="rank-panel rv" translate="no">
             <div className="rank-top">
               <span className="ttl">
                 <Icons.trophy size={14} />

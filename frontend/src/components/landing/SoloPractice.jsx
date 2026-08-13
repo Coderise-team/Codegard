@@ -14,7 +14,7 @@ const DIFFICULTIES = ['All', 'Easy', 'Medium', 'Hard'];
  */
 function CatalogueMock({ rows }) {
   return (
-    <div className="solo-cat rv">
+    <div className="solo-cat rv" translate="no">
       <div className="solo-cat-top">
         <span className="solo-seg">
           {DIFFICULTIES.map((level) => (
