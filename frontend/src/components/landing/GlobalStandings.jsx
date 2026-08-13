@@ -58,64 +58,66 @@ export default function GlobalStandings({ podium, table, ladder }) {
         {/* One panel around the whole leaderboard, the way the standings page
             holds it, so the podium and the rows read as one surface instead of
             floating on the section background. */}
-        <div className="rank-panel rv rv-d1">
-          <div className="rank-top">
-            <span className="ttl">
-              <Icons.trophy size={14} />
-              Global standings
-            </span>
-            <span className="rank-sort">Sorted by rating</span>
-          </div>
-
-          <div className="lp-podium">
-            {podium.map((p, i) => (
-              <div
-                key={p.handle}
-                className={`pod pod-${p.rank} rv rv-d${i + 1}`}
-              >
-                <span className="pod-medal">{p.rank}</span>
-                <span className="pod-av">{p.initials}</span>
-                <span className="pod-h">{p.handle}</span>
-                <TierBadge name={p.tier} color={p.color} />
-                <span className="pod-rating">{p.rating}</span>
-                <span className="pod-sub">
-                  <Delta d={p.delta} />
-                  <span className="pod-max">
-                    max <b>{p.max}</b>
-                  </span>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="rank-rows">
-            <div className="rank-h">
-              <span>#</span>
-              <span>Coder</span>
-              <span>Tier</span>
-              <span className="num">Rating</span>
-              <span className="num">Last</span>
-              <span className="num">Max</span>
+        <div className="plx">
+          <div className="rank-panel rv rv-d1">
+            <div className="rank-top">
+              <span className="ttl">
+                <Icons.trophy size={14} />
+                Global standings
+              </span>
+              <span className="rank-sort">Sorted by rating</span>
             </div>
 
-            {table.map((r) => (
-              <div key={r.handle} className={`st-row${r.you ? ' you' : ''}`}>
-                <span className="rn">{r.rank}</span>
-                <span className="st-user">
-                  <span className="st-av">{r.initials}</span>
-                  <span className="nm">{r.handle}</span>
-                  {r.you ? <span className="lp-you-tag">YOU</span> : null}
-                </span>
-                <span className="st-tier-c">
-                  <TierBadge name={r.tier} color={r.color} />
-                </span>
-                <span className="st-rating num">{r.rating}</span>
-                <span className="num">
-                  <Delta d={r.delta} />
-                </span>
-                <span className="st-max num">{r.max}</span>
+            <div className="lp-podium">
+              {podium.map((p, i) => (
+                <div
+                  key={p.handle}
+                  className={`pod pod-${p.rank} rv rv-d${i + 1}`}
+                >
+                  <span className="pod-medal">{p.rank}</span>
+                  <span className="pod-av">{p.initials}</span>
+                  <span className="pod-h">{p.handle}</span>
+                  <TierBadge name={p.tier} color={p.color} />
+                  <span className="pod-rating">{p.rating}</span>
+                  <span className="pod-sub">
+                    <Delta d={p.delta} />
+                    <span className="pod-max">
+                      max <b>{p.max}</b>
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="rank-rows">
+              <div className="rank-h">
+                <span>#</span>
+                <span>Coder</span>
+                <span>Tier</span>
+                <span className="num">Rating</span>
+                <span className="num">Last</span>
+                <span className="num">Max</span>
               </div>
-            ))}
+
+              {table.map((r) => (
+                <div key={r.handle} className={`st-row${r.you ? ' you' : ''}`}>
+                  <span className="rn">{r.rank}</span>
+                  <span className="st-user">
+                    <span className="st-av">{r.initials}</span>
+                    <span className="nm">{r.handle}</span>
+                    {r.you ? <span className="lp-you-tag">YOU</span> : null}
+                  </span>
+                  <span className="st-tier-c">
+                    <TierBadge name={r.tier} color={r.color} />
+                  </span>
+                  <span className="st-rating num">{r.rating}</span>
+                  <span className="num">
+                    <Delta d={r.delta} />
+                  </span>
+                  <span className="st-max num">{r.max}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -87,7 +87,9 @@ export default function SoloPractice({ solo }) {
   return (
     <section className="sec band solo-sec" id="solo">
       <div className="wrap solo-grid">
-        <CatalogueMock rows={solo.catalogue} />
+        <div className="plx">
+          <CatalogueMock rows={solo.catalogue} />
+        </div>
 
         <div className="solo-copy rv">
           <span className="eyebrow">

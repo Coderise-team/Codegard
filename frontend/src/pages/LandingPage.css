@@ -226,6 +226,33 @@
   transition-delay: 0.32s;
 }
 
+/* ---------- parallax ----------
+   A big mock drifts a little against the copy beside it while the section
+   crosses the screen: the same trick the ambient background already uses, one
+   layer closer. The travel is tied to scroll position rather than to time, so
+   the panel follows the wheel in both directions.
+
+   It sits on a wrapper of its own on purpose — the panels reveal themselves on
+   entry with a transform, and an animation on the same element would take that
+   transform over and swallow the reveal. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .lp .plx {
+      animation: lp-plx linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+@keyframes lp-plx {
+  from {
+    transform: translateY(30px);
+  }
+  to {
+    transform: translateY(-30px);
+  }
+}
+
 /* ---------- buttons ---------- */
 .lp .btn {
   display: inline-flex;

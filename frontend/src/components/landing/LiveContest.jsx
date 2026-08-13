@@ -102,7 +102,7 @@ export default function LiveContest({ contest }) {
           </p>
         </div>
 
-        <div className="contest-stack">
+        <div className="contest-stack plx">
           {/* The round strip as the contest topbar carries it: title, letters
               with their status, and the countdown, all on one line. It sits on
               top here for the same reason it does in the product. */}
