@@ -2326,6 +2326,74 @@
 }
 
 /* ============================================================
+   NARROW SCREENS — tablet
+   Below this width the side-by-side layouts stop working: a mock panel next to
+   a column of copy leaves neither enough room. Everything folds into a single
+   column, and the copy always comes first — on a phone the words have to
+   arrive before the picture that illustrates them, whichever side the picture
+   sits on when there is room for two.
+   ============================================================ */
+@media (max-width: 960px) {
+  .lp .hero-split,
+  .lp .contest-grid,
+  .lp .how-grid,
+  .lp .solo-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  /* The contest copy is the second column on a wide screen and rides along
+     while the board scrolls; stacked, it is simply the first thing read. */
+  .lp .contest-copy {
+    grid-column: 1;
+    position: static;
+  }
+  /* The solo section is mirrored on a wide screen — the catalogue on the left,
+     the copy on the right. In one column that order would put the mock first. */
+  .lp .solo-copy {
+    order: -1;
+  }
+
+  .lp .judge {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The podium loses its raised middle tile: with the three stacked there is no
+     middle to raise, and gold belongs on top. */
+  .lp-podium {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lp .pod-1,
+  .lp .pod-2,
+  .lp .pod-3 {
+    order: 0;
+  }
+  .lp .pod-1 {
+    transform: none;
+  }
+  .lp .pod:hover,
+  .lp .pod-1:hover {
+    transform: none;
+  }
+
+  /* Eight tiers in a row become unreadable slivers; two rows of four hold. */
+  .lp .ladder {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lp .foot-in {
+    flex-direction: column;
+    gap: 36px;
+  }
+  .lp .foot-cols {
+    margin-left: 0;
+    gap: 44px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ============================================================
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
