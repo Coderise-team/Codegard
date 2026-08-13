@@ -2394,6 +2394,165 @@
 }
 
 /* ============================================================
+   NARROW SCREENS — phone
+   Headings and the space around them shrink, and the mocks drop the columns
+   that carry the least: a table squeezed to six columns on a 360px screen
+   stops being a table. What is left in each of them is what the row is about.
+   ============================================================ */
+@media (max-width: 640px) {
+  .lp {
+    --lp-gutter: 16px;
+  }
+
+  /* ---------- type and rhythm ---------- */
+  .lp h1.hero-t {
+    font-size: 38px;
+  }
+  .lp h2.sec-t {
+    font-size: 30px;
+  }
+  .lp .final h2 {
+    font-size: 34px;
+  }
+  .lp .sec-sub {
+    font-size: 15.5px;
+  }
+  .lp .sec {
+    padding: 76px 0;
+  }
+  .lp .sec-tight {
+    padding: 66px 0;
+  }
+  .lp .sec.band {
+    padding-top: 96px;
+  }
+  .lp .sec-tight.band {
+    padding-top: 86px;
+  }
+  .lp .final.band {
+    padding-top: 110px;
+  }
+  /* A 34px corner on a phone-wide sheet reads as a bubble, not as an edge. */
+  .lp .band {
+    margin-top: -20px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* Seven sections will not fit a phone bar, and a bar that scrolls sideways
+     is worse than none. The same list is in the footer, and the sections
+     follow one another anyway. */
+  .lp .nav-links {
+    display: none;
+  }
+
+  /* ---------- the leaderboard mock ---------- */
+  /* Place, who, rating. The tier is on the podium above, and the change and the
+     peak are detail a phone has no room to spend. */
+  .lp .rank-rows {
+    --st-cols: 34px minmax(0, 1fr) 74px;
+    padding: 16px 12px 14px;
+  }
+  .lp .rank-h,
+  .lp .st-row {
+    gap: 10px;
+  }
+  .lp .rank-h span:nth-child(3),
+  .lp .rank-h span:nth-child(5),
+  .lp .rank-h span:nth-child(6),
+  .lp .st-row > :nth-child(3),
+  .lp .st-row > :nth-child(5),
+  .lp .st-row > :nth-child(6) {
+    display: none;
+  }
+  .lp .st-row {
+    padding: 10px 12px;
+  }
+  .lp .lp-podium {
+    padding: 26px 12px 0;
+  }
+
+  /* ---------- the catalogue mock ---------- */
+  /* Status, problem, difficulty. The sort bar is a header for columns that are
+     no longer there, and the number and the pass rate are the first to go. */
+  .lp .solo-sort {
+    display: none;
+  }
+  .lp .solo-list {
+    padding: 12px;
+  }
+  .lp .solo-row {
+    grid-template-columns: 24px minmax(0, 1fr) 82px;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .lp .solo-id,
+  .lp .solo-acc {
+    display: none;
+  }
+  .lp .solo-main {
+    grid-column: 2;
+  }
+  .lp .solo-row .df {
+    grid-column: 3;
+  }
+
+  /* ---------- the step panes ---------- */
+  .lp .hp-prob {
+    grid-template-columns: 20px minmax(0, 1fr) 92px;
+  }
+  .lp .hp-prob-id,
+  .lp .hp-prob .k {
+    display: none;
+  }
+  /* The standing card puts its ring beside the numbers when there is width. */
+  .lp .hp-card-bd {
+    flex-direction: column;
+    gap: 14px;
+    padding: 8px 16px 16px;
+  }
+  .lp .hp-meta {
+    width: 100%;
+    text-align: center;
+  }
+  .lp .hp-name {
+    justify-content: center;
+  }
+  .lp .hp-ring {
+    width: min(150px, 30vh);
+  }
+  .lp .hp-ring-c .elo {
+    font-size: 40px;
+  }
+
+  /* ---------- the round strip ---------- */
+  .lp .round-card {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+  .lp .rc-timer {
+    margin-left: 0;
+  }
+
+  /* ---------- tiers and footer ---------- */
+  .lp .ladder {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lp .foot-cols {
+    gap: 32px;
+  }
+  .lp .foot-bot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .lp .foot-bot .sp {
+    margin-left: 0;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ============================================================
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
