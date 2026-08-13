@@ -106,7 +106,7 @@ export function LandingFooter() {
           <div>
             <LandingLogo />
             <p className="foot-tag">
-              Problems, live contests and a rating that keeps score.
+              Problems to solve, contests to enter, a rating to climb.
             </p>
           </div>
           <div className="foot-cols">
@@ -114,10 +114,12 @@ export function LandingFooter() {
                 points at this page's own sections instead of dead ends. */}
             <div className="foot-col">
               <span className="h">This page</span>
+              <a href="#top">Home</a>
               <a href="#contests">Contests</a>
               <a href="#how">How it works</a>
               <a href="#solo">Solo</a>
               <a href="#rating">Rating</a>
+              <a href="#judge">Under the hood</a>
               <a href="#faq">FAQ</a>
             </div>
             <div className="foot-col">
