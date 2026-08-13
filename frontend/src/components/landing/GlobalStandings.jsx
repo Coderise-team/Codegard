@@ -39,7 +39,7 @@ function Delta({ d }) {
  */
 export default function GlobalStandings({ podium, table, ladder }) {
   return (
-    <section className="sec stand metal" id="rating">
+    <section className="sec band stand metal" id="rating">
       <div className="wrap">
         <div className="stand-head rv">
           <span className="eyebrow">

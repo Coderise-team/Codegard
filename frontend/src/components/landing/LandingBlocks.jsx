@@ -5,7 +5,7 @@ import { LandingLogo } from './LandingHeader';
 /** Four one-line facts about how a submission is decided. */
 export function JudgeSection({ items }) {
   return (
-    <section className="sec-tight" id="judge">
+    <section className="sec-tight band" id="judge">
       <div className="wrap">
         <div className="rv">
           <span className="eyebrow">
@@ -36,7 +36,7 @@ export function JudgeSection({ items }) {
 export function FaqSection({ items }) {
   const [open, setOpen] = useState(0);
   return (
-    <section className="sec-tight" id="faq">
+    <section className="sec-tight band" id="faq">
       <div className="wrap" style={{ width: 860 }}>
         <div className="rv">
           <span className="eyebrow">
@@ -71,7 +71,7 @@ export function FaqSection({ items }) {
 
 export function FinalCta() {
   return (
-    <section className="final">
+    <section className="final band">
       <div className="wrap rv">
         <span className="eyebrow">
           <i />

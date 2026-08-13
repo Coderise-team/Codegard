@@ -246,7 +246,7 @@ export default function HowItWorks({ steps, catalogue, you }) {
   }, [scrollEl, steps.length]);
 
   return (
-    <section className="how" id="how" ref={ref}>
+    <section className="how band" id="how" ref={ref}>
       <div className="how-pin">
         <div className="wrap how-grid">
           <div className="rv">

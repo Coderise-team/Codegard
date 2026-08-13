@@ -87,7 +87,7 @@ export default function LiveContest({ contest }) {
   const clock = `${asHoursMinutes(left)}:${pad(left % 60)}`;
 
   return (
-    <section className="sec contest-sec" id="contests">
+    <section className="sec band contest-sec" id="contests">
       <div className="wrap contest-grid">
         <div className="contest-copy rv">
           <span className="eyebrow">

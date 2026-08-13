@@ -143,6 +143,28 @@
 .lp .sec-tight {
   padding: 96px 0;
 }
+
+/* ---------- the deck: every section rides over the one before it ----------
+   A band carries its own rounded top edge with a hairline on it and drops a
+   shadow onto the section above, then is pulled up so the two overlap. The
+   band itself stays transparent, so the ambient grid keeps showing through and
+   only the edge reads as a sheet lying on top. The extra top padding gives back
+   what the negative margin takes, so the rhythm of the page does not move. */
+.lp .band {
+  margin-top: -34px;
+  border-top: 1px solid var(--border);
+  border-radius: 34px 34px 0 0;
+  box-shadow: 0 -26px 60px -26px rgba(0, 0, 0, 0.85);
+}
+.lp .sec.band {
+  padding-top: 164px;
+}
+.lp .sec-tight.band {
+  padding-top: 130px;
+}
+.lp .final.band {
+  padding-top: 184px;
+}
 .lp .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -1510,8 +1532,6 @@
     rgba(255, 255, 255, 0.016) 78%,
     transparent
   );
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
 }
 .lp .stand::before {
   content: '';

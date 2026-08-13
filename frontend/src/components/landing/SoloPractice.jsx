@@ -85,7 +85,7 @@ function CatalogueMock({ rows }) {
  */
 export default function SoloPractice({ solo }) {
   return (
-    <section className="sec solo-sec" id="solo">
+    <section className="sec band solo-sec" id="solo">
       <div className="wrap solo-grid">
         <CatalogueMock rows={solo.catalogue} />
 
