@@ -204,17 +204,47 @@
 /* ---------- reveal ----------
    Everything in a section comes up together — the copy and the mock beside it
    are one thought, and letting one trail the other only draws attention to the
-   effect. Long and far enough to read as an arrival rather than a flicker. */
+   effect.
+
+   The two channels are driven differently on purpose. The movement runs on a
+   curve that starts fast and settles slowly, which is what makes it feel like
+   weight coming to rest. Fading on that same curve is a mistake: it spends
+   most of its time creeping through the last few percent, where the eye can no
+   longer tell one frame from the next, so a long fade ends up looking like a
+   short one. Held to a straight line, the fade is visible for its whole
+   length. */
 .lp .rv {
   opacity: 0;
   transform: translate3d(0, 40px, 0);
   transition:
-    opacity 1.25s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.1s linear,
     transform 1.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .lp .rv.in {
   opacity: 1;
   transform: none;
+}
+
+/* The first screen is not revealed by scrolling — it is already there when the
+   page opens, so it plays on its own the moment it is drawn. A keyframe rather
+   than the transition above: a transition needs the browser to paint the
+   starting state first, and on a page that is still loading that frame is
+   easily skipped, which is what made the hero snap into place. Mostly a fade,
+   with only a hint of a rise, so nothing lurches. */
+@keyframes lp-hero-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-hero-rise {
+  from {
+    transform: translate3d(0, 22px, 0);
+  }
+}
+.lp .hero-in {
+  animation:
+    lp-hero-fade 1.1s linear both,
+    lp-hero-rise 1.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ---------- parallax ----------

@@ -58,7 +58,7 @@ export function LandingHero({ data }) {
   return (
     <header className="lp-hero">
       <div className="wrap hero-split">
-        <div className="rv">
+        <div className="hero-in">
           <span className="eyebrow">
             <i />
             {data.eyebrow}
