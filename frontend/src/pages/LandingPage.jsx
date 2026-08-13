@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { LandingNav, LandingHero } from '../components/landing/LandingHeader';
 import { LandingScrollContext } from '../hooks/useLandingScroll';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { useSmoothScroll } from '../hooks/useSmoothScroll';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import LiveContest from '../components/landing/LiveContest';
 import HowItWorks from '../components/landing/HowItWorks';
 import SoloPractice from '../components/landing/SoloPractice';
@@ -37,6 +39,7 @@ export default function LandingPage({ data = landingDataDefault }) {
   // The scroll area is kept in state rather than a ref so that the sections
   // below re-render once the node exists and can attach their own listeners.
   const [scrollEl, setScrollEl] = useState(null);
+  const reduced = useReducedMotion();
 
   // parallax + cursor glow
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function LandingPage({ data = landingDataDefault }) {
   }, [scrollEl]);
 
   useScrollReveal(scrollEl);
+  useSmoothScroll(scrollEl, !reduced);
 
   return (
     <LandingScrollContext.Provider value={scrollEl}>
