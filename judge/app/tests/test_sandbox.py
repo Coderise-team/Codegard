@@ -186,14 +186,29 @@ class TestRunInSandbox:
         run_in_sandbox("pass", "", 1000, 256)  # Must not raise
 
 
+def _patch_housekeeping(monkeypatch, client):
+    monkeypatch.setattr("app.core.sandbox._get_housekeeping_client", lambda: client)
+
+
 class TestSandboxHousekeeping:
+    def test_clearing_up_does_not_share_the_judging_connection(self, monkeypatch):
+        """Two threads, two connections: the judging one is busy while this
+        runs."""
+        judging = make_mock_docker_client()
+        _patch(monkeypatch, judging)
+        _patch_housekeeping(monkeypatch, make_mock_docker_client())
+
+        remove_sandbox("abc123")
+
+        judging.containers.get.assert_not_called()
+
     def test_lists_sandboxes_with_the_worker_that_asked_for_them(self, monkeypatch):
         client = make_mock_docker_client()
         left_behind = MagicMock()
         left_behind.id = "abc123"
         left_behind.labels = {SANDBOX_LABEL: "1", OWNER_LABEL: "box:9:deadbeef"}
         client.containers.list.return_value = [left_behind]
-        _patch(monkeypatch, client)
+        _patch_housekeeping(monkeypatch, client)
 
         assert list_sandbox_owners() == [("abc123", "box:9:deadbeef")]
         assert client.containers.list.call_args.kwargs["all"] is True
@@ -207,13 +222,13 @@ class TestSandboxHousekeeping:
         nameless.id = "abc123"
         nameless.labels = {SANDBOX_LABEL: "1"}
         client.containers.list.return_value = [nameless]
-        _patch(monkeypatch, client)
+        _patch_housekeeping(monkeypatch, client)
 
         assert list_sandbox_owners() == [("abc123", "")]
 
     def test_remove_forces_the_container_out(self, monkeypatch):
         client = make_mock_docker_client()
-        _patch(monkeypatch, client)
+        _patch_housekeeping(monkeypatch, client)
 
         remove_sandbox("abc123")
 
@@ -222,7 +237,7 @@ class TestSandboxHousekeeping:
     def test_remove_says_nothing_about_one_that_is_already_gone(self, monkeypatch):
         client = make_mock_docker_client()
         client.containers.get.side_effect = docker.errors.NotFound("gone")
-        _patch(monkeypatch, client)
+        _patch_housekeeping(monkeypatch, client)
 
         remove_sandbox("abc123")  # Must not raise
 
@@ -231,6 +246,6 @@ class TestSandboxHousekeeping:
         client.containers.get.return_value.remove.side_effect = docker.errors.APIError(
             "busy"
         )
-        _patch(monkeypatch, client)
+        _patch_housekeeping(monkeypatch, client)
 
         remove_sandbox("abc123")  # Must not raise

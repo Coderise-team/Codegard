@@ -49,6 +49,7 @@ class SandboxResult:
 
 
 _docker_client: docker.DockerClient | None = None
+_housekeeping_client: docker.DockerClient | None = None
 
 
 def _get_docker_client() -> docker.DockerClient:
@@ -56,6 +57,19 @@ def _get_docker_client() -> docker.DockerClient:
     if _docker_client is None:
         _docker_client = docker.from_env()
     return _docker_client
+
+
+def _get_housekeeping_client() -> docker.DockerClient:
+    """A connection of its own for the clearing up below.
+
+    Judging and clearing up run in separate threads now, and a single client is
+    a single open connection: the library never promises one is safe to drive
+    from two threads at once.
+    """
+    global _housekeeping_client
+    if _housekeeping_client is None:
+        _housekeeping_client = docker.from_env()
+    return _housekeeping_client
 
 
 def _build_command(code: str, stdin: str) -> list[str]:
@@ -181,13 +195,13 @@ def list_sandbox_owners() -> list[tuple[str, str]]:
     killed mid-judging never reaches the line above, and the container it left
     behind stays on the host for good.
     """
-    client = _get_docker_client()
+    client = _get_housekeeping_client()
     containers = client.containers.list(all=True, filters={"label": SANDBOX_LABEL})
     return [(c.id, c.labels.get(OWNER_LABEL, "")) for c in containers]
 
 
 def remove_sandbox(container_id: str) -> None:
-    client = _get_docker_client()
+    client = _get_housekeeping_client()
     try:
         client.containers.get(container_id).remove(force=True)
     except docker.errors.NotFound:
