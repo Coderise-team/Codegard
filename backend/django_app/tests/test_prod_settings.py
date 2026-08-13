@@ -12,6 +12,7 @@ and unaffected by the reload.
 """
 
 import importlib
+import re
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
@@ -119,6 +120,21 @@ def test_cors_origins_read_from_env(monkeypatch):
 def test_missing_cors_variable_refuses_to_start(monkeypatch):
     with pytest.raises(ImproperlyConfigured):
         load_prod_settings(monkeypatch, CORS_ALLOWED_ORIGINS=None)
+
+
+def test_localhost_is_allowed_for_the_health_check(monkeypatch):
+    prod = load_prod_settings(monkeypatch)
+
+    assert "localhost" in prod.ALLOWED_HOSTS
+    assert "codegard.dev" in prod.ALLOWED_HOSTS
+
+
+def test_the_health_check_is_exempt_from_the_https_redirect(monkeypatch):
+    """Matched against the path with its leading slash already stripped, which
+    is what makes the tempting ``^/healthz/$`` silently never match."""
+    prod = load_prod_settings(monkeypatch)
+
+    assert any(re.match(p, "healthz/") for p in prod.SECURE_REDIRECT_EXEMPT)
 
 
 def test_uploads_go_to_r2(monkeypatch):

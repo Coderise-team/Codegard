@@ -7,7 +7,9 @@ DEBUG = False
 
 SECRET_KEY = env("SECRET_KEY")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+# "localhost" is for the in-container health check only; outside traffic
+# arrives through nginx, which matches on the real domain.
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS") + ["localhost"]
 
 # Mandatory behind the proxy: nginx forwards X-Forwarded-Proto https, so Django
 # expects an https origin and 403s the admin login without a match here.
@@ -40,6 +42,9 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_SSL_REDIRECT = True
+# The container health check talks to Django over plain http inside the
+# network, so it must not be bounced to https.
+SECURE_REDIRECT_EXEMPT = [r"^healthz/$"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
