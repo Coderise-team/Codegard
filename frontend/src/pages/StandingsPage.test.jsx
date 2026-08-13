@@ -18,7 +18,7 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useNavigate: () => navigate,
 }));
 vi.mock('../hooks/useCurrentUser', () => ({
-  useCurrentUser: () => ({ username: 'me', initials: 'ME' }),
+  useCurrentUser: () => ({ username: 'me', avatar: null }),
 }));
 
 import StandingsPage from './StandingsPage';

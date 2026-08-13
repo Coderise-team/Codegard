@@ -10,6 +10,7 @@ import ContestPage from './pages/ContestPage';
 import ContestProblemPage from './pages/ContestProblemPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
+import PrivacyPage from './pages/PrivacyPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import PrivateRoute from './components/PrivateRoute';
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       // Unguarded on purpose: mid-exchange the auth flag flips to true, and a
       // GuestRoute would race the page's own redirect with its Navigate home.
       { path: '/oauth/callback', element: <OAuthCallbackPage /> },
+      // Public on purpose: the privacy policy must be readable by anyone,
+      // including a signed-out Google verification reviewer, so it sits outside
+      // both PrivateRoute and GuestRoute.
+      { path: '/privacy', element: <PrivacyPage /> },
       {
         element: <PrivateRoute />,
         children: [

@@ -5,6 +5,17 @@ from .base import *
 
 DEBUG = False
 
+# Uploaded files (avatars) must live in R2 here. Nothing serves /media/ in
+# production — Django only hands files out under DEBUG, and nginx answers an
+# image request with the app shell — so a deploy without R2 would write files
+# onto the container's disk where nobody can ever read them, and avatars would
+# quietly stop appearing. Fail at startup instead.
+if not R2_ENABLED:
+    raise ImproperlyConfigured(
+        "R2 storage is required in production: set R2_ACCOUNT_ID, "
+        "R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET_NAME."
+    )
+
 SECRET_KEY = env("SECRET_KEY")
 
 # "localhost" is for the in-container health check only; outside traffic
@@ -26,17 +37,6 @@ CORS_ALLOWED_ORIGINS = [origin for origin in env.list("CORS_ALLOWED_ORIGINS") if
 MIDDLEWARE = ["core.middleware.RealClientIPMiddleware", *MIDDLEWARE]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Uploads have to go to R2 here. Storing them on the container's own disk looks
-# like it works: the upload succeeds, and then nginx has no /media/ to serve it
-# from, so the picture 404s with nothing in any log — and the file is gone at
-# the next deploy anyway. Refusing to start says all that at once.
-if STORAGES["default"]["BACKEND"] != "storages.backends.s3.S3Storage":
-    raise ImproperlyConfigured(
-        "Production keeps uploads in R2, and it is not configured. Set "
-        "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME "
-        "and R2_CUSTOM_DOMAIN."
-    )
 
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True

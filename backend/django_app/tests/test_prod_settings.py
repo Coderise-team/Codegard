@@ -18,18 +18,6 @@ import pytest
 from django.core.exceptions import ImproperlyConfigured
 from settings import base
 
-# What settings.base resolved STORAGES to. It is patched rather than driven by
-# environment variables because base is imported once, by the test settings,
-# and its own reads are long since cached.
-R2_STORAGES = {
-    "default": {"BACKEND": "storages.backends.s3.S3Storage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-LOCAL_STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-
 PROD_ENV = {
     "SECRET_KEY": "prod-settings-test-key",
     "ALLOWED_HOSTS": "codegard.dev,www.codegard.dev",
@@ -41,13 +29,15 @@ PROD_ENV = {
 }
 
 
-def load_prod_settings(monkeypatch, storages=R2_STORAGES, **overrides):
+def load_prod_settings(monkeypatch, r2_enabled=True, **overrides):
     """Import ``settings.prod`` fresh against ``PROD_ENV`` plus ``overrides``.
 
     A value of ``None`` removes the variable, which is how the "operator forgot
-    to set it" case is expressed.
+    to set it" case is expressed. ``R2_ENABLED`` is patched instead of being
+    driven by the environment: settings.base is imported once, by the test
+    settings, and its own reads are long since cached.
     """
-    monkeypatch.setattr(base, "STORAGES", storages)
+    monkeypatch.setattr(base, "R2_ENABLED", r2_enabled)
     for name, value in {**PROD_ENV, **overrides}.items():
         if value is None:
             monkeypatch.delenv(name, raising=False)
@@ -137,14 +127,8 @@ def test_the_health_check_is_exempt_from_the_https_redirect(monkeypatch):
     assert any(re.match(p, "healthz/") for p in prod.SECURE_REDIRECT_EXEMPT)
 
 
-def test_uploads_go_to_r2(monkeypatch):
-    prod = load_prod_settings(monkeypatch)
-
-    assert prod.STORAGES["default"]["BACKEND"] == "storages.backends.s3.S3Storage"
-
-
-def test_storing_uploads_on_local_disk_refuses_to_start(monkeypatch):
+def test_r2_storage_refuses_to_start_when_unconfigured(monkeypatch):
     """The one failure with nothing to see: the upload succeeds, nginx has no
     /media/ to serve it from, and the file dies with the container."""
     with pytest.raises(ImproperlyConfigured):
-        load_prod_settings(monkeypatch, storages=LOCAL_STORAGES)
+        load_prod_settings(monkeypatch, r2_enabled=False)

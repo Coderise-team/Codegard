@@ -53,6 +53,8 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+# vitest writes its report here
+frontend/coverage/
 
 # Translations
 *.mo

@@ -5,7 +5,7 @@ import UserMenu from './UserMenu';
  * Navbar — top dashboard bar (breadcrumb, search, user menu).
  *
  * Props:
- *   user        — { username, initials }
+ *   user        — { username, avatar }
  *   title       — breadcrumb string (e.g. "Dashboard")
  *   onMenuClick — open the sidebar drawer (phone only; burger button)
  */

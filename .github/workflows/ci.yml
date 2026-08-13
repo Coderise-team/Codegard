@@ -194,6 +194,13 @@ jobs:
           VITE_API_URL: /api
         run: npm run test:run
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+
   # Nothing is published: this only proves the production images still build,
   # which otherwise comes to light on the server during a deploy.
   build-images:

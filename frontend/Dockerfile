@@ -36,5 +36,5 @@ CMD ["nginx", "-g", "daemon off;"]
 
 FROM base AS test
 
-RUN printf '#!/bin/sh\nset -e\nnpx vitest run\n' > /usr/local/bin/run-tests \
+RUN printf '#!/bin/sh\nset -e\nnpm run test:run\n' > /usr/local/bin/run-tests \
     && chmod +x /usr/local/bin/run-tests

@@ -13,6 +13,7 @@ vi.mock('./SettingsModal', () => ({
 
 const user = {
   username: 'yurii',
+  avatar: null,
   first_name: 'Yurii',
   last_name: 'Koval',
   bio: 'Competitive programmer since 2019.',
@@ -59,6 +60,19 @@ describe('ProfileHeader', () => {
     fireEvent.click(screen.getByRole('button', { name: /edit profile/i }));
 
     expect(screen.getByText('settings dialog')).toBeInTheDocument();
+  });
+
+  it('shows the picture of a user who has one', () => {
+    const { container } = render(
+      <ProfileHeader
+        user={{ ...user, avatar: '/media/avatars/thumbs/abc.webp' }}
+        delta={null}
+      />
+    );
+
+    expect(container.querySelector('.avatar-img').getAttribute('src')).toBe(
+      '/media/avatars/thumbs/abc.webp'
+    );
   });
 
   it('prints the full name and bio when they are filled in', () => {

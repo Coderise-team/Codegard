@@ -8,13 +8,16 @@ vi.mock('../../store/authStore', () => ({
 
 import UserMenu from './UserMenu';
 
+const renderMenu = (user) =>
+  render(
+    <MemoryRouter>
+      <UserMenu user={user} />
+    </MemoryRouter>
+  );
+
 describe('UserMenu', () => {
   it('points My profile at the signed-in user page', () => {
-    render(
-      <MemoryRouter>
-        <UserMenu user={{ username: 'n3ptune', initials: 'N3' }} />
-      </MemoryRouter>
-    );
+    renderMenu({ username: 'n3ptune', avatar: null });
 
     // The dropdown is closed until the chip is clicked.
     fireEvent.click(screen.getByRole('button', { name: /n3ptune/i }));
@@ -22,5 +25,21 @@ describe('UserMenu', () => {
     expect(
       screen.getByRole('menuitem', { name: /my profile/i }).getAttribute('href')
     ).toBe('/users/n3ptune');
+  });
+
+  it('shows the picture of a user who has one', () => {
+    const { container } = renderMenu({
+      username: 'n3ptune',
+      avatar: '/media/avatars/thumbs/abc.webp',
+    });
+
+    expect(container.querySelector('.avatar-img').getAttribute('src')).toBe(
+      '/media/avatars/thumbs/abc.webp'
+    );
+    // The chip is still found by the username: the picture adds no label of
+    // its own, so the button keeps reading as the account it belongs to.
+    expect(
+      screen.getByRole('button', { name: /n3ptune/i })
+    ).toBeInTheDocument();
   });
 });

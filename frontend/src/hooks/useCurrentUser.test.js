@@ -9,12 +9,25 @@ beforeEach(() => {
 });
 
 describe('useCurrentUser', () => {
-  it('derives uppercase two-letter initials from the username', () => {
+  it('hands the shell the name and the avatar url', () => {
+    useAuthStore.setState({
+      user: { username: 'alice', avatar: '/media/avatars/thumbs/abc.webp' },
+    });
+
+    const { result } = renderHook(() => useCurrentUser());
+
+    expect(result.current).toEqual({
+      username: 'alice',
+      avatar: '/media/avatars/thumbs/abc.webp',
+    });
+  });
+
+  it('reports a missing avatar as null', () => {
     useAuthStore.setState({ user: { username: 'alice' } });
 
     const { result } = renderHook(() => useCurrentUser());
 
-    expect(result.current).toEqual({ username: 'alice', initials: 'AL' });
+    expect(result.current).toEqual({ username: 'alice', avatar: null });
   });
 
   it('returns null when nobody is signed in', () => {
