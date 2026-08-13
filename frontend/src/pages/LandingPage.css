@@ -165,6 +165,50 @@
 .lp .final.band {
   padding-top: 184px;
 }
+
+/* The seam lights up as a band comes over the one before it: a line runs the
+   width of the edge, brightens while it crosses the screen and goes out again.
+   The subject of the timeline is the pseudo-element itself, a fixed 200px box,
+   so every band gets the same length of travel no matter how tall it is — the
+   paint is only the 1px line at its top.
+
+   Pure enhancement: browsers without scroll-driven animations, and anyone who
+   asked for less motion, simply keep the plain hairline. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .lp .band::after {
+      content: '';
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      top: -1px;
+      height: 200px;
+      pointer-events: none;
+      background: linear-gradient(
+          90deg,
+          transparent,
+          var(--gold-hi),
+          transparent
+        )
+        top / 100% 1px no-repeat;
+      opacity: 0;
+      animation: lp-seam linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 80%;
+    }
+  }
+}
+@keyframes lp-seam {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
 .lp .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -299,6 +343,29 @@
 .lp-nav.stuck {
   border-bottom-color: var(--border);
   background: color-mix(in srgb, var(--bg) 90%, transparent);
+}
+/* The top edge of the scroll, so a section leaving upward dissolves into the
+   page instead of being sheared off by the viewport: the bar's own background
+   carries on below it as a fade. It only appears once the page has moved, so
+   the hero keeps its own top untouched. */
+.lp-nav::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 92px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 80%, transparent),
+    transparent
+  );
+}
+.lp-nav.stuck::before {
+  opacity: 1;
 }
 .lp .nav-in {
   display: flex;
