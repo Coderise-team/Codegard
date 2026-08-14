@@ -30,6 +30,14 @@ def test_unrelated_word_finds_nothing(api_client):
 
 
 @pytest.mark.django_db
+def test_two_char_query_is_prefix_match(api_client):
+    # Under 3 chars there is no trigram signal, so it falls back to "starts with".
+    make_contest("Codeforces Round")  # starts with "Co"
+    make_contest("Weekly Challenge")  # "co" only in the middle
+    assert _titles(api_client.get(LIST, {"search": "Co"})) == ["Codeforces Round"]
+
+
+@pytest.mark.django_db
 def test_search_composes_with_status(api_client):
     # status is recomputed from the clock on save, so pick the windows directly.
     make_contest("Alpha Cup", starts_in=-3, ends_in=-1)  # finished

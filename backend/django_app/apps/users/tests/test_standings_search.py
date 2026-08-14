@@ -49,6 +49,15 @@ def test_unrelated_query_finds_nothing():
 
 
 @pytest.mark.django_db
+def test_two_char_query_is_prefix_match():
+    # Under 3 chars there is no trigram signal, so it falls back to "starts with".
+    me = _user("petro", 1500)  # starts with "pe"
+    _user("alpetrov", 1400)  # "pe" only in the middle
+    resp = _auth(me).get(reverse(URL), {"search": "pe"}).json()
+    assert [r["username"] for r in resp["results"]] == ["petro"]
+
+
+@pytest.mark.django_db
 def test_search_keeps_global_rank():
     me = _user("me", 3000)
     for i in range(5):  # five higher-rated coders
