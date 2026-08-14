@@ -451,6 +451,9 @@
   font-size: 14px;
   font-weight: 600;
   padding: 0 6px;
+  /* Two words on one line or not at all: squeezed, it was breaking after
+     "Sign" and standing the bar's two halves at different heights. */
+  white-space: nowrap;
 }
 .lp .nav-signin:hover {
   color: var(--fg);
@@ -523,6 +526,11 @@
 /* ---------- editor mock ---------- */
 .lp .ed-shell {
   position: relative;
+  /* A grid item is allowed to be as wide as its contents demand, and the
+     contents here are unwrapped lines of code that arrive a character at a
+     time. Left alone the editor widened as the sample was typed and pushed
+     itself off the side of a narrow screen. */
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--card);
@@ -615,6 +623,10 @@
 }
 .lp .ed-code {
   flex: 1;
+  /* Same reason as the shell above: without this the code sets the floor for
+     the whole editor's width instead of being clipped by it, exactly as the
+     real editor clips a line that runs past its right edge. */
+  min-width: 0;
   padding: 14px 16px 14px 0;
   font-family: var(--mono);
   font-size: 13px;
@@ -2479,10 +2491,6 @@
     order: -1;
   }
 
-  .lp .judge {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   /* "How it works" keeps what it is: still held still, still scrubbed, the
      picture still changing under the wheel. Only its shape gives way — the
      picture goes under the steps instead of beside them, and both are cut down
@@ -2496,20 +2504,29 @@
   .lp .how {
     height: 260vh;
   }
-  /* Held to the top rather than centred. Every step opens its description as
-     it becomes the current one, and centred content answers that by shifting
-     everything to find its middle again — which is felt as the whole section
-     trembling on each change. Anchored to the top, an opening step moves only
-     what is below it. */
+  /* The pinned screen is divided rather than filled in order: the words take
+     what they need and the picture takes everything that is left. That is what
+     keeps it on screen — given a height of its own it ended up below the fold
+     of a box exactly one screen tall, which is why it looked as though it had
+     disappeared.
+
+     Stretching also settles the trembling that centring used to cause. Every
+     step opens its description as it becomes the current one, and centred
+     content answers by shifting everything to find its middle again. */
   .lp .how-pin {
-    align-items: flex-start;
-    padding: calc(var(--nav-h) + 44px) 0 8px;
-  }
-  .lp .how-vis {
-    height: clamp(250px, 40vh, 360px);
+    align-items: stretch;
+    padding: calc(var(--nav-h) + 32px) 0 12px;
   }
   .lp .how-grid {
-    gap: 24px;
+    grid-template-rows: auto minmax(0, 1fr);
+    /* The picture has to fill the row it was given. Its panes are all laid over
+       one another out of the flow, so it has no content of its own to take a
+       height from — centred in its row it measures nothing and disappears. */
+    align-items: stretch;
+    gap: 22px;
+  }
+  .lp .how-vis {
+    height: auto;
   }
   .lp .how-steps {
     margin-top: 20px;
@@ -2546,22 +2563,13 @@
     margin-top: 12px;
   }
 
-  /* The podium loses its raised middle tile: with the three stacked there is no
-     middle to raise, and gold belongs on top. */
-  .lp-podium {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .lp .pod-1,
-  .lp .pod-2,
-  .lp .pod-3 {
-    order: 0;
-  }
-  .lp .pod-1 {
+  /* A tap leaves :hover stuck on a touch screen, so a tile that lifts under the
+     pointer would simply stay hoisted after you let go. */
+  .lp .pod:hover {
     transform: none;
   }
-  .lp .pod:hover,
   .lp .pod-1:hover {
-    transform: none;
+    transform: translateY(-14px);
   }
 
   /* Eight tiers in a row become unreadable slivers; two rows of four hold. */
@@ -2599,7 +2607,7 @@
    reader in it. There it becomes what it is on paper: four numbered steps, all
    open, all readable, and the picture left to the wide layout, where each pane
    is anyway a small copy of a screen the page shows in full somewhere else. */
-@media (max-width: 1200px) and (max-height: 800px) {
+@media (max-width: 1200px) and (max-height: 640px) {
   .lp .how {
     height: auto;
   }
@@ -2632,6 +2640,15 @@
 @media (max-width: 640px) {
   .lp {
     --lp-gutter: 16px;
+  }
+
+  /* Tighter spacing between the three things on the bar, so the sign-in link
+     keeps its two words side by side instead of being pressed into a column. */
+  .lp .nav-in {
+    gap: 12px;
+  }
+  .lp .nav-right {
+    gap: 10px;
   }
 
   /* ---------- type and rhythm ---------- */
@@ -2746,8 +2763,22 @@
   .lp .st-delta {
     font-size: 12px;
   }
+  /* Three tiles across a phone leave no tile. Stacked, gold on top: there is no
+     middle left to raise, and the raised one has nowhere to be raised from. */
   .lp .lp-podium {
+    grid-template-columns: minmax(0, 1fr);
     padding: 26px 12px 0;
+  }
+  .lp .pod-1,
+  .lp .pod-2,
+  .lp .pod-3,
+  .lp .pod-1:hover {
+    order: 0;
+    transform: none;
+  }
+
+  .lp .judge {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* ---------- the catalogue mock ---------- */
@@ -2772,10 +2803,35 @@
     font-size: 9px;
     letter-spacing: 0.04em;
   }
+  /* "Difficulty" is wider than the column it names once the tracks are shaved,
+     and a label that spills runs straight into the next one. Cut it instead —
+     the values under it are short and keep their column exactly. */
+  .lp .solo-sort .col-name,
+  .lp .solo-sort .col-diff {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .lp .solo-row {
     padding-top: 9px;
     padding-bottom: 9px;
     min-height: 0;
+  }
+
+  /* ---------- the editor ---------- */
+  /* Smaller type puts more of a line of code on screen before it runs into the
+     right edge — the same trade the real editor makes on a phone. */
+  .lp .ed-gutter,
+  .lp .ed-code {
+    font-size: 11.5px;
+    line-height: 19px;
+  }
+  .lp .ed-gutter {
+    flex-basis: 40px;
+  }
+  .lp .ed-body {
+    height: 268px;
   }
 
   /* ---------- the step panes ---------- */
@@ -2835,6 +2891,35 @@
     margin-left: 0;
     flex-direction: column;
     gap: 8px;
+  }
+}
+
+/* ============================================================
+   NARROW SCREENS — the narrowest phones
+   Below this the account button starts losing letters, and a button that reads
+   "Create act" is worse than a bar with less on it. The section menu is what
+   goes: it is the only thing on the bar the footer carries in full, while both
+   ways into an account stay where a visitor expects them.
+   ============================================================ */
+@media (max-width: 400px) {
+  .lp .nav-menu-btn {
+    display: none;
+  }
+  .lp .nav-in {
+    gap: 10px;
+  }
+  .lp .nav-right {
+    gap: 8px;
+  }
+  .lp .nav-signin {
+    padding: 0 2px;
+  }
+  /* The last few pixels come from the two ends rather than from another cut. */
+  .lp .logo {
+    font-size: 16px;
+  }
+  .lp-nav .btn-sm {
+    padding: 0 11px;
   }
 }
 
