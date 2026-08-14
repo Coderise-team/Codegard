@@ -20,10 +20,29 @@ export function LandingLogo({ href = '#top' }) {
   );
 }
 
-/** Sticky marketing header — gains a border once the page scrolls. */
+const NAV_SECTIONS = [
+  ['#top', 'Home'],
+  ['#contests', 'Contests'],
+  ['#how', 'How it works'],
+  ['#solo', 'Solo'],
+  ['#rating', 'Rating'],
+  ['#judge', 'Under the hood'],
+  ['#faq', 'FAQ'],
+];
+
+/**
+ * Sticky marketing header — gains a border once the page scrolls.
+ *
+ * Seven sections fit a desktop bar and nothing narrower: on a tablet the names
+ * are squeezed until they clip, and the account button is pushed off the edge.
+ * Below that width the list moves into a menu behind a button, which is opened
+ * and closed here; which of the two is shown is left to the stylesheet, so the
+ * two versions cannot disagree about where the line between them falls.
+ */
 export function LandingNav() {
   const scrollEl = useLandingScroll();
   const [stuck, setStuck] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!scrollEl) return undefined;
@@ -37,15 +56,25 @@ export function LandingNav() {
     <nav className={stuck ? 'lp-nav stuck' : 'lp-nav'}>
       <div className="nav-in">
         <LandingLogo />
-        <div className="nav-links">
-          <a href="#top">Home</a>
-          <a href="#contests">Contests</a>
-          <a href="#how">How it works</a>
-          <a href="#solo">Solo</a>
-          <a href="#rating">Rating</a>
-          <a href="#judge">Under the hood</a>
-          <a href="#faq">FAQ</a>
+
+        <button
+          type="button"
+          className={`nav-menu-btn${menuOpen ? ' on' : ''}`}
+          aria-expanded={menuOpen}
+          aria-label="Sections"
+          onClick={() => setMenuOpen((o) => !o)}
+        >
+          <Icons.menu size={18} />
+        </button>
+
+        <div className={`nav-links${menuOpen ? ' open' : ''}`}>
+          {NAV_SECTIONS.map(([href, label]) => (
+            <a key={href} href={href} onClick={() => setMenuOpen(false)}>
+              {label}
+            </a>
+          ))}
         </div>
+
         <div className="nav-right">
           <a className="nav-signin" href="/login">
             Sign in

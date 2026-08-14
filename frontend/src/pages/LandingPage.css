@@ -394,7 +394,10 @@
   display: flex;
   align-items: center;
   gap: 34px;
-  width: var(--lp-w);
+  /* Follows the window like the sections do. Held to the layout width it ran
+     past both edges of a narrow screen: the logo sat on the left edge and the
+     button was pushed off the right one. */
+  width: min(var(--lp-w), 100% - 2 * var(--lp-gutter));
   margin: 0 auto;
 }
 .lp .nav-links {
@@ -412,6 +415,30 @@
 }
 .lp .nav-links a:hover {
   color: var(--fg);
+}
+/* The button that holds the section list on anything narrower than a desktop.
+   Hidden here, shown by the narrow layout — one of the two is always on. */
+.lp .nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: 0.13s;
+}
+.lp .nav-menu-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-2);
+}
+.lp .nav-menu-btn.on {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
 }
 .lp .nav-right {
   display: flex;
@@ -1935,7 +1962,8 @@
   gap: 14px;
 }
 .lp .rank-h {
-  padding: 4px 18px 2px;
+  /* Sits close to the rows it names, not adrift between them and the podium. */
+  padding: 14px 18px 2px;
   font-size: 10.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2245,15 +2273,24 @@
   transform: rotate(180deg);
   color: var(--gold-hi);
 }
+/* The answer opens to whatever height its own text needs: the row grows from
+   0fr to 1fr. A fixed ceiling to slide to was what made it snap — the travel
+   was measured against that number rather than against the answer, so a short
+   one flew open and stopped early, and every one of them shut with a jolt. */
 .lp .faq-a {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.3s linear;
 }
 .lp .faq-i.open .faq-a {
-  max-height: 190px;
+  grid-template-rows: 1fr;
+  opacity: 1;
 }
 .lp .faq-a p {
+  overflow: hidden;
   margin: 0;
   padding: 0 60px 24px 4px;
   color: var(--fg2);
@@ -2374,8 +2411,48 @@
    column, and the copy always comes first — on a phone the words have to
    arrive before the picture that illustrates them, whichever side the picture
    sits on when there is room for two.
+
+   The line is drawn at 1200 rather than at a tablet's own width. A 1024px
+   screen is wide enough for the desktop layout to apply and too narrow for it
+   to work: the columns hold, but everything in them is pressed thin while the
+   page runs out of height to fill. One column and full-size pieces read better
+   than two columns of crushed ones.
    ============================================================ */
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
+  /* Seven section names stop fitting the bar well before the layout does. They
+     move behind a button, and the account button gets its room back. */
+  .lp .nav-menu-btn {
+    display: inline-flex;
+  }
+  .lp .nav-links {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: var(--lp-gutter);
+    right: var(--lp-gutter);
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin-left: 0;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--card);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+  }
+  .lp .nav-links.open {
+    display: flex;
+  }
+  .lp .nav-links a {
+    padding: 11px 12px;
+    border-radius: var(--r-sm);
+    font-size: 14.5px;
+  }
+  .lp .nav-links a:hover {
+    background: var(--card-2);
+    color: var(--fg);
+  }
+
   .lp .hero-split,
   .lp .contest-grid,
   .lp .how-grid,
@@ -2522,7 +2599,7 @@
    reader in it. There it becomes what it is on paper: four numbered steps, all
    open, all readable, and the picture left to the wide layout, where each pane
    is anyway a small copy of a screen the page shows in full somewhere else. */
-@media (max-width: 960px) and (max-height: 700px) {
+@media (max-width: 1200px) and (max-height: 800px) {
   .lp .how {
     height: auto;
   }
@@ -2591,13 +2668,6 @@
   }
   .lp .band {
     border-radius: 20px 20px 0 0;
-  }
-
-  /* Seven sections will not fit a phone bar, and a bar that scrolls sideways
-     is worse than none. The same list is in the footer, and the sections
-     follow one another anyway. */
-  .lp .nav-links {
-    display: none;
   }
 
   /* ---------- the leaderboard mock ---------- */
@@ -2681,28 +2751,31 @@
   }
 
   /* ---------- the catalogue mock ---------- */
-  /* Status, problem, difficulty. The sort bar is a header for columns that are
-     no longer there, and the number and the pass rate are the first to go. */
-  .lp .solo-sort {
-    display: none;
+  /* Every column stays, exactly as the problemset keeps them at this size: the
+     tracks are shaved instead, and the sort bar drops a step of type so its
+     words stay inside the narrowed columns it names. */
+  .lp .solo-cat-top {
+    flex-wrap: wrap;
+    gap: 10px;
   }
   .lp .solo-list {
     padding: 12px;
+    gap: 8px;
+  }
+  .lp .solo-sort,
+  .lp .solo-row {
+    grid-template-columns: 22px 24px minmax(0, 1fr) 60px 60px;
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .lp .solo-sort {
+    font-size: 9px;
+    letter-spacing: 0.04em;
   }
   .lp .solo-row {
-    grid-template-columns: 24px minmax(0, 1fr) 82px;
-    gap: 10px;
-    padding: 10px 12px;
-  }
-  .lp .solo-id,
-  .lp .solo-acc {
-    display: none;
-  }
-  .lp .solo-main {
-    grid-column: 2;
-  }
-  .lp .solo-row .df {
-    grid-column: 3;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    min-height: 0;
   }
 
   /* ---------- the step panes ---------- */
