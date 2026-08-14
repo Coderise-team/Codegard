@@ -936,7 +936,7 @@
      Tracks are shaved hard so all five still fit a 360px screen. */
   .st-page .st-row,
   .st-page .st-headrow {
-    grid-template-columns: 22px minmax(0, 1fr) auto 44px 40px;
+    grid-template-columns: 22px minmax(0, 1fr) 94px 44px 40px;
     column-gap: 8px;
   }
   .st-page .st-row {
@@ -970,8 +970,15 @@
     grid-area: max;
   }
 
-  /* the labels have no room; only the two sort buttons stay */
-  .st-headrow .sth-static {
+  /* Every column keeps its name. Only the change gives its up: it has stepped
+     down under the rating, and there is one header cell per column, not per
+     value. Max takes the track the change left free.
+
+     This is also why the tier column above is a fixed width rather than one
+     that measures its contents: the header and the rows are separate grids, so
+     a self-measuring track settles differently in each and the labels stop
+     standing over the columns they name. */
+  .st-headrow .sth-static.num {
     display: none;
   }
   .sth-rating {
@@ -995,9 +1002,9 @@
   }
   .st-tier {
     height: 20px;
-    padding: 0 7px;
-    gap: 5px;
-    font-size: 10.5px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 10px;
   }
   .st-rank .rn {
     padding-left: 0;
