@@ -1,12 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
 
 import LiveContest from './LiveContest';
 
-// The board re-sorts itself on a timer when motion is allowed; these tests are
-// about the order it puts people in, so the timer is kept out of it.
+const motion = vi.hoisted(() => ({ reduced: true }));
 vi.mock('../../hooks/useReducedMotion', () => ({
-  useReducedMotion: () => true,
+  useReducedMotion: () => motion.reduced,
 }));
 
 const participant = (handle, solved, pen, last, you = false) => ({
@@ -45,6 +44,12 @@ const rankOf = (handle) =>
   screen.getByText(handle).closest('.brow').querySelector('.cp-rk').textContent;
 
 describe('LiveContest', () => {
+  // The board solves a problem for somebody every few seconds when motion is
+  // allowed. These are about the order it puts people in, so it is held still.
+  beforeEach(() => {
+    motion.reduced = true;
+  });
+
   it('ranks by score first, then the smaller penalty, then who got there first', () => {
     render(<LiveContest contest={contest} />);
 
@@ -74,5 +79,67 @@ describe('LiveContest', () => {
     expect(screen.getByText('A').closest('.rc-pip')).toHaveClass('s-solved');
     expect(screen.getByText('B').closest('.rc-pip')).toHaveClass('s-attempted');
     expect(screen.getByText('C').closest('.rc-pip')).toHaveClass('current');
+  });
+
+  describe('while it is running', () => {
+    // One person short of finishing and everyone else already done, so the
+    // board has exactly one move to make and it needs no luck to find it.
+    const running = {
+      ...contest,
+      board: [
+        { ...participant('climber', 4, 200, '01:10'), solved: 4 },
+        participant('done', 5, 100, '00:50'),
+      ],
+    };
+
+    const cellsOf = (handle) =>
+      Array.from(
+        screen.getByText(handle).closest('.brow').querySelectorAll('.cp-cell')
+      ).map((cell) => cell.textContent);
+
+    beforeEach(() => {
+      motion.reduced = false;
+      vi.useFakeTimers();
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('hands somebody a problem, worth a whole hundred points', () => {
+      render(<LiveContest contest={running} />);
+      expect(cellsOf('climber').slice(0, 2)).toEqual(['4/5', '400']);
+
+      act(() => vi.advanceTimersByTime(3400));
+
+      expect(cellsOf('climber').slice(0, 2)).toEqual(['5/5', '500']);
+    });
+
+    it('lights the row that just moved, then lets it settle', () => {
+      render(<LiveContest contest={running} />);
+      act(() => vi.advanceTimersByTime(3400));
+
+      expect(screen.getByText('climber').closest('.brow')).toHaveClass('bump');
+
+      act(() => vi.advanceTimersByTime(1400));
+
+      expect(screen.getByText('climber').closest('.brow')).not.toHaveClass(
+        'bump'
+      );
+    });
+
+    it('has nothing left to do once everyone has finished', () => {
+      render(<LiveContest contest={running} />);
+      act(() => vi.advanceTimersByTime(3400 * 6));
+
+      expect(cellsOf('climber').slice(0, 2)).toEqual(['5/5', '500']);
+      expect(cellsOf('done').slice(0, 2)).toEqual(['5/5', '500']);
+    });
+
+    it('runs the clock down', () => {
+      render(<LiveContest contest={running} />);
+      expect(screen.getByText('01:23:45')).toBeInTheDocument();
+
+      act(() => vi.advanceTimersByTime(5000));
+
+      expect(screen.getByText('01:23:40')).toBeInTheDocument();
+    });
   });
 });
