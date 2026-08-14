@@ -50,7 +50,8 @@ export function useSmoothScroll(scrollEl, enabled = true) {
     let target = at;
     let raf = 0;
     let accel = 1;
-    let lastNotch = 0;
+    // No notch yet, so the first one can never count as a continuation of one.
+    let lastNotch = -Infinity;
 
     const limit = () => scrollEl.scrollHeight - scrollEl.clientHeight;
     const moveTo = (top) => scrollEl.scrollTo({ top, behavior: 'instant' });
