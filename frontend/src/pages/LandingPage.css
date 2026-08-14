@@ -2384,10 +2384,16 @@
     gap: 40px;
   }
 
-  /* The contest copy is the second column on a wide screen and rides along
-     while the board scrolls; stacked, it is simply the first thing read. */
-  .lp .contest-copy {
+  /* On a wide screen these two are placed in the same row on purpose, side by
+     side, and the copy rides along while the board scrolls past. Folded into
+     one column they have to give up both: the shared row above all, or they
+     land in the same cell and print on top of one another. */
+  .lp .contest-copy,
+  .lp .contest-stack {
     grid-column: 1;
+    grid-row: auto;
+  }
+  .lp .contest-copy {
     position: static;
   }
   /* The solo section is mirrored on a wide screen — the catalogue on the left,
@@ -2400,37 +2406,33 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* "How it works" gives up being pinned. Its four panes are scrubbed by how
-     far the page has travelled through a section three screens tall, and that
-     only means something while the section is held still. Unpinned it becomes
-     what it is on paper: four numbered steps, all of them open at once and all
-     of them readable without scrolling anything into place.
+  /* "How it works" keeps what it is: still held still, still scrubbed, the
+     picture still changing under the wheel. Only its shape gives way — the
+     picture goes under the steps instead of beside them, and both are cut down
+     until the pair fits the one screen the pin allows. Everything else in the
+     section already fits that screen; it was the two full-size columns stacked
+     on top of each other that did not.
 
-     The panes go with the pin. Each of them is a small copy of a screen the
-     page shows in full elsewhere — the catalogue, the editor, the verdict, the
-     standing card — so nothing is lost by leaving them to the wide layout. */
+     The travel is shortened to match. Three and a half screens of wheel was
+     measured against a wide layout; with a smaller picture and tighter steps
+     the same four changes want less of it. */
   .lp .how {
-    height: auto;
+    height: 260vh;
   }
   .lp .how-pin {
-    position: static;
-    height: auto;
+    padding: var(--nav-h) 0 20px;
   }
-  .lp .how-vis {
-    display: none;
+  .lp .how-grid {
+    gap: 26px;
   }
   .lp .how-steps {
-    margin-top: 28px;
+    margin-top: 22px;
   }
-  .lp .how-step .num {
-    color: var(--gold-hi);
+  .lp .how-step {
+    padding: 12px 0;
   }
-  .lp .how-step .step-t {
-    color: var(--fg);
-  }
-  .lp .how-step .step-d {
-    grid-template-rows: 1fr;
-    opacity: 1;
+  .lp .how-vis {
+    height: clamp(180px, 30vh, 300px);
   }
 
   /* The podium loses its raised middle tile: with the three stacked there is no
@@ -2465,6 +2467,36 @@
     margin-left: 0;
     gap: 44px;
     flex-wrap: wrap;
+  }
+}
+
+/* A pinned section needs a screen tall enough to hold its picture and its four
+   steps at once. On a short window — a phone lying on its side, a small laptop
+   — there is no such screen, and holding the section still would only trap the
+   reader in it. There it becomes what it is on paper: four numbered steps, all
+   open, all readable, and the picture left to the wide layout, where each pane
+   is anyway a small copy of a screen the page shows in full somewhere else. */
+@media (max-width: 960px) and (max-height: 700px) {
+  .lp .how {
+    height: auto;
+  }
+  .lp .how-pin {
+    position: static;
+    height: auto;
+    padding: 0;
+  }
+  .lp .how-vis {
+    display: none;
+  }
+  .lp .how-step .num {
+    color: var(--gold-hi);
+  }
+  .lp .how-step .step-t {
+    color: var(--fg);
+  }
+  .lp .how-step .step-d {
+    grid-template-rows: 1fr;
+    opacity: 1;
   }
 }
 
