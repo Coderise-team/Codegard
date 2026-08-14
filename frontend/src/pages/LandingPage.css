@@ -2358,6 +2358,39 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* "How it works" gives up being pinned. Its four panes are scrubbed by how
+     far the page has travelled through a section three screens tall, and that
+     only means something while the section is held still. Unpinned it becomes
+     what it is on paper: four numbered steps, all of them open at once and all
+     of them readable without scrolling anything into place.
+
+     The panes go with the pin. Each of them is a small copy of a screen the
+     page shows in full elsewhere — the catalogue, the editor, the verdict, the
+     standing card — so nothing is lost by leaving them to the wide layout. */
+  .lp .how {
+    height: auto;
+  }
+  .lp .how-pin {
+    position: static;
+    height: auto;
+  }
+  .lp .how-vis {
+    display: none;
+  }
+  .lp .how-steps {
+    margin-top: 28px;
+  }
+  .lp .how-step .num {
+    color: var(--gold-hi);
+  }
+  .lp .how-step .step-t {
+    color: var(--fg);
+  }
+  .lp .how-step .step-d {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
   /* The podium loses its raised middle tile: with the three stacked there is no
      middle to raise, and gold belongs on top. */
   .lp-podium {
