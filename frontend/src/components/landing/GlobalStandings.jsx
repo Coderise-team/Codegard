@@ -87,12 +87,13 @@ export default function GlobalStandings({ podium, table, ladder }) {
             </div>
 
             <div className="rank-rows">
+              {/* The column names the standings page uses, word for word. */}
               <div className="rank-h">
-                <span>#</span>
-                <span>Coder</span>
+                <span>Rank</span>
+                <span>User</span>
                 <span>Tier</span>
                 <span className="num">Rating</span>
-                <span className="num">Last</span>
+                <span className="num">Last Δ</span>
                 <span className="num">Max</span>
               </div>
 
@@ -108,7 +109,7 @@ export default function GlobalStandings({ podium, table, ladder }) {
                     <TierBadge name={r.tier} color={r.color} />
                   </span>
                   <span className="st-rating num">{r.rating}</span>
-                  <span className="num">
+                  <span className="st-delta-c num">
                     <Delta d={r.delta} />
                   </span>
                   <span className="st-max num">{r.max}</span>

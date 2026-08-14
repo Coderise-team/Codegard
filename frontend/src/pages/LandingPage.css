@@ -2493,6 +2493,18 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  /* The six columns no longer fit the panel, and a track set to shrink to
+     nothing does exactly that: the name column collapses and its contents spill
+     over the numbers beside it. Shaved to the widths the standings page uses at
+     this size, they all still fit. */
+  .lp .rank-rows {
+    --st-cols: 40px minmax(0, 1fr) 124px 80px 74px 68px;
+  }
+  .lp .rank-h,
+  .lp .st-row {
+    gap: 10px;
+  }
+
   .lp .foot-in {
     flex-direction: column;
     gap: 36px;
@@ -2589,26 +2601,80 @@
   }
 
   /* ---------- the leaderboard mock ---------- */
-  /* Place, who, rating. The tier is on the podium above, and the change and the
-     peak are detail a phone has no room to spend. */
+  /* Nothing is dropped — the row folds instead, exactly as the standings page
+     folds it: the same reading order across, with only the change stepping down
+     under the rating it belongs to. */
+  /* The tier column is a fixed width rather than one that fits its contents:
+     the header and the rows are two separate grids, so a track that measures
+     itself lands in a different place in each of them and the labels stop
+     standing over their columns. */
   .lp .rank-rows {
-    --st-cols: 34px minmax(0, 1fr) 74px;
-    padding: 16px 12px 14px;
+    --st-cols: 22px minmax(0, 1fr) 94px 46px 40px;
+    padding: 14px 8px 12px;
   }
   .lp .rank-h,
   .lp .st-row {
-    gap: 10px;
-  }
-  .lp .rank-h span:nth-child(3),
-  .lp .rank-h span:nth-child(5),
-  .lp .rank-h span:nth-child(6),
-  .lp .st-row > :nth-child(3),
-  .lp .st-row > :nth-child(5),
-  .lp .st-row > :nth-child(6) {
-    display: none;
+    column-gap: 8px;
   }
   .lp .st-row {
+    grid-template-areas:
+      'rank user tier rating max'
+      'rank user tier delta  max';
+    row-gap: 2px;
     padding: 10px 12px;
+  }
+  .lp .st-row .rn {
+    grid-area: rank;
+    padding-left: 0;
+    font-size: 13px;
+  }
+  .lp .st-user {
+    grid-area: user;
+    gap: 8px;
+  }
+  .lp .st-tier-c {
+    grid-area: tier;
+  }
+  .lp .st-rating {
+    grid-area: rating;
+    font-size: 15px;
+  }
+  .lp .st-delta-c {
+    grid-area: delta;
+  }
+  .lp .st-max {
+    grid-area: max;
+  }
+  /* Every column keeps its name except the change, which has stepped down under
+     the rating and would have nowhere to put a label of its own. Max moves into
+     the track the delta left behind. */
+  .lp .rank-h {
+    padding: 4px 12px 8px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  .lp .rank-h span:nth-child(5) {
+    display: none;
+  }
+  .lp .rank-h span:nth-child(6) {
+    grid-column: 5;
+  }
+  /* shrink the pieces that would otherwise eat the name */
+  .lp .st-av {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+  .lp .st-tier {
+    height: 20px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 10px;
+  }
+  .lp .st-max,
+  .lp .st-delta {
+    font-size: 12px;
   }
   .lp .lp-podium {
     padding: 26px 12px 0;

@@ -178,10 +178,12 @@ const landingContent = {
     ],
   },
 
-  // Global rating — the order is 2nd / 1st / 3rd; CSS puts them on the podium.
+  // Global rating. The places are in their own order, as the standings page
+  // keeps them; putting the winner in the middle is the wide layout's doing and
+  // is undone on a narrow screen, where a stack has no middle.
   podium: [
-    coder(2, 'quantumlynx', 'QL', 2571, -9, 2604),
     coder(1, 'hexraven', 'HR', 2603, 18, 2641),
+    coder(2, 'quantumlynx', 'QL', 2571, -9, 2604),
     coder(3, 'eulergate', 'EG', 2498, 31, 2498),
   ],
   table: [
