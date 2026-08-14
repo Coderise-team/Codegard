@@ -80,13 +80,16 @@ export function LandingHero({ data }) {
             ))}
           </h1>
           <p className="hero-sub">{data.sub}</p>
+          {/* The note belongs beside the button, not under it: it is what the
+              button costs you, and with one action left in the hero the room to
+              its right would otherwise read as something missing. */}
           <div className="hero-cta">
             <a className="btn btn-lg btn-primary" href="/register">
               Start solving
               <Icons.send size={17} />
             </a>
+            <p className="hero-note">{data.note}</p>
           </div>
-          <p className="hero-note">{data.note}</p>
         </div>
         <EditorMock />
       </div>

@@ -20,6 +20,9 @@
      layout, so nothing ever touches the edge of the screen. */
   --lp-gutter: 24px;
   --nav-h: 64px;
+  /* How far each section is pulled up over the one above it. The hero adds the
+     same amount back, so the fold lands exactly on the next section's edge. */
+  --lp-lift: 34px;
   position: relative;
   /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
      so this page owns its scroll area. Sticky sections and the parallax
@@ -150,7 +153,7 @@
    only the edge reads as a sheet lying on top. The extra top padding gives back
    what the negative margin takes, so the rhythm of the page does not move. */
 .lp .band {
-  margin-top: -34px;
+  margin-top: calc(-1 * var(--lp-lift));
   border-top: 1px solid var(--border);
   border-radius: 34px 34px 0 0;
   box-shadow: 0 -26px 60px -26px rgba(0, 0, 0, 0.85);
@@ -413,8 +416,21 @@
 /* ============================================================
    HERO
    ============================================================ */
+/* The first screen is exactly one screen. Its height comes from the window
+   rather than from its own content, so the fold falls in the same place on a
+   laptop and on a desk monitor instead of cutting wherever the text happens to
+   end. The lift is added back on top: without it the next sheet, which is
+   pulled up over this one, would show its edge below the fold. */
 .lp-hero {
-  padding: 96px 0 110px;
+  min-height: calc(100vh + var(--lp-lift));
+  /* Sat a little above the middle rather than on it: the optical centre of a
+     screen is higher than its measured one, and a block placed dead centre
+     reads as having sunk. The extra room is given to the bottom, since with
+     the content centred between them it is the far side that lifts it — and it
+     is in screen heights, so the lift keeps its proportion on any window. */
+  padding: var(--nav-h) 0 calc(var(--nav-h) + 10vh);
+  display: flex;
+  align-items: center;
 }
 .lp .hero-split {
   display: grid;
@@ -449,13 +465,16 @@
 .lp .hero-cta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 14px 22px;
   margin-top: 34px;
 }
 .lp .hero-note {
-  margin-top: 16px;
+  margin: 0;
+  max-width: 30ch;
   color: var(--fg3);
   font-size: 13px;
+  line-height: 1.5;
 }
 
 /* ---------- editor mock ---------- */
@@ -2466,8 +2485,10 @@
     padding-top: 110px;
   }
   /* A 34px corner on a phone-wide sheet reads as a bubble, not as an edge. */
+  .lp {
+    --lp-lift: 20px;
+  }
   .lp .band {
-    margin-top: -20px;
     border-radius: 20px 20px 0 0;
   }
 
