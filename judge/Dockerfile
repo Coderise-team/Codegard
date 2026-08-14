@@ -1,19 +1,23 @@
+# Built from the repository root — see backend/Dockerfile for why.
 FROM python:3.13-slim AS base
 
 WORKDIR /app
 
+ENV PYTHONPATH=/shared
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-COPY pyproject.toml uv.lock ./
+COPY judge/pyproject.toml judge/uv.lock ./
 
 RUN uv pip install --system --no-cache .
 
-COPY . .
+COPY judge/ ./
+COPY shared/ /shared/
 
 
 FROM base AS web
 
-COPY entrypoint.sh /entrypoint.sh
+COPY judge/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8001

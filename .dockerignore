@@ -1,0 +1,36 @@
+# Build context for every image is the repository root (the backend and the
+# judge both need shared/), so everything heavy or secret is kept out of it
+# here. Whatever survives this file is uploaded to the daemon on every build.
+
+.git
+.github
+.idea
+.vscode
+
+# Local environments and caches
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.ruff_cache
+**/coverage
+**/htmlcov
+frontend/dist
+
+# Secrets and local state
+.env
+.env.*
+!.env.example
+data
+backend/django_app/media
+infra/nginx/certs
+# Whatever a local collectstatic left behind. The image gathers its own inside
+# the build, and a stale copy from someone's machine would win over it.
+backend/django_app/staticfiles
+
+# Working documents, not part of any image
+mocks
+plans
+*.md
+!README.md

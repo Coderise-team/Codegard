@@ -10,7 +10,7 @@ export async function register({ username, email, password }) {
   return data;
 }
 
-// GET users/me/ -> { username, avatar }
+// GET users/me/ -> { username, avatar, bio, first_name, last_name }
 export async function me() {
   const { data } = await client.get('users/me/');
   return data;
@@ -58,7 +58,9 @@ export async function changePassword({ old_password, new_password }) {
   return data;
 }
 
-// POST users/avatar/ (multipart) -> { avatar, thumbnails: { 128, 256 } }
+// POST users/avatar/ (multipart) -> { avatar }. The url is the 192px thumbnail
+// the API serves everywhere; the full-size copy it is cut from stays on the
+// server.
 export async function uploadAvatar(file) {
   const form = new FormData();
   form.append('avatar', file);

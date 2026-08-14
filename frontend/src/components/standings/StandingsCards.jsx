@@ -1,13 +1,11 @@
 import { memo, useEffect, useRef, useState } from 'react';
+import Avatar from '../Avatar';
 import Icons from '../Icons';
 import { CG_RANKS, cgRankFor } from '../../utils/ranks';
 
 // How many places the podium covers. A place, not a person: dense ranking lets
 // several coders share one, so the podium can hold more than three of them.
 export const PODIUM_PLACES = 3;
-
-// Avatar badge fallback: first two letters of the username.
-const initialsOf = (username) => username.slice(0, 2).toUpperCase();
 
 // How long a podium tile holds one coder before rotating to the next one
 // sharing that place.
@@ -163,7 +161,7 @@ export const StandingRow = memo(function StandingRow({
       </div>
 
       <div className="st-user">
-        <div className="st-av">{initialsOf(u.username)}</div>
+        <Avatar src={u.avatar} username={u.username} className="st-av" />
         <div className="st-id">
           <div className="st-h">
             <span className="nm">{u.username}</span>
@@ -230,7 +228,7 @@ export function PodiumCard({
       onClick={() => onOpen?.(u.username)}
     >
       <div className="pod-medal">{place}</div>
-      <div className="pod-av">{initialsOf(u.username)}</div>
+      <Avatar src={u.avatar} username={u.username} className="pod-av" />
       <div className="pod-h">
         <span className="nm">{u.username}</span>
         {isYou && <span className="you-tag">YOU</span>}

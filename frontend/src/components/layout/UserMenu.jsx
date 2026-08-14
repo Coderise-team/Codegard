@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Avatar from '../Avatar';
 import Icons from '../Icons';
 import { useAuthStore } from '../../store/authStore';
 import './UserMenu.css';
@@ -11,7 +12,7 @@ import './UserMenu.css';
  * Edit profile button, so the menu just points there and logs out.
  *
  * Props:
- *   user — { username, initials }
+ *   user — { username, avatar }
  */
 export default function UserMenu({ user }) {
   const [open, setOpen] = useState(false);
@@ -52,7 +53,7 @@ export default function UserMenu({ user }) {
         <div className="meta">
           <div className="handle">{user?.username}</div>
         </div>
-        <div className="avatar">{user?.initials}</div>
+        <Avatar src={user?.avatar} username={user?.username} />
       </button>
 
       {open && (

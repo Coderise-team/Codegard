@@ -2,109 +2,118 @@ DEV := docker compose -f docker-compose.dev.yml
 PROD := docker compose -f docker-compose.prod.yml
 DEV_TEST := $(DEV) --profile test
 
-.PHONY: help dev dev-build build down restart logs ps shell migrate makemigrations superuser \
-        test-backend test-judge test-schemas test-frontend build-test-backend build-test-judge build-test-frontend \
-        prod-up prod-up-build prod-down prod-restart prod-logs prod-ps
+.DEFAULT_GOAL := help
 
-help:
-	@echo "Dev:"
-	@echo "  make dev                  Start dev containers"
-	@echo "  make dev-build            Start dev containers with image build"
-	@echo "  make build                Build dev images"
-	@echo "  make down                 Stop and remove dev containers"
-	@echo "  make restart              Restart dev containers"
-	@echo "  make logs                 Show dev logs (follow)"
-	@echo "  make ps                   Show running dev services"
-	@echo "  make shell                Open shell in backend container"
-	@echo ""
-	@echo "Prod:"
-	@echo "  make prod-up              Start prod containers"
-	@echo "  make prod-up-build        Start prod containers with image build"
-	@echo "  make prod-down            Stop and remove prod containers"
-	@echo "  make prod-restart         Restart prod containers"
-	@echo "  make prod-logs            Show prod logs (follow)"
-	@echo "  make prod-ps              Show running prod services"
-	@echo ""
-	@echo "Django:"
-	@echo "  make migrate              Apply migrations"
-	@echo "  make makemigrations       Create migrations"
-	@echo "  make superuser            Create Django superuser"
-	@echo ""
-	@echo "Tests:"
-	@echo "  make test-backend         Run backend tests"
-	@echo "  make test-judge           Run judge tests"
-	@echo "  make test-schemas         Run shared schema tests"
-	@echo "  make test-frontend        Run frontend tests"
-	@echo "  make build-test-backend   Rebuild backend test image"
-	@echo "  make build-test-judge     Rebuild judge test image"
-	@echo "  make build-test-frontend  Rebuild frontend test image"
+# Naming: <env>-<action>. A bare env starts it, -build only builds, -build-up
+# does both. The help below is generated from the ## comments, so it cannot
+# drift away from the targets themselves.
+help: ## Show this help
+	@awk 'BEGIN {FS = ":.*?## "} \
+		/^##@/ { printf "\n%s\n", substr($$0, 5); next } \
+		/^[a-zA-Z0-9_-]+:.*?## / { printf "  %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-dev:
+##@ Dev
+dev: ## Start the dev stack
 	$(DEV) up
 
-dev-build:
-	$(DEV) up --build
-
-build:
+dev-build: ## Build the dev images
 	$(DEV) build
 
-down:
+dev-build-up: ## Build the dev images, then start
+	$(DEV) up --build
+
+dev-down: ## Stop and remove the dev containers
 	$(DEV) down
 
-restart: down dev
+dev-restart: ## Restart the running dev containers
+	$(DEV) restart
 
-logs:
+dev-logs: ## Follow the dev logs
 	$(DEV) logs -f
 
-ps:
+dev-ps: ## Show the dev services
 	$(DEV) ps
 
-shell:
+dev-shell: ## Open a shell in the dev backend
 	$(DEV) exec backend sh
 
-migrate:
-	$(DEV) run --rm backend python django_app/manage.py migrate
+dev-migrate: ## Apply migrations (they also run on every start)
+	$(DEV) run --rm migrate
 
-makemigrations:
+dev-makemigrations: ## Create new migrations
 	$(DEV) run --rm backend python django_app/manage.py makemigrations
 
-superuser:
+dev-superuser: ## Create a Django superuser in dev
 	$(DEV) run --rm backend python django_app/manage.py createsuperuser
 
-test-backend:
-	$(DEV_TEST) run --rm backend-test
+##@ Prod
+prod: ## Start the prod stack in the background
+	$(PROD) up -d
 
-test-judge:
-	$(DEV_TEST) run --rm judge-test
+prod-build: ## Build the prod images without touching what is running
+	$(PROD) build
 
-test-schemas:
-	$(DEV_TEST) run --rm judge-test pytest /shared/tests/ -v
+prod-build-up: ## Build the prod images, then start in the background
+	$(PROD) up -d --build
 
-test-frontend:
-	$(DEV_TEST) run --rm frontend-test
-
-build-test-backend:
-	$(DEV_TEST) build backend-test
-
-build-test-judge:
-	$(DEV_TEST) build judge-test
-
-build-test-frontend:
-	$(DEV_TEST) build frontend-test
-
-prod-up:
-	$(PROD) up
-
-prod-up-build:
-	$(PROD) up --build
-
-prod-down:
+prod-down: ## Stop and remove the prod containers
 	$(PROD) down
 
-prod-restart: prod-down prod-up
+prod-restart: ## Restart the running prod containers
+	$(PROD) restart
 
-prod-logs:
+prod-logs: ## Follow the prod logs
 	$(PROD) logs -f
 
-prod-ps:
+prod-ps: ## Show the prod services
 	$(PROD) ps
+
+prod-superuser: ## Create a Django superuser in prod
+	$(PROD) run --rm backend python django_app/manage.py createsuperuser
+
+##@ Tests
+# Each one rebuilds its image first: the frontend image carries the code inside
+# it, so without a rebuild the suite passes against the previous build.
+test: test-backend test-judge test-schemas test-frontend ## Run every suite
+
+test-backend: build-test-backend ## Run the backend suite
+	$(DEV_TEST) run --rm backend-test
+
+test-judge: build-test-judge ## Run the judge suite
+	$(DEV_TEST) run --rm judge-test
+
+test-schemas: build-test-judge ## Run the shared schema suite
+	$(DEV_TEST) run --rm judge-test pytest /shared/tests/ -v
+
+test-frontend: build-test-frontend ## Run the frontend suite
+	$(DEV_TEST) run --rm frontend-test
+
+build-test-backend: ## Rebuild the backend test image
+	$(DEV_TEST) build backend-test
+
+build-test-judge: ## Rebuild the judge test image
+	$(DEV_TEST) build judge-test
+
+build-test-frontend: ## Rebuild the frontend test image
+	$(DEV_TEST) build frontend-test
+
+##@ Lint
+# Host tools, not containers: linters need to see the same files the editor
+# does, and rebuilding an image to check formatting is a waste.
+lint: ## Run every linter and formatting check
+	cd backend && ruff check . && ruff format --check .
+	cd judge && ruff check . && ruff format --check .
+	cd frontend && npm run lint && npx prettier --check .
+
+format: ## Reformat everything in place
+	cd backend && ruff format .
+	cd judge && ruff format .
+	cd frontend && npx prettier --write .
+
+.PHONY: help \
+        dev dev-build dev-build-up dev-down dev-restart dev-logs dev-ps dev-shell \
+        dev-migrate dev-makemigrations dev-superuser \
+        prod prod-build prod-build-up prod-down prod-restart prod-logs prod-ps prod-superuser \
+        test test-backend test-judge test-schemas test-frontend \
+        build-test-backend build-test-judge build-test-frontend \
+        lint format
