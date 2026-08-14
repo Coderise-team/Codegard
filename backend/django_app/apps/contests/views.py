@@ -27,10 +27,11 @@ from .serializers import (
 )
 from .services import get_leaderboard, get_participant_rank
 
-# Trigram title search knobs — same reasoning as the problem catalog: queries
-# under 3 chars have no useful trigram signal, and 0.35 word-similarity cleanly
-# separates real matches (incl. typos) from long titles that merely share a few
-# trigrams. Per project rule these are constants, not env vars.
+# Trigram title search knobs. Queries under 3 chars have no useful trigram
+# signal. 0.35 is inherited from the problem catalog, where it was validated on
+# real titles (real matches, incl. typos, score >= 0.375; garbage <= 0.25). The
+# current contest data is placeholder/homogeneous ("Codegard Round N"), so this
+
 MIN_TRIGRAM_LENGTH = 3
 TITLE_SEARCH_THRESHOLD = 0.35
 
