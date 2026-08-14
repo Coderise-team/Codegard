@@ -158,6 +158,22 @@
   border-radius: 34px 34px 0 0;
   box-shadow: 0 -26px 60px -26px rgba(0, 0, 0, 0.85);
 }
+/* Every sheet is at least a screen tall, and its contents sit in the middle of
+   it. A section shorter than that used to end wherever its text ran out, so
+   two of them shared a screen and the page lost its rhythm.
+
+   Only a floor, never a ceiling: a section with more in it than a screen can
+   hold — the standings, say — keeps its own height and is left to scroll.
+
+   "How it works" is left out. It is already three screens tall on purpose and
+   holds its picture still while you scroll through it, and centring a pinned
+   child inside its parent takes the pin apart. */
+.lp .band:not(.how) {
+  min-height: calc(100vh + var(--lp-lift));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .lp .sec.band {
   padding-top: 164px;
 }
@@ -2285,6 +2301,13 @@
 .lp .final .hero-cta {
   justify-content: center;
   margin-top: 36px;
+}
+/* Here the note stands on its own under the button rather than beside it, so
+   it needs its own room above and centring of its own — the width it is held
+   to would otherwise leave it hanging off the left of a centred column. */
+.lp .final .hero-note {
+  margin: 16px auto 0;
+  text-align: center;
 }
 .lp-foot {
   border-top: 1px solid var(--border);
