@@ -2419,20 +2419,54 @@
   .lp .how {
     height: 260vh;
   }
+  /* Held to the top rather than centred. Every step opens its description as
+     it becomes the current one, and centred content answers that by shifting
+     everything to find its middle again — which is felt as the whole section
+     trembling on each change. Anchored to the top, an opening step moves only
+     what is below it. */
   .lp .how-pin {
-    padding: var(--nav-h) 0 20px;
-  }
-  .lp .how-grid {
-    gap: 26px;
-  }
-  .lp .how-steps {
-    margin-top: 22px;
-  }
-  .lp .how-step {
-    padding: 12px 0;
+    align-items: flex-start;
+    padding: calc(var(--nav-h) + 44px) 0 8px;
   }
   .lp .how-vis {
-    height: clamp(180px, 30vh, 300px);
+    height: clamp(250px, 40vh, 360px);
+  }
+  .lp .how-grid {
+    gap: 24px;
+  }
+  .lp .how-steps {
+    margin-top: 20px;
+  }
+  .lp .how-step {
+    padding: 11px 0;
+  }
+
+  /* The standing card is the tallest of the four panes and the one that gets
+     clipped first. It keeps its ring beside the numbers — stacking them makes
+     it taller still — and gives up size instead. */
+  .lp .how-pane {
+    padding: 18px;
+    gap: 10px;
+  }
+  .lp .hp-card-bd {
+    gap: 18px;
+    padding: 6px 14px 12px;
+  }
+  .lp .hp-ring {
+    width: min(146px, 24vh);
+  }
+  .lp .hp-ring-c .elo {
+    font-size: 34px;
+  }
+  .lp .hp-ring-c .lab {
+    margin-top: 5px;
+  }
+  .lp .hp-name {
+    font-size: 16px;
+  }
+  .lp .hp-tier,
+  .lp .hp-spark {
+    margin-top: 12px;
   }
 
   /* The podium loses its raised middle tile: with the three stacked there is no
@@ -2613,24 +2647,28 @@
   .lp .hp-prob .k {
     display: none;
   }
-  /* The standing card puts its ring beside the numbers when there is width. */
+  /* The pane is wider than it is tall, so the ring stays beside the numbers
+     here too — only smaller. */
   .lp .hp-card-bd {
-    flex-direction: column;
     gap: 14px;
-    padding: 8px 16px 16px;
-  }
-  .lp .hp-meta {
-    width: 100%;
-    text-align: center;
-  }
-  .lp .hp-name {
-    justify-content: center;
+    padding: 4px 12px 10px;
   }
   .lp .hp-ring {
-    width: min(150px, 30vh);
+    width: min(124px, 22vh);
   }
   .lp .hp-ring-c .elo {
-    font-size: 40px;
+    font-size: 28px;
+  }
+  .lp .hp-ring-c .lab {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+  .lp .hp-ring-c .rk {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .lp .hp-name {
+    font-size: 15px;
   }
 
   /* ---------- the round strip ---------- */
