@@ -31,7 +31,8 @@ from .services import get_leaderboard, get_participant_rank
 # signal. 0.35 is inherited from the problem catalog, where it was validated on
 # real titles (real matches, incl. typos, score >= 0.375; garbage <= 0.25). The
 # current contest data is placeholder/homogeneous ("Codegard Round N"), so this
-
+# threshold can't be tuned independently yet — it should be re-checked on real,
+# varied contest names later. Per project rule these are constants, not env vars.
 MIN_TRIGRAM_LENGTH = 3
 TITLE_SEARCH_THRESHOLD = 0.35
 
