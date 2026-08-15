@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
 import { useLandingScroll } from '../../hooks/useLandingScroll';
@@ -44,6 +44,8 @@ export function LandingNav() {
   const [stuck, setStuck] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const barRef = useRef(null);
+
   useEffect(() => {
     if (!scrollEl) return undefined;
     const on = () => setStuck(scrollEl.scrollTop > 8);
@@ -52,9 +54,21 @@ export function LandingNav() {
     return () => scrollEl.removeEventListener('scroll', on);
   }, [scrollEl]);
 
+  // An open menu shuts on the next press anywhere outside the bar, the way the
+  // tag and tier menus inside the product do. Without it the only way out is
+  // the button that opened it.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onDown = (e) => {
+      if (!barRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [menuOpen]);
+
   return (
     <nav className={stuck ? 'lp-nav stuck' : 'lp-nav'}>
-      <div className="nav-in">
+      <div className="nav-in" ref={barRef}>
         <LandingLogo />
 
         <button

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icons from '../Icons';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 
@@ -34,39 +34,55 @@ export default function LiveContest({ contest }) {
     return () => clearInterval(iv);
   }, []);
 
+  // The board as it stands, kept beside the state rather than read out of it.
+  //
+  // React may run a state update more than once and expects it to do nothing
+  // but return the next value. Choosing at random and lighting the row that was
+  // chosen are neither of those, so they happen in the timer instead — made
+  // from inside the update, two runs would pick two different people and light
+  // a row that scored nothing.
+  //
+  // The timer needs the board as it is now, and a value that arrives with the
+  // next render is not that: several ticks can fall between two renders, and
+  // each would work from the same stale board and hand out the same point
+  // again. So the new board is written here first and handed to React after.
+  const rowsRef = useRef(rows);
+
   useEffect(() => {
     if (reduced) return undefined;
     const openedAt = Date.now();
     let fade = 0;
     const iv = setInterval(() => {
+      const unfinished = rowsRef.current.filter(
+        (r) => r.solved < PROBLEM_COUNT
+      );
+      if (!unfinished.length) return;
+
+      const solver =
+        unfinished[Math.floor(Math.random() * unfinished.length)].handle;
       // Where the round stands right now, so an accepted solution lands at a
       // believable minute instead of leaving the row's own clock behind.
       const intoRound =
         elapsedOnOpen + Math.floor((Date.now() - openedAt) / 1000);
 
-      setRows((current) => {
-        const unfinished = current.filter((r) => r.solved < PROBLEM_COUNT);
-        if (!unfinished.length) return current;
+      setBump(solver);
+      clearTimeout(fade);
+      fade = setTimeout(() => setBump(null), BUMP_FOR);
 
-        const solver =
-          unfinished[Math.floor(Math.random() * unfinished.length)].handle;
-        setBump(solver);
-        clearTimeout(fade);
-        fade = setTimeout(() => setBump(null), BUMP_FOR);
-
-        return current.map((row) =>
-          row.handle === solver
-            ? {
-                ...row,
-                solved: row.solved + 1,
-                pts: row.pts + POINTS_PER_PROBLEM,
-                // Penalty carries the minutes spent reaching this solution.
-                pen: row.pen + Math.floor(intoRound / 60),
-                last: asHoursMinutes(intoRound),
-              }
-            : row
-        );
-      });
+      const next = rowsRef.current.map((row) =>
+        row.handle === solver
+          ? {
+              ...row,
+              solved: row.solved + 1,
+              pts: row.pts + POINTS_PER_PROBLEM,
+              // Penalty carries the minutes spent reaching this solution.
+              pen: row.pen + Math.floor(intoRound / 60),
+              last: asHoursMinutes(intoRound),
+            }
+          : row
+      );
+      rowsRef.current = next;
+      setRows(next);
     }, SOLVE_EVERY);
     return () => {
       clearInterval(iv);
@@ -159,7 +175,14 @@ export default function LiveContest({ contest }) {
               <span className="cp-cell">Pts</span>
               <span className="cp-cell cp-c-pen">Penalty</span>
             </div>
-            <div className="board-rows">
+            {/* The rows are placed by transform, so the panel has to be told
+                how tall the board is; taken from the board itself rather than
+                set in the stylesheet, where adding a participant would leave a
+                gap or cut the last row off. */}
+            <div
+              className="board-rows"
+              style={{ height: `${rows.length * ROW_H}px` }}
+            >
               {rows.map((r) => {
                 const rank = pos[r.handle] + 1;
                 return (

@@ -15,10 +15,10 @@ export function JudgeSection({ items }) {
           <h2 className="sec-t">What happens after you press Submit.</h2>
         </div>
         <div className="judge">
-          {items.map((j, i) => {
+          {items.map((j) => {
             const Icon = Icons[j.icon];
             return (
-              <div key={j.t} className={`jc rv rv-d${i + 1}`}>
+              <div key={j.t} className="jc rv">
                 <span className="ic">
                   <Icon size={19} />
                 </span>

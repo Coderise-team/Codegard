@@ -239,9 +239,15 @@ export default function HowItWorks({ steps, catalogue, you }) {
 
     measure();
     scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    // A resize changes both sides of the sum: the section is three and a half
+    // screens tall on a desktop and two and a half on a tablet, and the screen
+    // it is measured against changes with it. Without this the step on show
+    // stays where it was until the wheel is touched again.
+    window.addEventListener('resize', onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
       scrollEl.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, [scrollEl, steps.length]);
 

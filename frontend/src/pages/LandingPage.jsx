@@ -41,30 +41,43 @@ export default function LandingPage({ data = landingDataDefault }) {
   const [scrollEl, setScrollEl] = useState(null);
   const reduced = useReducedMotion();
 
-  // parallax + cursor glow
+  // Parallax and cursor glow. Both are switched off rather than painted over
+  // when less motion is asked for: the stylesheet pins the layers in place
+  // there anyway, so listening would be work done for nothing.
+  //
+  // A pointer reports far more often than the screen redraws, so the position
+  // is written once a frame like the scroll offset. Both write a custom
+  // property and nothing else — no layout is read, and the layers that use
+  // them move on the compositor.
   useEffect(() => {
-    if (!scrollEl) return undefined;
+    if (!scrollEl || reduced) return undefined;
     let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        scrollEl.style.setProperty('--sy', `${scrollEl.scrollTop}px`);
-      });
+    let pointer = null;
+
+    const write = () => {
+      raf = 0;
+      scrollEl.style.setProperty('--sy', `${scrollEl.scrollTop}px`);
+      if (!pointer) return;
+      scrollEl.style.setProperty('--mx', `${pointer.x}px`);
+      scrollEl.style.setProperty('--my', `${pointer.y}px`);
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(write);
     };
     const onMove = (e) => {
-      scrollEl.style.setProperty('--mx', `${e.clientX}px`);
-      scrollEl.style.setProperty('--my', `${e.clientY}px`);
+      pointer = { x: e.clientX, y: e.clientY };
+      schedule();
     };
-    onScroll();
-    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+
+    write();
+    scrollEl.addEventListener('scroll', schedule, { passive: true });
     scrollEl.addEventListener('pointermove', onMove, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
-      scrollEl.removeEventListener('scroll', onScroll);
+      scrollEl.removeEventListener('scroll', schedule);
       scrollEl.removeEventListener('pointermove', onMove);
     };
-  }, [scrollEl]);
+  }, [scrollEl, reduced]);
 
   useScrollReveal(scrollEl);
   useSmoothScroll(scrollEl, !reduced);

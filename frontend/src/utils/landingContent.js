@@ -117,7 +117,7 @@ const landingContent = {
     },
     {
       t: 'Send it to the judge',
-      d: 'An answer comes back in seconds: the verdict, the time it ran, the memory it took.',
+      d: 'An answer comes back in seconds: the verdict and the time it ran.',
     },
     {
       t: 'Move the rating',

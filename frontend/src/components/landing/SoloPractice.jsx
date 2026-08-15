@@ -20,7 +20,7 @@ function CatalogueMock({ rows }) {
           {DIFFICULTIES.map((level) => (
             <span
               key={level}
-              className={`${level === 'All' ? 'on' : ''} d-${level.toLowerCase()}`}
+              className={level === 'All' ? 'on' : `d-${level.toLowerCase()}`}
             >
               {level === 'All' ? null : <span className="sdot" />}
               {level}

@@ -967,9 +967,9 @@
   width: 54px;
 }
 
+/* Height comes from the component: it knows how many rows the board has. */
 .lp .board-rows {
   position: relative;
-  height: 264px;
 }
 .lp .brow {
   position: absolute;

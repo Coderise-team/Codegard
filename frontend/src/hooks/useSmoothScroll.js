@@ -6,6 +6,9 @@ const EASE = 0.05;
 const LINE_PX = 16;
 // Close enough to the target to stop and let the position land exactly.
 const DONE_PX = 0.5;
+// How far the page may sit from where we put it and still count as ours: the
+// element rounds what it is given to whole device pixels.
+const FOREIGN_PX = 2;
 // Notches closer together than this are one continuous push, and the page
 // picks up speed: each one adds to the step, up to ACCEL_MAX times a notch.
 // Without it a fast scroll covers no more ground than a slow one and the page
@@ -95,9 +98,16 @@ export function useSmoothScroll(scrollEl, enabled = true) {
       if (!raf) raf = requestAnimationFrame(frame);
     };
 
-    // Anything that moved the page without the wheel becomes the new start.
+    // Anything that moved the page without the wheel wins, and the glide gives
+    // way to it. Told apart by where the page ended up: our own frames leave it
+    // where we last put it, so a position that has moved on its own is somebody
+    // else's — a link to a section, the scrollbar, the keyboard. Without this
+    // the next frame would drag the page back to where the wheel had aimed,
+    // and a section clicked a moment after scrolling would be snatched away.
     const onScroll = () => {
-      if (raf) return;
+      if (raf && Math.abs(scrollEl.scrollTop - at) <= FOREIGN_PX) return;
+      cancelAnimationFrame(raf);
+      raf = 0;
       at = scrollEl.scrollTop;
       target = at;
     };
