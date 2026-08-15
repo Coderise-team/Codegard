@@ -399,11 +399,12 @@ class PasswordChangeView(APIView):
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
-# Username trigram search knobs. Tuned on the real user table: exact, prefix
-# (3+ chars) and one-letter typos score >= 0.4, while unrelated names stay
-# <= 0.17. 0.3 sits in that gap and is a touch more forgiving than the title
-# threshold (0.35) because usernames are single short tokens that get mistyped.
-# Per project rule these are constants, not env vars.
+# Username trigram search knobs. Threshold 0.3 tuned on the real user table:
+# exact, 3+ char prefixes, one-letter typos and transpositions all score
+# >= 0.375, while unrelated names stay <= 0.22. 0.3 sits in that gap — a touch
+# more forgiving than the title threshold (0.35) because usernames are single
+# short tokens that get mistyped. Per project rule these are constants, not
+# env vars.
 MIN_TRIGRAM_LENGTH = 3
 USERNAME_SEARCH_THRESHOLD = 0.3
 
