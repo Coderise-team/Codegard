@@ -52,20 +52,24 @@ export default function LandingPage({ data = landingDataDefault }) {
   useEffect(() => {
     if (!scrollEl || reduced) return undefined;
     let raf = 0;
-    let pointer = null;
+    // Held as two numbers rather than a point: a pointer fires often enough
+    // that an object per event is rubbish worth not making.
+    let px = null;
+    let py = null;
 
     const write = () => {
       raf = 0;
       scrollEl.style.setProperty('--sy', `${scrollEl.scrollTop}px`);
-      if (!pointer) return;
-      scrollEl.style.setProperty('--mx', `${pointer.x}px`);
-      scrollEl.style.setProperty('--my', `${pointer.y}px`);
+      if (px === null) return;
+      scrollEl.style.setProperty('--mx', `${px}px`);
+      scrollEl.style.setProperty('--my', `${py}px`);
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(write);
     };
     const onMove = (e) => {
-      pointer = { x: e.clientX, y: e.clientY };
+      px = e.clientX;
+      py = e.clientY;
       schedule();
     };
 

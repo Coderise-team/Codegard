@@ -190,7 +190,7 @@ export default function LiveContest({ contest }) {
                     key={r.handle}
                     className={`brow${r.you ? ' you' : ''}${
                       rank <= 3 ? ` r${rank}` : ''
-                    }${bump === r.handle ? ' bump' : ''}`}
+                    }${!reduced && bump === r.handle ? ' bump' : ''}`}
                     style={{
                       transform: `translateY(${rank * ROW_H - ROW_H}px)`,
                     }}
