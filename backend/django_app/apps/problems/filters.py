@@ -1,11 +1,8 @@
 import django_filters
+from core.search import MIN_TRIGRAM_LENGTH
 from django.contrib.postgres.search import TrigramWordSimilarity
 
 from .models import Problem
-
-# Queries shorter than this fall back to prefix search — a two-letter query has
-# no useful trigram signal (see filter_search).
-MIN_TRIGRAM_LENGTH = 3
 
 # Minimum word-similarity for a title to count as a match. Tuned on the real
 # catalog (36 LeetCode-style titles). Real matches — exact, single-word,

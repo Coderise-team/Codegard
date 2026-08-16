@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
+from core.search import MIN_TRIGRAM_LENGTH
 from django.contrib.postgres.search import TrigramWordSimilarity
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
@@ -405,7 +406,6 @@ class PasswordChangeView(APIView):
 # more forgiving than the title threshold (0.35) because usernames are single
 # short tokens that get mistyped. Per project rule these are constants, not
 # env vars.
-MIN_TRIGRAM_LENGTH = 3
 USERNAME_SEARCH_THRESHOLD = 0.3
 
 

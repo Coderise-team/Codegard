@@ -3,6 +3,7 @@ from collections import defaultdict
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from core.pagination import ClientPageSizePagination
+from core.search import MIN_TRIGRAM_LENGTH
 from django.contrib.postgres.search import TrigramWordSimilarity
 from django.core.cache import cache
 from django.utils import timezone
@@ -33,7 +34,6 @@ from .services import get_leaderboard, get_participant_rank
 # current contest data is placeholder/homogeneous ("Codegard Round N"), so this
 # threshold can't be tuned independently yet — it should be re-checked on real,
 # varied contest names later. Per project rule these are constants, not env vars.
-MIN_TRIGRAM_LENGTH = 3
 TITLE_SEARCH_THRESHOLD = 0.35
 
 
