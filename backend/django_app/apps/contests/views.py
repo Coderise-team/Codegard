@@ -97,7 +97,9 @@ class ContestViewSet(viewsets.ModelViewSet):
         # active (3+ chars) it ranks by relevance, then falls back to newest.
         # Otherwise we set -start_time explicitly: the aggregate annotations below
         # drop the model's Meta ordering, and an explicit ?ordering still wins
-        # because OrderingFilter runs after get_queryset.
+        # because OrderingFilter runs after get_queryset. A trailing `id` keeps
+        # the order total when two contests share a start_time (or similarity),
+        # so pagination doesn't drop/duplicate rows at page seams.
         search = (self.request.query_params.get("search") or "").strip()
         if search and len(search) >= MIN_TRIGRAM_LENGTH:
             queryset = (
@@ -105,12 +107,12 @@ class ContestViewSet(viewsets.ModelViewSet):
                     title_similarity=TrigramWordSimilarity(search, "title")
                 )
                 .filter(title_similarity__gte=TITLE_SEARCH_THRESHOLD)
-                .order_by("-title_similarity", "-start_time")
+                .order_by("-title_similarity", "-start_time", "id")
             )
         else:
             if search:  # 1–2 chars: prefix match, keep the newest-first order
                 queryset = queryset.filter(title__istartswith=search)
-            queryset = queryset.order_by("-start_time")
+            queryset = queryset.order_by("-start_time", "id")
 
         # Annotations to avoid N+1 queries
         queryset = queryset.annotate(
