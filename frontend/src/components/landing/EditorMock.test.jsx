@@ -15,7 +15,7 @@ const START = 500;
 const PRESS = 520;
 const RUNNING = 240;
 const VERDICT = 1340;
-const RESTART = 6900;
+const RESTART = 3000;
 
 // Typing adds one or two characters a tick, at random. Held to one below, so
 // the run takes exactly a tick per character and each step of the cycle can be

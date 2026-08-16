@@ -13,7 +13,10 @@ const AFTER_TYPING = [
 ];
 
 const START_DELAY = 500; // quiet moment before the first character
-const RESTART_DELAY = 6900; // how long the verdict stays up before a rerun
+// How long the verdict stays up before a rerun. Long enough to read its two
+// lines twice over, short enough that the screen is not standing still for
+// half of every round.
+const RESTART_DELAY = 3000;
 const TYPING_TICK = 26;
 
 /**
