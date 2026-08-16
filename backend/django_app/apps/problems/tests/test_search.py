@@ -57,19 +57,6 @@ def test_blank_search_returns_full_list(user_client):
 
 
 @pytest.mark.django_db
-def test_filter_search_blank_term_is_noop():
-    # django_filters strips whitespace and drops an empty value before calling,
-    # so the method's own blank guard is only reachable in isolation. Verify it
-    # returns the queryset untouched rather than filtering to nothing.
-    from apps.problems.filters import ProblemFilter
-
-    make_problem("Alpha")
-    make_problem("Beta")
-    qs = Problem.objects.all()
-    assert ProblemFilter().filter_search(qs, "search", "   ").count() == 2
-
-
-@pytest.mark.django_db
 def test_two_char_query_is_prefix_match(user_client):
     make_problem("Two Sum")  # starts with "Tw"
     make_problem("Add Two Numbers")  # "Tw" only in the middle

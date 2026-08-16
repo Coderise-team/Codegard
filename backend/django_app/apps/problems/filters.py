@@ -74,10 +74,10 @@ class ProblemFilter(django_filters.FilterSet):
         fields = ["search", "difficulty", "tag", "status", "ordering"]
 
     def filter_search(self, queryset, name, value):
+        # django_filters strips whitespace and skips empty values, so a blank
+        # term never reaches here; if one somehow did, len < 3 falls through to
+        # istartswith="" which returns the full catalog anyway.
         term = (value or "").strip()
-        if not term:
-            # Absent/blank search leaves the catalog untouched.
-            return queryset
         if len(term) < MIN_TRIGRAM_LENGTH:
             # 1–2 chars: trigram similarity is meaningless, so "starts with".
             return queryset.filter(title__istartswith=term)
