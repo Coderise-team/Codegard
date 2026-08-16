@@ -312,9 +312,16 @@
     background 0.15s;
   padding: 0;
 }
-.auth-oauth-btn:hover {
+.auth-oauth-btn:hover:not(:disabled) {
   border-color: var(--border-2);
   background: #1a1e2e;
+}
+/* These go dead while a sign-in is on its way, and have to look it — the form's
+   own button a few rules up says so the same way. Without it a button that
+   answers nothing still lights up under the pointer. */
+.auth-oauth-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 /* ── Small / short screens: drop the ring (it needs ~600px each way),
