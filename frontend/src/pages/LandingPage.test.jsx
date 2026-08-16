@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 import LandingPage from './LandingPage';
 import landingContent from '../utils/landingContent';
@@ -10,6 +11,15 @@ vi.mock('../hooks/useReducedMotion', () => ({
   useReducedMotion: () => true,
 }));
 
+// The page's links into the product are router links, so it needs a router
+// around it the same way the app gives it one.
+const renderPage = () =>
+  render(
+    <MemoryRouter>
+      <LandingPage />
+    </MemoryRouter>
+  );
+
 const hrefsIn = (container, selector) =>
   Array.from(container.querySelectorAll(`${selector} a`))
     .map((link) => link.getAttribute('href'))
@@ -17,7 +27,7 @@ const hrefsIn = (container, selector) =>
 
 describe('LandingPage', () => {
   it('has a section behind every name in the bar', () => {
-    const { container } = render(<LandingPage />);
+    const { container } = renderPage();
     const links = hrefsIn(container, '.nav-links');
 
     expect(links.length).toBeGreaterThan(0);
@@ -27,7 +37,7 @@ describe('LandingPage', () => {
   });
 
   it('lists the same sections in the footer as in the bar', () => {
-    const { container } = render(<LandingPage />);
+    const { container } = renderPage();
 
     expect(hrefsIn(container, '.foot-col')).toEqual(
       hrefsIn(container, '.nav-links')
@@ -35,7 +45,7 @@ describe('LandingPage', () => {
   });
 
   it('sends both of its calls to action to the sign-up form', () => {
-    render(<LandingPage />);
+    renderPage();
 
     expect(
       screen.getByRole('link', { name: /start solving/i })
@@ -46,7 +56,7 @@ describe('LandingPage', () => {
   });
 
   it('answers every question it promises to answer', () => {
-    render(<LandingPage />);
+    renderPage();
 
     landingContent.faq.forEach(({ q }) => {
       expect(screen.getByRole('button', { name: q })).toBeInTheDocument();
@@ -54,7 +64,7 @@ describe('LandingPage', () => {
   });
 
   it('keeps the interface mocks out of a page translator', () => {
-    const { container } = render(<LandingPage />);
+    const { container } = renderPage();
 
     [
       '.ed-shell',

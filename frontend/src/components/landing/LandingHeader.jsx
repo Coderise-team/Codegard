@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
 import { useLandingScroll } from '../../hooks/useLandingScroll';
@@ -90,12 +91,12 @@ export function LandingNav() {
         </div>
 
         <div className="nav-right">
-          <a className="nav-signin" href="/login">
+          <Link className="nav-signin" to="/login">
             Sign in
-          </a>
-          <a className="btn btn-sm btn-primary" href="/register">
+          </Link>
+          <Link className="btn btn-sm btn-primary" to="/register">
             Create account
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
@@ -127,10 +128,10 @@ export function LandingHero({ data }) {
               button costs you, and with one action left in the hero the room to
               its right would otherwise read as something missing. */}
           <div className="hero-cta">
-            <a className="btn btn-lg btn-primary" href="/register">
+            <Link className="btn btn-lg btn-primary" to="/register">
               Start solving
               <Icons.send size={17} />
-            </a>
+            </Link>
             <p className="hero-note">{data.note}</p>
           </div>
         </div>

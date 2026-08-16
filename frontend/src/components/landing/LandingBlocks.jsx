@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Icons from '../Icons';
 import { LandingLogo } from './LandingHeader';
 
@@ -51,6 +52,7 @@ export function FaqSection({ items }) {
               <button
                 type="button"
                 className="faq-q"
+                aria-expanded={open === i}
                 onClick={() => setOpen(open === i ? -1 : i)}
               >
                 {f.q}
@@ -84,10 +86,10 @@ export function FinalCta() {
           Solve problems, join live contests, watch your rating move.
         </p>
         <div className="hero-cta">
-          <a className="btn btn-lg btn-primary" href="/register">
+          <Link className="btn btn-lg btn-primary" to="/register">
             Create account
             <Icons.send size={17} />
-          </a>
+          </Link>
         </div>
         <p className="hero-note">Free. No card, no limits.</p>
       </div>
@@ -124,19 +126,19 @@ export function LandingFooter() {
             </div>
             <div className="foot-col">
               <span className="h">Account</span>
-              <a href="/login">Sign in</a>
-              <a href="/register">Create account</a>
+              <Link to="/login">Sign in</Link>
+              <Link to="/register">Create account</Link>
             </div>
             <div className="foot-col">
               <span className="h">Legal</span>
-              <a href="/privacy">Privacy policy</a>
+              <Link to="/privacy">Privacy policy</Link>
             </div>
           </div>
         </div>
         <div className="foot-bot">
           <span>© 2026 Codegard</span>
           <span className="sp">
-            <a href="/privacy">Privacy policy</a>
+            <Link to="/privacy">Privacy policy</Link>
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </span>
         </div>
