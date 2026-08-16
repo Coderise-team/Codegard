@@ -30,7 +30,7 @@ from .services import get_leaderboard, get_participant_rank
 
 # Trigram title search knobs. Queries under 3 chars have no useful trigram
 # signal. 0.35 is inherited from the problem catalog, where it was validated on
-# real titles (real matches, incl. typos, score >= 0.375; garbage <= 0.25). The
+# real titles (real matches, incl. typos, score >= 0.44; garbage <= 0.25). The
 # current contest data is placeholder/homogeneous ("Codegard Round N"), so this
 # threshold can't be tuned independently yet — it should be re-checked on real,
 # varied contest names later. Per project rule these are constants, not env vars.
@@ -65,9 +65,11 @@ class ContestViewSet(viewsets.ModelViewSet):
     pagination_class = ClientPageSizePagination
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["start_time"]
-    # No view-level `ordering` default: the model Meta already orders by
-    # -start_time, and leaving it off lets a search rank by similarity without
-    # OrderingFilter forcing -start_time back on top. An explicit ?ordering wins.
+    # No view-level `ordering` default: get_queryset sets the order explicitly
+    # (-start_time, or similarity when searching — the aggregate annotations
+    # there drop Meta.ordering anyway), so leaving it off lets a search rank by
+    # relevance without OrderingFilter forcing -start_time back on top. An
+    # explicit ?ordering still wins.
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
