@@ -7,26 +7,11 @@ from django.urls import reverse
 from factories import make_contest
 from rest_framework.test import APIClient
 
+from .helpers import _auth, _user
+
 User = get_user_model()
 
 URL = "users:standings"
-
-
-def _user(username, elo, max_rating=None, is_active=True):
-    return User.objects.create_user(
-        username=username,
-        email=f"{username}@test.com",
-        password="pass",
-        elo_rating=elo,
-        max_rating=max_rating if max_rating is not None else elo,
-        is_active=is_active,
-    )
-
-
-def _auth(user):
-    api = APIClient()
-    api.force_authenticate(user=user)
-    return api
 
 
 def _finished_contest(title, hours_ago):

@@ -7,28 +7,11 @@ composition with ?tier=.
 """
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.urls import reverse
-from rest_framework.test import APIClient
 
-User = get_user_model()
+from .helpers import _auth, _user
+
 URL = "users:standings"
-
-
-def _user(username, elo):
-    return User.objects.create_user(
-        username=username,
-        email=f"{username}@test.com",
-        password="pass",
-        elo_rating=elo,
-        max_rating=elo,
-    )
-
-
-def _auth(user):
-    api = APIClient()
-    api.force_authenticate(user=user)
-    return api
 
 
 @pytest.mark.django_db
