@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router-dom';
 
 import AuthPage from './pages/AuthPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import Dashboard from './pages/Dashboard';
 import ProblemsPage from './pages/ProblemsPage';
 import ProblemPage from './pages/ProblemPage';
 import ContestsPage from './pages/ContestsPage';
@@ -13,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import PrivacyPage from './pages/PrivacyPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import HomeRoute from './components/HomeRoute';
 import PrivateRoute from './components/PrivateRoute';
 import GuestRoute from './components/GuestRoute';
 
@@ -40,10 +40,13 @@ export const router = createBrowserRouter([
       // including a signed-out Google verification reviewer, so it sits outside
       // both PrivateRoute and GuestRoute.
       { path: '/privacy', element: <PrivacyPage /> },
+      // The root belongs to both audiences: it answers with the dashboard to a
+      // member and with the landing page to a guest, so it sits outside both
+      // guards and picks for itself.
+      { path: '/', element: <HomeRoute /> },
       {
         element: <PrivateRoute />,
         children: [
-          { path: '/', element: <Dashboard /> },
           { path: '/problems', element: <ProblemsPage /> },
           { path: '/problems/:id', element: <ProblemPage /> },
           { path: '/contests', element: <ContestsPage /> },
