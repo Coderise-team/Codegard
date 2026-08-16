@@ -32,7 +32,9 @@ class User(AbstractUser):
     elo_rating = models.IntegerField(default=1200, db_index=True)
     max_rating = models.IntegerField(default=1200, db_index=True)
 
-    class Meta:
+    class Meta(AbstractUser.Meta):
+        # Inherit AbstractUser.Meta so its verbose_name / ordering survive; a
+        # bare `class Meta` would reset them to Django defaults.
         indexes = [
             # Trigram GIN index backing the typo-tolerant username search.
             GinIndex(

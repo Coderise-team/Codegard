@@ -11,10 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name="user",
-            options={},
-        ),
         migrations.AddIndex(
             model_name="user",
             index=django.contrib.postgres.indexes.GinIndex(
