@@ -2515,7 +2515,7 @@
      content answers by shifting everything to find its middle again. */
   .lp .how-pin {
     align-items: stretch;
-    padding: calc(var(--nav-h) + 32px) 0 12px;
+    padding: calc(var(--nav-h) + 44px) 0 8px;
   }
   .lp .how-grid {
     grid-template-rows: auto minmax(0, 1fr);
