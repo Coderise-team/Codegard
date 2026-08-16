@@ -4,16 +4,21 @@ import { renderHook } from '@testing-library/react';
 import { useSmoothScroll } from './useSmoothScroll';
 
 // A stand-in for the page's scroll area: jsdom lays nothing out, so the sizes
-// it would measure are given here.
+// it would measure are given here, and moving it reports itself the way a real
+// element does — the hook watches those reports to tell its own movement from
+// everybody else's.
 function makeScroller({ view = 800, content = 4000 } = {}) {
   const el = document.createElement('div');
   Object.defineProperty(el, 'clientHeight', { value: view });
   Object.defineProperty(el, 'scrollHeight', { value: content });
-  el.scrollTo = ({ top }) => {
-    el.scrollTop = top;
-  };
+  el.scrollTo = ({ top }) => moveTo(el, top);
   return el;
 }
+
+const moveTo = (el, top) => {
+  el.scrollTop = top;
+  el.dispatchEvent(new Event('scroll'));
+};
 
 const wheel = (el, deltaY, timeStamp = 0) => {
   const event = new Event('wheel', { bubbles: true, cancelable: true });
@@ -89,6 +94,19 @@ describe('useSmoothScroll', () => {
     settle();
 
     expect(el.scrollTop).toBe(400);
+  });
+
+  it('gives way to a move made by anything other than the wheel', () => {
+    const el = makeScroller();
+    renderHook(() => useSmoothScroll(el));
+
+    wheel(el, 600);
+    vi.advanceTimersToNextFrame(); // the glide is under way
+
+    moveTo(el, 2000); // a link to a section, the scrollbar, the keyboard
+    settle();
+
+    expect(el.scrollTop).toBe(2000);
   });
 
   it('takes the wheel back when it is switched off', () => {
