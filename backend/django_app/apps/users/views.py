@@ -52,6 +52,7 @@ class RegisterView(APIView):
     """Register a new user and immediately issue JWT tokens."""
 
     permission_classes = [AllowAny]
+    throttle_scope = "register"
 
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
@@ -113,6 +114,7 @@ class LoginView(TokenObtainPairView):
     """Issue JWT tokens using either username or email credentials."""
 
     serializer_class = EmailOrUsernameTokenObtainSerializer
+    throttle_scope = "login"
 
 
 class OAuthStartView(APIView):
@@ -380,6 +382,7 @@ class PasswordChangeView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    throttle_scope = "password_change"
 
     def post(self, request):
         serializer = PasswordChangeSerializer(

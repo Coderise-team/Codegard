@@ -12,8 +12,8 @@ class ProblemInline(admin.TabularInline):
 
 @admin.register(Contest)
 class ContestAdmin(admin.ModelAdmin):
-    list_display = ("title", "status", "start_time", "end_time")
-    list_filter = ("status",)
+    list_display = ("title", "status", "start_time", "end_time", "rating_applied")
+    list_filter = ("status", "rating_applied")
     search_fields = ("title",)
     date_hierarchy = "start_time"
     # Removed "problems" from filter_horizontal so we can use Inline instead
