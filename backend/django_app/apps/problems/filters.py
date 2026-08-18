@@ -1,6 +1,7 @@
 import django_filters
 from core.search import MIN_TRIGRAM_LENGTH
 from django.contrib.postgres.search import TrigramWordSimilarity
+from django.core.validators import EMPTY_VALUES
 
 from .models import Problem
 
@@ -26,7 +27,16 @@ class TiebreakOrderingFilter(django_filters.OrderingFilter):
     def filter(self, qs, value):
         if not value:
             return qs
-        ordering = [self.get_ordering_value(param) for param in value]
+        # Skip empty params exactly as the parent OrderingFilter does — a
+        # trailing/leading/double comma ("?ordering=name,") yields a "" entry
+        # that would map to an invalid field and raise FieldError (HTTP 500).
+        ordering = [
+            self.get_ordering_value(param)
+            for param in value
+            if param not in EMPTY_VALUES
+        ]
+        if not ordering:
+            return qs
         ordering.append("id")
         return qs.order_by(*ordering)
 

@@ -133,6 +133,19 @@ def test_ordering_by_name(user_client):
 
 
 @pytest.mark.django_db
+def test_ordering_with_trailing_comma_is_ignored(user_client):
+    # An empty ordering param (trailing/leading comma) must be skipped, not
+    # mapped to an invalid field — otherwise order_by raises FieldError (500).
+    make_problem("Banana")
+    make_problem("Apple")
+    make_problem("Cherry")
+    plain = user_client.get(LIST, {"ordering": "name"})
+    trailing = user_client.get(LIST, {"ordering": "name,"})
+    assert trailing.status_code == 200
+    assert [r["title"] for r in _rows(trailing)] == [r["title"] for r in _rows(plain)]
+
+
+@pytest.mark.django_db
 def test_default_ordering_newest_first(user_client):
     first = make_problem("First")
     second = make_problem("Second")
