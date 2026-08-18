@@ -144,6 +144,12 @@ def test_ordering_with_trailing_comma_is_ignored(user_client):
     assert trailing.status_code == 200
     assert [r["title"] for r in _rows(trailing)] == [r["title"] for r in _rows(plain)]
 
+    # Only-commas: every param is empty, so nothing is left to order by — the
+    # request must still succeed (falls back to the default catalog order).
+    all_empty = user_client.get(LIST, {"ordering": ",,"})
+    assert all_empty.status_code == 200
+    assert len(_rows(all_empty)) == 3
+
 
 @pytest.mark.django_db
 def test_default_ordering_newest_first(user_client):
