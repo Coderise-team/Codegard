@@ -12,8 +12,9 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
+from django.utils import timezone
 
-from .models import DailyProblem, Problem, Tag, TestCase
+from .models import DailyProblem, Problem, ProblemReport, Tag, TestCase
 
 
 class TestCaseInlineFormSet(BaseInlineFormSet):
@@ -154,3 +155,50 @@ class DailyProblemAdmin(admin.ModelAdmin):
     list_display = ("date", "problem")
     date_hierarchy = "date"
     autocomplete_fields = ("problem",)
+
+@admin.register(ProblemReport)
+class ProblemReportAdmin(admin.ModelAdmin):
+    """The report queue: one page to triage everything the judge doesn't catch."""
+
+    list_display = ("problem_title", "user", "reason", "status", "created_at")
+    list_filter = ("status", "reason")
+    search_fields = ("user__username", "problem_title")
+    readonly_fields = (
+        "problem", "problem_title", "user", "reason", "message",
+        "created_at", "resolved_by", "resolved_at",
+    )
+    fieldsets = (
+        (None, {"fields": ("problem", "problem_title", "user", "reason", "message", "created_at")}),
+        ("Resolution", {"fields": ("status", "resolved_by", "resolved_at")}),
+    )
+    actions = ["accept_reports", "reject_reports"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("problem", "user", "resolved_by")
+
+    def has_add_permission(self, request):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        if "status" in form.changed_data and obj.status != ProblemReport.Status.NEW:
+            obj.resolved_by = request.user
+            obj.resolved_at = timezone.now()
+        super().save_model(request, obj, form, change)
+
+    @admin.action(description="Accept selected reports")
+    def accept_reports(self, request, queryset):
+        updated = queryset.exclude(status=ProblemReport.Status.ACCEPTED).update(
+            status=ProblemReport.Status.ACCEPTED,
+            resolved_by=request.user,
+            resolved_at=timezone.now(),
+        )
+        self.message_user(request, f"{updated} report(s) accepted.")
+
+    @admin.action(description="Reject selected reports")
+    def reject_reports(self, request, queryset):
+        updated = queryset.exclude(status=ProblemReport.Status.REJECTED).update(
+            status=ProblemReport.Status.REJECTED,
+            resolved_by=request.user,
+            resolved_at=timezone.now(),
+        )
+        self.message_user(request, f"{updated} report(s) rejected.")

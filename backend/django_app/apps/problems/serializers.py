@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
-from .models import Problem, Tag, TestCase
+from .models import Problem, Tag, TestCase, ProblemReport
 
+MIN_REPORT_MESSAGE_LENGTH = 10
 
 def acceptance_from_annotations(obj) -> float:
     """Global AC rate (%) from `total_submissions`/`ac_submissions` annotations.
@@ -204,3 +205,44 @@ class RecommendedProblemSerializer(serializers.ModelSerializer):
             return 0.0
         ac = getattr(obj, "ac_submissions", 0) or 0
         return round(ac / total * 100, 1)
+
+class ProblemReportCreateSerializer(serializers.ModelSerializer):
+    """Input for POST /api/problems/{id}/report/ — just the two fields a human
+    fills in. ``problem``, ``user``, ``problem_title`` and ``status`` are all
+    set by the view, never accepted from the request body.
+    """
+
+    class Meta:
+        model = ProblemReport
+        fields = ["reason", "message"]
+
+    def validate_message(self, value):
+        if len(value.strip()) < MIN_REPORT_MESSAGE_LENGTH:
+            raise serializers.ValidationError(
+                f"Please describe the issue in at least "
+                f"{MIN_REPORT_MESSAGE_LENGTH} characters."
+            )
+        return value
+
+
+class ProblemReportSerializer(serializers.ModelSerializer):
+    """Full report as seen by staff on /api/reports/."""
+
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    resolved_by = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = ProblemReport
+        fields = [
+            "id",
+            "problem",
+            "problem_title",
+            "user",
+            "reason",
+            "message",
+            "status",
+            "created_at",
+            "resolved_by",
+            "resolved_at",
+        ]
+        read_only_fields = fields
