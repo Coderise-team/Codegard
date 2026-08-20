@@ -15,6 +15,7 @@ from datetime import timedelta
 from apps.contests.models import Contest
 from apps.problems.models import Problem, Tag
 from apps.submissions.models import Submission
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 
@@ -64,3 +65,15 @@ def make_submission(
         Submission.objects.filter(pk=submission.pk).update(created_at=created_at)
         submission.created_at = created_at
     return submission
+
+
+def make_user(username, elo, *, max_rating=None, is_active=True):
+    """An active leaderboard user with a set rating (peak defaults to current)."""
+    return get_user_model().objects.create_user(
+        username=username,
+        email=f"{username}@test.com",
+        password="pass",
+        elo_rating=elo,
+        max_rating=max_rating if max_rating is not None else elo,
+        is_active=is_active,
+    )
