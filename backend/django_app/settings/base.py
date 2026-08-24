@@ -127,7 +127,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.ScopedRateThrottle",
+        "core.throttling.DynamicScopedRateThrottle",
     ],
     # Only views that declare a `throttle_scope` are limited; everything else
     # is untouched.

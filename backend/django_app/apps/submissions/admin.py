@@ -26,12 +26,15 @@ class SubmissionAdmin(admin.ModelAdmin):
         "email",
         "elo_rating",
         "max_rating",
-        "is_staff"
+        "is_staff",
     )
     list_filter = ("verdict", "language", "created_at", "is_staff", "is_active")
     search_fields = ("user__username", "problem__title", "username", "email")
     date_hierarchy = "created_at"
-    ordering = ("-created_at", "-elo_rating",)
+    ordering = (
+        "-created_at",
+        "-elo_rating",
+    )
     # Heavy foreign keys: a dropdown would load every user and problem.
     raw_id_fields = ("user", "problem", "contest")
     readonly_fields = tuple(f.name for f in Submission._meta.fields)
