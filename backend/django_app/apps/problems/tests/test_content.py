@@ -66,6 +66,7 @@ class TestContentFieldsReturned:
             input_format="in fmt",
             output_format="out fmt",
             constraints="1 <= n <= 10",
+            is_hidden=False,
         )
         resp = api_client.get(reverse("problems-detail", args=[problem.pk]))
         assert resp.status_code == status.HTTP_200_OK
@@ -77,7 +78,9 @@ class TestContentFieldsReturned:
 @pytest.mark.django_db
 class TestExampleNote:
     def test_visible_test_case_note_is_returned_to_user(self, user_client):
-        problem = Problem.objects.create(title="P", description="b", difficulty="easy")
+        problem = Problem.objects.create(
+            title="P", description="b", difficulty="easy", is_hidden=False
+        )
         TestCase.objects.create(
             problem=problem,
             input="1 2\n3",
@@ -90,7 +93,9 @@ class TestExampleNote:
         assert resp.data["test_cases"][0]["note"] == "indices are 0-based"
 
     def test_note_is_optional(self, user_client):
-        problem = Problem.objects.create(title="P", description="b", difficulty="easy")
+        problem = Problem.objects.create(
+            title="P", description="b", difficulty="easy", is_hidden=False
+        )
         TestCase.objects.create(
             problem=problem, input="x", expected_output="y", is_hidden=False
         )
