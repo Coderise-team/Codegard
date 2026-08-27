@@ -12,12 +12,21 @@ class ProblemInline(admin.TabularInline):
 
 @admin.register(Contest)
 class ContestAdmin(admin.ModelAdmin):
+    """Contest admin.
+
+    `rating_applied` is shown but never editable: it is owned by the beat task
+    that awards ELO, and it is the task's only guard against paying a contest
+    twice. Ticking it by hand makes the task skip the round, and the ratings are
+    then never awarded at all.
+    """
+
     list_display = ("title", "status", "start_time", "end_time")
     list_filter = ("status",)
     search_fields = ("title",)
     date_hierarchy = "start_time"
     # Removed "problems" from filter_horizontal so we can use Inline instead
     filter_horizontal = ("participants",)
+    readonly_fields = ("rating_applied",)
     ordering = ("-start_time",)
     inlines = [ProblemInline]
     exclude = ("problems",)  # Exclude the main M2M field so it doesn't show twice
