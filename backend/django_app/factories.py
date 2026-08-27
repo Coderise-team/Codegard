@@ -20,11 +20,20 @@ from django.utils import timezone
 
 
 def make_problem(
-    title="P", *, difficulty=Problem.Difficulty.EASY, description="", tags=()
+    title="P",
+    *,
+    difficulty=Problem.Difficulty.EASY,
+    description="",
+    tags=(),
+    is_hidden=False,
 ):
-    """A problem. ``time_limit``/``memory_limit`` fall back to the model defaults."""
+    """A published problem. ``time_limit``/``memory_limit`` fall back to the
+    model defaults."""
     problem = Problem.objects.create(
-        title=title, description=description, difficulty=difficulty
+        title=title,
+        description=description,
+        difficulty=difficulty,
+        is_hidden=is_hidden,
     )
     for name in tags:
         problem.tags.add(Tag.objects.get_or_create(name=name)[0])

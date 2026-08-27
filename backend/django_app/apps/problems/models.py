@@ -51,6 +51,14 @@ class Problem(models.Model):
         default=256,
     )
     tags = models.ManyToManyField(Tag, related_name="problems")
+    is_hidden = models.BooleanField(
+        default=True,
+        help_text=(
+            "Hidden problems stay out of the public catalog. New problems start "
+            "hidden; a problem is unhidden automatically once a contest that "
+            "uses it has finished."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
