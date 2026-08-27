@@ -35,7 +35,7 @@ def assign_daily_problem(self) -> dict:
 
     chosen = _pick_problem(today)
     if chosen is None:
-        logger.warning("[assign_daily_problem] no problems in DB; nothing assigned")
+        logger.warning("[assign_daily_problem] no visible problems; nothing assigned")
         return {"created": False, "reason": "no problems"}
 
     # get_or_create + unique(date) close the race if two runs overlap.
@@ -56,13 +56,19 @@ def _pick_problem(today):
 
     Falls back to the least-recently-used problem when the whole pool was used
     within the window (pool <= RECENT_DAYS). Returns None only if there are no
-    problems at all.
+    visible problems at all.
+
+    Hidden problems are off the table in both branches: the daily challenge
+    publishes a full statement to every user, which would give away a problem
+    saved for an upcoming contest.
     """
+    pool = Problem.objects.filter(is_hidden=False)
+
     recent_ids = DailyProblem.objects.filter(
         date__gte=today - timedelta(days=RECENT_DAYS)
     ).values_list("problem_id", flat=True)
 
-    candidate = Problem.objects.exclude(id__in=recent_ids).order_by("?").first()
+    candidate = pool.exclude(id__in=recent_ids).order_by("?").first()
     if candidate is not None:
         return candidate
 
@@ -70,7 +76,7 @@ def _pick_problem(today):
     # (the one whose most recent daily assignment is the oldest; never-used
     # problems sort first via NULL last_used).
     return (
-        Problem.objects.annotate(last_used=Max("daily_assignments__date"))
+        pool.annotate(last_used=Max("daily_assignments__date"))
         .order_by("last_used")
         .first()
     )
