@@ -337,6 +337,30 @@ services:
       - codegard_net
     restart: unless-stopped
 
+  # Database backups: daily snapshots + WAL streaming to a private R2 bucket.
+  # The web panel has full access to the database, so the port is bound to
+  # 127.0.0.1 only — never exposed outside. Reach it through an SSH tunnel,
+  # the same way flower is reached above.
+  databasus:
+    image: databasus/databasus:v3.55.1
+    # Sees the database by its service name `postgres` on the shared network.
+    ports:
+      - "127.0.0.1:4005:4005"
+    volumes:
+      - databasus_data:/databasus-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Losing the backup service does not take the site down, but it also goes
+    # unnoticed for a while, so it dies earlier than the useful services.
+    oom_score_adj: 300
+    logging: *logging
+    networks:
+      - codegard_net
+    restart: unless-stopped
+    # No healthcheck block on purpose: the image ships its own for Compose.
+    # An external probe, if ever needed, is HTTP GET /api/v1/system/health.
+
 networks:
   codegard_net:
     driver: bridge
@@ -345,3 +369,4 @@ volumes:
   postgres_data:
   redis_data:
   static_files:
+  databasus_data:
