@@ -82,6 +82,12 @@ class Submission(models.Model):
             # Speeds up the activity-heatmap query (filter by user + created_at
             # range, group by day) and any per-user submission lookups.
             models.Index(fields=["user", "created_at"]),
+            # Catalog "solved?" Exists(user+problem) run per row.
+            models.Index(fields=["user", "problem"], name="sub_user_problem"),
+            # Catalog acceptance rate: all subs of a problem + AC count, per row.
+            models.Index(fields=["problem", "verdict"], name="sub_problem_verdict"),
+            # Contest "how many solved this problem": subs by contest + verdict.
+            models.Index(fields=["contest", "verdict"], name="sub_contest_verdict"),
         ]
 
     def __str__(self):

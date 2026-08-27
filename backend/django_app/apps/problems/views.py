@@ -15,7 +15,7 @@ from django.db.models import (
 from django.http import JsonResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -55,9 +55,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Problem.objects.prefetch_related("test_cases", "tags").all()
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = ProblemFilter
-    search_fields = ["title"]
     # Needs to exist as a class attribute (even unset) for the `report` action
     # below to override it per-request via @action(throttle_scope=...) — DRF's
     # ViewSetMixin.as_view() rejects action kwargs that aren't already
@@ -110,8 +109,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
                 output_field=FloatField(),
             )
         )
-        # Default order (newest first); ?ordering overrides this via OrderingFilter.
-        return queryset.order_by("-created_at")
+        # Default order (newest first) with a constant `id` tiebreaker so pages
+        # don't shuffle at their seams; ?ordering overrides via OrderingFilter.
+        return queryset.order_by("-created_at", "id")
 
     def _user_status_annotation(self):
         """solved / attempted / todo for request.user, in one query (no N+1).
@@ -233,7 +233,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
         Feeds the ProblemsPage filter dropdown. Public read (like the list).
         """
-        qs = Tag.objects.annotate(count=Count("problems"))
+        # annotate() adds a GROUP BY that drops Tag.Meta.ordering, so sort
+        # explicitly — the dropdown expects tags alphabetical by name.
+        qs = Tag.objects.annotate(count=Count("problems")).order_by("name")
         return Response(TagSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["post"], throttle_scope="problem_report")

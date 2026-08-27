@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils import timezone
 
@@ -50,6 +51,18 @@ class Contest(models.Model):
                 condition=models.Q(end_time__gt=models.F("start_time")),
                 name="check_start_before_end",
             )
+        ]
+        indexes = [
+            # Trigram GIN index backing the typo-tolerant title search.
+            GinIndex(
+                name="contest_title_trgm",
+                fields=["title"],
+                opclasses=["gin_trgm_ops"],
+            ),
+            # ELO beat task scans end_time < now AND rating_applied = False.
+            models.Index(
+                fields=["end_time", "rating_applied"], name="contest_end_rating"
+            ),
         ]
 
     def __str__(self):
@@ -125,6 +138,14 @@ class ContestScore(models.Model):
     class Meta:
         unique_together = ("user", "contest")
         ordering = ["-score", "penalty", "last_ac_at"]
+        indexes = [
+            # Leaderboard: filter by contest, sort by (-score, penalty, last_ac_at)
+            # — the exact tuple get_leaderboard uses.
+            models.Index(
+                fields=["contest", "-score", "penalty", "last_ac_at"],
+                name="cscore_leaderboard",
+            ),
+        ]
 
     def __str__(self):
         return (

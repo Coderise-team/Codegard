@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 
@@ -30,6 +31,18 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     elo_rating = models.IntegerField(default=1200, db_index=True)
     max_rating = models.IntegerField(default=1200, db_index=True)
+
+    class Meta(AbstractUser.Meta):
+        # Inherit AbstractUser.Meta so its verbose_name / ordering survive; a
+        # bare `class Meta` would reset them to Django defaults.
+        indexes = [
+            # Trigram GIN index backing the typo-tolerant username search.
+            GinIndex(
+                name="user_username_trgm",
+                fields=["username"],
+                opclasses=["gin_trgm_ops"],
+            ),
+        ]
 
 
 class EloHistory(models.Model):

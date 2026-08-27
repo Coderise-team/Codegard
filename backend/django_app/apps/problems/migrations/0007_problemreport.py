@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('problems', '0004_problem_constraints_problem_input_format_and_more'),
+        ('problems', '0006_problem_problem_created_at'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
