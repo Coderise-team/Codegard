@@ -67,7 +67,7 @@ def make_submission(
     return submission
 
 
-def make_user(username, elo, *, max_rating=None, is_active=True):
+def make_user(username, elo, *, max_rating=None, is_active=True, is_staff=False):
     """An active leaderboard user with a set rating (peak defaults to current)."""
     return get_user_model().objects.create_user(
         username=username,
@@ -76,4 +76,5 @@ def make_user(username, elo, *, max_rating=None, is_active=True):
         elo_rating=elo,
         max_rating=max_rating if max_rating is not None else elo,
         is_active=is_active,
+        is_staff=is_staff,
     )
