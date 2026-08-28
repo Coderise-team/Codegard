@@ -1,7 +1,7 @@
 """Tests for the statement a started contest ships with each of its problems.
 
-The catalog refuses to serve a hidden problem to anyone, so this payload is the
-only place a participant's statement can come from.
+The catalog serves no hidden problem to anyone, so this payload is where a
+participant's statement comes from.
 """
 
 import pytest
@@ -50,3 +50,18 @@ def test_examples_ship_but_judge_only_tests_do_not(user_client, live_contest):
     row = _first_problem(user_client, live_contest)
 
     assert [case["input"] for case in row["test_cases"]] == ["1 2"]
+
+
+@pytest.mark.django_db
+def test_a_long_round_costs_no_extra_queries(
+    user_client, live_contest, django_assert_max_num_queries
+):
+    # Tags and examples ride prefetches, so the query count must not grow with
+    # the number of problems in the round.
+    for i in range(5):
+        problem = make_problem(f"Extra {i}", tags=["math"], is_hidden=True)
+        TestCase.objects.create(problem=problem, input="1", expected_output="1")
+        live_contest.problems.add(problem)
+
+    with django_assert_max_num_queries(8):
+        user_client.get(reverse("contests-detail", args=[live_contest.pk]))
