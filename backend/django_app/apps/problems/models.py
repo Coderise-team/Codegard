@@ -71,6 +71,7 @@ class Problem(models.Model):
     def __str__(self):
         return f"{self.title} ({self.difficulty})"
 
+
 class ProblemReport(models.Model):
     """A user-submitted complaint about a problem (bad statement, wrong test,
     wrong limits, an improvement idea, or something else).

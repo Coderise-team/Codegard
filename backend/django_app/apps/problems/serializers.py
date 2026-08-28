@@ -1,8 +1,9 @@
 from rest_framework import serializers
 
-from .models import Problem, Tag, TestCase, ProblemReport
+from .models import Problem, ProblemReport, Tag, TestCase
 
 MIN_REPORT_MESSAGE_LENGTH = 10
+
 
 def acceptance_from_annotations(obj) -> float:
     """Global AC rate (%) from `total_submissions`/`ac_submissions` annotations.
@@ -205,6 +206,7 @@ class RecommendedProblemSerializer(serializers.ModelSerializer):
             return 0.0
         ac = getattr(obj, "ac_submissions", 0) or 0
         return round(ac / total * 100, 1)
+
 
 class ProblemReportCreateSerializer(serializers.ModelSerializer):
     """Input for POST /api/problems/{id}/report/ — just the two fields a human

@@ -156,6 +156,7 @@ class DailyProblemAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
     autocomplete_fields = ("problem",)
 
+
 @admin.register(ProblemReport)
 class ProblemReportAdmin(admin.ModelAdmin):
     """The report queue: one page to triage everything the judge doesn't catch."""
@@ -164,17 +165,39 @@ class ProblemReportAdmin(admin.ModelAdmin):
     list_filter = ("status", "reason")
     search_fields = ("user__username", "problem_title")
     readonly_fields = (
-        "problem", "problem_title", "user", "reason", "message",
-        "created_at", "resolved_by", "resolved_at",
+        "problem",
+        "problem_title",
+        "user",
+        "reason",
+        "message",
+        "created_at",
+        "resolved_by",
+        "resolved_at",
     )
     fieldsets = (
-        (None, {"fields": ("problem", "problem_title", "user", "reason", "message", "created_at")}),
+        (
+            None,
+            {
+                "fields": (
+                    "problem",
+                    "problem_title",
+                    "user",
+                    "reason",
+                    "message",
+                    "created_at",
+                )
+            },
+        ),
         ("Resolution", {"fields": ("status", "resolved_by", "resolved_at")}),
     )
     actions = ["accept_reports", "reject_reports"]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("problem", "user", "resolved_by")
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("problem", "user", "resolved_by")
+        )
 
     def has_add_permission(self, request):
         return False

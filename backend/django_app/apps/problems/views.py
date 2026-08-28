@@ -278,7 +278,8 @@ class ReportReasonsView(APIView):
 
     def get(self, request):
         reasons = [
-            {"id": value, "name": label} for value, label in ProblemReport.Reason.choices
+            {"id": value, "name": label}
+            for value, label in ProblemReport.Reason.choices
         ]
         return Response(reasons)
 
