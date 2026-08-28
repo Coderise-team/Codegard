@@ -83,13 +83,15 @@ class ProblemAdminForm(forms.ModelForm):
 class ProblemAdmin(admin.ModelAdmin):
     """Problem admin: full content in grouped sections, tests inline, tags required.
 
-    The `Tests` column makes zero-test problems obvious at a glance.
+    The `Tests` column makes zero-test problems obvious at a glance, and the
+    `Is hidden` column the same for problems that are not in the catalog yet.
     """
 
     form = ProblemAdminForm
     inlines = [TestCaseInline]
     list_display = (
         "title",
+        "is_hidden",
         "difficulty",
         "tag_list",
         "test_case_count",
@@ -97,7 +99,7 @@ class ProblemAdmin(admin.ModelAdmin):
         "memory_limit",
         "created_at",
     )
-    list_filter = ("difficulty", "tags")
+    list_filter = ("is_hidden", "difficulty", "tags")
     search_fields = ("title", "description")
     filter_horizontal = ("tags",)
     readonly_fields = ("created_at", "updated_at")
@@ -120,6 +122,7 @@ class ProblemAdmin(admin.ModelAdmin):
         ),
         ("Limits", {"fields": ("time_limit", "memory_limit")}),
         ("Classification", {"fields": ("tags",)}),
+        ("Visibility", {"fields": ("is_hidden",)}),
         ("Metadata", {"fields": ("created_at", "updated_at")}),
     )
 

@@ -65,3 +65,27 @@ def test_no_problems_creates_nothing():
     summary = assign_daily_problem()
     assert summary == {"created": False, "reason": "no problems"}
     assert not DailyProblem.objects.exists()
+
+
+@pytest.mark.django_db
+def test_hidden_problems_are_never_picked():
+    # The daily challenge publishes the statement to everyone, so a problem
+    # saved for a contest must stay out of the draw.
+    make_problem("hidden", is_hidden=True)
+    published = make_problem("published")
+
+    assign_daily_problem()
+    assert DailyProblem.objects.get(date=timezone.now().date()).problem_id == (
+        published.id
+    )
+
+
+@pytest.mark.django_db
+def test_only_hidden_problems_assigns_nothing():
+    # Including the fallback branch: an exhausted pool must not reach for a
+    # hidden problem either.
+    make_problem("hidden", is_hidden=True)
+
+    summary = assign_daily_problem()
+    assert summary == {"created": False, "reason": "no problems"}
+    assert not DailyProblem.objects.exists()

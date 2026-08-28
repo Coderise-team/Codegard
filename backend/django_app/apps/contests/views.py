@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from apps.problems.models import Problem
+from apps.problems.models import Problem, TestCase
 from apps.submissions.models import Submission
 from core.pagination import ClientPageSizePagination
 from core.search import MIN_TRIGRAM_LENGTH
@@ -152,12 +152,27 @@ class ContestViewSet(viewsets.ModelViewSet):
                 ),
                 distinct=True,
             )
+            # Judge-only test cases are skipped: they never reach the client
+            # and can be large.
+            examples = Prefetch(
+                "test_cases", queryset=TestCase.objects.filter(is_hidden=False)
+            )
             # Replace the base `prefetch_related("problems")` rather than adding a
-            # second lookup for the same relation (Django rejects that).
+            # second lookup for the same relation (Django rejects that). Tags and
+            # examples ride along, because the statement ships with the round.
             queryset = queryset.prefetch_related(None).prefetch_related(
                 Prefetch(
                     "problems",
-                    queryset=Problem.objects.annotate(solved_count=solved_count),
+                    queryset=Problem.objects.prefetch_related(
+                        "tags", examples
+                    ).annotate(
+                        solved_count=solved_count,
+                        total_submissions=Count("submissions"),
+                        ac_submissions=Count(
+                            "submissions",
+                            filter=Q(submissions__verdict=Submission.Verdict.AC),
+                        ),
+                    ),
                 )
             )
 
