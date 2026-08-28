@@ -1,6 +1,7 @@
 """Tests for the catalog serving published problems only."""
 
 import pytest
+from apps.problems.models import Problem
 from django.urls import reverse
 from factories import make_problem
 
@@ -76,3 +77,39 @@ def test_staff_sees_hidden_problems(custom_admin_client, published, hidden):
 
     resp = custom_admin_client.get(reverse("problems-detail", args=[hidden.pk]))
     assert resp.status_code == 200
+
+
+# --- publishing through the API --------------------------------------------
+
+
+@pytest.mark.django_db
+def test_a_problem_can_be_created_published(custom_admin_client, problem_payload):
+    resp = custom_admin_client.post(
+        reverse("problems-list"), problem_payload(is_hidden=False), format="json"
+    )
+    assert resp.status_code == 201
+    assert Problem.objects.get(pk=resp.data["id"]).is_hidden is False
+
+
+@pytest.mark.django_db
+def test_a_problem_without_the_flag_is_created_hidden(
+    custom_admin_client, problem_payload
+):
+    # The field is optional, so a client that never heard of it keeps the safe
+    # default instead of publishing by accident.
+    resp = custom_admin_client.post(
+        reverse("problems-list"), problem_payload(), format="json"
+    )
+    assert Problem.objects.get(pk=resp.data["id"]).is_hidden is True
+
+
+@pytest.mark.django_db
+def test_an_existing_problem_can_be_published(custom_admin_client, hidden):
+    resp = custom_admin_client.patch(
+        reverse("problems-detail", args=[hidden.pk]),
+        {"is_hidden": False},
+        format="json",
+    )
+    assert resp.status_code == 200
+    hidden.refresh_from_db()
+    assert hidden.is_hidden is False
