@@ -12,14 +12,11 @@ User = get_user_model()
 
 
 class ContestProblemSerializer(serializers.ModelSerializer):
-    """
-    Problem serializer for contest context — the full statement the workspace
-    renders.
+    """A contest's problem with the full statement the workspace renders.
 
-    A contest problem is usually hidden, and the catalog refuses to serve
-    hidden problems to anyone, so this is the only place a participant's
-    statement comes from. Hidden test cases stay hidden here too: only the
-    visible ones ship, exactly as the catalog would serve them.
+    A contest problem is normally hidden, and the catalog serves no hidden
+    problem to anyone, so this is where a participant's statement comes from.
+    Judge-only test cases stay out of it.
     """
 
     # Unique solvers of this problem IN THIS contest, injected as an annotation
@@ -51,9 +48,10 @@ class ContestProblemSerializer(serializers.ModelSerializer):
         return acceptance_from_annotations(obj)
 
     def get_test_cases(self, obj):
-        return TestCasePublicSerializer(
-            obj.test_cases.filter(is_hidden=False), many=True
-        ).data
+        # We filter in Python: a queryset .filter() would ignore the view's
+        # prefetch and run one query per problem in the round.
+        visible = [case for case in obj.test_cases.all() if not case.is_hidden]
+        return TestCasePublicSerializer(visible, many=True).data
 
 
 class ContestRegistrantSerializer(serializers.ModelSerializer):
