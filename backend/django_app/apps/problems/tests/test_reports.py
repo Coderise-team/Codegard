@@ -15,7 +15,6 @@ from django.utils import timezone
 from factories import make_problem
 from rest_framework import status
 
-
 # api_client, user, other, admin, user_client, custom_admin_client and
 # `problem` (from apps/problems/tests/conftest.py) come from conftest.
 
