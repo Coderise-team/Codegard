@@ -133,6 +133,32 @@ def apply_finished_contest_ratings(self) -> dict:
     return summary
 
 
+@shared_task(bind=True)
+def publish_finished_contest_problems(self) -> dict:
+    """
+    Periodic task: put the problems of finished contests into the catalog.
+
+    A problem is hidden while it is being prepared and while its round runs;
+    once the round is over there is nothing left to protect. Written as one
+    UPDATE over everything still hidden rather than a pass per contest, so a
+    run missed while the worker was down is picked up by the next one instead
+    of leaving those problems hidden forever.
+    """
+    from apps.problems.models import Problem
+
+    logger.info(
+        "[publish_finished_contest_problems] started | task_id=%s", self.request.id
+    )
+
+    published = Problem.objects.filter(
+        is_hidden=True, contests__end_time__lt=timezone.now()
+    ).update(is_hidden=False)
+
+    summary = {"published": published}
+    logger.info("publish_finished_contest_problems %s", summary)
+    return summary
+
+
 def _broadcast_contest_ended(contest_ids: list[int]) -> None:
     """Push a ``contest_ended`` event to each contest's ``contest_<id>`` group so
     viewers' live pages close out."""
