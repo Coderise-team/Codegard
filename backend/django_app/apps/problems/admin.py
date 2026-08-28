@@ -203,9 +203,14 @@ class ProblemReportAdmin(admin.ModelAdmin):
         return False
 
     def save_model(self, request, obj, form, change):
-        if "status" in form.changed_data and obj.status != ProblemReport.Status.NEW:
-            obj.resolved_by = request.user
-            obj.resolved_at = timezone.now()
+        if "status" in form.changed_data:
+            if obj.status == ProblemReport.Status.NEW:
+                # Reopened: whoever previously resolved it no longer applies.
+                obj.resolved_by = None
+                obj.resolved_at = None
+            else:
+                obj.resolved_by = request.user
+                obj.resolved_at = timezone.now()
         super().save_model(request, obj, form, change)
 
     @admin.action(description="Accept selected reports")

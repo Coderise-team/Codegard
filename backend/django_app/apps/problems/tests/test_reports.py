@@ -15,6 +15,7 @@ from django.utils import timezone
 from factories import make_problem
 from rest_framework import status
 
+
 # api_client, user, other, admin, user_client, custom_admin_client and
 # `problem` (from apps/problems/tests/conftest.py) come from conftest.
 
@@ -278,8 +279,8 @@ def test_regular_user_gets_403_anonymous_gets_401(api_client, user, problem):
     api_client.force_authenticate(user=user)
     assert api_client.get(REPORTS_LIST_URL).status_code == status.HTTP_403_FORBIDDEN
     assert (
-        api_client.get(reverse("reports-detail", args=[1])).status_code
-        == status.HTTP_403_FORBIDDEN
+            api_client.get(reverse("reports-detail", args=[1])).status_code
+            == status.HTTP_403_FORBIDDEN
     )
 
     api_client.force_authenticate(user=None)
@@ -372,14 +373,14 @@ def test_cannot_change_status_through_api(custom_admin_client, user, problem):
     detail_url = reverse("reports-detail", args=[report.id])
 
     assert (
-        custom_admin_client.patch(
-            detail_url, {"status": "accepted"}, format="json"
-        ).status_code
-        == status.HTTP_405_METHOD_NOT_ALLOWED
+            custom_admin_client.patch(
+                detail_url, {"status": "accepted"}, format="json"
+            ).status_code
+            == status.HTTP_405_METHOD_NOT_ALLOWED
     )
     assert (
-        custom_admin_client.delete(detail_url).status_code
-        == status.HTTP_405_METHOD_NOT_ALLOWED
+            custom_admin_client.delete(detail_url).status_code
+            == status.HTTP_405_METHOD_NOT_ALLOWED
     )
 
     report.refresh_from_db()
@@ -460,6 +461,33 @@ def test_admin_save_model_sets_resolver_on_status_change(user, admin, problem):
 
     assert report.resolved_by == admin
     assert report.resolved_at is not None
+
+
+@pytest.mark.django_db
+def test_admin_save_model_clears_resolver_when_reopened(user, admin, problem):
+    report = ProblemReport.objects.create(
+        problem=problem,
+        problem_title=problem.title,
+        user=user,
+        reason=ProblemReport.Reason.OTHER,
+        message="ten characters here",
+        status=ProblemReport.Status.ACCEPTED,
+        resolved_by=admin,
+        resolved_at=timezone.now(),
+    )
+    ma = ProblemReportAdmin(ProblemReport, AdminSite())
+    request = RequestFactory().get("/")
+    request.user = admin
+
+    report.status = ProblemReport.Status.NEW
+
+    class _Form:
+        changed_data = ["status"]
+
+    ma.save_model(request, report, _Form(), change=True)
+
+    assert report.resolved_by is None
+    assert report.resolved_at is None
 
 
 @pytest.mark.django_db
