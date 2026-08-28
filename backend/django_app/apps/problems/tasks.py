@@ -58,9 +58,8 @@ def _pick_problem(today):
     within the window (pool <= RECENT_DAYS). Returns None only if there are no
     visible problems at all.
 
-    Hidden problems are off the table in both branches: the daily challenge
-    publishes a full statement to every user, which would give away a problem
-    saved for an upcoming contest.
+    Both branches skip hidden problems: the daily challenge publishes a full
+    statement to everyone, which would give away a problem saved for a contest.
     """
     pool = Problem.objects.filter(is_hidden=False)
 

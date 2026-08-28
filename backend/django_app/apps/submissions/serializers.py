@@ -12,10 +12,10 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         fields = ["id", "problem", "contest", "code", "language"]
 
     def _running_round_for(self, problem):
-        """The live round this problem is being solved in, or None.
+        """The running round the user is registered in, or None.
 
-        A round the user has joined and that is running right now owns every
-        submission to its problems, whether or not the client said so.
+        Such a round owns every submission to its problems, whatever the client
+        sent.
         """
         from apps.contests.models import Contest
 
@@ -36,9 +36,9 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         problem must belong to it and the contest must currently be active
         (status is refreshed from the clock before the check).
 
-        A submission the client sent without a contest is pulled into the
-        running round when there is one, so a participant cannot collect free
-        verdicts outside the round and paste the answer back in."""
+        A submission that arrives without a contest joins the running round when
+        there is one: otherwise a participant could collect verdicts outside the
+        round with no penalty."""
         problem = attrs.get("problem")
         contest = attrs.get("contest")
         if contest is None and problem is not None:

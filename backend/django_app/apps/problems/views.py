@@ -72,10 +72,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
         # now (ProblemFilter). Here we only annotate the fields those rely on.
         queryset = super().get_queryset()
 
-        # Hidden problems are invisible to everyone but staff, on the detail
-        # route as well as the list: a contest problem must not be readable
-        # from the catalog while the round is running. The contest serves its
-        # own statements, so nothing legitimate reads them through here.
+        # A contest problem stays unreadable from the catalog while its round
+        # runs; the contest ships its own statements to the participants.
         if not self.request.user.is_staff:
             queryset = queryset.filter(is_hidden=False)
 
@@ -233,8 +231,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
         """
         # annotate() adds a GROUP BY that drops Tag.Meta.ordering, so sort
         # explicitly — the dropdown expects tags alphabetical by name.
-        # The count covers visible problems only, so it matches what the filter
-        # actually returns once applied.
+        # The count covers visible problems only, so it matches what clicking
+        # the tag actually returns.
         qs = Tag.objects.annotate(
             count=Count("problems", filter=Q(problems__is_hidden=False))
         ).order_by("name")

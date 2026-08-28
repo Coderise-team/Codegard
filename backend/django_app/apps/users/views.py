@@ -408,10 +408,8 @@ class PasswordChangeView(APIView):
 # env vars.
 USERNAME_SEARCH_THRESHOLD = 0.3
 
-# Who the leaderboard is made of. Staff accounts administer the platform and
-# play from separate accounts, so they must not take rank slots or inflate the
-# total. Shared by the rows, the rank subquery and the count: the three must
-# agree, or ranks get holes and the total stops matching the list.
+# Staff accounts run the platform and play from separate accounts. The rows,
+# the rank subquery and the total share this filter so they cannot disagree.
 RANKED_USERS = Q(is_active=True, is_staff=False)
 
 

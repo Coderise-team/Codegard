@@ -7,13 +7,12 @@ import { isNotFound } from '../utils/errors';
  * needs: the round itself plus the full statement of the addressed problem.
  *
  * The letter is a position in the contest's problem list, and the entry there
- * carries the whole statement. The round ships it on purpose: a contest
- * problem is normally hidden, and the catalogue serves no hidden problem to
- * anyone, so there is nowhere else to read it from.
+ * carries the whole statement: a contest problem is normally hidden, and the
+ * catalogue serves no hidden problem to anyone.
  *
  * `notFound` folds together every "this URL addresses nothing" case: unknown
  * contest, a :letter that is not a letter, and a letter past the end of the
- * round. A contest that has not started yet also lands here, because the
+ * round. A contest that has not started yet lands here too, because the
  * backend hides its problems until the start.
  */
 export function useContestProblem(contestId, letter) {

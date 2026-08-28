@@ -14,10 +14,9 @@ class ProblemInline(admin.TabularInline):
 class ContestAdmin(admin.ModelAdmin):
     """Contest admin.
 
-    `rating_applied` is shown but never editable: it is owned by the beat task
-    that awards ELO, and it is the task's only guard against paying a contest
-    twice. Ticking it by hand makes the task skip the round, and the ratings are
-    then never awarded at all.
+    `rating_applied` is read-only: the ELO task owns it and uses it as its only
+    guard against paying a contest twice. Ticking it by hand makes the task skip
+    the round, so the ratings are never awarded.
     """
 
     list_display = ("title", "status", "start_time", "end_time")

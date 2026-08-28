@@ -44,8 +44,7 @@ def test_hidden_problem_never_listed(
 
 @pytest.mark.django_db
 def test_hidden_problem_has_no_page(user_client, hidden):
-    # Knowing the address is not enough: this is the route the contest
-    # workspace used to read statements from.
+    # This is the route the contest workspace used to read statements from.
     resp = user_client.get(reverse("problems-detail", args=[hidden.pk]))
     assert resp.status_code == 404
 

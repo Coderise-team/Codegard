@@ -69,8 +69,8 @@ def test_no_problems_creates_nothing():
 
 @pytest.mark.django_db
 def test_hidden_problems_are_never_picked():
-    # The daily challenge publishes a full statement to everyone, so a problem
-    # saved for an upcoming contest must stay out of the draw.
+    # The daily challenge publishes the statement to everyone, so a problem
+    # saved for a contest must stay out of the draw.
     make_problem("hidden", is_hidden=True)
     published = make_problem("published")
 

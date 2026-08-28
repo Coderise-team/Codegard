@@ -138,11 +138,9 @@ def publish_finished_contest_problems(self) -> dict:
     """
     Periodic task: put the problems of finished contests into the catalog.
 
-    A problem is hidden while it is being prepared and while its round runs;
-    once the round is over there is nothing left to protect. Written as one
-    UPDATE over everything still hidden rather than a pass per contest, so a
-    run missed while the worker was down is picked up by the next one instead
-    of leaving those problems hidden forever.
+    One UPDATE over everything still hidden, not a pass per contest: the task
+    compares state instead of catching the moment a round ends, so a run missed
+    while the worker was down costs nothing.
     """
     from apps.problems.models import Problem
 

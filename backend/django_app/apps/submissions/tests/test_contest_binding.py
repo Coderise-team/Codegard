@@ -1,8 +1,7 @@
-"""Tests for a submission being pulled into the round it belongs to.
+"""Tests for a submission joining the round it belongs to.
 
-The client sends the contest, so it cannot be trusted with it: a participant
-who submits outside the round would collect verdicts with no penalty and paste
-the answer back in.
+The client names the contest, so the server decides instead: a participant who
+submits outside the round would collect verdicts with no penalty.
 """
 
 from unittest.mock import patch
