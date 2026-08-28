@@ -154,10 +154,21 @@ class ContestViewSet(viewsets.ModelViewSet):
             )
             # Replace the base `prefetch_related("problems")` rather than adding a
             # second lookup for the same relation (Django rejects that).
+            # The statement ships with the round (tags, examples, acceptance),
+            # so the prefetch carries everything the workspace renders.
             queryset = queryset.prefetch_related(None).prefetch_related(
                 Prefetch(
                     "problems",
-                    queryset=Problem.objects.annotate(solved_count=solved_count),
+                    queryset=Problem.objects.prefetch_related(
+                        "tags", "test_cases"
+                    ).annotate(
+                        solved_count=solved_count,
+                        total_submissions=Count("submissions"),
+                        ac_submissions=Count(
+                            "submissions",
+                            filter=Q(submissions__verdict=Submission.Verdict.AC),
+                        ),
+                    ),
                 )
             )
 

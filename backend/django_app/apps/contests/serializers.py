@@ -1,4 +1,8 @@
 from apps.problems.models import Problem
+from apps.problems.serializers import (
+    TestCasePublicSerializer,
+    acceptance_from_annotations,
+)
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -9,14 +13,21 @@ User = get_user_model()
 
 class ContestProblemSerializer(serializers.ModelSerializer):
     """
-    Problem serializer for contest context.
+    Problem serializer for contest context — the full statement the workspace
+    renders.
 
-    Important: does NOT include test cases (hidden or visible).
+    A contest problem is usually hidden, and the catalog refuses to serve
+    hidden problems to anyone, so this is the only place a participant's
+    statement comes from. Hidden test cases stay hidden here too: only the
+    visible ones ship, exactly as the catalog would serve them.
     """
 
     # Unique solvers of this problem IN THIS contest, injected as an annotation
     # by the retrieve view's prefetch (0 when the annotation is absent).
     solved_count = serializers.IntegerField(read_only=True, default=0)
+    tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
+    acceptance = serializers.SerializerMethodField()
+    test_cases = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
@@ -24,11 +35,25 @@ class ContestProblemSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
+            "input_format",
+            "output_format",
+            "constraints",
             "difficulty",
             "time_limit",
             "memory_limit",
+            "tags",
+            "acceptance",
+            "test_cases",
             "solved_count",
         ]
+
+    def get_acceptance(self, obj) -> float:
+        return acceptance_from_annotations(obj)
+
+    def get_test_cases(self, obj):
+        return TestCasePublicSerializer(
+            obj.test_cases.filter(is_hidden=False), many=True
+        ).data
 
 
 class ContestRegistrantSerializer(serializers.ModelSerializer):
