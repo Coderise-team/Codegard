@@ -9,10 +9,12 @@ from apps.contests.models import Contest
 from apps.contests.tasks import (
     _broadcast_contest_ended,
     apply_finished_contest_ratings,
+    publish_finished_contest_problems,
     update_contest_statuses,
 )
+from apps.problems.models import Problem
 from django.utils import timezone
-from factories import make_submission
+from factories import make_contest, make_problem, make_submission
 
 # users, problems, finished_contest come from conftest.
 
@@ -188,3 +190,36 @@ def test_ratings_pick_finished_unrated_only(users, problems, finished_contest):
     active.refresh_from_db()
     assert finished.rating_applied is True
     assert active.rating_applied is False  # not finished → untouched
+
+
+# --- publish_finished_contest_problems -------------------------------------
+
+
+@pytest.mark.django_db
+def test_finished_contest_puts_its_problems_in_the_catalog():
+    contest = make_contest("Done", starts_in=-3, ends_in=-1)
+    problem = make_problem("Hidden", is_hidden=True)
+    contest.problems.add(problem)
+
+    assert publish_finished_contest_problems() == {"published": 1}
+    problem.refresh_from_db()
+    assert problem.is_hidden is False
+
+
+@pytest.mark.django_db
+def test_problems_of_a_round_still_ahead_stay_hidden():
+    for title, starts_in, ends_in in [("Live", -1, 1), ("Upcoming", 1, 2)]:
+        contest = make_contest(title, starts_in=starts_in, ends_in=ends_in)
+        contest.problems.add(make_problem(title, is_hidden=True))
+
+    assert publish_finished_contest_problems() == {"published": 0}
+    assert Problem.objects.filter(is_hidden=True).count() == 2
+
+
+@pytest.mark.django_db
+def test_second_run_has_nothing_left_to_do():
+    contest = make_contest("Done", starts_in=-3, ends_in=-1)
+    contest.problems.add(make_problem("Hidden", is_hidden=True))
+
+    publish_finished_contest_problems()
+    assert publish_finished_contest_problems() == {"published": 0}
