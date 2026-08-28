@@ -278,8 +278,8 @@ def test_regular_user_gets_403_anonymous_gets_401(api_client, user, problem):
     api_client.force_authenticate(user=user)
     assert api_client.get(REPORTS_LIST_URL).status_code == status.HTTP_403_FORBIDDEN
     assert (
-            api_client.get(reverse("reports-detail", args=[1])).status_code
-            == status.HTTP_403_FORBIDDEN
+        api_client.get(reverse("reports-detail", args=[1])).status_code
+        == status.HTTP_403_FORBIDDEN
     )
 
     api_client.force_authenticate(user=None)
@@ -372,14 +372,14 @@ def test_cannot_change_status_through_api(custom_admin_client, user, problem):
     detail_url = reverse("reports-detail", args=[report.id])
 
     assert (
-            custom_admin_client.patch(
-                detail_url, {"status": "accepted"}, format="json"
-            ).status_code
-            == status.HTTP_405_METHOD_NOT_ALLOWED
+        custom_admin_client.patch(
+            detail_url, {"status": "accepted"}, format="json"
+        ).status_code
+        == status.HTTP_405_METHOD_NOT_ALLOWED
     )
     assert (
-            custom_admin_client.delete(detail_url).status_code
-            == status.HTTP_405_METHOD_NOT_ALLOWED
+        custom_admin_client.delete(detail_url).status_code
+        == status.HTTP_405_METHOD_NOT_ALLOWED
     )
 
     report.refresh_from_db()
