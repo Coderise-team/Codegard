@@ -5,31 +5,16 @@ from apps.problems.models import Problem, TestCase
 from django.urls import reverse
 from rest_framework import status
 
-# api_client, user_client and custom_admin_client come from conftest.
-
-
-def _valid_payload(**overrides):
-    """A full, valid create payload; tests drop/override pieces as needed."""
-    data = {
-        "title": "Two Sum",
-        "description": "Find two numbers that add up to target.",
-        "difficulty": "easy",
-        "time_limit": 1000,
-        "memory_limit": 256,
-        "input_format": "First line: n. Second line: n integers.",
-        "output_format": "Two indices.",
-        "constraints": "2 <= n <= 1e5\n-1e9 <= a[i] <= 1e9",
-        "tags": ["Arrays"],
-    }
-    data.update(overrides)
-    return data
+# api_client, user_client, custom_admin_client and problem_payload come from conftest.
 
 
 @pytest.mark.django_db
 class TestContentFieldsRequired:
-    def test_create_with_all_content_fields_succeeds(self, custom_admin_client):
+    def test_create_with_all_content_fields_succeeds(
+        self, custom_admin_client, problem_payload
+    ):
         resp = custom_admin_client.post(
-            reverse("problems-list"), _valid_payload(), format="json"
+            reverse("problems-list"), problem_payload(), format="json"
         )
         assert resp.status_code == status.HTTP_201_CREATED
         problem = Problem.objects.get(title="Two Sum")
@@ -40,8 +25,10 @@ class TestContentFieldsRequired:
     @pytest.mark.parametrize(
         "missing", ["input_format", "output_format", "constraints"]
     )
-    def test_create_without_a_content_field_is_400(self, custom_admin_client, missing):
-        payload = _valid_payload()
+    def test_create_without_a_content_field_is_400(
+        self, custom_admin_client, problem_payload, missing
+    ):
+        payload = problem_payload()
         payload.pop(missing)
         resp = custom_admin_client.post(
             reverse("problems-list"), payload, format="json"
@@ -49,9 +36,13 @@ class TestContentFieldsRequired:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert missing in resp.data
 
-    def test_create_with_blank_content_field_is_400(self, custom_admin_client):
+    def test_create_with_blank_content_field_is_400(
+        self, custom_admin_client, problem_payload
+    ):
         resp = custom_admin_client.post(
-            reverse("problems-list"), _valid_payload(input_format=""), format="json"
+            reverse("problems-list"),
+            problem_payload(input_format=""),
+            format="json",
         )
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
