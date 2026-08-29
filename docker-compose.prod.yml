@@ -12,12 +12,17 @@ x-logging: &logging
 services:
   postgres:
     image: postgres:16-alpine
+    # Point Postgres at a repo-tracked pg_hba.conf so the replication rule the
+    # physical backup needs lives in git (survives a migration/restore), instead
+    # of being hand-edited inside the data volume.
+    command: postgres -c hba_file=/etc/postgresql/pg_hba.conf
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     # oom_score_adj tilts the kernel's choice when memory runs out: it kills the
     # highest number first. Every service sets one, so they form a single scale.
     # Last thing on the machine we let die.
