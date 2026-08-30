@@ -1,3 +1,4 @@
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 
@@ -50,11 +51,29 @@ class Problem(models.Model):
         default=256,
     )
     tags = models.ManyToManyField(Tag, related_name="problems")
+    is_hidden = models.BooleanField(
+        default=True,
+        help_text=(
+            "Hidden problems stay out of the public catalog. New problems start "
+            "hidden; a problem is unhidden automatically once a contest that "
+            "uses it has finished."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Trigram GIN index backing the typo-tolerant title search.
+            GinIndex(
+                name="problem_title_trgm",
+                fields=["title"],
+                opclasses=["gin_trgm_ops"],
+            ),
+            # Catalog default sort is -created_at.
+            models.Index(fields=["created_at"], name="problem_created_at"),
+        ]
 
     def __str__(self):
         return f"{self.title} ({self.difficulty})"

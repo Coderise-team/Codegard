@@ -1,8 +1,10 @@
 from collections import defaultdict
 
-from apps.problems.models import Problem
+from apps.problems.models import Problem, TestCase
 from apps.submissions.models import Submission
 from core.pagination import ClientPageSizePagination
+from core.search import MIN_TRIGRAM_LENGTH
+from django.contrib.postgres.search import TrigramWordSimilarity
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import filters, status, viewsets
@@ -25,6 +27,14 @@ from .serializers import (
     LeaderboardEntrySerializer,
 )
 from .services import get_leaderboard, get_participant_rank
+
+# Trigram title search knobs. Queries under 3 chars have no useful trigram
+# signal. 0.35 is inherited from the problem catalog, where it was validated on
+# real titles (real matches, incl. typos, score >= 0.44; garbage <= 0.25). The
+# current contest data is placeholder/homogeneous ("Codegard Round N"), so this
+# threshold can't be tuned independently yet — it should be re-checked on real,
+# varied contest names later. Per project rule these are constants, not env vars.
+TITLE_SEARCH_THRESHOLD = 0.35
 
 
 def _leaderboard_rank(contest, user_id):
@@ -53,10 +63,13 @@ class ContestViewSet(viewsets.ModelViewSet):
 
     queryset = Contest.objects.prefetch_related("problems").all()
     pagination_class = ClientPageSizePagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["title"]
+    filter_backends = [filters.OrderingFilter]
     ordering_fields = ["start_time"]
-    ordering = ["-start_time"]
+    # No view-level `ordering` default: get_queryset sets the order explicitly
+    # (-start_time, or similarity when searching — the aggregate annotations
+    # there drop Meta.ordering anyway), so leaving it off lets a search rank by
+    # relevance without OrderingFilter forcing -start_time back on top. An
+    # explicit ?ordering still wins.
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -81,6 +94,27 @@ class ContestViewSet(viewsets.ModelViewSet):
         status_filter = self.request.query_params.get("status")
         if status_filter in ["pending", "active", "finished"]:
             queryset = queryset.filter(status=status_filter)
+
+        # Typo-tolerant title search. Composes with the status slice above; when
+        # active (3+ chars) it ranks by relevance, then falls back to newest.
+        # Otherwise we set -start_time explicitly: the aggregate annotations below
+        # drop the model's Meta ordering, and an explicit ?ordering still wins
+        # because OrderingFilter runs after get_queryset. A trailing `id` keeps
+        # the order total when two contests share a start_time (or similarity),
+        # so pagination doesn't drop/duplicate rows at page seams.
+        search = (self.request.query_params.get("search") or "").strip()
+        if search and len(search) >= MIN_TRIGRAM_LENGTH:
+            queryset = (
+                queryset.annotate(
+                    title_similarity=TrigramWordSimilarity(search, "title")
+                )
+                .filter(title_similarity__gte=TITLE_SEARCH_THRESHOLD)
+                .order_by("-title_similarity", "-start_time", "id")
+            )
+        else:
+            if search:  # 1–2 chars: prefix match, keep the newest-first order
+                queryset = queryset.filter(title__istartswith=search)
+            queryset = queryset.order_by("-start_time", "id")
 
         # Annotations to avoid N+1 queries
         queryset = queryset.annotate(
@@ -118,12 +152,27 @@ class ContestViewSet(viewsets.ModelViewSet):
                 ),
                 distinct=True,
             )
+            # Judge-only test cases are skipped: they never reach the client
+            # and can be large.
+            examples = Prefetch(
+                "test_cases", queryset=TestCase.objects.filter(is_hidden=False)
+            )
             # Replace the base `prefetch_related("problems")` rather than adding a
-            # second lookup for the same relation (Django rejects that).
+            # second lookup for the same relation (Django rejects that). Tags and
+            # examples ride along, because the statement ships with the round.
             queryset = queryset.prefetch_related(None).prefetch_related(
                 Prefetch(
                     "problems",
-                    queryset=Problem.objects.annotate(solved_count=solved_count),
+                    queryset=Problem.objects.prefetch_related(
+                        "tags", examples
+                    ).annotate(
+                        solved_count=solved_count,
+                        total_submissions=Count("submissions"),
+                        ac_submissions=Count(
+                            "submissions",
+                            filter=Q(submissions__verdict=Submission.Verdict.AC),
+                        ),
+                    ),
                 )
             )
 

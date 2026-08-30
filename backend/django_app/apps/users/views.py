@@ -2,7 +2,9 @@ from datetime import timedelta
 
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
-from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
+from core.search import MIN_TRIGRAM_LENGTH
+from django.contrib.postgres.search import TrigramWordSimilarity
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -401,6 +403,19 @@ class PasswordChangeView(APIView):
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
 
 
+# Username trigram search knobs. Threshold 0.3 tuned on the real user table:
+# exact, 3+ char prefixes, one-letter typos and transpositions all score
+# >= 0.375, while unrelated names stay <= 0.22. 0.3 sits in that gap — a touch
+# more forgiving than the title threshold (0.35) because usernames are single
+# short tokens that get mistyped. Per project rule these are constants, not
+# env vars.
+USERNAME_SEARCH_THRESHOLD = 0.3
+
+# Staff accounts run the platform and play from separate accounts. The rows,
+# the rank subquery and the total share this filter so they cannot disagree.
+RANKED_USERS = Q(is_active=True, is_staff=False)
+
+
 class StandingsView(ListAPIView):
     """GET /api/users/standings/ — the global ELO leaderboard.
 
@@ -408,8 +423,9 @@ class StandingsView(ListAPIView):
     the number stays global under any tier filter, sort direction, or page (a
     window function would recompute inside the filtered set — a silent bug). The
     rank is computed against whichever field is being sorted (elo_rating or
-    max_rating). The envelope adds ``total`` (all active users, ignoring the
-    tier filter) and ``you`` (the caller's own row, always present).
+    max_rating). The envelope adds ``total`` (every ranked user, ignoring the
+    tier filter) and ``you`` (the caller's own row, null for a caller who is
+    not ranked).
     """
 
     permission_classes = [IsAuthenticated]
@@ -426,7 +442,7 @@ class StandingsView(ListAPIView):
         return ordering if ordering in self._ORDERING else "-elo_rating"
 
     def _annotated(self):
-        """All active users, annotated with the dense global rank (by the active
+        """All ranked users, annotated with the dense global rank (by the active
         sort field) and the last rated-contest delta. Not tier-filtered — the
         rank must stay global, and ``you`` reuses this same annotation."""
         from apps.contests.models import ContestScore
@@ -436,7 +452,7 @@ class StandingsView(ListAPIView):
 
         # Dense rank = count of DISTINCT greater values of `field`, + 1.
         higher_distinct = (
-            User.objects.filter(is_active=True, **{f"{field}__gt": OuterRef(field)})
+            User.objects.filter(RANKED_USERS, **{f"{field}__gt": OuterRef(field)})
             .order_by()
             .annotate(_g=Value(1))
             .values("_g")
@@ -450,7 +466,7 @@ class StandingsView(ListAPIView):
             .values("rating_delta")[:1]
         )
         return (
-            User.objects.filter(is_active=True)
+            User.objects.filter(RANKED_USERS)
             .annotate(
                 global_rank=Coalesce(
                     Subquery(higher_distinct, output_field=IntegerField()), Value(0)
@@ -481,12 +497,29 @@ class StandingsView(ListAPIView):
             qs = qs.filter(elo_rating__gte=floor)
             if ceil is not None:
                 qs = qs.filter(elo_rating__lt=ceil)
+
+        # Typo-tolerant username search, applied OUTSIDE _annotated (like the tier
+        # filter) so global_rank/delta subqueries stay global. Composes with tier.
+        # When active (3+ chars) it ranks by relevance, then the rating order.
+        # `you`/`total` in the envelope are computed separately and stay untouched.
+        search = (self.request.query_params.get("search") or "").strip()
+        if search:
+            if len(search) < MIN_TRIGRAM_LENGTH:
+                qs = qs.filter(username__istartswith=search)
+            else:
+                qs = (
+                    qs.annotate(
+                        username_similarity=TrigramWordSimilarity(search, "username")
+                    )
+                    .filter(username_similarity__gte=USERNAME_SEARCH_THRESHOLD)
+                    .order_by("-username_similarity", self._ordering(), "id")
+                )
         return qs
 
     def list(self, request, *args, **kwargs):
         page = self.paginate_queryset(self.get_queryset())
         # total ignores the tier filter (header "all coders"); you ignores it too.
-        self.paginator.total = User.objects.filter(is_active=True).count()
+        self.paginator.total = User.objects.filter(RANKED_USERS).count()
         me = self._annotated().filter(pk=request.user.pk).first()
         self.paginator.you = self.get_serializer(me).data if me is not None else None
         serializer = self.get_serializer(page, many=True)

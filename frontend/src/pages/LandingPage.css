@@ -1,0 +1,2976 @@
+/* =============================================================
+   Codegard — LandingPage
+   Marketing entry page. Tokens come from styles/variables.css and the
+   .logo / .btn primitives from styles/global.css; this file only adds
+   landing-specific layout, the animated editor mock, the live board,
+   the pinned "how it works" section and the metallic podium.
+
+   Scoping rule: CSS in this project is global, so every selector here
+   is nested under .lp. Class names that already start with lp- are
+   unique on their own and stay at the top level.
+
+   Podium medals use a SEMANTIC metallic palette, independent of accent.
+   Desktop only: fixed layout width, no responsive breakpoints.
+   ============================================================= */
+
+/* ---------- page root ---------- */
+.lp {
+  --lp-w: 1180px;
+  /* Breathing room kept on both sides once the window is narrower than the
+     layout, so nothing ever touches the edge of the screen. */
+  --lp-gutter: 24px;
+  --nav-h: 64px;
+  /* How far each section is pulled up over the one above it. The hero adds the
+     same amount back, so the fold lands exactly on the next section's edge. */
+  --lp-lift: 34px;
+  position: relative;
+  /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
+     so this page owns its scroll area. Sticky sections and the parallax
+     background are anchored to it, not to the window. */
+  height: 100vh;
+  overflow: auto;
+  font-size: 15px;
+  scroll-behavior: smooth;
+  isolation: isolate;
+}
+
+.lp ::selection {
+  background: var(--gold-soft);
+}
+.lp a {
+  color: var(--gold-hi);
+  text-decoration: none;
+}
+.lp a:hover {
+  color: var(--gold);
+}
+
+/* ---------- ambient background: grid + parallax glow ---------- */
+.lp-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.lp-grid {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: -20%;
+  height: 170%;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 76px 76px;
+  transform: translate3d(0, calc(var(--sy, 0px) * -0.06), 0);
+  mask-image: radial-gradient(120% 80% at 50% 0%, #000 10%, transparent 78%);
+}
+.lp-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+}
+.lp-orb.a {
+  width: 720px;
+  height: 720px;
+  left: -160px;
+  top: -260px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--gold) 42%, transparent),
+    transparent 66%
+  );
+  transform: translate3d(0, calc(var(--sy, 0px) * -0.12), 0);
+}
+.lp-orb.b {
+  width: 640px;
+  height: 640px;
+  right: -180px;
+  top: 120px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--btn-hi-h) 24%, transparent),
+    transparent 66%
+  );
+  transform: translate3d(0, calc(var(--sy, 0px) * -0.05), 0);
+}
+.lp-cursor {
+  position: fixed;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  filter: blur(70px);
+  opacity: 0.22;
+  background: radial-gradient(circle, var(--gold), transparent 62%);
+  transform: translate3d(
+    calc(var(--mx, 50vw) - 260px),
+    calc(var(--my, 50vh) - 260px),
+    0
+  );
+  transition: opacity 0.6s;
+}
+.lp-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.9) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 3px 3px;
+}
+
+/* ---------- layout ---------- */
+.lp .wrap {
+  width: min(var(--lp-w), 100% - 2 * var(--lp-gutter));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+/* Reading width, for a column of prose rather than a layout. */
+.lp .wrap-narrow {
+  width: min(860px, 100% - 2 * var(--lp-gutter));
+}
+.lp section {
+  position: relative;
+  z-index: 2;
+}
+.lp .sec {
+  padding: 130px 0;
+}
+.lp .sec-tight {
+  padding: 96px 0;
+}
+
+/* ---------- the deck: every section rides over the one before it ----------
+   A band carries its own rounded top edge with a hairline on it and drops a
+   shadow onto the section above, then is pulled up so the two overlap. The
+   band itself stays transparent, so the ambient grid keeps showing through and
+   only the edge reads as a sheet lying on top. The extra top padding gives back
+   what the negative margin takes, so the rhythm of the page does not move. */
+.lp .band {
+  margin-top: calc(-1 * var(--lp-lift));
+  border-top: 1px solid var(--border);
+  border-radius: 34px 34px 0 0;
+  box-shadow: 0 -26px 60px -26px rgba(0, 0, 0, 0.85);
+}
+/* Every sheet is at least a screen tall, and its contents sit in the middle of
+   it. A section shorter than that used to end wherever its text ran out, so
+   two of them shared a screen and the page lost its rhythm.
+
+   Only a floor, never a ceiling: a section with more in it than a screen can
+   hold — the standings, say — keeps its own height and is left to scroll.
+
+   "How it works" is left out. It is already three screens tall on purpose and
+   holds its picture still while you scroll through it, and centring a pinned
+   child inside its parent takes the pin apart. */
+.lp .band:not(.how) {
+  min-height: calc(100vh + var(--lp-lift));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.lp .sec.band {
+  padding-top: 164px;
+}
+.lp .sec-tight.band {
+  padding-top: 130px;
+}
+.lp .final.band {
+  padding-top: 184px;
+}
+
+.lp .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.lp .eyebrow i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+.lp h2.sec-t {
+  font-size: 44px;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-weight: 600;
+  margin: 16px 0 0;
+  text-wrap: pretty;
+}
+.lp .sec-sub {
+  margin: 14px 0 0;
+  color: var(--fg2);
+  font-size: 16.5px;
+  line-height: 1.6;
+  max-width: 56ch;
+  text-wrap: pretty;
+}
+
+/* ---------- reveal ----------
+   Everything in a section comes up together — the copy and the mock beside it
+   are one thought, and letting one trail the other only draws attention to the
+   effect.
+
+   The two channels are driven differently on purpose. The movement runs on a
+   curve that starts fast and settles slowly, which is what makes it feel like
+   weight coming to rest. Fading on that same curve is a mistake: it spends
+   most of its time creeping through the last few percent, where the eye can no
+   longer tell one frame from the next, so a long fade ends up looking like a
+   short one. Held to a straight line, the fade is visible for its whole
+   length. */
+.lp .rv {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0);
+  transition:
+    opacity 1.1s linear,
+    transform 1.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lp .rv.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* The first screen is not revealed by scrolling — it is already there when the
+   page opens, so it plays on its own the moment it is drawn. A keyframe rather
+   than the transition above: a transition needs the browser to paint the
+   starting state first, and on a page that is still loading that frame is
+   easily skipped, which is what made the hero snap into place. Mostly a fade,
+   with only a hint of a rise, so nothing lurches. */
+@keyframes lp-hero-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-hero-rise {
+  from {
+    transform: translate3d(0, 22px, 0);
+  }
+}
+.lp .hero-in {
+  animation:
+    lp-hero-fade 1.1s linear both,
+    lp-hero-rise 1.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ---------- parallax ----------
+   A big mock drifts a little against the copy beside it while the section
+   crosses the screen: the same trick the ambient background already uses, one
+   layer closer. The travel is tied to scroll position rather than to time, so
+   the panel follows the wheel in both directions.
+
+   It sits on a wrapper of its own on purpose — the panels reveal themselves on
+   entry with a transform, and an animation on the same element would take that
+   transform over and swallow the reveal. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .lp .plx {
+      animation: lp-plx linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+@keyframes lp-plx {
+  from {
+    transform: translateY(30px);
+  }
+  to {
+    transform: translateY(-30px);
+  }
+}
+
+/* ---------- buttons ---------- */
+.lp .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: var(--r);
+  border: 1px solid var(--border-2);
+  background: var(--card);
+  color: var(--fg);
+  font-family: var(--ui);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.18s;
+  white-space: nowrap;
+}
+.lp .btn:hover {
+  border-color: var(--gold-line);
+  background: var(--card-2);
+  color: var(--fg);
+}
+.lp .btn-primary {
+  border-color: transparent;
+  color: #12091f;
+  background: linear-gradient(135deg, var(--gold-hi), var(--gold));
+  box-shadow:
+    0 0 0 1px var(--gold-line),
+    0 10px 30px var(--accent-glow-2);
+}
+.lp .btn-primary:hover {
+  color: #12091f;
+  background: linear-gradient(135deg, var(--btn-hi-h), var(--btn-lo-h));
+  box-shadow:
+    0 0 0 1px var(--gold-line),
+    0 14px 40px var(--accent-glow);
+  transform: translateY(-1px);
+}
+.lp .btn-sm {
+  height: 36px;
+  padding: 0 15px;
+  font-size: 13.5px;
+  border-radius: var(--r-sm);
+}
+.lp .btn-lg {
+  height: 52px;
+  padding: 0 28px;
+  font-size: 15.5px;
+}
+.lp .btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+}
+
+/* ---------- nav ---------- */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color 0.3s,
+    background 0.3s;
+}
+.lp-nav.stuck {
+  border-bottom-color: var(--border);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+}
+/* The top edge of the scroll, so a section leaving upward dissolves into the
+   page instead of being sheared off by the viewport: the bar's own background
+   carries on below it as a fade. It only appears once the page has moved, so
+   the hero keeps its own top untouched. */
+.lp-nav::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 92px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 80%, transparent),
+    transparent
+  );
+}
+.lp-nav.stuck::before {
+  opacity: 1;
+}
+.lp .nav-in {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  /* Follows the window like the sections do. Held to the layout width it ran
+     past both edges of a narrow screen: the logo sat on the left edge and the
+     button was pushed off the right one. */
+  width: min(var(--lp-w), 100% - 2 * var(--lp-gutter));
+  margin: 0 auto;
+}
+.lp .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-left: 14px;
+}
+.lp .nav-links a {
+  color: var(--fg2);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.16s;
+  position: relative;
+}
+.lp .nav-links a:hover {
+  color: var(--fg);
+}
+/* The button that holds the section list on anything narrower than a desktop.
+   Hidden here, shown by the narrow layout — one of the two is always on. */
+.lp .nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: 0.13s;
+}
+.lp .nav-menu-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-2);
+}
+.lp .nav-menu-btn.on {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+}
+.lp .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.lp .nav-signin {
+  color: var(--fg2);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 6px;
+  /* Two words on one line or not at all: squeezed, it was breaking after
+     "Sign" and standing the bar's two halves at different heights. */
+  white-space: nowrap;
+}
+.lp .nav-signin:hover {
+  color: var(--fg);
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+/* The first screen is exactly one screen. Its height comes from the window
+   rather than from its own content, so the fold falls in the same place on a
+   laptop and on a desk monitor instead of cutting wherever the text happens to
+   end. The lift is added back on top: without it the next sheet, which is
+   pulled up over this one, would show its edge below the fold. */
+.lp-hero {
+  min-height: calc(100vh + var(--lp-lift));
+  /* Sat a little above the middle rather than on it: the optical centre of a
+     screen is higher than its measured one, and a block placed dead centre
+     reads as having sunk. The extra room is given to the bottom, since with
+     the content centred between them it is the far side that lifts it — and it
+     is in screen heights, so the lift keeps its proportion on any window. */
+  padding: var(--nav-h) 0 calc(var(--nav-h) + 10vh);
+  display: flex;
+  align-items: center;
+}
+.lp .hero-split {
+  display: grid;
+  grid-template-columns: 487px 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.lp h1.hero-t {
+  font-size: 60px;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin: 20px 0 0;
+}
+.lp h1.hero-t .l {
+  display: block;
+}
+.lp h1.hero-t .g {
+  background: linear-gradient(100deg, var(--gold-hi), var(--btn-hi-h));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lp .hero-sub {
+  margin: 22px 0 0;
+  color: var(--fg2);
+  font-size: 17px;
+  line-height: 1.62;
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+.lp .hero-cta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  margin-top: 34px;
+}
+.lp .hero-note {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--fg3);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- editor mock ---------- */
+.lp .ed-shell {
+  position: relative;
+  /* A grid item is allowed to be as wide as its contents demand, and the
+     contents here are unwrapped lines of code that arrive a character at a
+     time. Left alone the editor widened as the sample was typed and pushed
+     itself off the side of a narrow screen. */
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow:
+    0 40px 100px -30px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.lp .ed-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 60% at 50% -10%,
+    var(--gold-soft),
+    transparent 60%
+  );
+}
+/* Toolbar, language picker and Report link all follow ProblemWorkspace.css. */
+.lp .ed-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  position: relative;
+  z-index: 1;
+}
+.lp .ed-lang {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+.lp .ed-lang svg {
+  color: var(--fg2);
+}
+.lp .ed-lang-ic {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #3776ab, #ffd43b);
+  flex-shrink: 0;
+}
+.lp .ed-report {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+/* The code surface copies what CodeEditor gives Monaco: its own darker
+   background, JetBrains Mono at 13/21, dimmed line numbers with the accent on
+   the active one, and no rule between the gutter and the code. */
+.lp .ed-body {
+  display: flex;
+  position: relative;
+  z-index: 1;
+  height: 322px;
+  overflow: hidden;
+  background: #0f121a;
+}
+.lp .ed-gutter {
+  flex: 0 0 52px;
+  padding: 14px 0;
+  /* Centred in its column: the sample never goes past one digit, so Monaco's
+     right alignment would leave the numbers hanging on the rule. */
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  color: #444b5c;
+  border-right: 1px solid var(--border);
+  user-select: none;
+}
+.lp .ed-gutter .cur {
+  color: var(--gold);
+}
+.lp .ed-code {
+  flex: 1;
+  /* Same reason as the shell above: without this the code sets the floor for
+     the whole editor's width instead of being clipped by it, exactly as the
+     real editor clips a line that runs past its right edge. */
+  min-width: 0;
+  padding: 14px 16px 14px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  color: #abb2bf;
+  white-space: pre;
+  overflow: hidden;
+  tab-size: 4;
+}
+.lp .ed-caret {
+  display: inline-block;
+  width: 7.8px;
+  height: 16px;
+  vertical-align: -3px;
+  background: #c4b5fd;
+  animation: lp-blink 1.05s steps(1) infinite;
+}
+@keyframes lp-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+/* Action bar: same proportions and the same two buttons as the product. */
+.lp .ed-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  position: relative;
+  z-index: 1;
+}
+.lp .ed-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.lp .ed-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* The landing scales .btn up for its own calls to action; inside the mock the
+   buttons keep the size they have in the app (see global.css .btn-sm). */
+.lp .ed-shell .btn-sm {
+  height: 32px;
+  padding: 0 13px;
+  font-size: 12.5px;
+  gap: 8px;
+}
+.lp .ed-shell .btn-primary.pressed {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+
+/* Verdict arrives as the product's toast does: over the workspace, top right. */
+.lp .ed-toast {
+  position: absolute;
+  top: 66px;
+  right: 16px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 260px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  animation: lp-toast-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes lp-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+}
+.lp .ed-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+.lp .ed-toast-big {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ac);
+}
+.lp .ed-toast-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   LIVE CONTESTS — sticky copy, live board
+   ============================================================ */
+.lp .contest-sec {
+  position: relative;
+}
+.lp .contest-sec::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    60% 50% at 22% 40%,
+    var(--gold-soft),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+/* Board on the left, copy on the right — the sections alternate sides down the
+   page, so this one mirrors the hero above it and the solo section below.
+   The copy stays first in the markup, where it reads first. */
+.lp .contest-grid {
+  display: grid;
+  grid-template-columns: 1fr 432px;
+  gap: 64px;
+  align-items: start;
+}
+.lp .contest-copy {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 120px;
+}
+/* The round strip over the leaderboard, the order the product puts them in. */
+.lp .contest-stack {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+.lp .round-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  /* Same lift as the leaderboard panel below it, so the two read as one unit.
+     The product paints both flat; the gradient is the landing's own touch. */
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  padding: 12px 16px;
+}
+.lp .rc-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.lp .rc-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lp .rc-pip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--fg2);
+  font-size: 13px;
+  font-weight: 700;
+  transition: 0.13s;
+}
+.lp .rc-pip:hover {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.lp .rc-pip.current {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold-hi);
+}
+.lp .rc-pip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg3);
+  flex-shrink: 0;
+}
+.lp .rc-pip.s-solved .rc-pip-dot {
+  background: var(--ac);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+.lp .rc-pip.s-attempted .rc-pip-dot {
+  background: var(--tle);
+}
+.lp .rc-timer {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  border: 1px solid var(--border);
+}
+.lp .rc-timer-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: lp-pulse 1.6s ease-in-out infinite;
+}
+@keyframes lp-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.lp .rc-timer-body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.lp .rc-timer-lbl {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  font-weight: 600;
+}
+.lp .rc-timer-val {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+.lp .board {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  overflow: hidden;
+  box-shadow: 0 30px 80px -34px rgba(0, 0, 0, 0.8);
+}
+.lp .board-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .board-top .ttl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.lp .board-live {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--wa);
+}
+.lp .board-live .d {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wa);
+  animation: lp-live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes lp-live-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Header and rows use the column widths from StandingsList.css. */
+.lp .board-head,
+.lp .brow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+}
+.lp .board-head {
+  height: 34px;
+  border-bottom: 1px solid var(--border);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+.lp .cp-rk {
+  width: 22px;
+  flex: 0 0 auto;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.lp .cp-user {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .cp-cell {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.lp .cp-c-pen {
+  width: 54px;
+}
+
+/* Height comes from the component: it knows how many rows the board has. */
+.lp .board-rows {
+  position: relative;
+}
+.lp .brow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 44px;
+  font-size: 13.5px;
+  color: var(--fg);
+  border-top: 1px solid rgba(30, 34, 50, 0.5);
+  transition:
+    transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.4s;
+}
+.lp .brow .cp-rk {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fg2);
+}
+.lp .brow.r1 .cp-rk {
+  color: var(--gold);
+}
+.lp .brow.r2 .cp-rk,
+.lp .brow.r3 .cp-rk {
+  color: var(--fg);
+}
+.lp .brow .cp-user {
+  font-weight: 600;
+}
+.lp .brow .cp-cell {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--fg2);
+}
+.lp .brow .cp-pts {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 13.5px;
+}
+/* Your row is marked the way the product marks it: a tinted band with an
+   accent edge, no badge. */
+.lp .brow.you {
+  background: var(--gold-soft);
+}
+.lp .brow.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
+}
+.lp .brow.bump {
+  background: color-mix(in srgb, var(--ac) 12%, transparent);
+}
+.lp .brow.you.bump {
+  background: color-mix(in srgb, var(--ac) 16%, transparent);
+}
+
+/* ============================================================
+   HOW IT WORKS — pinned, scroll-stepped
+   ============================================================ */
+.lp .how {
+  position: relative;
+  height: 340vh;
+}
+.lp .how-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+/* Same column rhythm as the contest and solo sections. The width comes from
+   .wrap; setting it here used to override that and push the copy into the
+   left edge of the screen. */
+.lp .how-grid {
+  display: grid;
+  grid-template-columns: 432px 1fr;
+  gap: 64px;
+  align-items: center;
+}
+.lp .how-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 36px;
+}
+.lp .how-step {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  transition: opacity 0.45s;
+}
+.lp .how-step:last-child {
+  border-bottom: 1px solid var(--border);
+}
+.lp .how-step .num {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg3);
+  padding-top: 3px;
+  transition: color 0.35s;
+}
+.lp .how-step .step-t {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg2);
+  transition: color 0.35s;
+}
+/* The description opens to whatever height its text needs: the row grows from
+   0fr to 1fr, so no fixed height can clip a longer step. */
+.lp .how-step .step-d {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: 5px;
+  font-size: 13.5px;
+  color: var(--fg3);
+  line-height: 1.55;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s;
+}
+.lp .how-step .step-d > span {
+  overflow: hidden;
+}
+.lp .how-step.on .num {
+  color: var(--gold-hi);
+}
+.lp .how-step.on .step-t {
+  color: var(--fg);
+}
+.lp .how-step.on .step-d {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.lp .how-vis {
+  position: relative;
+  /* Give way on a short window instead of running past the pinned screen. */
+  height: min(500px, 64vh);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  overflow: hidden;
+}
+.lp .how-vis::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    80% 60% at 50% 0%,
+    var(--gold-soft),
+    transparent 62%
+  );
+}
+.lp .how-pane {
+  position: absolute;
+  inset: 0;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  /* One pane hands over to the next slowly enough to be watched: the copy on
+     the left has already changed while the picture is still arriving. The fade
+     is held to a straight line for the same reason the section reveals are —
+     on a curve it finishes in the first fifth of its own duration and reads as
+     a cut rather than a dissolve. */
+  transition:
+    opacity 0.62s linear,
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.lp .how-pane.on {
+  opacity: 1;
+  transform: none;
+}
+.lp .hp-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.lp .hp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lp .hp-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card-2);
+  font-size: 13.5px;
+}
+.lp .hp-item .k {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg2);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+/* A problem in the problemset pane. One grid, as in the catalogue, so the
+   difficulty starts on the same line in every row instead of drifting with the
+   title and crowding the acceptance. */
+.lp .hp-prob {
+  display: grid;
+  grid-template-columns: 20px 40px minmax(0, 1fr) 104px 64px;
+  gap: 12px;
+}
+.lp .hp-prob-id {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-prob-t {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .hp-prob .df {
+  font-size: 11.5px;
+}
+.lp .hp-prob .k {
+  margin-left: 0;
+  justify-self: end;
+  color: var(--gold-hi);
+}
+.lp .hp-code {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 21px;
+  white-space: pre;
+  color: #abb2bf;
+}
+/* The verdict, as the workspace throws it up after a submission. */
+.lp .hp-toast {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--card-2);
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent);
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+}
+.lp .hp-toast-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--ac-soft);
+  color: var(--ac);
+}
+.lp .hp-toast-big {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ac);
+}
+.lp .hp-toast-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+
+/* Rating pane: the dashboard's standing card, top to bottom. */
+.lp .hp-rate {
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 0;
+  padding: 0;
+}
+/* The dashboard runs this card in its swap layout: ring on the left, the
+   numbers in a column on the right. */
+.lp .hp-card-bd {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 22px 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+.lp .hp-meta {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.lp .hp-card-hd {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .hp-card-hd .t {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.lp .hp-card-hd .t svg {
+  color: var(--fg2);
+}
+.lp .hp-card-hd .more {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg2);
+}
+.lp .hp-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 700;
+}
+.lp .hp-last {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ac);
+}
+.lp .hp-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--fg2);
+}
+.lp .hp-sub b {
+  color: var(--gold);
+}
+.lp .hp-ring {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(232px, 40vh);
+  aspect-ratio: 1;
+}
+.lp .hp-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  /* The glow reaches past the arc; without this the svg clips it square. */
+  overflow: visible;
+}
+.lp .hp-ring .track {
+  fill: none;
+  stroke: var(--card-2);
+}
+.lp .hp-ring .meter {
+  fill: none;
+  stroke: url(#lpRingGrad);
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+.lp .hp-ring-c {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.lp .hp-ring-c .elo {
+  font-family: var(--mono);
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-ring-c .lab {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg2);
+  margin-top: 7px;
+}
+.lp .hp-ring-c .rk {
+  margin-top: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.lp .hp-tier {
+  width: 100%;
+  margin-top: 20px;
+}
+.lp .hp-tier .lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--fg2);
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-tier .track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.lp .hp-tier .fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-hi));
+}
+
+/* Rating history under the bar. */
+.lp .hp-spark {
+  width: 100%;
+  margin-top: 20px;
+}
+.lp .hp-spark .shd {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.lp .hp-spark .shd .k {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.lp .hp-spark .shd .v {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.lp .hp-spark svg {
+  display: block;
+  width: 100%;
+  height: 56px;
+  overflow: visible;
+}
+.lp .hp-spark .ln {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+}
+.lp .hp-spark .ar {
+  fill: url(#lpSparkFill);
+}
+.lp .hp-spark .dot {
+  fill: var(--gold-hi);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+/* ============================================================
+   SOLO PRACTICE — catalogue sample on the left, copy on the right
+   (mirrors the contest section so the two do not read as one block)
+   ============================================================ */
+.lp .solo-grid {
+  display: grid;
+  grid-template-columns: 1fr 432px;
+  gap: 64px;
+  align-items: center;
+}
+.lp .solo-copy .solo-note {
+  margin: 18px 0 0;
+  color: var(--fg3);
+  font-size: 13.5px;
+}
+
+.lp .solo-cat {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  overflow: hidden;
+  box-shadow: 0 30px 80px -34px rgba(0, 0, 0, 0.8);
+}
+.lp .solo-cat-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .solo-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+.lp .solo-seg span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+  white-space: nowrap;
+}
+.lp .solo-seg span.on {
+  background: var(--card-2);
+  color: var(--fg);
+}
+.lp .solo-seg .sdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  padding: 0;
+}
+.lp .solo-seg .d-easy .sdot {
+  background: var(--ac);
+}
+.lp .solo-seg .d-medium .sdot {
+  background: var(--tle);
+}
+.lp .solo-seg .d-hard .sdot {
+  background: var(--wa);
+}
+/* The tag filter, as its button reads before the dropdown is opened. */
+.lp .solo-tags-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg2);
+  white-space: nowrap;
+  transition: 0.12s;
+}
+.lp .solo-tags-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-2);
+}
+
+/* Sort bar and row-cards share one column grid, so every label in the bar
+   stands over its own column in the cards below (see ProblemsPage.css). */
+.lp .solo-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 16px;
+}
+.lp .solo-sort,
+.lp .solo-row {
+  display: grid;
+  grid-template-columns: 38px 46px minmax(0, 1fr) 106px 88px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+}
+.lp .solo-sort {
+  height: 42px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--fg2);
+}
+.lp .solo-sort .solo-sort-lbl {
+  grid-column: 1;
+  color: var(--fg3);
+  white-space: nowrap;
+}
+.lp .solo-sort .col-id {
+  grid-column: 2;
+}
+.lp .solo-sort .col-name {
+  grid-column: 3;
+}
+.lp .solo-sort .col-diff {
+  grid-column: 4;
+}
+.lp .solo-sort .col-acc {
+  grid-column: 5;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lp .solo-sort .on {
+  color: var(--gold-hi);
+}
+.lp .solo-sort i {
+  display: inline-flex;
+  color: var(--gold);
+}
+
+.lp .solo-row {
+  min-height: 54px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  transition:
+    transform 0.14s,
+    border-color 0.14s,
+    background 0.14s;
+}
+.lp .solo-row:hover {
+  border-color: var(--border-2);
+  background: var(--card-2);
+  transform: translateY(-2px);
+}
+.lp .solo-row:hover .solo-title {
+  color: var(--gold-hi);
+}
+
+.lp .solo-row .lp-st {
+  grid-column: 1;
+}
+.lp .solo-id {
+  grid-column: 2;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--fg3);
+  font-variant-numeric: tabular-nums;
+}
+.lp .solo-main {
+  grid-column: 3;
+  min-width: 0;
+}
+.lp .solo-title {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.14s;
+}
+.lp .solo-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+/* A tag in a row is its own filter in the catalogue, and it answers to the
+   pointer separately from the row it sits in. */
+.lp .solo-tags .tag {
+  transition: 0.12s;
+}
+.lp .solo-tags .tag:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+.lp .solo-row .df {
+  grid-column: 4;
+}
+.lp .solo-acc {
+  grid-column: 5;
+  justify-self: end;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--gold-hi);
+  font-variant-numeric: tabular-nums;
+}
+.lp .solo-acc .pct {
+  color: var(--fg3);
+  font-size: 11px;
+}
+
+/* ============================================================
+   GLOBAL RATING — metallic podium
+   ============================================================ */
+.lp .stand {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(255, 255, 255, 0.016) 22%,
+    rgba(255, 255, 255, 0.016) 78%,
+    transparent
+  );
+}
+.lp .stand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    70% 40% at 50% 0%,
+    rgba(255, 215, 0, 0.05),
+    transparent 70%
+  );
+}
+.lp .stand-head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lp .stand-head .sec-sub {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+/* Same metal names the standings page uses, so the two are read side by side. */
+.lp .metal {
+  --metal-gold-hi: #ffe873;
+  --metal-gold: #ffd700;
+  --metal-silver-hi: #ececec;
+  --metal-silver: #c0c0c0;
+  --metal-bronze-hi: #e39a55;
+  --metal-bronze: #cd7f32;
+}
+
+/* The leaderboard panel: one surface holding the podium and the ranked rows,
+   as the standings page holds them. Extra headroom at the top leaves the
+   raised winner tile room to sit without touching the header. */
+.lp .rank-panel {
+  margin-top: 52px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--card-2), var(--card));
+  box-shadow: 0 30px 80px -34px rgba(0, 0, 0, 0.8);
+}
+.lp .rank-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.lp .rank-top .ttl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+.lp .rank-sort {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+}
+
+/* Podium tiles, following StandingsPage.css: the winner sits in the middle and
+   lifted, each tile carries its own metal, and the avatar keeps the accent. */
+.lp-podium {
+  display: grid;
+  grid-template-columns: 1fr 1.14fr 1fr;
+  gap: 18px;
+  align-items: end;
+  padding: 40px 22px 0;
+}
+.lp .pod {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--card);
+  padding: 22px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  transition:
+    background 0.16s,
+    border-color 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
+}
+/* Each tile carries its own metal, so hover is one rule instead of three. */
+.lp .pod-1 {
+  --metal: var(--metal-gold);
+  order: 2;
+  transform: translateY(-14px);
+  border-color: color-mix(in srgb, var(--metal-gold) 55%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal-gold) 15%, transparent),
+      transparent 62%
+    ),
+    var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-gold) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-gold) 20%, transparent);
+}
+.lp .pod-2 {
+  --metal: var(--metal-silver);
+  order: 1;
+  border-color: color-mix(in srgb, var(--metal-silver) 42%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal-silver) 11%, transparent),
+      transparent 62%
+    ),
+    var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-silver) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-silver) 20%, transparent);
+}
+.lp .pod-3 {
+  --metal: var(--metal-bronze);
+  order: 3;
+  border-color: color-mix(in srgb, var(--metal-bronze) 42%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal-bronze) 11%, transparent),
+      transparent 62%
+    ),
+    var(--card);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal-bronze) 45%, transparent),
+    0 16px 44px color-mix(in srgb, var(--metal-bronze) 20%, transparent);
+}
+
+/* Hover is the same recipe, just more of it: brighter rim, deeper wash, wider
+   glow, all in the tile's own metal. The gold tile already rides high, so it
+   lifts from where it is. */
+.lp .pod:hover {
+  border-color: color-mix(in srgb, var(--metal) 78%, transparent);
+  background:
+    radial-gradient(
+      120% 130% at 50% 0%,
+      color-mix(in srgb, var(--metal) 26%, transparent),
+      transparent 66%
+    ),
+    var(--card-2);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--metal) 65%, transparent),
+    0 22px 60px color-mix(in srgb, var(--metal) 34%, transparent);
+  transform: translateY(-3px);
+}
+.lp .pod-1:hover {
+  transform: translateY(-17px);
+}
+
+.lp .pod-medal {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 15px;
+}
+.lp .pod-1 .pod-medal {
+  background: linear-gradient(150deg, var(--metal-gold-hi), var(--metal-gold));
+  color: #3a2a08;
+}
+.lp .pod-2 .pod-medal {
+  background: linear-gradient(
+    150deg,
+    var(--metal-silver-hi),
+    var(--metal-silver)
+  );
+  color: #2a2e36;
+}
+.lp .pod-3 .pod-medal {
+  background: linear-gradient(
+    150deg,
+    var(--metal-bronze-hi),
+    var(--metal-bronze)
+  );
+  color: #3a2410;
+}
+.lp .pod-av {
+  width: 56px;
+  height: 56px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0d0f14;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
+}
+.lp .pod-h {
+  font-size: 15px;
+  font-weight: 700;
+}
+.lp .pod-rating {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.lp .pod-1 .pod-rating {
+  color: var(--metal-gold-hi);
+}
+.lp .pod-2 .pod-rating {
+  color: var(--metal-silver-hi);
+}
+.lp .pod-3 .pod-rating {
+  color: var(--metal-bronze-hi);
+}
+.lp .pod-sub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+}
+.lp .pod-max {
+  color: var(--fg2);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.lp .pod-max b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Tier pill and delta, shared by the podium and the rows. */
+.lp .st-tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.lp .st-tier i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.lp .st-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lp .st-delta.up {
+  color: var(--ac);
+}
+.lp .st-delta.down {
+  color: var(--wa);
+}
+
+/* Ranked rows. On the standings page every row is its own card rather than a
+   line in one table, and the columns come from --st-cols there. */
+.lp .rank-rows {
+  --st-cols: 56px minmax(0, 1fr) 172px 104px 92px 88px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: 26px 22px 22px;
+}
+.lp .rank-h,
+.lp .st-row {
+  display: grid;
+  grid-template-columns: var(--st-cols);
+  align-items: center;
+  gap: 14px;
+}
+.lp .rank-h {
+  /* Sits close to the rows it names, not adrift between them and the podium. */
+  padding: 14px 18px 2px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  font-weight: 700;
+}
+.lp .rank-h .num,
+.lp .st-row .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lp .st-row {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 18px;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.lp .st-row:hover {
+  border-color: var(--border-2);
+  background: var(--card-2);
+}
+.lp .st-row .rn {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+  padding-left: 6px;
+}
+.lp .st-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.lp .st-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d0f14;
+  flex: 0 0 auto;
+  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
+}
+.lp .st-user .nm {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lp .st-rating {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.lp .st-max {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+/* Your own row: tinted, edged with the accent, and the rating lights up. */
+.lp .st-row.you {
+  border-color: var(--gold-line);
+  background:
+    radial-gradient(120% 200% at 0% 50%, var(--gold-soft), transparent 42%),
+    var(--card);
+}
+.lp .st-row.you::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gold);
+}
+.lp .st-row.you:hover {
+  border-color: var(--gold);
+  background:
+    radial-gradient(
+      130% 220% at 0% 50%,
+      color-mix(in srgb, var(--gold) 30%, transparent),
+      transparent 48%
+    ),
+    var(--card-2);
+  box-shadow:
+    0 0 0 1px var(--gold-line),
+    0 10px 30px var(--accent-glow);
+}
+.lp .st-row.you .st-rating {
+  color: var(--gold-hi);
+}
+.lp-you-tag {
+  flex: 0 0 auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+/* Closing notes under the ladder: centred, quieter than the section lead. */
+.lp .stand-note {
+  margin: 22px auto 0;
+  max-width: 68ch;
+  text-align: center;
+  color: var(--fg2);
+  font-size: 15px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* ---------- ladder strip ---------- */
+.lp .ladder {
+  display: flex;
+  gap: 8px;
+  margin-top: 34px;
+}
+.lp .lad {
+  flex: 1;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  transition:
+    transform 0.25s,
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.lp .lad:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-2);
+}
+.lp .lad .nm {
+  font-size: 12.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.lp .lad .nm i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.lp .lad .rg {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--fg3);
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   JUDGE / technical
+   ============================================================ */
+.lp .judge {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 44px;
+}
+.lp .jc {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--card);
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s,
+    box-shadow 0.28s;
+}
+.lp .jc:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-line);
+  box-shadow: 0 18px 44px -22px var(--accent-glow);
+}
+.lp .jc .ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  flex: 0 0 auto;
+}
+.lp .jc .tx {
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.lp .verdicts {
+  display: flex;
+  gap: 7px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.lp-vd {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.lp-vd.ac {
+  color: var(--ac);
+  border-color: color-mix(in srgb, var(--ac) 45%, transparent);
+  background: var(--ac-soft);
+}
+.lp-vd.wa {
+  color: var(--wa);
+  border-color: color-mix(in srgb, var(--wa) 45%, transparent);
+  background: var(--wa-soft);
+}
+.lp-vd.tle {
+  color: var(--tle);
+  border-color: color-mix(in srgb, var(--tle) 45%, transparent);
+  background: var(--tle-soft);
+}
+/* Status glyph in front of a problem: a tinted disc once the problem has been
+   touched, an empty ring while it has not. */
+.lp-st {
+  display: grid;
+  place-items: center;
+}
+.lp-st .ic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.lp-st.solved .ic {
+  color: var(--ac);
+  background: var(--ac-soft);
+}
+.lp-st.attempted .ic {
+  color: var(--tle);
+  background: var(--tle-soft);
+}
+.lp-st.todo .ic {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-2);
+}
+
+/* ============================================================
+   FAQ
+   ============================================================ */
+.lp .faq {
+  margin-top: 44px;
+  border-top: 1px solid var(--border);
+}
+.lp .faq-i {
+  border-bottom: 1px solid var(--border);
+}
+.lp .faq-q {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 4px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--fg);
+  font-family: var(--ui);
+  font-size: 16.5px;
+  font-weight: 500;
+  transition: color 0.18s;
+}
+.lp .faq-q:hover {
+  color: var(--gold-hi);
+}
+.lp .faq-q .ch {
+  margin-left: auto;
+  color: var(--fg2);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.2s;
+  flex: 0 0 auto;
+}
+.lp .faq-i.open .faq-q .ch {
+  transform: rotate(180deg);
+  color: var(--gold-hi);
+}
+/* The answer opens to whatever height its own text needs: the row grows from
+   0fr to 1fr. A fixed ceiling to slide to was what made it snap — the travel
+   was measured against that number rather than against the answer, so a short
+   one flew open and stopped early, and every one of them shut with a jolt. */
+.lp .faq-a {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.3s linear;
+}
+.lp .faq-i.open .faq-a {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.lp .faq-a p {
+  overflow: hidden;
+  margin: 0;
+  padding: 0 60px 24px 4px;
+  color: var(--fg2);
+  font-size: 15px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+/* ============================================================
+   FINAL CTA + FOOTER
+   ============================================================ */
+.lp .final {
+  position: relative;
+  text-align: center;
+  padding: 150px 0 130px;
+}
+.lp .final::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    52% 62% at 50% 55%,
+    var(--gold-soft),
+    transparent 68%
+  );
+}
+.lp .final h2 {
+  font-size: 56px;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+  margin: 18px 0 0;
+}
+.lp .final h2 .g {
+  background: linear-gradient(100deg, var(--gold-hi), var(--btn-hi-h));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.lp .final .sec-sub {
+  margin: 20px auto 0;
+  text-align: center;
+}
+.lp .final .hero-cta {
+  justify-content: center;
+  margin-top: 36px;
+}
+/* Here the note stands on its own under the button rather than beside it, so
+   it needs its own room above and centring of its own — the width it is held
+   to would otherwise leave it hanging off the left of a centred column. */
+.lp .final .hero-note {
+  margin: 16px auto 0;
+  text-align: center;
+}
+.lp-foot {
+  border-top: 1px solid var(--border);
+  padding: 40px 0 56px;
+  background: color-mix(in srgb, var(--card) 40%, transparent);
+}
+.lp .foot-in {
+  display: flex;
+  align-items: flex-start;
+  gap: 60px;
+}
+.lp .foot-tag {
+  color: var(--fg3);
+  font-size: 12.5px;
+  margin-top: 12px;
+  max-width: 30ch;
+  line-height: 1.6;
+}
+.lp .foot-cols {
+  margin-left: auto;
+  display: flex;
+  gap: 64px;
+}
+.lp .foot-col {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.lp .foot-col .h {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg3);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.lp .foot-col a {
+  color: var(--fg2);
+  font-size: 13.5px;
+}
+.lp .foot-col a:hover {
+  color: var(--fg);
+}
+.lp .foot-bot {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--fg3);
+  font-size: 12.5px;
+}
+.lp .foot-bot .sp {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+}
+
+/* ============================================================
+   NARROW SCREENS — tablet
+   Below this width the side-by-side layouts stop working: a mock panel next to
+   a column of copy leaves neither enough room. Everything folds into a single
+   column, and the copy always comes first — on a phone the words have to
+   arrive before the picture that illustrates them, whichever side the picture
+   sits on when there is room for two.
+
+   The line is drawn at 1200 rather than at a tablet's own width. A 1024px
+   screen is wide enough for the desktop layout to apply and too narrow for it
+   to work: the columns hold, but everything in them is pressed thin while the
+   page runs out of height to fill. One column and full-size pieces read better
+   than two columns of crushed ones.
+   ============================================================ */
+@media (max-width: 1200px) {
+  /* Seven section names stop fitting the bar well before the layout does. They
+     move behind a button, and the account button gets its room back. */
+  .lp .nav-menu-btn {
+    display: inline-flex;
+  }
+  .lp .nav-links {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: var(--lp-gutter);
+    right: var(--lp-gutter);
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin-left: 0;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--card);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+  }
+  .lp .nav-links.open {
+    display: flex;
+  }
+  .lp .nav-links a {
+    padding: 11px 12px;
+    border-radius: var(--r-sm);
+    font-size: 14.5px;
+  }
+  .lp .nav-links a:hover {
+    background: var(--card-2);
+    color: var(--fg);
+  }
+
+  .lp .hero-split,
+  .lp .contest-grid,
+  .lp .how-grid,
+  .lp .solo-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  /* On a wide screen these two are placed in the same row on purpose, side by
+     side, and the copy rides along while the board scrolls past. Folded into
+     one column they have to give up both: the shared row above all, or they
+     land in the same cell and print on top of one another. */
+  .lp .contest-copy,
+  .lp .contest-stack {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .lp .contest-copy {
+    position: static;
+  }
+  /* The solo section is mirrored on a wide screen — the catalogue on the left,
+     the copy on the right. In one column that order would put the mock first. */
+  .lp .solo-copy {
+    order: -1;
+  }
+
+  /* "How it works" keeps what it is: still held still, still scrubbed, the
+     picture still changing under the wheel. Only its shape gives way — the
+     picture goes under the steps instead of beside them, and both are cut down
+     until the pair fits the one screen the pin allows. Everything else in the
+     section already fits that screen; it was the two full-size columns stacked
+     on top of each other that did not.
+
+     The travel is shortened to match. Three and a half screens of wheel was
+     measured against a wide layout; with a smaller picture and tighter steps
+     the same four changes want less of it. */
+  .lp .how {
+    height: 260vh;
+  }
+  /* The pinned screen is divided rather than filled in order: the words take
+     what they need and the picture takes everything that is left. That is what
+     keeps it on screen — given a height of its own it ended up below the fold
+     of a box exactly one screen tall, which is why it looked as though it had
+     disappeared.
+
+     Stretching also settles the trembling that centring used to cause. Every
+     step opens its description as it becomes the current one, and centred
+     content answers by shifting everything to find its middle again. */
+  .lp .how-pin {
+    align-items: stretch;
+    padding: calc(var(--nav-h) + 44px) 0 8px;
+  }
+  .lp .how-grid {
+    grid-template-rows: auto minmax(0, 1fr);
+    /* The picture has to fill the row it was given. Its panes are all laid over
+       one another out of the flow, so it has no content of its own to take a
+       height from — centred in its row it measures nothing and disappears. */
+    align-items: stretch;
+    gap: 22px;
+  }
+  .lp .how-vis {
+    height: auto;
+  }
+  .lp .how-steps {
+    margin-top: 20px;
+  }
+  .lp .how-step {
+    padding: 11px 0;
+  }
+
+  /* The standing card is the tallest of the four panes and the one that gets
+     clipped first. It keeps its ring beside the numbers — stacking them makes
+     it taller still — and gives up size instead. */
+  .lp .how-pane {
+    padding: 18px;
+    gap: 10px;
+  }
+  .lp .hp-card-bd {
+    gap: 18px;
+    padding: 6px 14px 12px;
+  }
+  .lp .hp-ring {
+    width: min(146px, 24vh);
+  }
+  .lp .hp-ring-c .elo {
+    font-size: 34px;
+  }
+  .lp .hp-ring-c .lab {
+    margin-top: 5px;
+  }
+  .lp .hp-name {
+    font-size: 16px;
+  }
+  .lp .hp-tier,
+  .lp .hp-spark {
+    margin-top: 12px;
+  }
+
+  /* A tap leaves :hover stuck on a touch screen, so a tile that lifts under the
+     pointer would simply stay hoisted after you let go. */
+  .lp .pod:hover {
+    transform: none;
+  }
+  .lp .pod-1:hover {
+    transform: translateY(-14px);
+  }
+
+  /* Eight tiers in a row become unreadable slivers; two rows of four hold. */
+  .lp .ladder {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  /* The six columns no longer fit the panel, and a track set to shrink to
+     nothing does exactly that: the name column collapses and its contents spill
+     over the numbers beside it. Shaved to the widths the standings page uses at
+     this size, they all still fit. */
+  .lp .rank-rows {
+    --st-cols: 40px minmax(0, 1fr) 124px 80px 74px 68px;
+  }
+  .lp .rank-h,
+  .lp .st-row {
+    gap: 10px;
+  }
+
+  .lp .foot-in {
+    flex-direction: column;
+    gap: 36px;
+  }
+  .lp .foot-cols {
+    margin-left: 0;
+    gap: 44px;
+    flex-wrap: wrap;
+  }
+}
+
+/* A pinned section needs a screen tall enough to hold its picture and its four
+   steps at once. On a short window — a phone lying on its side, a small laptop
+   — there is no such screen, and holding the section still would only trap the
+   reader in it. There it becomes what it is on paper: four numbered steps, all
+   open, all readable, and the picture left to the wide layout, where each pane
+   is anyway a small copy of a screen the page shows in full somewhere else. */
+@media (max-width: 1200px) and (max-height: 640px) {
+  .lp .how {
+    height: auto;
+  }
+  .lp .how-pin {
+    position: static;
+    height: auto;
+    padding: 0;
+  }
+  .lp .how-vis {
+    display: none;
+  }
+  .lp .how-step .num {
+    color: var(--gold-hi);
+  }
+  .lp .how-step .step-t {
+    color: var(--fg);
+  }
+  .lp .how-step .step-d {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   NARROW SCREENS — phone
+   Headings and the space around them shrink, and the mocks drop the columns
+   that carry the least: a table squeezed to six columns on a 360px screen
+   stops being a table. What is left in each of them is what the row is about.
+   ============================================================ */
+@media (max-width: 640px) {
+  .lp {
+    --lp-gutter: 16px;
+  }
+
+  /* Tighter spacing between the three things on the bar, so the sign-in link
+     keeps its two words side by side instead of being pressed into a column. */
+  .lp .nav-in {
+    gap: 12px;
+  }
+  .lp .nav-right {
+    gap: 10px;
+  }
+
+  /* ---------- type and rhythm ---------- */
+  .lp h1.hero-t {
+    font-size: 38px;
+  }
+  .lp h2.sec-t {
+    font-size: 30px;
+  }
+  .lp .final h2 {
+    font-size: 34px;
+  }
+  .lp .sec-sub {
+    font-size: 15.5px;
+  }
+  .lp .sec {
+    padding: 76px 0;
+  }
+  .lp .sec-tight {
+    padding: 66px 0;
+  }
+  .lp .sec.band {
+    padding-top: 96px;
+  }
+  .lp .sec-tight.band {
+    padding-top: 86px;
+  }
+  .lp .final.band {
+    padding-top: 110px;
+  }
+  /* A 34px corner on a phone-wide sheet reads as a bubble, not as an edge. */
+  .lp {
+    --lp-lift: 20px;
+  }
+  .lp .band {
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* ---------- the leaderboard mock ---------- */
+  /* Nothing is dropped — the row folds instead, exactly as the standings page
+     folds it: the same reading order across, with only the change stepping down
+     under the rating it belongs to. */
+  /* The tier column is a fixed width rather than one that fits its contents:
+     the header and the rows are two separate grids, so a track that measures
+     itself lands in a different place in each of them and the labels stop
+     standing over their columns. */
+  .lp .rank-rows {
+    --st-cols: 22px minmax(0, 1fr) 94px 46px 40px;
+    padding: 14px 8px 12px;
+  }
+  .lp .rank-h,
+  .lp .st-row {
+    column-gap: 8px;
+  }
+  .lp .st-row {
+    grid-template-areas:
+      'rank user tier rating max'
+      'rank user tier delta  max';
+    row-gap: 2px;
+    padding: 10px 12px;
+  }
+  .lp .st-row .rn {
+    grid-area: rank;
+    padding-left: 0;
+    font-size: 13px;
+  }
+  .lp .st-user {
+    grid-area: user;
+    gap: 8px;
+  }
+  .lp .st-tier-c {
+    grid-area: tier;
+  }
+  .lp .st-rating {
+    grid-area: rating;
+    font-size: 15px;
+  }
+  .lp .st-delta-c {
+    grid-area: delta;
+  }
+  .lp .st-max {
+    grid-area: max;
+  }
+  /* Every column keeps its name except the change, which has stepped down under
+     the rating and would have nowhere to put a label of its own. Max moves into
+     the track the delta left behind. */
+  .lp .rank-h {
+    padding: 4px 12px 8px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  .lp .rank-h span:nth-child(5) {
+    display: none;
+  }
+  .lp .rank-h span:nth-child(6) {
+    grid-column: 5;
+  }
+  /* shrink the pieces that would otherwise eat the name */
+  .lp .st-av {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 11px;
+  }
+  .lp .st-tier {
+    height: 20px;
+    padding: 0 6px;
+    gap: 4px;
+    font-size: 10px;
+  }
+  .lp .st-max,
+  .lp .st-delta {
+    font-size: 12px;
+  }
+  /* Three tiles across a phone leave no tile. Stacked, gold on top: there is no
+     middle left to raise, and the raised one has nowhere to be raised from. */
+  .lp .lp-podium {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 26px 12px 0;
+  }
+  .lp .pod-1,
+  .lp .pod-2,
+  .lp .pod-3,
+  .lp .pod-1:hover {
+    order: 0;
+    transform: none;
+  }
+
+  .lp .judge {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* ---------- the catalogue mock ---------- */
+  /* Every column stays, exactly as the problemset keeps them at this size: the
+     tracks are shaved instead, and the sort bar drops a step of type so its
+     words stay inside the narrowed columns it names. */
+  .lp .solo-cat-top {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .lp .solo-list {
+    padding: 12px;
+    gap: 8px;
+  }
+  .lp .solo-sort,
+  .lp .solo-row {
+    grid-template-columns: 22px 24px minmax(0, 1fr) 60px 60px;
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .lp .solo-sort {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  /* "Difficulty" is wider than the column it names once the tracks are shaved,
+     and a label that spills runs straight into the next one. Cut it instead —
+     the values under it are short and keep their column exactly. */
+  .lp .solo-sort .col-name,
+  .lp .solo-sort .col-diff {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lp .solo-row {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    min-height: 0;
+  }
+
+  /* ---------- the editor ---------- */
+  /* Smaller type puts more of a line of code on screen before it runs into the
+     right edge — the same trade the real editor makes on a phone. */
+  .lp .ed-gutter,
+  .lp .ed-code {
+    font-size: 11.5px;
+    line-height: 19px;
+  }
+  .lp .ed-gutter {
+    flex-basis: 40px;
+  }
+  .lp .ed-body {
+    height: 268px;
+  }
+
+  /* ---------- the step panes ---------- */
+  .lp .hp-prob {
+    grid-template-columns: 20px minmax(0, 1fr) 92px;
+  }
+  .lp .hp-prob-id,
+  .lp .hp-prob .k {
+    display: none;
+  }
+  /* The pane is wider than it is tall, so the ring stays beside the numbers
+     here too — only smaller. */
+  .lp .hp-card-bd {
+    gap: 14px;
+    padding: 4px 12px 10px;
+  }
+  .lp .hp-ring {
+    width: min(124px, 22vh);
+  }
+  .lp .hp-ring-c .elo {
+    font-size: 28px;
+  }
+  .lp .hp-ring-c .lab {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+  .lp .hp-ring-c .rk {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .lp .hp-name {
+    font-size: 15px;
+  }
+
+  /* ---------- the round strip ---------- */
+  .lp .round-card {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+  .lp .rc-timer {
+    margin-left: 0;
+  }
+
+  /* ---------- tiers and footer ---------- */
+  .lp .ladder {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lp .foot-cols {
+    gap: 32px;
+  }
+  .lp .foot-bot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .lp .foot-bot .sp {
+    margin-left: 0;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ============================================================
+   NARROW SCREENS — the narrowest phones
+   Below this the account button starts losing letters, and a button that reads
+   "Create act" is worse than a bar with less on it. The section menu is what
+   goes: it is the only thing on the bar the footer carries in full, while both
+   ways into an account stay where a visitor expects them.
+   ============================================================ */
+@media (max-width: 400px) {
+  .lp .nav-menu-btn {
+    display: none;
+  }
+  .lp .nav-in {
+    gap: 10px;
+  }
+  .lp .nav-right {
+    gap: 8px;
+  }
+  .lp .nav-signin {
+    padding: 0 2px;
+  }
+  /* The last few pixels come from the two ends rather than from another cut. */
+  .lp .logo {
+    font-size: 16px;
+  }
+  .lp-nav .btn-sm {
+    padding: 0 11px;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .lp {
+    scroll-behavior: auto;
+  }
+  .lp .rv {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .lp-grid,
+  .lp-orb,
+  .lp-cursor {
+    transform: none !important;
+  }
+  .lp-cursor {
+    display: none;
+  }
+  .lp *,
+  .lp *::before,
+  .lp *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.06s !important;
+  }
+}
+
+/* ============================================================
+   CODE TOKEN COLOURS
+   The same values CodeEditor gives Monaco (see its theme), so the mock and the
+   real editor paint the sample identically. Function names have no rule there
+   and keep the default foreground here too.
+   ============================================================ */
+.lp .tk-comment {
+  color: #5c6370;
+  font-style: italic;
+}
+.lp .tk-keyword {
+  color: #c678dd;
+}
+.lp .tk-string {
+  color: #98c379;
+}
+.lp .tk-number {
+  color: #d19a66;
+}
+.lp .tk-builtin {
+  color: #56b6c2;
+}

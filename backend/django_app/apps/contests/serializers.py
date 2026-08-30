@@ -1,4 +1,8 @@
 from apps.problems.models import Problem
+from apps.problems.serializers import (
+    TestCasePublicSerializer,
+    acceptance_from_annotations,
+)
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
@@ -8,15 +12,19 @@ User = get_user_model()
 
 
 class ContestProblemSerializer(serializers.ModelSerializer):
-    """
-    Problem serializer for contest context.
+    """A contest's problem with the full statement the workspace renders.
 
-    Important: does NOT include test cases (hidden or visible).
+    A contest problem is normally hidden, and the catalog serves no hidden
+    problem to anyone, so this is where a participant's statement comes from.
+    Judge-only test cases stay out of it.
     """
 
     # Unique solvers of this problem IN THIS contest, injected as an annotation
     # by the retrieve view's prefetch (0 when the annotation is absent).
     solved_count = serializers.IntegerField(read_only=True, default=0)
+    tags = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
+    acceptance = serializers.SerializerMethodField()
+    test_cases = serializers.SerializerMethodField()
 
     class Meta:
         model = Problem
@@ -24,11 +32,26 @@ class ContestProblemSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "description",
+            "input_format",
+            "output_format",
+            "constraints",
             "difficulty",
             "time_limit",
             "memory_limit",
+            "tags",
+            "acceptance",
+            "test_cases",
             "solved_count",
         ]
+
+    def get_acceptance(self, obj) -> float:
+        return acceptance_from_annotations(obj)
+
+    def get_test_cases(self, obj):
+        # We filter in Python: a queryset .filter() would ignore the view's
+        # prefetch and run one query per problem in the round.
+        visible = [case for case in obj.test_cases.all() if not case.is_hidden]
+        return TestCasePublicSerializer(visible, many=True).data
 
 
 class ContestRegistrantSerializer(serializers.ModelSerializer):

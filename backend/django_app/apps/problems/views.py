@@ -14,7 +14,7 @@ from django.db.models import (
 from django.http import JsonResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAdminUser,
@@ -50,9 +50,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Problem.objects.prefetch_related("test_cases", "tags").all()
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     filterset_class = ProblemFilter
-    search_fields = ["title"]
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -72,6 +71,11 @@ class ProblemViewSet(viewsets.ModelViewSet):
         # Filtering/ordering by ?difficulty/?tag/?status/?ordering is declarative
         # now (ProblemFilter). Here we only annotate the fields those rely on.
         queryset = super().get_queryset()
+
+        # A contest problem stays unreadable from the catalog while its round
+        # runs; the contest ships its own statements to the participants.
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_hidden=False)
 
         # Acceptance counters in one pass - both counts over the same 'submissions'
         # relation, so it's a single JOIN with no fan-out (no distinct needed).
@@ -100,8 +104,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
                 output_field=FloatField(),
             )
         )
-        # Default order (newest first); ?ordering overrides this via OrderingFilter.
-        return queryset.order_by("-created_at")
+        # Default order (newest first) with a constant `id` tiebreaker so pages
+        # don't shuffle at their seams; ?ordering overrides via OrderingFilter.
+        return queryset.order_by("-created_at", "id")
 
     def _user_status_annotation(self):
         """solved / attempted / todo for request.user, in one query (no N+1).
@@ -186,7 +191,8 @@ class ProblemViewSet(viewsets.ModelViewSet):
         )
 
         unsolved = (
-            Problem.objects.exclude(id__in=solved_ids)
+            Problem.objects.filter(is_hidden=False)
+            .exclude(id__in=solved_ids)
             .prefetch_related("tags")
             .annotate(
                 total_submissions=Count("submissions"),
@@ -223,5 +229,11 @@ class ProblemViewSet(viewsets.ModelViewSet):
 
         Feeds the ProblemsPage filter dropdown. Public read (like the list).
         """
-        qs = Tag.objects.annotate(count=Count("problems"))
+        # annotate() adds a GROUP BY that drops Tag.Meta.ordering, so sort
+        # explicitly — the dropdown expects tags alphabetical by name.
+        # The count covers visible problems only, so it matches what clicking
+        # the tag actually returns.
+        qs = Tag.objects.annotate(
+            count=Count("problems", filter=Q(problems__is_hidden=False))
+        ).order_by("name")
         return Response(TagSerializer(qs, many=True).data)

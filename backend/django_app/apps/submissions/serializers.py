@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Submission
@@ -10,12 +11,39 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         model = Submission
         fields = ["id", "problem", "contest", "code", "language"]
 
+    def _running_round_for(self, problem):
+        """The running round the user is registered in, or None.
+
+        Such a round owns every submission to its problems, whatever the client
+        sent.
+        """
+        from apps.contests.models import Contest
+
+        now = timezone.now()
+        return (
+            Contest.objects.filter(
+                problems=problem,
+                participants=self.context["request"].user,
+                start_time__lte=now,
+                end_time__gte=now,
+            )
+            .order_by("start_time")
+            .first()
+        )
+
     def validate(self, attrs):
         """Enforce the contest submission rules: when a contest is given, the
         problem must belong to it and the contest must currently be active
-        (status is refreshed from the clock before the check)."""
-        contest = attrs.get("contest")
+        (status is refreshed from the clock before the check).
+
+        A submission that arrives without a contest joins the running round when
+        there is one: otherwise a participant could collect verdicts outside the
+        round with no penalty."""
         problem = attrs.get("problem")
+        contest = attrs.get("contest")
+        if contest is None and problem is not None:
+            contest = self._running_round_for(problem)
+            attrs["contest"] = contest
 
         # If contest is provided — problem must belong to that contest
         if contest and not contest.problems.filter(pk=problem.pk).exists():

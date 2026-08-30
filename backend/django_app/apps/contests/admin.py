@@ -18,6 +18,7 @@ class ContestAdmin(admin.ModelAdmin):
     date_hierarchy = "start_time"
     # Removed "problems" from filter_horizontal so we can use Inline instead
     filter_horizontal = ("participants",)
+    readonly_fields = ("rating_applied",)
     ordering = ("-start_time",)
     inlines = [ProblemInline]
     exclude = ("problems",)  # Exclude the main M2M field so it doesn't show twice

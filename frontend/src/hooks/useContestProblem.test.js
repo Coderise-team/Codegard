@@ -1,12 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
-const { useContest, useProblem } = vi.hoisted(() => ({
-  useContest: vi.fn(),
-  useProblem: vi.fn(),
-}));
+const { useContest } = vi.hoisted(() => ({ useContest: vi.fn() }));
 vi.mock('./useContest', () => ({ useContest }));
-vi.mock('./useProblem', () => ({ useProblem }));
 
 import { useContestProblem } from './useContestProblem';
 
@@ -18,58 +14,45 @@ const contestSays = (over = {}) =>
     ...over,
   });
 
-const problemSays = (over = {}) =>
-  useProblem.mockReturnValue({
-    data: null,
-    loading: false,
-    error: null,
-    ...over,
-  });
-
 const notFound = () => ({ response: { status: 404 } });
 
 beforeEach(() => {
   useContest.mockReset();
-  useProblem.mockReset();
 });
 
 describe('useContestProblem', () => {
-  it('turns the letter into the problem the round holds at that spot', () => {
-    // The letter is a position in the round; the entry there carries the
-    // catalogue id, and the statement is loaded from the catalogue because the
-    // contest payload ships a trimmed problem.
-    contestSays({ contest: { id: 7, problems: [{ id: 11 }, { id: 22 }] } });
-    problemSays({ data: { id: 22, title: 'Second' } });
+  it('turns the letter into the statement the round holds at that spot', () => {
+    // The letter is a position in the round, and the entry there is the whole
+    // statement: the round ships it, the catalogue never serves it.
+    const second = { id: 22, title: 'Second', test_cases: [] };
+    contestSays({ contest: { id: 7, problems: [{ id: 11 }, second] } });
 
     const { result } = renderHook(() => useContestProblem(7, 'B'));
 
-    expect(useProblem).toHaveBeenCalledWith(22);
-    expect(result.current.problem).toEqual({ id: 22, title: 'Second' });
+    expect(result.current.problem).toBe(second);
     expect(result.current.notFound).toBe(false);
   });
 
   it('takes a hand-typed lowercase letter', () => {
-    contestSays({ contest: { id: 7, problems: [{ id: 11 }] } });
-    problemSays({ data: { id: 11 } });
+    const first = { id: 11 };
+    contestSays({ contest: { id: 7, problems: [first] } });
 
-    renderHook(() => useContestProblem(7, 'a'));
+    const { result } = renderHook(() => useContestProblem(7, 'a'));
 
-    expect(useProblem).toHaveBeenCalledWith(11);
+    expect(result.current.problem).toBe(first);
   });
 
   it('calls a letter past the end of the round a dead url', () => {
     contestSays({ contest: { id: 7, problems: [{ id: 11 }] } });
-    problemSays();
 
     const { result } = renderHook(() => useContestProblem(7, 'C'));
 
     expect(result.current.notFound).toBe(true);
-    expect(useProblem).toHaveBeenCalledWith(null);
+    expect(result.current.problem).toBe(null);
   });
 
   it('calls a segment that is not a letter a dead url', () => {
     contestSays({ contest: { id: 7, problems: [{ id: 11 }] } });
-    problemSays();
 
     const { result } = renderHook(() => useContestProblem(7, '42'));
 
@@ -80,7 +63,6 @@ describe('useContestProblem', () => {
     // A round that has not started counts too: the backend hides its problems
     // until the start, so the page has nothing to draw either way.
     contestSays({ error: notFound() });
-    problemSays();
 
     const { result } = renderHook(() => useContestProblem(99, 'A'));
 
@@ -89,7 +71,6 @@ describe('useContestProblem', () => {
 
   it('waits while the round is still loading', () => {
     contestSays({ loading: true });
-    problemSays();
 
     const { result } = renderHook(() => useContestProblem(7, 'A'));
 
@@ -97,22 +78,9 @@ describe('useContestProblem', () => {
     expect(result.current.notFound).toBe(false);
   });
 
-  it('does not wait for a problem that was never addressed', () => {
-    // useProblem sits at loading:true on a null id; leaking that out would
-    // spin forever on a url that addresses nothing.
-    contestSays({ contest: { id: 7, problems: [] } });
-    problemSays({ loading: true });
-
-    const { result } = renderHook(() => useContestProblem(7, 'A'));
-
-    expect(result.current.loading).toBe(false);
-    expect(result.current.notFound).toBe(true);
-  });
-
-  it('hands up a real failure of either half', () => {
+  it('hands up a real failure', () => {
     const failure = new Error('boom');
     contestSays({ error: failure });
-    problemSays();
 
     const { result } = renderHook(() => useContestProblem(7, 'A'));
 

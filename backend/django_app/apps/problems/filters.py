@@ -1,6 +1,44 @@
 import django_filters
+from core.search import MIN_TRIGRAM_LENGTH
+from django.contrib.postgres.search import TrigramWordSimilarity
+from django.core.validators import EMPTY_VALUES
 
 from .models import Problem
+
+# Minimum word-similarity for a title to count as a match. Tuned on the real
+# catalog (36 LeetCode-style titles). Real matches — exact, single-word,
+# 3-letter abbreviations, one-letter typos, and transpositions — all score
+# >= 0.44. Long unrelated titles that happen to share a few trigrams top out
+# around 0.25 (e.g. "anagrams" vs "Best Time to Buy and Sell Stock" = 0.22),
+# and truly unrelated words stay <= 0.11. 0.35 sits in that gap. Per project
+# rule this is a constant, not an env var.
+TITLE_SEARCH_THRESHOLD = 0.35
+
+
+class TiebreakOrderingFilter(django_filters.OrderingFilter):
+    """OrderingFilter that appends a constant ``id`` tiebreaker to any explicit
+    ordering. The primary field alone (difficulty, acceptance) leaves rows with
+    equal values in an undefined order, so infinite scroll drops or duplicates
+    rows at page seams. ``id`` ascending — direction fixed regardless of the main
+    field — makes the order total and stable. No ordering requested → untouched,
+    so the view's default (-created_at, id) and search ranking still apply.
+    """
+
+    def filter(self, qs, value):
+        if not value:
+            return qs
+        # Skip empty params exactly as the parent OrderingFilter does — a
+        # trailing/leading/double comma ("?ordering=name,") yields a "" entry
+        # that would map to an invalid field and raise FieldError (HTTP 500).
+        ordering = [
+            self.get_ordering_value(param)
+            for param in value
+            if param not in EMPTY_VALUES
+        ]
+        if not ordering:
+            return qs
+        ordering.append("id")
+        return qs.order_by(*ordering)
 
 
 class ProblemFilter(django_filters.FilterSet):
@@ -10,6 +48,10 @@ class ProblemFilter(django_filters.FilterSet):
     acceptance ordering) work off annotations added in the viewset's
     get_queryset (user_status / difficulty_rank / acceptance_rate).
     """
+
+    # Typo-tolerant title search. Composes with the other filters; when active
+    # (and no explicit ?ordering) it sorts by relevance.
+    search = django_filters.CharFilter(method="filter_search")
 
     difficulty = django_filters.ChoiceFilter(choices=Problem.Difficulty.choices)
 
@@ -25,7 +67,7 @@ class ProblemFilter(django_filters.FilterSet):
     #   name       -> title (plain text field, sorts directly)
     #   difficulty -> difficulty_rank (easy<medium<hard, not alphabetical)
     #   acceptance -> acceptance_rate (ac/total, not the raw CharField)
-    ordering = django_filters.OrderingFilter(
+    ordering = TiebreakOrderingFilter(
         fields=(
             ("id", "id"),
             ("title", "name"),
@@ -36,7 +78,24 @@ class ProblemFilter(django_filters.FilterSet):
 
     class Meta:
         model = Problem
-        fields = ["difficulty", "tag", "status", "ordering"]
+        fields = ["search", "difficulty", "tag", "status", "ordering"]
+
+    def filter_search(self, queryset, name, value):
+        # django_filters strips whitespace and skips empty values, so a blank
+        # term never reaches here; if one somehow did, len < 3 falls through to
+        # istartswith="" which returns the full catalog anyway.
+        term = (value or "").strip()
+        if len(term) < MIN_TRIGRAM_LENGTH:
+            # 1–2 chars: trigram similarity is meaningless, so "starts with".
+            return queryset.filter(title__istartswith=term)
+        # 3+ chars: word similarity (best word inside the title), thresholded,
+        # then ranked by relevance. An explicit ?ordering, applied afterwards by
+        # the OrderingFilter, still wins over this.
+        return (
+            queryset.annotate(title_similarity=TrigramWordSimilarity(term, "title"))
+            .filter(title_similarity__gte=TITLE_SEARCH_THRESHOLD)
+            .order_by("-title_similarity", "id")
+        )
 
     def filter_tags(self, queryset, name, value):
         # `tag` may be repeated; getlist gives every value. AND them together by

@@ -5,6 +5,18 @@ from rest_framework.test import APIClient
 
 
 @pytest.fixture
+def auth_client():
+    """Factory: return an APIClient authenticated as the given user."""
+
+    def _auth(user):
+        api = APIClient()
+        api.force_authenticate(user=user)
+        return api
+
+    return _auth
+
+
+@pytest.fixture
 def viewer_client(db, django_user_model):
     """
     APIClient authenticated as a separate viewer.
