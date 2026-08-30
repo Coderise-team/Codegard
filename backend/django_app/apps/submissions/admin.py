@@ -22,19 +22,11 @@ class SubmissionAdmin(admin.ModelAdmin):
         "verdict",
         "execution_time_ms",
         "created_at",
-        "username",
-        "email",
-        "elo_rating",
-        "max_rating",
-        "is_staff",
     )
-    list_filter = ("verdict", "language", "created_at", "is_staff", "is_active")
-    search_fields = ("user__username", "problem__title", "username", "email")
+    list_filter = ("verdict", "language", "created_at")
+    search_fields = ("user__username", "problem__title")
     date_hierarchy = "created_at"
-    ordering = (
-        "-created_at",
-        "-elo_rating",
-    )
+    ordering = ("-created_at",)
     # Heavy foreign keys: a dropdown would load every user and problem.
     raw_id_fields = ("user", "problem", "contest")
     readonly_fields = tuple(f.name for f in Submission._meta.fields)
