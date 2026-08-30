@@ -41,6 +41,7 @@ jobs:
       - name: Check migrations
         if: matrix.service == 'backend'
         env:
+          PYTHONPATH: django_app:../shared
           DJANGO_SETTINGS_MODULE: settings.test
           SECRET_KEY: ci-insecure-key
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/codegard
