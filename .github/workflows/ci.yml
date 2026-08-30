@@ -38,6 +38,20 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check .
 
+      - name: Check migrations
+        if: matrix.service == 'backend'
+        env:
+          DJANGO_SETTINGS_MODULE: settings.test
+          SECRET_KEY: ci-insecure-key
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/codegard
+          REDIS_URL: redis://localhost:6379/0
+          GOOGLE_OAUTH_CLIENT_ID: ""
+          GOOGLE_OAUTH_CLIENT_SECRET: ""
+          GITHUB_OAUTH_CLIENT_ID: ""
+          GITHUB_OAUTH_CLIENT_SECRET: ""
+          OAUTH_REDIRECT_BASE: http://localhost:5173
+        run: uv run python django_app/manage.py makemigrations --check --dry-run
+
   test-backend:
     name: Test (backend)
     runs-on: ubuntu-latest
