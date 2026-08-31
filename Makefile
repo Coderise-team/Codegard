@@ -79,6 +79,9 @@ test: test-backend test-judge test-schemas test-frontend ## Run every suite
 test-backend: build-test-backend ## Run the backend suite
 	$(DEV_TEST) run --rm backend-test
 
+check-migrations: ## Check the migration graph and that models match migrations
+	$(DEV_TEST) run --rm backend-test python django_app/manage.py makemigrations --check --dry-run
+
 test-judge: build-test-judge ## Run the judge suite
 	$(DEV_TEST) run --rm judge-test
 
@@ -114,6 +117,6 @@ format: ## Reformat everything in place
         dev dev-build dev-build-up dev-down dev-restart dev-logs dev-ps dev-shell \
         dev-migrate dev-makemigrations dev-superuser \
         prod prod-build prod-build-up prod-down prod-restart prod-logs prod-ps prod-superuser \
-        test test-backend test-judge test-schemas test-frontend \
+        test test-backend test-judge test-schemas test-frontend check-migrations \
         build-test-backend build-test-judge build-test-frontend \
         lint format
