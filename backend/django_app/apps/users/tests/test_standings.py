@@ -291,3 +291,31 @@ def test_inactive_user_absent(auth_client):
 @pytest.mark.django_db
 def test_anonymous_rejected():
     assert APIClient().get(reverse(URL)).status_code in (401, 403)
+
+
+# --- staff accounts --------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_staff_user_absent(auth_client):
+    player = make_user("player", 1500)
+    make_user("staff", 1600, is_staff=True)
+    rows = auth_client(player).get(reverse(URL)).json()["results"]
+    assert [r["username"] for r in rows] == ["player"]
+
+
+@pytest.mark.django_db
+def test_staff_leaves_no_gap_in_rank_or_total(auth_client):
+    players = [make_user("a", 1500), make_user("b", 1300)]
+    make_user("staff", 1400, is_staff=True)  # rating sits between the players
+    resp = auth_client(players[0]).get(reverse(URL)).json()
+    # The rank subquery must skip staff too, or "b" would be 3rd of two.
+    assert [r["globalRank"] for r in resp["results"]] == [1, 2]
+    assert resp["total"] == 2
+
+
+@pytest.mark.django_db
+def test_you_is_null_for_staff_viewer(auth_client):
+    staff = make_user("staff", 1600, is_staff=True)
+    make_user("player", 1500)
+    assert auth_client(staff).get(reverse(URL)).json()["you"] is None

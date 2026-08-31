@@ -20,11 +20,20 @@ from django.utils import timezone
 
 
 def make_problem(
-    title="P", *, difficulty=Problem.Difficulty.EASY, description="", tags=()
+    title="P",
+    *,
+    difficulty=Problem.Difficulty.EASY,
+    description="",
+    tags=(),
+    is_hidden=False,
 ):
-    """A problem. ``time_limit``/``memory_limit`` fall back to the model defaults."""
+    """A published problem. ``time_limit``/``memory_limit`` fall back to the
+    model defaults."""
     problem = Problem.objects.create(
-        title=title, description=description, difficulty=difficulty
+        title=title,
+        description=description,
+        difficulty=difficulty,
+        is_hidden=is_hidden,
     )
     for name in tags:
         problem.tags.add(Tag.objects.get_or_create(name=name)[0])
@@ -67,7 +76,7 @@ def make_submission(
     return submission
 
 
-def make_user(username, elo, *, max_rating=None, is_active=True):
+def make_user(username, elo, *, max_rating=None, is_active=True, is_staff=False):
     """An active leaderboard user with a set rating (peak defaults to current)."""
     return get_user_model().objects.create_user(
         username=username,
@@ -76,4 +85,5 @@ def make_user(username, elo, *, max_rating=None, is_active=True):
         elo_rating=elo,
         max_rating=max_rating if max_rating is not None else elo,
         is_active=is_active,
+        is_staff=is_staff,
     )

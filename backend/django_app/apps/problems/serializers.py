@@ -139,6 +139,7 @@ class ProblemWriteSerializer(serializers.ModelSerializer):
             "difficulty",
             "time_limit",
             "memory_limit",
+            "is_hidden",
             "test_cases",
             "tags",
         ]
