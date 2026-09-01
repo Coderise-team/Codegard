@@ -12,6 +12,13 @@ class ProblemInline(admin.TabularInline):
 
 @admin.register(Contest)
 class ContestAdmin(admin.ModelAdmin):
+    """Contest admin.
+
+    `rating_applied` is read-only: the ELO task owns it and uses it as its only
+    guard against paying a contest twice. Ticking it by hand makes the task skip
+    the round, so the ratings are never awarded.
+    """
+
     list_display = ("title", "status", "start_time", "end_time", "rating_applied")
     list_filter = ("status", "rating_applied")
     search_fields = ("title",)
