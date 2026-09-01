@@ -120,7 +120,8 @@ services:
       - codegard_net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8000), timeout=2).close()"]
+      # Asks the app, not the port: a dead Postgres leaves the port open.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz/', timeout=3)"]
       interval: 10s
       timeout: 5s
       retries: 5
