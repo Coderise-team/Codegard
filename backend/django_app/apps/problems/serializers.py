@@ -3,6 +3,9 @@ from rest_framework import serializers
 from .models import Problem, ProblemReport, Tag, TestCase
 
 MIN_REPORT_MESSAGE_LENGTH = 10
+# The field is an unbounded TextField, so without a ceiling one request can put
+# megabytes into the triage queue. Room for a long, detailed complaint.
+MAX_REPORT_MESSAGE_LENGTH = 5000
 
 
 def acceptance_from_annotations(obj) -> float:
@@ -220,12 +223,18 @@ class ProblemReportCreateSerializer(serializers.ModelSerializer):
         fields = ["reason", "message"]
 
     def validate_message(self, value):
-        if len(value.strip()) < MIN_REPORT_MESSAGE_LENGTH:
+        message = value.strip()
+        if len(message) < MIN_REPORT_MESSAGE_LENGTH:
             raise serializers.ValidationError(
                 f"Please describe the issue in at least "
                 f"{MIN_REPORT_MESSAGE_LENGTH} characters."
             )
-        return value
+        if len(message) > MAX_REPORT_MESSAGE_LENGTH:
+            raise serializers.ValidationError(
+                f"Please keep the description under "
+                f"{MAX_REPORT_MESSAGE_LENGTH} characters."
+            )
+        return message
 
 
 class ProblemReportSerializer(serializers.ModelSerializer):

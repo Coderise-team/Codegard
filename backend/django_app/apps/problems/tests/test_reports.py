@@ -7,6 +7,7 @@ from datetime import timedelta
 import pytest
 from apps.problems.admin import ProblemReportAdmin
 from apps.problems.models import ProblemReport
+from apps.problems.serializers import MAX_REPORT_MESSAGE_LENGTH
 from django.contrib.admin.sites import AdminSite
 from django.core.cache import cache
 from django.test import RequestFactory
@@ -103,6 +104,54 @@ def test_too_short_message_is_400(user_client, problem):
 def test_nonexistent_problem_is_404(user_client):
     resp = user_client.post(_report_url(999999), _valid_payload(), format="json")
     assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_too_long_message_is_400(user_client, problem):
+    """The column is unbounded, so one request could otherwise drop megabytes
+    into the triage queue."""
+    too_long = "a" * (MAX_REPORT_MESSAGE_LENGTH + 1)
+
+    resp = user_client.post(
+        _report_url(problem.id), _valid_payload(message=too_long), format="json"
+    )
+
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+    assert not ProblemReport.objects.exists()
+
+
+@pytest.mark.django_db
+def test_message_is_stored_trimmed(user_client, problem):
+    user_client.post(
+        _report_url(problem.id),
+        _valid_payload(message="   the expected output is wrong   "),
+        format="json",
+    )
+    assert ProblemReport.objects.get().message == "the expected output is wrong"
+
+
+@pytest.mark.django_db
+def test_non_numeric_problem_id_is_404(user_client):
+    """The router's detail pattern accepts any text, so the view has to answer
+    404 rather than blow up on a id that is not a number."""
+    resp = user_client.post(
+        "/api/problems/not-a-number/report/", _valid_payload(), format="json"
+    )
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_hidden_problem_can_be_reported(user_client, user):
+    """A running contest keeps its problems out of the catalog, and a broken
+    test is exactly what a participant needs to report while the round is on."""
+    hidden = make_problem("Hidden Round Problem", is_hidden=True)
+
+    resp = user_client.post(_report_url(hidden.id), _valid_payload(), format="json")
+
+    assert resp.status_code == status.HTTP_201_CREATED
+    report = ProblemReport.objects.get()
+    assert report.problem == hidden
+    assert report.problem_title == hidden.title
 
 
 @pytest.mark.django_db

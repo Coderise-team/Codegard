@@ -17,6 +17,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (
     IsAdminUser,
     IsAuthenticated,
@@ -251,7 +252,13 @@ class ProblemViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], throttle_scope="problem_report")
     def report(self, request, pk=None):
         """POST /api/problems/{id}/report/ — file a complaint about this problem."""
-        problem = self.get_object()
+        # Deliberately not self.get_object(): that queryset hides problems of a
+        # running contest, and a broken test is exactly what a participant needs
+        # to report while the round is still on. The reply carries nothing about
+        # the problem, so reaching it here reveals nothing the catalog hides.
+        # DRF's helper, not Django's: the router's detail pattern accepts any
+        # text, and only this one turns a non-numeric id into 404, not 500.
+        problem = get_object_or_404(Problem, pk=pk)
 
         open_count = ProblemReport.objects.filter(
             user=request.user,
