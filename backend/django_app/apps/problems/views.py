@@ -1,4 +1,5 @@
 from apps.submissions.models import Submission
+from core.pagination import ClientPageSizePagination
 from django.db.models import (
     Case,
     Count,
@@ -16,17 +17,21 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (
     IsAdminUser,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .filters import ProblemFilter
-from .models import DailyProblem, Problem, Tag
+from .models import DailyProblem, Problem, ProblemReport, Tag
 from .serializers import (
     DailyProblemSerializer,
+    ProblemReportCreateSerializer,
+    ProblemReportSerializer,
     ProblemSerializer,
     ProblemWriteSerializer,
     RecommendedProblemSerializer,
@@ -35,6 +40,7 @@ from .serializers import (
 
 RECOMMENDED_PER_DIFFICULTY = 2
 RECOMMENDED_TOTAL = 6
+MAX_OPEN_REPORTS_PER_PROBLEM = 5
 
 
 class ProblemViewSet(viewsets.ModelViewSet):
@@ -52,13 +58,18 @@ class ProblemViewSet(viewsets.ModelViewSet):
     queryset = Problem.objects.prefetch_related("test_cases", "tags").all()
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProblemFilter
+    # Needs to exist as a class attribute (even unset) for the `report` action
+    # below to override it per-request via @action(throttle_scope=...) — DRF's
+    # ViewSetMixin.as_view() rejects action kwargs that aren't already
+    # attributes on the class.
+    throttle_scope = None
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
             return [IsAdminUser()]
         # NOTE: @action decorator permissions are ignored in this viewset (DRF
         # reads them from get_permissions), so the auth gates live here.
-        if self.action in ["daily", "recommended"]:
+        if self.action in ["daily", "recommended", "report"]:
             return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly()]
 
@@ -237,3 +248,75 @@ class ProblemViewSet(viewsets.ModelViewSet):
             count=Count("problems", filter=Q(problems__is_hidden=False))
         ).order_by("name")
         return Response(TagSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=["post"], throttle_scope="problem_report")
+    def report(self, request, pk=None):
+        """POST /api/problems/{id}/report/ — file a complaint about this problem."""
+        # Deliberately not self.get_object(): that queryset hides problems of a
+        # running contest, and a broken test is exactly what a participant needs
+        # to report while the round is still on. The reply carries nothing about
+        # the problem, so reaching it here reveals nothing the catalog hides.
+        # DRF's helper, not Django's: the router's detail pattern accepts any
+        # text, and only this one turns a non-numeric id into 404, not 500.
+        problem = get_object_or_404(Problem, pk=pk)
+
+        open_count = ProblemReport.objects.filter(
+            user=request.user,
+            problem=problem,
+            status=ProblemReport.Status.NEW,
+        ).count()
+        if open_count >= MAX_OPEN_REPORTS_PER_PROBLEM:
+            return Response(
+                {
+                    "detail": (
+                        "You already have "
+                        f"{MAX_OPEN_REPORTS_PER_PROBLEM} unresolved reports on "
+                        "this problem. We're already looking into them — wait "
+                        "until they're reviewed before submitting more."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = ProblemReportCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            user=request.user,
+            problem=problem,
+            problem_title=problem.title,
+        )
+        return Response({"detail": "Report submitted."}, status=status.HTTP_201_CREATED)
+
+
+class ReportReasonsView(APIView):
+    """GET /api/report-reasons/ — reason codes + human labels for the report form."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        reasons = [
+            {"id": value, "name": label}
+            for value, label in ProblemReport.Reason.choices
+        ]
+        return Response(reasons)
+
+
+class ProblemReportViewSet(viewsets.ReadOnlyModelViewSet):
+    """Staff-only queue for reading problem reports.
+
+    GET /api/reports/       — paginated list, newest first, filterable by
+                               ?status= and ?reason=
+    GET /api/reports/{id}/  — single report
+    """
+
+    # Newest first with a constant `id` tiebreaker, same as the catalog: the
+    # model's own ordering is by timestamp alone, and reports filed in the same
+    # second would shuffle between pages of the queue.
+    queryset = ProblemReport.objects.select_related(
+        "problem", "user", "resolved_by"
+    ).order_by("-created_at", "id")
+    serializer_class = ProblemReportSerializer
+    permission_classes = [IsAdminUser]
+    pagination_class = ClientPageSizePagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["status", "reason"]

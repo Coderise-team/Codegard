@@ -1,6 +1,11 @@
 from rest_framework import serializers
 
-from .models import Problem, Tag, TestCase
+from .models import Problem, ProblemReport, Tag, TestCase
+
+MIN_REPORT_MESSAGE_LENGTH = 10
+# The field is an unbounded TextField, so without a ceiling one request can put
+# megabytes into the triage queue. Room for a long, detailed complaint.
+MAX_REPORT_MESSAGE_LENGTH = 5000
 
 
 def acceptance_from_annotations(obj) -> float:
@@ -205,3 +210,51 @@ class RecommendedProblemSerializer(serializers.ModelSerializer):
             return 0.0
         ac = getattr(obj, "ac_submissions", 0) or 0
         return round(ac / total * 100, 1)
+
+
+class ProblemReportCreateSerializer(serializers.ModelSerializer):
+    """Input for POST /api/problems/{id}/report/ — just the two fields a human
+    fills in. ``problem``, ``user``, ``problem_title`` and ``status`` are all
+    set by the view, never accepted from the request body.
+    """
+
+    class Meta:
+        model = ProblemReport
+        fields = ["reason", "message"]
+
+    def validate_message(self, value):
+        message = value.strip()
+        if len(message) < MIN_REPORT_MESSAGE_LENGTH:
+            raise serializers.ValidationError(
+                f"Please describe the issue in at least "
+                f"{MIN_REPORT_MESSAGE_LENGTH} characters."
+            )
+        if len(message) > MAX_REPORT_MESSAGE_LENGTH:
+            raise serializers.ValidationError(
+                f"Please keep the description under "
+                f"{MAX_REPORT_MESSAGE_LENGTH} characters."
+            )
+        return message
+
+
+class ProblemReportSerializer(serializers.ModelSerializer):
+    """Full report as seen by staff on /api/reports/."""
+
+    user = serializers.SlugRelatedField(slug_field="username", read_only=True)
+    resolved_by = serializers.SlugRelatedField(slug_field="username", read_only=True)
+
+    class Meta:
+        model = ProblemReport
+        fields = [
+            "id",
+            "problem",
+            "problem_title",
+            "user",
+            "reason",
+            "message",
+            "status",
+            "created_at",
+            "resolved_by",
+            "resolved_at",
+        ]
+        read_only_fields = fields
