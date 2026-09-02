@@ -9,6 +9,10 @@ class UserAdmin(DjangoUserAdmin):
     fieldsets = DjangoUserAdmin.fieldsets + (
         ("Profile", {"fields": ("avatar", "avatar_thumb")}),
     )
+    list_display = ("username", "email", "elo_rating", "max_rating", "is_staff")
+    list_filter = ("is_staff", "is_active")
+    search_fields = ("username", "email")
+    ordering = ("-elo_rating",)
     # Avatars are set by users through the API, not uploaded here — view only.
     readonly_fields = DjangoUserAdmin.readonly_fields + ("avatar", "avatar_thumb")
     actions = ["clear_avatar"]

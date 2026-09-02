@@ -29,3 +29,16 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
+
+# The test cache is one process-wide dict, so throttle counters would leak
+# between tests and give unrelated ones a 429. The limit test switches the
+# rates back on for itself.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        "login": None,
+        "register": None,
+        "password_change": None,
+        "problem_report": None,
+    },
+}
