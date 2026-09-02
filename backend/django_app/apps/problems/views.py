@@ -309,7 +309,12 @@ class ProblemReportViewSet(viewsets.ReadOnlyModelViewSet):
     GET /api/reports/{id}/  — single report
     """
 
-    queryset = ProblemReport.objects.select_related("problem", "user", "resolved_by")
+    # Newest first with a constant `id` tiebreaker, same as the catalog: the
+    # model's own ordering is by timestamp alone, and reports filed in the same
+    # second would shuffle between pages of the queue.
+    queryset = ProblemReport.objects.select_related(
+        "problem", "user", "resolved_by"
+    ).order_by("-created_at", "id")
     serializer_class = ProblemReportSerializer
     permission_classes = [IsAdminUser]
     pagination_class = ClientPageSizePagination

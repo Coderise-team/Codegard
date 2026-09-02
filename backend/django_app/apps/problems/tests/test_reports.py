@@ -410,6 +410,35 @@ def test_list_is_paginated_and_newest_first(custom_admin_client, user, problem):
 
 
 @pytest.mark.django_db
+def test_reports_filed_in_the_same_second_keep_a_stable_order(
+    custom_admin_client, user, problem
+):
+    """Timestamp alone is not a unique sort key, and an unstable one makes rows
+    jump between pages of the queue."""
+    same_moment = timezone.now()
+    ids = []
+    for _ in range(3):
+        report = ProblemReport.objects.create(
+            problem=problem,
+            problem_title=problem.title,
+            user=user,
+            reason=ProblemReport.Reason.OTHER,
+            message="ten characters here",
+        )
+        ProblemReport.objects.filter(pk=report.pk).update(created_at=same_moment)
+        ids.append(report.id)
+
+    first = [
+        r["id"] for r in custom_admin_client.get(REPORTS_LIST_URL).json()["results"]
+    ]
+    second = [
+        r["id"] for r in custom_admin_client.get(REPORTS_LIST_URL).json()["results"]
+    ]
+
+    assert first == second == sorted(ids)
+
+
+@pytest.mark.django_db
 def test_cannot_change_status_through_api(custom_admin_client, user, problem):
     report = ProblemReport.objects.create(
         problem=problem,
