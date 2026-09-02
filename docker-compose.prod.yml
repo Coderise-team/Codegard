@@ -121,9 +121,12 @@ services:
     restart: unless-stopped
     healthcheck:
       # Asks the app, not the port: a dead Postgres leaves the port open.
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz/', timeout=3)"]
+      # Prints the body so `docker inspect` names the failed dependency. The
+      # three waits are staged - the endpoint needs ~4s to give up on a dead
+      # database, so the request waits longer than that, and Docker longer still.
+      test: ["CMD", "python", "-c", "import http.client,sys; c=http.client.HTTPConnection('localhost',8000,timeout=8); c.request('GET','/healthz/'); r=c.getresponse(); print(r.status, r.read().decode()); sys.exit(0 if r.status==200 else 1)"]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
       start_period: 30s
 
