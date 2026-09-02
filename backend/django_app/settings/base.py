@@ -127,6 +127,16 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "core.throttling.DynamicScopedRateThrottle",
+    ],
+    # Only views that declare a `throttle_scope` are limited; everything else
+    # is untouched.
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "10/min",
+        "register": "5/hour",
+        "password_change": "5/hour",
+    },
 }
 
 # Celery (broker URLs, reliability, observability, beat schedule)

@@ -1,11 +1,13 @@
 from apps.realtime.views import WSTicketView
 from apps.submissions.views import LanguagesView
+from core.health import healthz
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
+    path("healthz/", healthz, name="healthz"),
     path("admin/", admin.site.urls),
     path("api/users/", include("apps.users.urls")),
     path("api/problems/", include("apps.problems.urls")),
