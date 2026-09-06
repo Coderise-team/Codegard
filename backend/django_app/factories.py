@@ -13,6 +13,7 @@ belong in one global place rather than copied into each app's tests.
 from datetime import timedelta
 
 from apps.contests.models import Contest
+from apps.notifications.models import Notification
 from apps.problems.models import Problem, Tag
 from apps.submissions.models import Submission
 from django.contrib.auth import get_user_model
@@ -74,6 +75,38 @@ def make_submission(
         Submission.objects.filter(pk=submission.pk).update(created_at=created_at)
         submission.created_at = created_at
     return submission
+
+
+def make_notification(
+    user,
+    *,
+    type=Notification.Type.RATING_CHANGED,
+    dedup_key="k",
+    title="T",
+    body="B",
+    link="",
+    seen_at=None,
+    created_at=None,
+):
+    """A notification for `user`. Unseen by default (what the counter counts).
+
+    ``created_at`` is set via ``update()`` because the column is
+    ``auto_now_add``, the same trick ``make_submission`` uses — retention and
+    race-guard tests need rows placed at a chosen point on the clock.
+    """
+    notification = Notification.objects.create(
+        user=user,
+        type=type,
+        dedup_key=dedup_key,
+        title=title,
+        body=body,
+        link=link,
+        seen_at=seen_at,
+    )
+    if created_at is not None:
+        Notification.objects.filter(pk=notification.pk).update(created_at=created_at)
+        notification.created_at = created_at
+    return notification
 
 
 def make_user(username, elo, *, max_rating=None, is_active=True, is_staff=False):
