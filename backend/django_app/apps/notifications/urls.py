@@ -1,8 +1,11 @@
-"""URLs for the `notifications` app.
+from django.urls import path
 
-Empty for now: the app is mounted at ``/api/notifications/`` from the start so
-the model and its endpoints land under one prefix, and the views that fill this
-in arrive with the HTTP API.
-"""
+from .views import MarkSeenView, NotificationListView, UnreadCountView
 
-urlpatterns = []
+app_name = "notifications"
+
+urlpatterns = [
+    path("", NotificationListView.as_view(), name="notification-list"),
+    path("unread-count/", UnreadCountView.as_view(), name="notification-unread-count"),
+    path("seen/", MarkSeenView.as_view(), name="notification-seen"),
+]
