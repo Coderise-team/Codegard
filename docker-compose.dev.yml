@@ -2,13 +2,14 @@ name: codegard-dev
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # 18 keeps the cluster in a version-named subdirectory; the volume is the parent.
+      - postgres_data:/var/lib/postgresql
     networks:
       - codegard_net
     healthcheck:
