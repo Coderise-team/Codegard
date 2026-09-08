@@ -198,3 +198,97 @@ def test_the_idle_runs_ring_nobody(running_contest, django_capture_on_commit_cal
             run_task()
 
     ring.assert_not_called()
+
+
+# --- contest_ended ---------------------------------------------------------
+
+
+def run_rating_batch():
+    """The finished-contest rating batch with the channel layer stubbed out."""
+    from apps.contests.tasks import apply_finished_contest_ratings
+
+    with patch("channels.layers.get_channel_layer", return_value=None):
+        return apply_finished_contest_ratings()
+
+
+def ended_for(user):
+    return Notification.objects.filter(user=user, type=Notification.Type.CONTEST_ENDED)
+
+
+@pytest.fixture
+def played_contest(db):
+    """A finished contest with two entrants who both submitted."""
+    from apps.submissions.models import Submission
+    from factories import make_problem, make_submission
+
+    contest = make_contest("Round 1", starts_in=-3, ends_in=-1)
+    problem = make_problem("Two Sum")
+    contest.problems.add(problem)
+    winner = make_user("winner", 1200)
+    loser = make_user("loser", 1200)
+    contest.participants.add(winner, loser)
+    make_submission(winner, problem, contest, Submission.Verdict.AC)
+    make_submission(loser, problem, contest, Submission.Verdict.WA)
+    return contest, winner, loser
+
+
+@pytest.mark.django_db
+def test_participants_are_told_the_results_are_in(played_contest):
+    contest, winner, _ = played_contest
+
+    run_rating_batch()
+
+    notification = ended_for(winner).get()
+    assert notification.title == "Contest finished"
+    assert notification.body == "Round 1 has ended — results are in"
+    assert notification.link == f"/contests/{contest.pk}"
+
+
+@pytest.mark.django_db
+def test_an_entrant_who_never_submitted_still_hears_it_ended(db):
+    """The one notification that reaches a no-show: they are not rated, so
+    ``rating_changed`` never comes, and this is all they would ever get."""
+    contest = make_contest("Round 1", starts_in=-3, ends_in=-1)
+    no_show = make_user("noshow", 1200)
+    contest.participants.add(no_show)
+
+    run_rating_batch()
+
+    assert ended_for(no_show).exists()
+
+
+@pytest.mark.django_db
+def test_the_end_is_announced_exactly_once(played_contest):
+    """The batch re-runs, but a rated contest is skipped by `rating_applied`;
+    the key holds the line even if that flag is cleared."""
+    contest, winner, _ = played_contest
+    run_rating_batch()
+
+    contest.rating_applied = False
+    contest.save(update_fields=["rating_applied"])
+    run_rating_batch()
+
+    assert ended_for(winner).count() == 1
+
+
+@pytest.mark.django_db
+def test_a_contest_still_running_is_not_declared_over(running_contest):
+    entrant = make_user("entrant", 1200)
+    running_contest.participants.add(entrant)
+
+    run_rating_batch()
+
+    assert not ended_for(entrant).exists()
+
+
+@pytest.mark.django_db
+def test_the_end_of_the_round_rings_every_participant(
+    played_contest, django_capture_on_commit_callbacks
+):
+    _, winner, loser = played_contest
+
+    with patch("apps.notifications.services.notify_user") as ring:
+        with django_capture_on_commit_callbacks(execute=True):
+            run_rating_batch()
+
+    assert {call.args[0] for call in ring.call_args_list} == {winner.pk, loser.pk}

@@ -125,6 +125,7 @@ def apply_finished_contest_ratings(self) -> dict:
             # written the deltas and busted the leaderboard cache, so a client
             # refetching on this event sees the rated table.
             _broadcast_contest_ended([contest.pk])
+            _announce_finished_contest(contest)
         except Exception:
             logger.exception("Failed to apply ratings for contest %s", contest.pk)
 
@@ -159,6 +160,34 @@ def publish_finished_contest_problems(self) -> dict:
     summary = {"published": published}
     logger.info("publish_finished_contest_problems %s", summary)
     return summary
+
+
+def _announce_finished_contest(contest: Contest) -> None:
+    """Tell participants the round is over and the results are in.
+
+    Deliberately separate from the ``rating_changed`` / ``rank_changed`` pair
+    that ``apply_contest_ratings`` just created: those are about what happened
+    to one person, this is about the round itself, and it is the only one that
+    reaches an entrant who scored nothing. Merging them would leave that person
+    with silence.
+
+    Keyed on ``end_time`` for the same reason ``contest_started`` is keyed on
+    the start: re-running the batch is silent, while an admin who moves the
+    finish line ends a genuinely different round.
+    """
+    from apps.notifications.models import Notification
+    from apps.notifications.services import create_bulk, notify_user
+
+    recipients = create_bulk(
+        contest.participants.values_list("id", flat=True),
+        type=Notification.Type.CONTEST_ENDED,
+        dedup_key=f"contest_{contest.pk}_ended_{int(contest.end_time.timestamp())}",
+        title="Contest finished",
+        body=f"{contest.title} has ended — results are in",
+        link=f"/contests/{contest.pk}",
+    )
+    for user_id in recipients:
+        transaction.on_commit(partial(notify_user, user_id))
 
 
 def _announce_started_contests(now) -> None:
