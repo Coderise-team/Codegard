@@ -1,8 +1,10 @@
 import logging
+from datetime import timedelta
 from functools import partial
 
 from celery import shared_task
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from redis import Redis
@@ -10,6 +12,10 @@ from redis import Redis
 from .models import Contest
 
 logger = logging.getLogger(__name__)
+
+# How far ahead of the start a round is announced. A plain in-code constant:
+# it is a product decision about timing, not deployment configuration.
+STARTING_SOON_MINUTES = 15
 
 
 @shared_task(bind=True)
@@ -159,6 +165,62 @@ def publish_finished_contest_problems(self) -> dict:
 
     summary = {"published": published}
     logger.info("publish_finished_contest_problems %s", summary)
+    return summary
+
+
+@shared_task(bind=True)
+def notify_contests_starting_soon(self) -> dict:
+    """
+    Periodic task: announce contests about to begin.
+
+    Addressed to every active user, not just the people already registered.
+    Registration closes the moment a contest starts, so the point of this
+    notification is to let someone still get into the round — pinging only
+    those who are already in would be telling people what they know.
+
+    Runs every minute against a 15-minute window, so a contest falls into the
+    selection on roughly fifteen consecutive runs. The first one creates the
+    rows and the rest are silent: ``create_bulk`` subtracts the people who
+    already have the notification, so the later runs cost one SELECT, write
+    nothing and ring nobody.
+    """
+    from apps.notifications.models import Notification
+    from apps.notifications.services import create_bulk, notify_user
+
+    logger.info("[notify_contests_starting_soon] started | task_id=%s", self.request.id)
+
+    now = timezone.now()
+    window_end = now + timedelta(minutes=STARTING_SOON_MINUTES)
+    # Strictly ahead of `now`: a contest that has already begun is the business
+    # of `contest_started`, and nobody can join it any more.
+    upcoming = Contest.objects.filter(start_time__gt=now, start_time__lte=window_end)
+
+    audience = list(
+        get_user_model().objects.filter(is_active=True).values_list("id", flat=True)
+    )
+
+    to_ring: set[int] = set()
+    announced = 0
+    for contest in upcoming:
+        recipients = create_bulk(
+            audience,
+            type=Notification.Type.CONTEST_STARTING_SOON,
+            dedup_key=f"contest_{contest.pk}_soon_"
+            f"{int(contest.start_time.timestamp())}",
+            title="Contest starting soon",
+            body=f"{contest.title} starts in ~{STARTING_SOON_MINUTES} min",
+            link=f"/contests/{contest.pk}",
+        )
+        if recipients:
+            announced += 1
+        to_ring |= recipients
+
+    # One doorbell per person for the whole run, not one per contest.
+    for user_id in to_ring:
+        transaction.on_commit(partial(notify_user, user_id))
+
+    summary = {"contests_announced": announced, "users_notified": len(to_ring)}
+    logger.info("notify_contests_starting_soon %s", summary)
     return summary
 
 

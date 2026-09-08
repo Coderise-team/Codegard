@@ -41,6 +41,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.contests.tasks.publish_finished_contest_problems",
         "schedule": crontab(minute="*"),
     },
+    # Every minute against a 15-minute window: the dedup key makes the repeat
+    # runs silent, and a finer schedule means a contest created 10 minutes
+    # before its start is still announced.
+    "notify-contests-starting-soon-every-minute": {
+        "task": "apps.contests.tasks.notify_contests_starting_soon",
+        "schedule": crontab(minute="*"),
+    },
     "flush-expired-jwt-tokens-daily": {
         "task": "apps.users.tasks.flush_expired_jwt_tokens",
         "schedule": crontab(minute=0, hour=3),
