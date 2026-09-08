@@ -1,7 +1,9 @@
 import logging
+from functools import partial
 
 from celery import shared_task
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from redis import Redis
 
@@ -42,6 +44,8 @@ def update_contest_statuses(self) -> dict:
         status=Contest.Status.PENDING
     )
     pending_updated = pending.update(status=Contest.Status.PENDING, updated_at=now)
+
+    _announce_started_contests(now)
 
     total_current = {
         "finished": Contest.objects.filter(status=Contest.Status.FINISHED).count(),
@@ -155,6 +159,44 @@ def publish_finished_contest_problems(self) -> dict:
     summary = {"published": published}
     logger.info("publish_finished_contest_problems %s", summary)
     return summary
+
+
+def _announce_started_contests(now) -> None:
+    """Tell registered participants that their round is live.
+
+    Selected by the clock alone, never by ``status``. That column is a cache
+    that lags a beat interval behind — and worse, ``Contest.save()`` recomputes
+    it, so an admin who creates a contest inside its own window stores it as
+    ACTIVE straight away. A status-based filter would see nothing left to
+    transition and would silently never announce that contest at all.
+
+    Selecting every running contest on every run means the same event is
+    offered once a minute; the ``dedup_key`` is what makes delivery
+    exactly-once, and it carries the start time on purpose. A repeat at the
+    same start time is a duplicate and stays silent (two beat copies, a worker
+    restart); a start the admin moved is a genuinely new event and goes out
+    again, which is right — people are waiting to hear when the round begins.
+    """
+    from apps.notifications.models import Notification
+    from apps.notifications.services import create_bulk, notify_user
+
+    to_ring: set[int] = set()
+    running = Contest.objects.filter(start_time__lte=now, end_time__gte=now)
+    for contest in running:
+        recipients = create_bulk(
+            contest.participants.values_list("id", flat=True),
+            type=Notification.Type.CONTEST_STARTED,
+            dedup_key=f"contest_{contest.pk}_started_"
+            f"{int(contest.start_time.timestamp())}",
+            title="Contest started",
+            body=f"{contest.title} has started",
+            link=f"/contests/{contest.pk}",
+        )
+        to_ring |= recipients
+
+    # One doorbell per person for the whole run, not one per contest.
+    for user_id in to_ring:
+        transaction.on_commit(partial(notify_user, user_id))
 
 
 def _broadcast_contest_ended(contest_ids: list[int]) -> None:
