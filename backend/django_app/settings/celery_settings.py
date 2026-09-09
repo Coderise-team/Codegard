@@ -52,6 +52,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.users.tasks.flush_expired_jwt_tokens",
         "schedule": crontab(minute=0, hour=3),
     },
+    # An hour after the JWT flush, so the two nightly sweeps do not overlap.
+    "cleanup-old-notifications-daily": {
+        "task": "apps.notifications.tasks.cleanup_old_notifications",
+        "schedule": crontab(minute=0, hour=4),
+    },
     "assign-daily-problem-hourly": {
         "task": "apps.problems.tasks.assign_daily_problem",
         "schedule": crontab(minute=0),
