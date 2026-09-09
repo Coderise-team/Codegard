@@ -1,16 +1,20 @@
-"""Reactions to a problem changing.
+"""Reactions to a problem, or a report about one, changing.
 
-The only one so far: a problem entering the public catalog is news worth
-telling people about. The trigger is the *transition* into visibility, not the
-save — an admin fixing a typo on a problem that has been public for a month
-must not send it round again.
+Both receivers here fire on a *transition* rather than on a save: a problem
+becoming visible, and a report being judged. An admin fixing a typo on a
+month-old public problem, or reopening the report form to read it, must not
+send anything round again — so each pair stashes the stored value in
+``pre_save`` and compares against it afterwards.
 """
 
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import Problem
-from .notifications import announce_new_problems
+from .models import Problem, ProblemReport
+from .notifications import (
+    announce_new_problems,
+    announce_report_resolved,
+)
 
 
 @receiver(pre_save, sender=Problem)
@@ -44,3 +48,33 @@ def _announce_a_problem_entering_the_catalog(sender, instance: Problem, **kwargs
         return  # already public; this save changed something else
 
     announce_new_problems([instance])
+
+
+@receiver(pre_save, sender=ProblemReport)
+def _capture_previous_status(sender, instance: ProblemReport, **kwargs):
+    """Stash the stored status so post_save can tell a review from a re-save."""
+    if not instance.pk:
+        instance._previous_status = None
+        return
+    instance._previous_status = (
+        ProblemReport.objects.filter(pk=instance.pk)
+        .values_list("status", flat=True)
+        .first()
+    )
+
+
+@receiver(post_save, sender=ProblemReport)
+def _announce_a_reviewed_report(sender, instance: ProblemReport, **kwargs):
+    """Announce the moment a pending report is judged, and only then.
+
+    The one path into this is a staff member changing the status in the admin,
+    so the transition worth catching is ``new`` -> accepted/rejected. Anything
+    else — a report saved again, a note edited, a resolution revisited — has
+    already been reported to its author.
+    """
+    if instance.status == ProblemReport.Status.NEW:
+        return
+    if getattr(instance, "_previous_status", None) != ProblemReport.Status.NEW:
+        return
+
+    announce_report_resolved(instance)
