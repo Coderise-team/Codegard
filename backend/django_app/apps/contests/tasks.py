@@ -154,14 +154,23 @@ def publish_finished_contest_problems(self) -> dict:
     while the worker was down costs nothing.
     """
     from apps.problems.models import Problem
+    from apps.problems.notifications import announce_new_problems
 
     logger.info(
         "[publish_finished_contest_problems] started | task_id=%s", self.request.id
     )
 
-    published = Problem.objects.filter(
-        is_hidden=True, contests__end_time__lt=timezone.now()
-    ).update(is_hidden=False)
+    now = timezone.now()
+    still_hidden = Problem.objects.filter(is_hidden=True, contests__end_time__lt=now)
+    # Read the set BEFORE the update: a bulk UPDATE fires no signals, so the
+    # problem signal that normally announces a reveal never runs here and this
+    # task has to do the announcing itself. Afterwards these rows no longer
+    # match the filter, hence the list().
+    revealed = list(still_hidden.distinct())
+
+    published = still_hidden.update(is_hidden=False)
+
+    announce_new_problems(revealed)
 
     summary = {"published": published}
     logger.info("publish_finished_contest_problems %s", summary)
