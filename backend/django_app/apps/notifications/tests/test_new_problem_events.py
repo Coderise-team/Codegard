@@ -211,3 +211,75 @@ def test_a_hidden_problem_rings_nobody(member, django_capture_on_commit_callback
             Problem.objects.create(title="Secret", description="", is_hidden=True)
 
     ring.assert_not_called()
+
+
+# --- a problem published after the contest was already summarised ----------
+
+
+@pytest.mark.django_db
+def test_a_problem_added_to_a_summarised_contest_still_reaches_entrants(
+    finished_round,
+):
+    """Entrants are excluded from the per-problem rows, so if the summary key
+    ignored which problems it covered, a late addition reached them by neither
+    route and was lost in silence."""
+    contest, _, _ = finished_round
+    entrant = make_user("entrant", 1200)
+    contest.participants.add(entrant)
+    publish_finished_contest_problems()
+    assert new_problem_for(entrant).count() == 1  # the first summary
+
+    contest.problems.add(make_problem("Gamma", is_hidden=True))
+    publish_finished_contest_problems()
+
+    assert new_problem_for(entrant).count() == 2  # a summary for Gamma too
+
+
+@pytest.mark.django_db
+def test_the_same_batch_offered_twice_still_summarises_once(finished_round):
+    """The batch is folded into the key, so a repeat run is as silent as before."""
+    contest, _, _ = finished_round
+    entrant = make_user("entrant", 1200)
+    contest.participants.add(entrant)
+
+    publish_finished_contest_problems()
+    publish_finished_contest_problems()
+
+    assert new_problem_for(entrant).count() == 1
+
+
+@pytest.mark.django_db
+def test_announcing_a_batch_does_not_query_per_problem(
+    finished_round, django_assert_num_queries
+):
+    """The contests of each problem come from one prefetch, not one query each."""
+    contest, _, _ = finished_round
+    for i in range(4):
+        contest.problems.add(make_problem(f"Extra {i}", is_hidden=True))
+    make_user("member", 1200)
+
+    # 6 problems: without the prefetch this alone cost 6 contest lookups.
+    with django_assert_num_queries(18):
+        publish_finished_contest_problems()
+
+
+@pytest.mark.django_db
+def test_an_upcoming_contest_sharing_the_problem_gets_no_summary(finished_round):
+    """A problem can belong to more than one contest.
+
+    Only the finished ones get the "problems are now in the catalog" summary:
+    telling the entrants of a round that has not run yet that its problems are
+    public would be both untrue and a hint at what is coming.
+    """
+    finished, first, _ = finished_round
+    upcoming = make_contest("Round 2", starts_in=1, ends_in=3)
+    upcoming.problems.add(first)
+    waiting = make_user("waiting", 1200)
+    upcoming.participants.add(waiting)
+
+    publish_finished_contest_problems()
+
+    summaries = new_problem_for(waiting).filter(title="Contest problems published")
+    assert not summaries.exists()
+    # Not an entrant of the finished round, so they hear about it by name.
+    assert new_problem_for(waiting).filter(title="New problem").exists()
