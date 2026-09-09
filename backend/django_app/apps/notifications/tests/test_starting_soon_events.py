@@ -46,7 +46,7 @@ def test_a_contest_about_to_start_is_announced(db):
 
     notification = soon_for(member).get()
     assert notification.title == "Contest starting soon"
-    assert notification.body == "Round 1 starts in ~15 min"
+    assert notification.body == "Round 1 starts in ~10 min"  # the real time left
     assert notification.link == f"/contests/{contest.pk}"
 
 
@@ -178,3 +178,48 @@ def test_a_quiet_schedule_costs_nothing(db):
         "contests_announced": 0,
         "users_notified": 0,
     }
+
+
+# --- the reminder tells the truth about the time -------------------------
+
+
+@pytest.mark.django_db
+def test_a_contest_entering_the_window_late_is_not_called_fifteen_minutes(db):
+    """A contest created two minutes before its start is two minutes away.
+
+    The body used to print the window constant, so this case announced
+    "starts in ~15 min" for a round about to begin.
+    """
+    contest_starting_in(2)
+    member = make_user("member", 1200)
+
+    notify_contests_starting_soon()
+
+    assert soon_for(member).get().body == "Round 1 starts in ~2 min"
+
+
+@pytest.mark.django_db
+def test_a_contest_seconds_away_never_says_zero(db):
+    contest_starting_in(0.2)  # 12 seconds
+    member = make_user("member", 1200)
+
+    notify_contests_starting_soon()
+
+    assert soon_for(member).get().body == "Round 1 starts in ~1 min"
+
+
+# --- what an idle run costs ------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_an_idle_run_does_not_read_the_user_table(db, django_assert_num_queries):
+    """Nothing is starting soon - the task must not scan every active user.
+
+    It runs every minute and the window is empty almost all the time, so the
+    audience is fetched only once there is something to announce.
+    """
+    for i in range(3):
+        make_user(f"u{i}", 1200)
+
+    with django_assert_num_queries(1):  # the contest lookup, and nothing else
+        notify_contests_starting_soon()

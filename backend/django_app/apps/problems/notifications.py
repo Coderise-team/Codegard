@@ -5,11 +5,30 @@ or the batch task opens a finished contest's set — and both land here, so the
 audience rules are written once instead of twice.
 """
 
+import hashlib
 from functools import partial
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
+
+from .models import Problem
+
+
+def _summary_key(contest_id: int, problem_ids) -> str:
+    """Dedup key for one contest's "problems published" summary.
+
+    The batch of problems is folded into the key, so re-offering the same batch
+    stays silent while a later batch for the same contest is a genuinely new
+    summary. Keying on the contest alone used to lose those later problems
+    outright: entrants are excluded from the per-problem rows, so once a contest
+    had been summarised once, a problem attached to it afterwards reached them
+    through neither route. A digest rather than the ids themselves because the
+    column holds 100 characters and a contest may publish many problems.
+    """
+    fingerprint = ",".join(str(pk) for pk in sorted(problem_ids))
+    digest = hashlib.sha256(fingerprint.encode()).hexdigest()[:12]
+    return f"contest_{contest_id}_problems_published_{digest}"
 
 
 def announce_new_problems(problems) -> None:
@@ -29,8 +48,8 @@ def announce_new_problems(problems) -> None:
     from apps.notifications.models import Notification
     from apps.notifications.services import create_bulk, notify_user
 
-    problems = list(problems)
-    if not problems:
+    problem_ids = [problem.pk for problem in problems]
+    if not problem_ids:
         return
 
     now = timezone.now()
@@ -40,23 +59,36 @@ def announce_new_problems(problems) -> None:
     if not audience:
         return
 
+    # Re-read with the contests attached: walking `problem.contests` inside the
+    # loop cost one query per problem for what is usually the same single
+    # contest. The finished ones are picked out in Python afterwards, which
+    # keeps this to one prefetch instead of one filtered query each.
+    problems = list(
+        Problem.objects.filter(pk__in=problem_ids).prefetch_related("contests")
+    )
+
     to_ring: set[int] = set()
-    # Contest -> its participants, filled in as problems are walked. A contest
-    # usually contributes several problems, and its entrants are the same set
-    # every time.
+    # Contest -> its participants, and -> the problems of this batch that came
+    # out of it. A contest usually contributes several problems, and its
+    # entrants are the same set every time.
     entrants: dict[int, set[int]] = {}
     contests: dict[int, object] = {}
+    covered: dict[int, list[int]] = {}
 
     for problem in problems:
         insiders: set[int] = set()
-        # Only finished contests: an entrant of a round still to come has
-        # solved nothing yet, and "now in the catalog" would be nonsense.
-        for contest in problem.contests.filter(end_time__lt=now):
+        for contest in problem.contests.all():
+            # Only finished contests: an entrant of a round still to come has
+            # solved nothing yet, and "now in the catalog" would be nonsense.
+            if contest.end_time >= now:
+                continue
             if contest.pk not in entrants:
                 contests[contest.pk] = contest
+                covered[contest.pk] = []
                 entrants[contest.pk] = set(
                     contest.participants.values_list("id", flat=True)
                 )
+            covered[contest.pk].append(problem.pk)
             insiders |= entrants[contest.pk]
 
         to_ring |= create_bulk(
@@ -72,7 +104,7 @@ def announce_new_problems(problems) -> None:
         to_ring |= create_bulk(
             entrants[contest_id] & audience,
             type=Notification.Type.NEW_PROBLEM,
-            dedup_key=f"contest_{contest_id}_problems_published",
+            dedup_key=_summary_key(contest_id, covered[contest_id]),
             title="Contest problems published",
             body=f"Problems from {contest.title} are now in the catalog",
             link=f"/contests/{contest_id}",

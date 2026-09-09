@@ -177,6 +177,18 @@ def publish_finished_contest_problems(self) -> dict:
     return summary
 
 
+def _minutes_until(start_time, now) -> int:
+    """Whole minutes from ``now`` to ``start_time``, never below one.
+
+    The reminder used to print the window constant, which made it lie whenever a
+    contest entered the window late: one created two minutes before its start
+    was still announced as "starts in ~15 min". Rounding the real remaining time
+    keeps the text true whenever it is sent; the floor of one minute avoids
+    "starts in ~0 min" for a contest seconds away.
+    """
+    return max(1, round((start_time - now).total_seconds() / 60))
+
+
 @shared_task(bind=True)
 def notify_contests_starting_soon(self) -> dict:
     """
@@ -202,7 +214,15 @@ def notify_contests_starting_soon(self) -> dict:
     window_end = now + timedelta(minutes=STARTING_SOON_MINUTES)
     # Strictly ahead of `now`: a contest that has already begun is the business
     # of `contest_started`, and nobody can join it any more.
-    upcoming = Contest.objects.filter(start_time__gt=now, start_time__lte=window_end)
+    upcoming = list(
+        Contest.objects.filter(start_time__gt=now, start_time__lte=window_end)
+    )
+    # Nothing to say: leave before reading the user table. This task runs every
+    # minute and the window is empty almost all of the time, so fetching the
+    # audience first would mean a full scan of the users table 1440 times a day
+    # to announce nothing.
+    if not upcoming:
+        return {"contests_announced": 0, "users_notified": 0}
 
     audience = list(
         get_user_model().objects.filter(is_active=True).values_list("id", flat=True)
@@ -217,7 +237,8 @@ def notify_contests_starting_soon(self) -> dict:
             dedup_key=f"contest_{contest.pk}_soon_"
             f"{int(contest.start_time.timestamp())}",
             title="Contest starting soon",
-            body=f"{contest.title} starts in ~{STARTING_SOON_MINUTES} min",
+            body=f"{contest.title} starts in ~{_minutes_until(contest.start_time, now)}"
+            " min",
             link=f"/contests/{contest.pk}",
         )
         if recipients:
