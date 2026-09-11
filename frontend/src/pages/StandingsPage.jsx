@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import Icons from '../components/Icons';
 import {
   TierSelect,
@@ -28,7 +27,6 @@ const DEFAULT_SORT = { key: 'rating', dir: 'desc' };
 export default function StandingsPage() {
   const user = useCurrentUser();
   const navigate = useNavigate();
-  const [navOpen, setNavOpen] = useState(false);
 
   const [tier, setTier] = useState('All');
   const [sort, setSort] = useState(DEFAULT_SORT);
@@ -112,120 +110,110 @@ export default function StandingsPage() {
   const fmt = (n) => n.toLocaleString('en-US');
 
   return (
-    <div className="dash st-page" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
-
-      <div className="main">
-        <Navbar
-          user={user}
-          title="Standings"
-          onMenuClick={() => setNavOpen(true)}
-        />
-
-        <div className="canvas scroll" ref={canvasRef}>
-          <div className="canvas-in">
-            <div className="st-head">
-              <h1>Global Standings</h1>
-              {/* The one count on the page: the whole board, or how much of it
+    <AppShell title="Standings" className="st-page">
+      <div className="canvas scroll" ref={canvasRef}>
+        <div className="canvas-in">
+          <div className="st-head">
+            <h1>Global Standings</h1>
+            {/* The one count on the page: the whole board, or how much of it
                   the current tier leaves once you filter. */}
-              {total != null && (
-                <span className="sub">
-                  {filtered && count != null ? (
-                    <>
-                      showing <b>{fmt(count)}</b> of <b>{fmt(total)}</b> coders
-                    </>
-                  ) : (
-                    <>
-                      showing all <b>{fmt(total)}</b> coders
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
+            {total != null && (
+              <span className="sub">
+                {filtered && count != null ? (
+                  <>
+                    showing <b>{fmt(count)}</b> of <b>{fmt(total)}</b> coders
+                  </>
+                ) : (
+                  <>
+                    showing all <b>{fmt(total)}</b> coders
+                  </>
+                )}
+              </span>
+            )}
+          </div>
 
-            <div className="st-controls">
-              <TierSelect value={tier} onChange={setTier} />
-            </div>
+          <div className="st-controls">
+            <TierSelect value={tier} onChange={setTier} />
+          </div>
 
-            {showPodium && podium.length > 0 && (
-              <div className="podium">
-                {podium.map(({ place, users }) => (
-                  <PodiumCard
-                    key={place}
-                    place={place}
-                    users={users}
+          {showPodium && podium.length > 0 && (
+            <div className="podium">
+              {podium.map(({ place, users }) => (
+                <PodiumCard
+                  key={place}
+                  place={place}
+                  users={users}
+                  metric={metric}
+                  youUsername={user?.username}
+                  cardRef={place === youPlace ? youRowRef : null}
+                  onOpen={openUser}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Only shout when there is nothing to read: a page that failed to
+                load MORE rows must not take the rows you already have with it. */}
+          {error && items.length === 0 ? (
+            <div className="st-empty">
+              <div className="ei">
+                <Icons.x size={20} />
+              </div>
+              <div className="et">Standings unavailable</div>
+              <div className="es">
+                The leaderboard could not be loaded. Try again later.
+              </div>
+            </div>
+          ) : !loading && items.length === 0 ? (
+            <div className="st-empty">
+              <div className="ei">
+                <Icons.search size={20} />
+              </div>
+              <div className="et">No coders found</div>
+              {/* Don't send anyone off to change a filter they never set. */}
+              <div className="es">
+                {filtered
+                  ? 'No one holds this tier yet. Try another one.'
+                  : 'The board is empty — nobody is ranked yet.'}
+              </div>
+            </div>
+          ) : (
+            <>
+              <StHead sort={sort} onSort={onSort} />
+              <div className="st-list">
+                {rows.map((u) => (
+                  <StandingRow
+                    key={u.username}
+                    u={u}
                     metric={metric}
-                    youUsername={user?.username}
-                    cardRef={place === youPlace ? youRowRef : null}
+                    isYou={isYou(u)}
+                    rowRef={isYou(u) && !youPlace ? youRowRef : null}
                     onOpen={openUser}
                   />
                 ))}
               </div>
-            )}
-
-            {/* Only shout when there is nothing to read: a page that failed to
-                load MORE rows must not take the rows you already have with it. */}
-            {error && items.length === 0 ? (
-              <div className="st-empty">
-                <div className="ei">
-                  <Icons.x size={20} />
+              {hasMore && (
+                <div className="st-more" ref={sentinelRef}>
+                  <span className="sp" />
+                  Loading more…
                 </div>
-                <div className="et">Standings unavailable</div>
-                <div className="es">
-                  The leaderboard could not be loaded. Try again later.
-                </div>
-              </div>
-            ) : !loading && items.length === 0 ? (
-              <div className="st-empty">
-                <div className="ei">
-                  <Icons.search size={20} />
-                </div>
-                <div className="et">No coders found</div>
-                {/* Don't send anyone off to change a filter they never set. */}
-                <div className="es">
-                  {filtered
-                    ? 'No one holds this tier yet. Try another one.'
-                    : 'The board is empty — nobody is ranked yet.'}
-                </div>
-              </div>
-            ) : (
-              <>
-                <StHead sort={sort} onSort={onSort} />
-                <div className="st-list">
-                  {rows.map((u) => (
-                    <StandingRow
-                      key={u.username}
-                      u={u}
-                      metric={metric}
-                      isYou={isYou(u)}
-                      rowRef={isYou(u) && !youPlace ? youRowRef : null}
-                      onOpen={openUser}
-                    />
-                  ))}
-                </div>
-                {hasMore && (
-                  <div className="st-more" ref={sentinelRef}>
-                    <span className="sp" />
-                    Loading more…
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              )}
+            </>
+          )}
         </div>
+      </div>
 
-        {/* "your standing" — overlay, position tracks your row. A tier filter is
+      {/* "your standing" — overlay, position tracks your row. A tier filter is
             a deliberate search, not a look at where you stand, so the bar stays
             out of it. */}
-        {you && !filtered && youVis !== 'visible' && (
-          <div className={`st-youbar ${youVis}`}>
-            <div className="st-youbar-in">
-              <div className="lbl">Your standing</div>
-              <StandingRow u={you} metric={metric} isYou onOpen={openUser} />
-            </div>
+      {you && !filtered && youVis !== 'visible' && (
+        <div className={`st-youbar ${youVis}`}>
+          <div className="st-youbar-in">
+            <div className="lbl">Your standing</div>
+            <StandingRow u={you} metric={metric} isYou onOpen={openUser} />
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </AppShell>
   );
 }

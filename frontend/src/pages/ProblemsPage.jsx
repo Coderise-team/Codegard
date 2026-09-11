@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import Icons from '../components/Icons';
 import Toolbar, { SelectedTags } from '../components/problems/ProblemsToolbar';
 import ProblemList from '../components/problems/ProblemList';
@@ -38,7 +37,6 @@ const ORDER_FIELD = {
 export default function ProblemsPage() {
   const user = useCurrentUser();
   const navigate = useNavigate();
-  const [navOpen, setNavOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ---- view toggle (list = row-cards, grid = thick cards) ----
@@ -163,79 +161,67 @@ export default function ProblemsPage() {
   );
 
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
+    <AppShell title="Problems">
+      <div className="canvas scroll">
+        <div className="ps-canvas">
+          <div className="ps-head">
+            <h1>Problemset</h1>
+            <span className="ps-count">
+              <b>{total}</b> problems
+            </span>
+            <div className="ps-diffsum">
+              {[
+                ['Easy', 'd-easy'],
+                ['Medium', 'd-medium'],
+                ['Hard', 'd-hard'],
+              ].map(([d, c]) => (
+                <div key={d} className={`ds ${c}`}>
+                  <span className="n">{byDiff[d].total}</span>
+                  <span className="k">{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      <div className="main">
-        <Navbar
-          user={user}
-          title="Problems"
-          onMenuClick={() => setNavOpen(true)}
-        />
+          <div className="ps-body">
+            <div className="ps-main">
+              <Toolbar
+                diff={diff}
+                onDiff={setDiff}
+                status={status}
+                onStatus={setStatus}
+                view={view}
+                onView={setView}
+                tags={tags}
+                counts={tagCounts}
+                tagsSel={tagsSel}
+                onToggleTag={toggleTag}
+              />
 
-        <div className="canvas scroll">
-          <div className="ps-canvas">
-            <div className="ps-head">
-              <h1>Problemset</h1>
-              <span className="ps-count">
-                <b>{total}</b> problems
-              </span>
-              <div className="ps-diffsum">
-                {[
-                  ['Easy', 'd-easy'],
-                  ['Medium', 'd-medium'],
-                  ['Hard', 'd-hard'],
-                ].map(([d, c]) => (
-                  <div key={d} className={`ds ${c}`}>
-                    <span className="n">{byDiff[d].total}</span>
-                    <span className="k">{d}</span>
-                  </div>
-                ))}
-              </div>
+              <SelectedTags
+                tagsSel={tagsSel}
+                onToggle={toggleTag}
+                onClear={clearTags}
+              />
+
+              {items.length ? list : loading ? null : empty}
+
+              {hasMore && (
+                <div
+                  ref={sentinelRef}
+                  className="ps-sentinel"
+                  aria-hidden="true"
+                />
+              )}
             </div>
 
-            <div className="ps-body">
-              <div className="ps-main">
-                <Toolbar
-                  diff={diff}
-                  onDiff={setDiff}
-                  status={status}
-                  onStatus={setStatus}
-                  view={view}
-                  onView={setView}
-                  tags={tags}
-                  counts={tagCounts}
-                  tagsSel={tagsSel}
-                  onToggleTag={toggleTag}
-                />
-
-                <SelectedTags
-                  tagsSel={tagsSel}
-                  onToggle={toggleTag}
-                  onClear={clearTags}
-                />
-
-                {items.length ? list : loading ? null : empty}
-
-                {hasMore && (
-                  <div
-                    ref={sentinelRef}
-                    className="ps-sentinel"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-
-              <aside className="ps-rail">
-                <ProgressCard byDiff={byDiff} />
-                {daily && (
-                  <DailyRandomCard daily={daily} onRandom={pickRandom} />
-                )}
-              </aside>
-            </div>
+            <aside className="ps-rail">
+              <ProgressCard byDiff={byDiff} />
+              {daily && <DailyRandomCard daily={daily} onRandom={pickRandom} />}
+            </aside>
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

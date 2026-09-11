@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import ProfileCard from '../components/dashboard/ProfileCard';
 import ContestHero from '../components/dashboard/ContestHero';
 import StatsStrip from '../components/dashboard/StatsStrip';
@@ -19,51 +17,40 @@ import './Dashboard.css';
  */
 export default function Dashboard() {
   const user = useCurrentUser();
-  const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
+    <AppShell title="Dashboard">
+      <div className="canvas scroll">
+        <div className="canvas-in">
+          <div className="hello">
+            <h1>
+              Welcome back, <b>{user?.username}</b>
+            </h1>
+          </div>
 
-      <div className="main">
-        <Navbar
-          user={user}
-          title="Dashboard"
-          onMenuClick={() => setNavOpen(true)}
-        />
-
-        <div className="canvas scroll">
-          <div className="canvas-in">
-            <div className="hello">
-              <h1>
-                Welcome back, <b>{user?.username}</b>
-              </h1>
+          <div className="lay-swap">
+            <div className="top-band">
+              <ProfileCard />
+              <ContestHero />
             </div>
 
-            <div className="lay-swap">
-              <div className="top-band">
-                <ProfileCard />
-                <ContestHero />
+            <StatsStrip username={user?.username} />
+
+            <div className="cols">
+              <div className="col-main">
+                <Recommended />
+                <RecentSubmissions username={user?.username} />
+                <ActivityHeatmap username={user?.username} />
               </div>
-
-              <StatsStrip username={user?.username} />
-
-              <div className="cols">
-                <div className="col-main">
-                  <Recommended />
-                  <RecentSubmissions username={user?.username} />
-                  <ActivityHeatmap username={user?.username} />
-                </div>
-                <div className="col-rail">
-                  <DailyChallenge />
-                  <MyContests />
-                  <PastContests username={user?.username} />
-                </div>
+              <div className="col-rail">
+                <DailyChallenge />
+                <MyContests />
+                <PastContests username={user?.username} />
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

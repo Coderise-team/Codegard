@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import { ContestHeroView } from '../components/dashboard/ContestHero';
 import ContestRow from '../components/contests/ContestRow';
 import PastRow from '../components/contests/PastRow';
-import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useContestHero } from '../hooks/useContestHero';
 import { useContests } from '../hooks/useContests';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -15,12 +13,9 @@ import './ContestsPage.css';
 /**
  * ContestsPage — the contests hub (compact density, violet accent).
  *
- * Featured contest hero on top + Upcoming / Past tabs. Reuses the dashboard
- * shell (Sidebar/Navbar/drawer) and the self-fetching ContestHero.
+ * Featured contest hero on top + Upcoming / Past tabs, inside AppShell.
  */
 export default function ContestsPage() {
-  const user = useCurrentUser();
-  const [navOpen, setNavOpen] = useState(false);
   const [tab, setTab] = useState('upcoming'); // upcoming | past
 
   // Each tab is a status slice of the same endpoint. Past keeps the server's
@@ -74,106 +69,96 @@ export default function ContestsPage() {
   };
 
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
-
-      <div className="main">
-        <Navbar
-          user={user}
-          title="Contests"
-          onMenuClick={() => setNavOpen(true)}
-        />
-
-        <div className="canvas scroll">
-          <div className="ct-hub">
-            <div className="ct-head">
-              <h1>Contests</h1>
-              <span className="sub">
-                Compete in rated rounds · climb the rating
-              </span>
-            </div>
-
-            <ContestHeroView {...hero} />
-
-            <div className="ct-bar">
-              <div className="ct-tabs">
-                <button
-                  className={`ct-tab${tab === 'upcoming' ? ' is-active' : ''}`}
-                  onClick={() => setTab('upcoming')}
-                >
-                  Upcoming
-                  {tab === 'upcoming' && (
-                    <span className="cnt">{upcomingCount}</span>
-                  )}
-                </button>
-                <button
-                  className={`ct-tab${tab === 'past' ? ' is-active' : ''}`}
-                  onClick={() => setTab('past')}
-                >
-                  Past
-                  {tab === 'past' && <span className="cnt">{total}</span>}
-                </button>
-              </div>
-            </div>
-
-            {tab === 'upcoming' &&
-              (upcoming.length ? (
-                <>
-                  <div className="ct-list">
-                    {upcoming.map((c, i) => (
-                      <ContestRow
-                        key={c.id}
-                        c={c}
-                        now={now}
-                        registered={isRegistered(c)}
-                        onToggle={toggleReg}
-                        onOpen={openContest}
-                        soon={featuredId == null && i === 0}
-                      />
-                    ))}
-                  </div>
-                  {hasMore && (
-                    <div
-                      ref={sentinelRef}
-                      className="ct-sentinel"
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
-              ) : loading ? null : (
-                <div className="ct-empty">
-                  <div className="et">No upcoming contests</div>
-                  <div className="es">
-                    New rounds will show up here once scheduled.
-                  </div>
-                </div>
-              ))}
-
-            {tab === 'past' &&
-              (items.length ? (
-                <>
-                  <div className="ct-list">
-                    {items.map((c) => (
-                      <PastRow key={c.id} c={c} onOpen={openContest} />
-                    ))}
-                  </div>
-                  {hasMore && (
-                    <div
-                      ref={sentinelRef}
-                      className="ct-sentinel"
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
-              ) : loading ? null : (
-                <div className="ct-empty">
-                  <div className="et">No past contests yet</div>
-                  <div className="es">Finished rounds will show up here.</div>
-                </div>
-              ))}
+    <AppShell title="Contests">
+      <div className="canvas scroll">
+        <div className="ct-hub">
+          <div className="ct-head">
+            <h1>Contests</h1>
+            <span className="sub">
+              Compete in rated rounds · climb the rating
+            </span>
           </div>
+
+          <ContestHeroView {...hero} />
+
+          <div className="ct-bar">
+            <div className="ct-tabs">
+              <button
+                className={`ct-tab${tab === 'upcoming' ? ' is-active' : ''}`}
+                onClick={() => setTab('upcoming')}
+              >
+                Upcoming
+                {tab === 'upcoming' && (
+                  <span className="cnt">{upcomingCount}</span>
+                )}
+              </button>
+              <button
+                className={`ct-tab${tab === 'past' ? ' is-active' : ''}`}
+                onClick={() => setTab('past')}
+              >
+                Past
+                {tab === 'past' && <span className="cnt">{total}</span>}
+              </button>
+            </div>
+          </div>
+
+          {tab === 'upcoming' &&
+            (upcoming.length ? (
+              <>
+                <div className="ct-list">
+                  {upcoming.map((c, i) => (
+                    <ContestRow
+                      key={c.id}
+                      c={c}
+                      now={now}
+                      registered={isRegistered(c)}
+                      onToggle={toggleReg}
+                      onOpen={openContest}
+                      soon={featuredId == null && i === 0}
+                    />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div
+                    ref={sentinelRef}
+                    className="ct-sentinel"
+                    aria-hidden="true"
+                  />
+                )}
+              </>
+            ) : loading ? null : (
+              <div className="ct-empty">
+                <div className="et">No upcoming contests</div>
+                <div className="es">
+                  New rounds will show up here once scheduled.
+                </div>
+              </div>
+            ))}
+
+          {tab === 'past' &&
+            (items.length ? (
+              <>
+                <div className="ct-list">
+                  {items.map((c) => (
+                    <PastRow key={c.id} c={c} onOpen={openContest} />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div
+                    ref={sentinelRef}
+                    className="ct-sentinel"
+                    aria-hidden="true"
+                  />
+                )}
+              </>
+            ) : loading ? null : (
+              <div className="ct-empty">
+                <div className="et">No past contests yet</div>
+                <div className="es">Finished rounds will show up here.</div>
+              </div>
+            ))}
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
