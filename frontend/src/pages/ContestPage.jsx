@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import Icons from '../components/Icons';
 import ContestBanner from '../components/contests/ContestBanner';
 import ContestAside from '../components/contests/ContestAside';
@@ -35,7 +34,6 @@ import './ContestPage.css';
 export default function ContestPage() {
   const { id } = useParams();
   const user = useCurrentUser();
-  const [navOpen, setNavOpen] = useState(false);
   const [showPanel, setShowPanel] = useState(true);
 
   const { contest, loading, error, reload } = useContest(id);
@@ -173,44 +171,34 @@ export default function ContestPage() {
   );
 
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
-
-      <div className="main">
-        <Navbar
-          user={user}
-          title={crumb}
-          onMenuClick={() => setNavOpen(true)}
-        />
-
-        <div className="cp-stage">
-          {loading ? (
-            <div className="list-msg">Loading…</div>
-          ) : error || !contest ? (
-            <div className="list-msg">Couldn’t load the contest.</div>
-          ) : (
-            <>
-              <ContestBanner
-                D={D}
-                contestId={id}
-                state={state}
-                seconds={seconds}
-                registered={registered}
-                onToggle={toggleReg}
-              />
-              <ContestAside
-                state={state}
-                open={showPanel}
-                onToggle={() => setShowPanel((v) => !v)}
-                panel={panel}
-                problemsCount={contest.problems_count}
-                you={user?.username}
-                myStanding={standing}
-              />
-            </>
-          )}
-        </div>
+    <AppShell title={crumb}>
+      <div className="cp-stage">
+        {loading ? (
+          <div className="list-msg">Loading…</div>
+        ) : error || !contest ? (
+          <div className="list-msg">Couldn’t load the contest.</div>
+        ) : (
+          <>
+            <ContestBanner
+              D={D}
+              contestId={id}
+              state={state}
+              seconds={seconds}
+              registered={registered}
+              onToggle={toggleReg}
+            />
+            <ContestAside
+              state={state}
+              open={showPanel}
+              onToggle={() => setShowPanel((v) => !v)}
+              panel={panel}
+              problemsCount={contest.problems_count}
+              you={user?.username}
+              myStanding={standing}
+            />
+          </>
+        )}
       </div>
-    </div>
+    </AppShell>
   );
 }
