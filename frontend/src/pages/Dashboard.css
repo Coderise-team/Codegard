@@ -200,6 +200,21 @@
 .gsearch input::placeholder {
   color: var(--fg3);
 }
+.gsearch-clear {
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--fg3);
+  cursor: pointer;
+  transition: 0.14s;
+}
+.gsearch-clear:hover {
+  color: var(--fg);
+  background: var(--border);
+}
 .gsearch .kbd {
   font-family: var(--mono);
   font-size: 10.5px;

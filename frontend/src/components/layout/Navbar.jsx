@@ -1,5 +1,6 @@
 import Icons from '../Icons';
 import UserMenu from './UserMenu';
+import SearchField from './SearchField';
 
 /**
  * Navbar — top dashboard bar (breadcrumb, search, user menu).
@@ -31,17 +32,7 @@ export default function Navbar({
       <div className="crumb">{title}</div>
       <div className="tbar-spacer" />
 
-      {search && (
-        <div className="gsearch">
-          <Icons.search size={15} />
-          <input
-            placeholder={search.placeholder}
-            value={search.value}
-            onChange={(e) => search.onChange(e.target.value)}
-          />
-          <span className="kbd">/</span>
-        </div>
-      )}
+      {search && <SearchField {...search} />}
 
       <UserMenu user={user} />
     </header>
