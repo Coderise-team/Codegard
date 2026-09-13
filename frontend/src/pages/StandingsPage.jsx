@@ -10,6 +10,7 @@ import {
   PODIUM_PLACES,
 } from '../components/standings/StandingsCards';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useSearchTerm } from '../hooks/useSearchTerm';
 import { useStandings } from '../hooks/useStandings';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useRowPosition } from '../hooks/useRowPosition';
@@ -30,6 +31,7 @@ export default function StandingsPage() {
 
   const [tier, setTier] = useState('All');
   const [sort, setSort] = useState(DEFAULT_SORT);
+  const [term, setTerm] = useSearchTerm();
 
   const canvasRef = useRef(null);
   // The floating bar docks to whichever edge your own row went past.
@@ -44,8 +46,9 @@ export default function StandingsPage() {
       ordering: `${sort.dir === 'desc' ? '-' : ''}${ORDER_FIELD[sort.key]}`,
     };
     if (tier !== 'All') p.tier = tier;
+    if (term) p.search = term;
     return p;
-  }, [sort, tier]);
+  }, [sort, tier, term]);
 
   const { items, count, total, you, hasMore, loading, error, loadMore } =
     useStandings(params);
@@ -61,11 +64,13 @@ export default function StandingsPage() {
   // Which number the table is ranked by right now; it gets the loud styling.
   const metric = sort.key;
 
-  const filtered = tier !== 'All';
+  // A narrowed board: a tier, a name, or both. Rows still carry their true
+  // global places, but the board is no longer the world.
+  const filtered = tier !== 'All' || Boolean(term);
 
   // The podium is a view of the top of the WORLD, so it only belongs on the
-  // unfiltered board. Filter by tier and it goes away entirely — even when the
-  // world's top three happen to sit in that tier, they show as ordinary rows.
+  // unfiltered board. Narrow it and the podium goes away entirely — even when
+  // the world's top three sit inside the slice, they show as ordinary rows.
   // Ascending order kills it too: the top places would land at the far end of
   // the list, leaving the podium empty until you scrolled all the way down.
   const showPodium = !filtered && sort.dir === 'desc';
@@ -110,7 +115,11 @@ export default function StandingsPage() {
   const fmt = (n) => n.toLocaleString('en-US');
 
   return (
-    <AppShell title="Standings" className="st-page">
+    <AppShell
+      title="Standings"
+      className="st-page"
+      search={{ placeholder: 'Search coders…', value: term, onChange: setTerm }}
+    >
       <div className="canvas scroll" ref={canvasRef}>
         <div className="canvas-in">
           <div className="st-head">
