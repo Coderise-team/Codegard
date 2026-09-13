@@ -13,9 +13,9 @@ import { useCurrentUser } from '../../hooks/useCurrentUser';
  * page hands neither to the frame above it. The scroll container stays with the
  * page — it differs (canvas / cp-stage) and Standings needs a ref on it.
  *
- * Props: title — breadcrumb; search — { placeholder, value, onChange } for the
- * top bar field, absent on a page that searches nothing; className, style — on
- * the frame root; children.
+ * Props: title — breadcrumb; search — the page's declaration for the top bar
+ * field, absent on a page that searches nothing; className, style — on the
+ * frame root; children.
  */
 export default function AppShell({
   title,

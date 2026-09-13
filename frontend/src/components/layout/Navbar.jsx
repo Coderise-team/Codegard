@@ -12,7 +12,8 @@ import SearchField from './SearchField';
  *   user        — { username, avatar }
  *   title       — breadcrumb (string or markup)
  *   onMenuClick — open the sidebar drawer (phone only; burger button)
- *   search      — { placeholder, value, onChange } from the page, or nothing
+ *   search      — { placeholder, value, onChange, onSubmit } from the page, or
+ *                 nothing
  */
 export default function Navbar({
   user,

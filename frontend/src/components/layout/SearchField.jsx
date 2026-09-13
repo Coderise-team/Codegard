@@ -16,21 +16,32 @@ const DEBOUNCE_MS = 300;
  * outside — a back step rewrites it from the address — and anything this field
  * did not send itself replaces what is in it.
  *
+ * A page without its own list of results leaves out `onChange` and takes the
+ * term on Enter instead: nothing is searched here, the typing is carried
+ * somewhere that can answer it.
+ *
  * Props:
  *   placeholder — hint for this page ("Search problems…")
  *   value       — the current term
- *   onChange    — called with a new term, debounced
+ *   onChange    — called with a new term, debounced; absent on a page that
+ *                 searches nothing itself
+ *   onSubmit    — called with the term on Enter
  */
-export default function SearchField({ placeholder, value, onChange }) {
+export default function SearchField({
+  placeholder,
+  value = '',
+  onChange,
+  onSubmit,
+}) {
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
 
-  // A page passes its handler inline, so a new function arrives on every render
-  // of the page; keeping it in a ref is what lets the timer below depend on the
-  // term alone instead of restarting on each of those renders.
-  const onChangeRef = useRef(onChange);
+  // A page passes its handlers inline, so new functions arrive on every render
+  // of the page; keeping them in a ref is what lets the timer below depend on
+  // the term alone instead of restarting on each of those renders.
+  const handlers = useRef({ onChange, onSubmit });
   useEffect(() => {
-    onChangeRef.current = onChange;
+    handlers.current = { onChange, onSubmit };
   });
 
   // Adjust-during-render: the term moved without this field (a back step), so
@@ -41,15 +52,19 @@ export default function SearchField({ placeholder, value, onChange }) {
     setDraft(value);
   }
 
+  const live = Boolean(onChange);
   useEffect(() => {
-    if (draft === value) return undefined;
-    const timer = setTimeout(() => onChangeRef.current(draft), DEBOUNCE_MS);
+    if (!live || draft === value) return undefined;
+    const timer = setTimeout(
+      () => handlers.current.onChange(draft),
+      DEBOUNCE_MS
+    );
     return () => clearTimeout(timer);
-  }, [draft, value]);
+  }, [draft, value, live]);
 
   const clear = () => {
     setDraft('');
-    onChangeRef.current('');
+    handlers.current.onChange?.('');
   };
 
   return (
@@ -61,6 +76,7 @@ export default function SearchField({ placeholder, value, onChange }) {
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
+          if (e.key === 'Enter') handlers.current.onSubmit?.(draft);
           if (e.key !== 'Escape') return;
           clear();
           inputRef.current?.blur();

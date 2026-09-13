@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import AppShell from '../components/layout/AppShell';
 import ProfileCard from '../components/dashboard/ProfileCard';
 import ContestHero from '../components/dashboard/ContestHero';
@@ -17,9 +19,19 @@ import './Dashboard.css';
  */
 export default function Dashboard() {
   const user = useCurrentUser();
+  const navigate = useNavigate();
+
+  // The dashboard holds no list of its own, and the commonest reason to type
+  // here is to go and solve something, so the term is carried to the catalog.
+  const openCatalog = (term) => {
+    if (term) navigate(`/problems?search=${encodeURIComponent(term)}`);
+  };
 
   return (
-    <AppShell title="Dashboard">
+    <AppShell
+      title="Dashboard"
+      search={{ placeholder: 'Search problems…', onSubmit: openCatalog }}
+    >
       <div className="canvas scroll">
         <div className="canvas-in">
           <div className="hello">
