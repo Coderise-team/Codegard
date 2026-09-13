@@ -62,6 +62,31 @@ export default function SearchField({
     return () => clearTimeout(timer);
   }, [draft, value, live]);
 
+  // "/" jumps here from anywhere on the page — the shortcut the key badge in
+  // the corner has been promising. Not while something else is being typed
+  // into, or the slash would be stolen out of that text.
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+      const target = event.target;
+      const tag = target?.tagName;
+      if (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      event.preventDefault();
+      inputRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const clear = () => {
     setDraft('');
     handlers.current.onChange?.('');
