@@ -87,40 +87,62 @@ export default function SearchField({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // A phone bar has no room for a field standing open, so there it is a button
+  // until asked for, and the field it opens lies across the bar. On a wide
+  // screen the field is always out and this flag changes nothing.
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
   const clear = () => {
     setDraft('');
     handlers.current.onChange?.('');
   };
 
   return (
-    <div className="gsearch">
-      <Icons.search size={15} />
-      <input
-        ref={inputRef}
-        placeholder={placeholder}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') handlers.current.onSubmit?.(draft);
-          if (e.key !== 'Escape') return;
-          clear();
-          inputRef.current?.blur();
-        }}
-      />
-      {draft ? (
-        <button
-          className="gsearch-clear"
-          title="Clear"
-          onClick={() => {
+    <>
+      <button
+        className="gsearch-open icon-btn"
+        title="Search"
+        onClick={() => setOpen(true)}
+      >
+        <Icons.search size={16} />
+      </button>
+
+      <div className={`gsearch${open ? ' is-open' : ''}`}>
+        <Icons.search size={15} />
+        <input
+          ref={inputRef}
+          placeholder={placeholder}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => setOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handlers.current.onSubmit?.(draft);
+            if (e.key !== 'Escape') return;
             clear();
-            inputRef.current?.focus();
+            inputRef.current?.blur();
           }}
-        >
-          <Icons.x size={13} />
-        </button>
-      ) : (
-        <span className="kbd">/</span>
-      )}
-    </div>
+        />
+        {draft ? (
+          <button
+            className="gsearch-clear"
+            title="Clear"
+            // Keep the field focused: on a phone losing focus folds it away,
+            // and it would fold before this click ever landed.
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              clear();
+              inputRef.current?.focus();
+            }}
+          >
+            <Icons.x size={13} />
+          </button>
+        ) : (
+          <span className="kbd">/</span>
+        )}
+      </div>
+    </>
   );
 }

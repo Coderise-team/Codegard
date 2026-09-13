@@ -200,6 +200,10 @@
 .gsearch input::placeholder {
   color: var(--fg3);
 }
+/* Only a phone bar shows it; a wide one keeps the field itself out. */
+.tbar .gsearch-open {
+  display: none;
+}
 .gsearch-clear {
   display: flex;
   align-items: center;
@@ -1429,9 +1433,28 @@
   .nav-burger {
     display: inline-flex;
   }
-  .gsearch,
   .tbar .user-chip .meta {
     display: none;
+  }
+
+  /* The field is folded into the button next to it, and unfolds across the
+     whole bar — there is no width here to share with the breadcrumb. */
+  .tbar {
+    position: relative;
+  }
+  .tbar .gsearch-open {
+    display: grid;
+  }
+  .gsearch {
+    display: none;
+  }
+  .gsearch.is-open {
+    display: flex;
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    width: auto;
+    z-index: 3;
   }
 
   /* keep the 3 quick stats in one row — stack icon over value so each fits */
