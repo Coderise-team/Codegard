@@ -8,6 +8,7 @@ import ProblemCards from '../components/problems/ProblemCards';
 import ProgressCard from '../components/problems/ProgressCard';
 import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useSearchTerm } from '../hooks/useSearchTerm';
 import { useProblems } from '../hooks/useProblems';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
@@ -38,6 +39,7 @@ export default function ProblemsPage() {
   const user = useCurrentUser();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [term, setTerm] = useSearchTerm();
 
   // ---- view toggle (list = row-cards, grid = thick cards) ----
   const [view, setView] = useState('list');
@@ -90,13 +92,14 @@ export default function ProblemsPage() {
   // Memoised so useProblems only reloads when a filter/sort actually changes.
   const params = useMemo(() => {
     const p = {};
+    if (term) p.search = term;
     if (diff !== 'all') p.difficulty = DIFF_PARAM[diff];
     if (status !== 'all') p.status = status;
     if (tagsSel.length) p.tag = tagsSel;
     if (sortCol)
       p.ordering = (sortDir === 'desc' ? '-' : '') + ORDER_FIELD[sortCol];
     return p;
-  }, [diff, status, tagsSel, sortCol, sortDir]);
+  }, [term, diff, status, tagsSel, sortCol, sortDir]);
 
   const { items, total, hasMore, loading, loadMore } = useProblems(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
@@ -161,7 +164,14 @@ export default function ProblemsPage() {
   );
 
   return (
-    <AppShell title="Problems">
+    <AppShell
+      title="Problems"
+      search={{
+        placeholder: 'Search problems…',
+        value: term,
+        onChange: setTerm,
+      }}
+    >
       <div className="canvas scroll">
         <div className="ps-canvas">
           <div className="ps-head">
