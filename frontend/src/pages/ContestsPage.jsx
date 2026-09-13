@@ -76,6 +76,21 @@ export default function ContestsPage() {
     }
   };
 
+  // A search that found nothing is its own dead end, and it reads the same in
+  // both sections. The term is never printed back: it comes from the address,
+  // so a crafted link could put any text on a page that looks like ours.
+  const nothingFound = (
+    <div className="ct-empty">
+      <div className="et">Nothing found for that search</div>
+      <div className="es">
+        Check the spelling, or look in the other section.
+      </div>
+      <button className="btn" onClick={() => setTerm('')}>
+        Clear search
+      </button>
+    </div>
+  );
+
   return (
     <AppShell
       title="Contests"
@@ -141,7 +156,9 @@ export default function ContestsPage() {
                   />
                 )}
               </>
-            ) : loading ? null : (
+            ) : loading ? null : searching ? (
+              nothingFound
+            ) : (
               <div className="ct-empty">
                 <div className="et">No upcoming contests</div>
                 <div className="es">
@@ -166,7 +183,9 @@ export default function ContestsPage() {
                   />
                 )}
               </>
-            ) : loading ? null : (
+            ) : loading ? null : searching ? (
+              nothingFound
+            ) : (
               <div className="ct-empty">
                 <div className="et">No past contests yet</div>
                 <div className="es">Finished rounds will show up here.</div>

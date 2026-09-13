@@ -179,12 +179,23 @@ export default function StandingsPage() {
                 <Icons.search size={20} />
               </div>
               <div className="et">No coders found</div>
-              {/* Don't send anyone off to change a filter they never set. */}
+              {/* Don't send anyone off to change a filter they never set, and
+                  name the narrowing that actually emptied the board. The term
+                  itself is never printed back: it comes from the address, so a
+                  crafted link could put any text on a page that looks like
+                  ours. */}
               <div className="es">
-                {filtered
-                  ? 'No one holds this tier yet. Try another one.'
-                  : 'The board is empty — nobody is ranked yet.'}
+                {term
+                  ? 'No nickname matches that search.'
+                  : tier !== 'All'
+                    ? 'No one holds this tier yet. Try another one.'
+                    : 'The board is empty — nobody is ranked yet.'}
               </div>
+              {term && (
+                <button className="btn" onClick={() => setTerm('')}>
+                  Clear search
+                </button>
+              )}
             </div>
           ) : (
             <>

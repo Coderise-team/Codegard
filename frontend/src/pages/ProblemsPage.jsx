@@ -148,17 +148,35 @@ export default function ProblemsPage() {
       />
     );
 
+  // A search that found nothing and a filter that left nothing are different
+  // dead ends, and each names the way out of itself. The term is never printed
+  // back: it comes from the address, so a crafted link could put any text on a
+  // page that looks like ours.
   const empty = (
     <div className="ps-emptywrap">
       <div className="ps-empty">
         <div className="ei">
           <Icons.search size={22} />
         </div>
-        <div className="et">No problems match these filters</div>
-        <div className="es">Try clearing the difficulty, status or tags.</div>
-        <button className="btn" onClick={resetFilters}>
-          Reset filters
-        </button>
+        {term ? (
+          <>
+            <div className="et">Nothing found for that search</div>
+            <div className="es">Check the spelling, or try a shorter word.</div>
+            <button className="btn" onClick={() => setTerm('')}>
+              Clear search
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="et">No problems match these filters</div>
+            <div className="es">
+              Try clearing the difficulty, status or tags.
+            </div>
+            <button className="btn" onClick={resetFilters}>
+              Reset filters
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
