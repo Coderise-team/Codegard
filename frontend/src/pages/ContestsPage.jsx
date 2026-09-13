@@ -4,6 +4,7 @@ import AppShell from '../components/layout/AppShell';
 import { ContestHeroView } from '../components/dashboard/ContestHero';
 import ContestRow from '../components/contests/ContestRow';
 import PastRow from '../components/contests/PastRow';
+import { useSearchTerm } from '../hooks/useSearchTerm';
 import { useContestHero } from '../hooks/useContestHero';
 import { useContests } from '../hooks/useContests';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -17,26 +18,33 @@ import './ContestsPage.css';
  */
 export default function ContestsPage() {
   const [tab, setTab] = useState('upcoming'); // upcoming | past
+  const [term, setTerm] = useSearchTerm();
+  const searching = Boolean(term);
 
   // Each tab is a status slice of the same endpoint. Past keeps the server's
   // default -start_time order (freshest first); Upcoming asks for ascending
-  // start_time (nearest first).
-  const params = useMemo(
-    () =>
+  // start_time (nearest first). The term rides along with the slice, so
+  // switching tabs searches the new one instead of keeping the old matches.
+  const params = useMemo(() => {
+    const p =
       tab === 'past'
         ? { status: 'finished' }
-        : { status: 'pending', ordering: 'start_time' },
-    [tab]
-  );
+        : { status: 'pending', ordering: 'start_time' };
+    return term ? { ...p, search: term } : p;
+  }, [tab, term]);
   const { items, total, hasMore, loading, loadMore } = useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // The featured hero (when "soon") is the nearest pending contest — the same
   // one that would head the Upcoming list. Lift the hook here so we can render
   // the hero AND drop that contest from the list to avoid the duplicate.
+  // A search asks for matches, not for what the page would feature on its own:
+  // the hero steps aside and its contest stays in the list like any other.
   const hero = useContestHero();
   const featuredId =
-    hero.state === 'soon' ? (hero.data?.contest?.id ?? null) : null;
+    !searching && hero.state === 'soon'
+      ? (hero.data?.contest?.id ?? null)
+      : null;
   const upcoming =
     featuredId == null ? items : items.filter((c) => c.id !== featuredId);
   const upcomingCount = Math.max(0, total - (featuredId == null ? 0 : 1));
@@ -69,7 +77,14 @@ export default function ContestsPage() {
   };
 
   return (
-    <AppShell title="Contests">
+    <AppShell
+      title="Contests"
+      search={{
+        placeholder: 'Search contests…',
+        value: term,
+        onChange: setTerm,
+      }}
+    >
       <div className="canvas scroll">
         <div className="ct-hub">
           <div className="ct-head">
@@ -79,7 +94,7 @@ export default function ContestsPage() {
             </span>
           </div>
 
-          <ContestHeroView {...hero} />
+          {!searching && <ContestHeroView {...hero} />}
 
           <div className="ct-bar">
             <div className="ct-tabs">
