@@ -87,6 +87,13 @@ class AvatarUploadView(APIView):
 
         return Response({"avatar": request.build_absolute_uri(user.avatar_thumb.url)})
 
+    def delete(self, request):
+        user = request.user
+        user.avatar = ""
+        user.avatar_thumb = ""
+        user.save(update_fields=["avatar", "avatar_thumb"])
+        return Response({"avatar": None}, status=status.HTTP_200_OK)
+
 
 class LogoutView(APIView):
     """Blacklist a refresh token and log out the authenticated user."""
