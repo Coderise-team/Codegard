@@ -71,7 +71,7 @@ describe('ContestsPage search', () => {
     expect(lastParams()).toEqual({ status: 'finished', search: 'div' });
   });
 
-  it('steps the featured contest aside so it cannot swallow a match', () => {
+  it('hides the featured contest so it cannot swallow a match', () => {
     hooks.useContestHero.mockReturnValue({
       state: 'soon',
       data: { contest: contest(1, 'Div 2 Round') },

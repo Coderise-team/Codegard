@@ -12,17 +12,12 @@ const DEBOUNCE_MS = 300;
  * page a term only once typing stops; clearing skips the wait, since an empty
  * field is a request to see everything again.
  *
- * `value` is the term the page is showing results for. It also arrives from the
- * outside — a back step rewrites it from the address — and anything this field
- * did not send itself replaces what is in it.
- *
  * A page without its own list of results leaves out `onChange` and takes the
- * term on Enter instead: nothing is searched here, the typing is carried
- * somewhere that can answer it.
+ * term on Enter instead, carrying it somewhere that can answer it.
  *
  * Props:
  *   placeholder — hint for this page ("Search problems…")
- *   value       — the current term
+ *   value       — the term the page is showing results for
  *   onChange    — called with a new term, debounced; absent on a page that
  *                 searches nothing itself
  *   onSubmit    — called with the term on Enter
@@ -62,6 +57,14 @@ export default function SearchField({
     return () => clearTimeout(timer);
   }, [draft, value, live]);
 
+  // A phone bar has no room for a field standing open, so there it is a button
+  // until asked for, and the field it opens lies across the bar. On a wide
+  // screen the field is always out and this flag changes nothing.
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
   // "/" jumps here from anywhere on the page — the shortcut the key badge in
   // the corner has been promising. Not while something else is being typed
   // into, or the slash would be stolen out of that text.
@@ -81,19 +84,14 @@ export default function SearchField({
         return;
       }
       event.preventDefault();
+      // Unfolds the field first where it is folded away; where it is already
+      // out, the focus below is the whole of it.
+      setOpen(true);
       inputRef.current?.focus();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, []);
-
-  // A phone bar has no room for a field standing open, so there it is a button
-  // until asked for, and the field it opens lies across the bar. On a wide
-  // screen the field is always out and this flag changes nothing.
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
 
   const clear = () => {
     setDraft('');
@@ -119,10 +117,14 @@ export default function SearchField({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => setOpen(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') handlers.current.onSubmit?.(draft);
-            if (e.key !== 'Escape') return;
-            clear();
-            inputRef.current?.blur();
+            if (e.key === 'Enter') {
+              handlers.current.onSubmit?.(draft);
+              return;
+            }
+            if (e.key === 'Escape') {
+              clear();
+              inputRef.current?.blur();
+            }
           }}
         />
         {draft ? (

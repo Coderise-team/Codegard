@@ -39,7 +39,8 @@ export default function ContestsPage() {
   // one that would head the Upcoming list. Lift the hook here so we can render
   // the hero AND drop that contest from the list to avoid the duplicate.
   // A search asks for matches, not for what the page would feature on its own:
-  // the hero steps aside and its contest stays in the list like any other.
+  // the hero is not drawn at all, and its contest stays in the list like any
+  // other instead of being held out of it as the hero's double.
   const hero = useContestHero();
   const featuredId =
     !searching && hero.state === 'soon'
