@@ -14,6 +14,8 @@ function Harness() {
       <span data-testid="address">{search}</span>
       <button onClick={() => setTerm('arrays')}>set</button>
       <button onClick={() => setTerm('')}>clear</button>
+      <button onClick={() => setTerm('  ')}>spaces</button>
+      <button onClick={() => setTerm('two ')}>half a phrase</button>
     </>
   );
 }
@@ -57,6 +59,25 @@ describe('useSearchTerm', () => {
 
     expect(address()).toBe('');
     expect(term()).toBe('');
+  });
+
+  it('treats a term of nothing but spaces as no search at all', () => {
+    // The server strips it and answers with the whole list, so a page must not
+    // act as if a search were running.
+    renderAt('/problems');
+
+    fireEvent.click(screen.getByText('spaces'));
+
+    expect(address()).toBe('');
+    expect(term()).toBe('');
+  });
+
+  it('keeps a space inside a term being typed through', () => {
+    renderAt('/problems');
+
+    fireEvent.click(screen.getByText('half a phrase'));
+
+    expect(term()).toBe('two ');
   });
 
   it('keeps the other filters in the address', () => {

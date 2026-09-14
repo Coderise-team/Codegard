@@ -200,7 +200,8 @@
 .gsearch input::placeholder {
   color: var(--fg3);
 }
-/* Only a phone bar shows it; a wide one keeps the field itself out. */
+/* The button that unfolds the field belongs to a phone bar only: a wide one has
+   room to keep the field itself on show. */
 .tbar .gsearch-open {
   display: none;
 }
