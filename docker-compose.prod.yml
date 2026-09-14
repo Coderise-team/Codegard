@@ -16,7 +16,19 @@ services:
     # physical backup needs lives in git (survives a migration/restore), instead
     # of being hand-edited inside the data volume. summarize_wal is here for the
     # same reason: physical backups refuse to run without it.
-    command: postgres -c hba_file=/etc/postgresql/pg_hba.conf -c summarize_wal=on
+    # archive_timeout closes the WAL segment every minute even when the database
+    # is idle, so a point-in-time restore never loses more than a minute of
+    # submissions. The replication slot holds WAL until Databasus takes it, with
+    # no limit by default: max_slot_wal_keep_size caps that, so a long Databasus
+    # outage costs the backup chain (a fresh full follows) instead of filling
+    # the disk. wal_keep_size keeps a buffer to catch up from after that.
+    command: >
+      postgres
+      -c hba_file=/etc/postgresql/pg_hba.conf
+      -c summarize_wal=on
+      -c archive_timeout=60
+      -c wal_keep_size=512MB
+      -c max_slot_wal_keep_size=10GB
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
