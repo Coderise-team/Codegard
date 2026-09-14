@@ -40,6 +40,21 @@ describe('AppShell', () => {
     expect(sidebar.className).not.toContain('open');
   });
 
+  it('gives the bar no search field until a page declares one', () => {
+    const { container } = renderShell();
+
+    expect(container.querySelector('.gsearch')).toBeNull();
+  });
+
+  it('puts the field a page declared into the bar', () => {
+    const { container } = renderShell({
+      search: { placeholder: 'Search problems…', value: '', onChange: vi.fn() },
+    });
+
+    expect(container.querySelector('.gsearch')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Search problems…')).toBeInTheDocument();
+  });
+
   it('passes a page its own class and variables on the frame root', () => {
     const { container } = renderShell({
       className: 'st-page',
