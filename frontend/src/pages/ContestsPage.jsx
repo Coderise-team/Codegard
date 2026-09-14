@@ -25,12 +25,19 @@ export default function ContestsPage() {
   // default -start_time order (freshest first); Upcoming asks for ascending
   // start_time (nearest first). The term rides along with the slice, so
   // switching tabs searches the new one instead of keeping the old matches.
+  //
+  // A search drops that explicit ordering: the server ranks matches by how well
+  // they match, and any ?ordering= it is given overrides that ranking. Asked
+  // for a name, answer with the closest name, not with the nearest date.
   const params = useMemo(() => {
-    const p =
-      tab === 'past'
-        ? { status: 'finished' }
-        : { status: 'pending', ordering: 'start_time' };
-    return term ? { ...p, search: term } : p;
+    if (tab === 'past') {
+      return term
+        ? { status: 'finished', search: term }
+        : { status: 'finished' };
+    }
+    return term
+      ? { status: 'pending', search: term }
+      : { status: 'pending', ordering: 'start_time' };
   }, [tab, term]);
   const { items, total, hasMore, loading, loadMore } = useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
@@ -145,7 +152,9 @@ export default function ContestsPage() {
                       registered={isRegistered(c)}
                       onToggle={toggleReg}
                       onOpen={openContest}
-                      soon={featuredId == null && i === 0}
+                      // Top of a search is the closest name, not the next
+                      // round, and the glow says "this one is coming up".
+                      soon={!searching && featuredId == null && i === 0}
                     />
                   ))}
                 </div>

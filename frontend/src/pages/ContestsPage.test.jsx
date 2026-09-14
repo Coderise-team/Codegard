@@ -56,10 +56,19 @@ describe('ContestsPage search', () => {
   it('searches inside the open section', () => {
     renderPage('/contests?search=div');
 
+    // No ordering of ours: it would override the server's ranking by how well
+    // each title matches, and the closest name is what was asked for.
+    expect(lastParams()).toEqual({ status: 'pending', search: 'div' });
+  });
+
+  it('asks for the nearest round first once the search is cleared', () => {
+    renderPage('/contests?search=div');
+
+    fireEvent.click(screen.getByTitle('Clear'));
+
     expect(lastParams()).toEqual({
       status: 'pending',
       ordering: 'start_time',
-      search: 'div',
     });
   });
 
