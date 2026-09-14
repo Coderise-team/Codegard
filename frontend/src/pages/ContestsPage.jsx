@@ -40,7 +40,8 @@ export default function ContestsPage() {
       ? { status: 'pending', search: term }
       : { status: 'pending', ordering: 'start_time' };
   }, [tab, term]);
-  const { items, total, hasMore, loading, loadMore } = useContests(params);
+  const { items, total, hasMore, loading, error, loadMore } =
+    useContests(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // The featured hero (when "soon") is the nearest pending contest — the same
@@ -97,6 +98,15 @@ export default function ContestsPage() {
       <button className="btn" onClick={() => setTerm('')}>
         Clear search
       </button>
+    </div>
+  );
+
+  // A request that failed must not be read as "nothing is scheduled": telling
+  // someone to check their spelling when the server is down blames them for it.
+  const failed = (
+    <div className="ct-empty">
+      <div className="et">Contests unavailable</div>
+      <div className="es">The list could not be loaded. Try again later.</div>
     </div>
   );
 
@@ -167,7 +177,9 @@ export default function ContestsPage() {
                   />
                 )}
               </>
-            ) : loading ? null : searching ? (
+            ) : loading ? null : error ? (
+              failed
+            ) : searching ? (
               nothingFound
             ) : (
               <div className="ct-empty">
@@ -194,7 +206,9 @@ export default function ContestsPage() {
                   />
                 )}
               </>
-            ) : loading ? null : searching ? (
+            ) : loading ? null : error ? (
+              failed
+            ) : searching ? (
               nothingFound
             ) : (
               <div className="ct-empty">

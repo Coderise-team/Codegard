@@ -101,7 +101,8 @@ export default function ProblemsPage() {
     return p;
   }, [term, diff, status, tagsSel, sortCol, sortDir]);
 
-  const { items, total, hasMore, loading, loadMore } = useProblems(params);
+  const { items, total, hasMore, loading, error, loadMore } =
+    useProblems(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // solved/total per difficulty (rail progress + header totals). The endpoint's
@@ -181,6 +182,22 @@ export default function ProblemsPage() {
     </div>
   );
 
+  // A request that failed must not be read as "nothing matched": telling
+  // someone to check their spelling when the server is down blames them for it.
+  const failed = (
+    <div className="ps-emptywrap">
+      <div className="ps-empty">
+        <div className="ei">
+          <Icons.x size={22} />
+        </div>
+        <div className="et">Problems unavailable</div>
+        <div className="es">
+          The catalog could not be loaded. Try again later.
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <AppShell
       title="Problems"
@@ -232,7 +249,9 @@ export default function ProblemsPage() {
                 onClear={clearTags}
               />
 
-              {items.length ? list : loading ? null : empty}
+              {/* Rows already on screen survive a failed next page: the error
+                  only takes over when there is nothing to read. */}
+              {items.length ? list : loading ? null : error ? failed : empty}
 
               {hasMore && (
                 <div

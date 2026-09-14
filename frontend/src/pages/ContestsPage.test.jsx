@@ -18,12 +18,14 @@ vi.mock('../store/authStore', () => ({
 
 import ContestsPage from './ContestsPage';
 
-const result = (items) => ({
+const result = (items, over = {}) => ({
   items,
   total: items.length,
   hasMore: false,
   loading: false,
+  error: null,
   loadMore: vi.fn(),
+  ...over,
 });
 
 const contest = (id, title) => ({
@@ -103,6 +105,16 @@ describe('ContestsPage search', () => {
     expect(
       searched.container.querySelectorAll('.ct-list .ct-row')
     ).toHaveLength(1);
+  });
+
+  it('says the list failed instead of blaming the spelling', () => {
+    hooks.useContests.mockReturnValue(result([], { error: new Error('down') }));
+    renderPage('/contests?search=div');
+
+    expect(screen.getByText('Contests unavailable')).toBeTruthy();
+    expect(
+      screen.queryByText('Nothing found for that search')
+    ).not.toBeInTheDocument();
   });
 
   it('says the search found nothing in this section and offers to clear it', () => {

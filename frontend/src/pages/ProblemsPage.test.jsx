@@ -32,12 +32,14 @@ const problem = (id, title) => ({
   status: 'todo',
 });
 
-const result = (items) => ({
+const result = (items, over = {}) => ({
   items,
   total: items.length,
   hasMore: false,
   loading: false,
+  error: null,
   loadMore: vi.fn(),
+  ...over,
 });
 
 const lastParams = () => hooks.useProblems.mock.lastCall[0];
@@ -94,6 +96,26 @@ describe('ProblemsPage search', () => {
 
     fireEvent.click(screen.getByText('Clear search'));
     expect(lastParams()).toEqual({});
+  });
+
+  it('says the catalog failed instead of blaming the spelling', () => {
+    hooks.useProblems.mockReturnValue(result([], { error: new Error('down') }));
+    renderPage('/problems?search=arrays');
+
+    expect(screen.getByText('Problems unavailable')).toBeTruthy();
+    expect(
+      screen.queryByText('Nothing found for that search')
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the rows it has when an extra page fails to load', () => {
+    hooks.useProblems.mockReturnValue(
+      result([problem(1, 'Two Sum')], { error: new Error('down') })
+    );
+    const { container } = renderPage();
+
+    expect(container.querySelectorAll('.prow')).toHaveLength(1);
+    expect(screen.queryByText('Problems unavailable')).not.toBeInTheDocument();
   });
 
   it('points at the filters instead when no search is running', () => {
