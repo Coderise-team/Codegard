@@ -332,7 +332,7 @@ describe('StandingsPage search', () => {
     expect(container.querySelector('.st-youbar')).toBeNull();
   });
 
-  it('blames the search, not a tier, when nothing matched', () => {
+  it('says the search found nobody, not that the tier is empty', () => {
     useStandings.mockReturnValue({ ...result([]), total: 400 });
     renderPage('/standings?search=zzz');
 
@@ -340,7 +340,7 @@ describe('StandingsPage search', () => {
     expect(screen.queryByText(/No one holds this tier yet/)).toBeNull();
   });
 
-  it('offers a way out of a search that found nobody', () => {
+  it('clears the search from the empty board', () => {
     useStandings.mockReturnValue({ ...result([]), total: 400 });
     renderPage('/standings?search=zzz');
 

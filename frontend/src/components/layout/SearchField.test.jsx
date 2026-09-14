@@ -32,7 +32,7 @@ describe('SearchField', () => {
     expect(onChange).toHaveBeenCalledWith('arr');
   });
 
-  it('clears without making anyone wait for it', () => {
+  it('clears at once instead of waiting out the delay', () => {
     const onChange = vi.fn();
     render(
       <SearchField
@@ -49,7 +49,7 @@ describe('SearchField', () => {
     expect(field()).toHaveValue('');
   });
 
-  it('escape empties the field and steps out of it', () => {
+  it('escape empties the field and removes focus from it', () => {
     const onChange = vi.fn();
     render(
       <SearchField
@@ -94,7 +94,7 @@ describe('SearchField', () => {
   });
 
   describe('the slash shortcut', () => {
-    it('jumps into the field from the page', () => {
+    it('focuses the field from anywhere on the page', () => {
       render(
         <SearchField placeholder="Search problems…" value="" onChange={noop} />
       );
@@ -123,7 +123,7 @@ describe('SearchField', () => {
     });
   });
 
-  it('unfolds from its button and folds back once it loses focus', () => {
+  it('opens from its button and closes when focus leaves', () => {
     const { container } = render(
       <SearchField placeholder="Search problems…" value="" onChange={noop} />
     );

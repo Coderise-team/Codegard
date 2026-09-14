@@ -72,7 +72,7 @@ describe('useSearchTerm', () => {
     expect(term()).toBe('');
   });
 
-  it('keeps a space inside a term being typed through', () => {
+  it('keeps a space inside a term', () => {
     renderAt('/problems');
 
     fireEvent.click(screen.getByText('half a phrase'));

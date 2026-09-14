@@ -80,7 +80,7 @@ describe('ContestsPage search', () => {
     expect(lastParams()).toEqual({ status: 'finished', search: 'div' });
   });
 
-  it('hides the featured contest so it cannot swallow a match', () => {
+  it('hides the featured contest so a match is not dropped from the list', () => {
     hooks.useContestHero.mockReturnValue({
       state: 'soon',
       data: { contest: contest(1, 'Div 2 Round') },
@@ -105,7 +105,7 @@ describe('ContestsPage search', () => {
     ).toHaveLength(1);
   });
 
-  it('blames the search when a section holds no match, and offers a way out', () => {
+  it('says the search found nothing in this section and offers to clear it', () => {
     hooks.useContests.mockReturnValue(result([]));
     renderPage('/contests?search=zzz');
 

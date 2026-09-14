@@ -23,12 +23,13 @@ export default function ContestsPage() {
 
   // Each tab is a status slice of the same endpoint. Past keeps the server's
   // default -start_time order (freshest first); Upcoming asks for ascending
-  // start_time (nearest first). The term rides along with the slice, so
-  // switching tabs searches the new one instead of keeping the old matches.
+  // start_time (nearest first). The term goes into the query together with the
+  // status, so switching tabs re-queries the new slice with the same term
+  // instead of keeping the old matches.
   //
-  // A search drops that explicit ordering: the server ranks matches by how well
-  // they match, and any ?ordering= it is given overrides that ranking. Asked
-  // for a name, answer with the closest name, not with the nearest date.
+  // A search sends no ordering of ours: the server sorts matches by how well
+  // the title matches, and any ?ordering= overrides that. A question about a
+  // name is answered with the closest name, not with the nearest date.
   const params = useMemo(() => {
     if (tab === 'past') {
       return term
@@ -45,9 +46,9 @@ export default function ContestsPage() {
   // The featured hero (when "soon") is the nearest pending contest — the same
   // one that would head the Upcoming list. Lift the hook here so we can render
   // the hero AND drop that contest from the list to avoid the duplicate.
-  // A search asks for matches, not for what the page would feature on its own:
-  // the hero is not drawn at all, and its contest stays in the list like any
-  // other instead of being held out of it as the hero's double.
+  // A search asks for matches, not for the contest the page picks on its own:
+  // ContestHero is not rendered, and its contest stays in the list like any
+  // other instead of being removed from it as a duplicate.
   const hero = useContestHero();
   const featuredId =
     !searching && hero.state === 'soon'
@@ -84,9 +85,9 @@ export default function ContestsPage() {
     }
   };
 
-  // A search that found nothing is its own dead end, and it reads the same in
-  // both sections. The term is never printed back: it comes from the address,
-  // so a crafted link could put any text on a page that looks like ours.
+  // Shown in both sections, so it is built once. The term is never printed
+  // back: it comes from the address, so a crafted link could put any text on a
+  // page that looks like ours.
   const nothingFound = (
     <div className="ct-empty">
       <div className="et">Nothing found for that search</div>

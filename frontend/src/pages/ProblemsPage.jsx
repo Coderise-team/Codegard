@@ -148,10 +148,10 @@ export default function ProblemsPage() {
       />
     );
 
-  // A search that found nothing and a filter that left nothing are different
-  // dead ends, and each names the way out of itself. The term is never printed
-  // back: it comes from the address, so a crafted link could put any text on a
-  // page that looks like ours.
+  // A search that found nothing and a filter that left nothing need different
+  // wording, because the way out of each is different. The term is never
+  // printed back: it comes from the address, so a crafted link could put any
+  // text on a page that looks like ours.
   const empty = (
     <div className="ps-emptywrap">
       <div className="ps-empty">

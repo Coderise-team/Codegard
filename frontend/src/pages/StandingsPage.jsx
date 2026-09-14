@@ -64,13 +64,13 @@ export default function StandingsPage() {
   // Which number the table is ranked by right now; it gets the loud styling.
   const metric = sort.key;
 
-  // A narrowed board: a tier, a name, or both. Rows still carry their true
-  // global places, but the board is no longer the world.
+  // The list is cut down: by a tier, by a name, or by both. Rows still carry
+  // their true global places, but they are no longer the whole board.
   const filtered = tier !== 'All' || Boolean(term);
 
   // The podium is a view of the top of the WORLD, so it only belongs on the
-  // unfiltered board. Narrow it and the podium goes away entirely — even when
-  // the world's top three sit inside the slice, they show as ordinary rows.
+  // unfiltered board. Cut the list down and the podium is hidden entirely —
+  // even when the world's top three are in it, they show as ordinary rows.
   // Ascending order kills it too: the top places would land at the far end of
   // the list, leaving the podium empty until you scrolled all the way down.
   const showPodium = !filtered && sort.dir === 'desc';

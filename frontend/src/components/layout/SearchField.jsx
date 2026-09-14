@@ -8,9 +8,9 @@ import Icons from '../Icons';
 const DEBOUNCE_MS = 300;
 
 /**
- * SearchField — the top bar input. Holds the text being typed and hands the
- * page a term only once typing stops; clearing skips the wait, since an empty
- * field is a request to see everything again.
+ * SearchField — the top bar input. Holds the text being typed and gives the
+ * page a term only once typing stops; clearing reports it at once instead of
+ * waiting, since an empty field means "show everything again".
  *
  * A page without its own list of results leaves out `onChange` and takes the
  * term on Enter instead, carrying it somewhere that can answer it.
@@ -57,17 +57,17 @@ export default function SearchField({
     return () => clearTimeout(timer);
   }, [draft, value, live]);
 
-  // A phone bar has no room for a field standing open, so there it is a button
-  // until asked for, and the field it opens lies across the bar. On a wide
-  // screen the field is always out and this flag changes nothing.
+  // A phone bar has no room for an open field, so CSS hides it there until this
+  // flag shows it across the whole bar. On a wide screen the field is always
+  // visible and the flag changes nothing.
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  // "/" jumps here from anywhere on the page — the shortcut the key badge in
-  // the corner has been promising. Not while something else is being typed
-  // into, or the slash would be stolen out of that text.
+  // "/" focuses this field from anywhere on the page — the shortcut the key
+  // badge shows. Skipped while another field has focus, or the slash would be
+  // taken out of the text being typed there.
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
@@ -84,8 +84,8 @@ export default function SearchField({
         return;
       }
       event.preventDefault();
-      // Unfolds the field first where it is folded away; where it is already
-      // out, the focus below is the whole of it.
+      // Shows the field first where CSS keeps it hidden; where it is already
+      // visible, only the focus below matters.
       setOpen(true);
       inputRef.current?.focus();
     };
@@ -131,8 +131,8 @@ export default function SearchField({
           <button
             className="gsearch-clear"
             title="Clear"
-            // Keep the field focused: on a phone losing focus folds it away,
-            // and it would fold before this click ever landed.
+            // Keep the field focused: on a phone losing focus hides it, and it
+            // would be gone before this click landed.
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               clear();
