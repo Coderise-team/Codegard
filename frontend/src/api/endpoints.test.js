@@ -124,6 +124,13 @@ const reads = [
     result: { id: 9 },
   },
   {
+    name: 'problems.getReportReasons',
+    run: () => problems.getReportReasons(),
+    calledWith: ['report-reasons/'],
+    answer: [{ id: 'wrong_test', name: 'Wrong test' }],
+    result: [{ id: 'wrong_test', name: 'Wrong test' }],
+  },
+  {
     name: 'submissions.getSubmissions',
     run: () => submissions.getSubmissions({ problem: 42 }),
     calledWith: ['submissions/', { params: { problem: 42 } }],
@@ -245,6 +252,21 @@ describe('submissions.createSubmission', () => {
       language: 'python',
       contest: 7,
     });
+  });
+});
+
+describe('problems.reportProblem', () => {
+  it('posts the complaint to the problem it is about', async () => {
+    post.mockResolvedValue({ data: { detail: 'Report submitted.' } });
+
+    const body = {
+      reason: 'wrong_test',
+      message: 'Sample 3 expects 5, not 4.',
+    };
+    const data = await problems.reportProblem(42, body);
+
+    expect(post).toHaveBeenCalledWith('problems/42/report/', body);
+    expect(data).toEqual({ detail: 'Report submitted.' });
   });
 });
 

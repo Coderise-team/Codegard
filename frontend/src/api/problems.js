@@ -41,3 +41,19 @@ export async function getDaily() {
   const { data } = await client.get('problems/daily/');
   return data;
 }
+
+// GET report-reasons/ -> the reasons a problem can be reported for
+// ([{ id, name }]), so the form offers exactly what the backend accepts.
+export async function getReportReasons() {
+  const { data } = await client.get('report-reasons/');
+  return data;
+}
+
+// POST problems/{id}/report/ -> file a complaint about a problem
+// ({ reason, message }) and get back a { detail } confirmation. The backend
+// answers 400 with a { detail } of its own once five reports on that problem
+// are still unresolved, and 429 past ten reports an hour.
+export async function reportProblem(id, body) {
+  const { data } = await client.post(`problems/${id}/report/`, body);
+  return data;
+}
