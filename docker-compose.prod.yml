@@ -16,8 +16,8 @@ services:
     # physical backup needs lives in git (survives a migration/restore), instead
     # of being hand-edited inside the data volume. summarize_wal is here for the
     # same reason: physical backups refuse to run without it.
-    # archive_timeout closes the WAL segment every minute even when the database
-    # is idle, so a point-in-time restore never loses more than a minute of
+    # archive_timeout closes the WAL segment every minute while anything is being
+    # written, so a point-in-time restore never loses more than a minute of
     # submissions. The replication slot holds WAL until Databasus takes it, with
     # no limit by default: max_slot_wal_keep_size caps that, so a long Databasus
     # outage costs the backup chain (a fresh full follows) instead of filling
