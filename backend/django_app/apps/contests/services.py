@@ -262,6 +262,55 @@ def get_contest_history(user):
         .order_by("-contest__end_time", "-id")
     )
 
+def _collect_rating_participants(contest: Contest):
+    """Read-only. Rating set for a contest, in place order (decision 5).
+
+    Same rule apply_contest_ratings has always used: everyone who submitted
+    at least once. ``scored`` are users with an existing ContestScore row
+    (created on their first AC — see calculate_score); ``zero_ids`` are
+    submitters who never got one (WA/TLE/etc. only, no AC yet), who rank
+    last with place_key (0, 0, None). Pure no-shows (registered, never
+    submitted) are absent by construction — get_scored_rows only returns
+    ContestScore rows, and zero_ids is submitter_ids minus scored_uids.
+
+    Returns (ordered_uids, scored, zero_ids) so callers can rebuild
+    EloParticipant entries without re-querying.
+    """
+    from apps.submissions.models import Submission
+
+    submitter_ids = set(
+        Submission.objects.filter(contest=contest)
+        .values_list("user_id", flat=True)
+        .distinct()
+    )
+    scored = list(get_scored_rows(contest))  # ContestScore rows, in place order
+    scored_uids = {cs.user_id for cs in scored}
+    zero_ids = [uid for uid in submitter_ids if uid not in scored_uids]
+    ordered_uids = [cs.user_id for cs in scored] + zero_ids
+    return ordered_uids, scored, zero_ids
+
+
+def _build_rating_entries(scored, zero_ids, ratings_by_uid):
+    """Read-only. EloParticipant list in place order.
+
+    ``ratings_by_uid`` is supplied by the caller rather than fetched here:
+    the rated path passes a snapshot taken under select_for_update, the
+    prediction path passes plain current values. Same rule, different data
+    lifecycle — this function doesn't know or care which.
+    """
+    from apps.users.services import EloParticipant
+
+    return [
+        EloParticipant(
+            user_id=cs.user_id,
+            rating=ratings_by_uid[cs.user_id],
+            place_key=(cs.score, cs.penalty, cs.last_ac_at),
+        )
+        for cs in scored
+    ] + [
+        EloParticipant(user_id=uid, rating=ratings_by_uid[uid], place_key=(0, 0, None))
+        for uid in zero_ids
+    ]
 
 def apply_contest_ratings(contest: Contest) -> int:
     """
@@ -271,13 +320,13 @@ def apply_contest_ratings(contest: Contest) -> int:
     overlapping beat runs never double-count. Everything is one transaction, so
     a mid-flight crash rolls back and the contest is retried next run.
 
-    Rating set = everyone who made >=1 submission. Those who solved nothing get
-    score=0 / last place and a freshly created ContestScore. Pure no-shows
-    (joined but never submitted) are not rated.
+    Rating-set collection and place-key construction live in
+    _collect_rating_participants / _build_rating_entries, shared with the
+    read-only rating predictor — the transaction, locking, and writes stay
+    here.
     """
-    from apps.submissions.models import Submission
     from apps.users.models import EloHistory, User
-    from apps.users.services import EloParticipant, compute_elo_deltas
+    from apps.users.services import compute_elo_deltas
 
     with transaction.atomic():
         # 1. Lock the contest and re-check the flag (the task's filter is not enough).
@@ -286,18 +335,7 @@ def apply_contest_ratings(contest: Contest) -> int:
             return 0
 
         # 2. Build the set: everyone who submitted at least once.
-        submitter_ids = set(
-            Submission.objects.filter(contest=contest)
-            .values_list("user_id", flat=True)
-            .distinct()
-        )
-        # get_scored_rows, NOT get_leaderboard: the latter now includes every
-        # registered participant, and pure no-shows must stay unrated.
-        scored = list(get_scored_rows(contest))  # ContestScore rows, in place order
-        scored_uids = {cs.user_id for cs in scored}
-        # Submitted but solved nothing → last place, no ContestScore yet.
-        zero_ids = [uid for uid in submitter_ids if uid not in scored_uids]
-        ordered_uids = [cs.user_id for cs in scored] + zero_ids
+        ordered_uids, scored, zero_ids = _collect_rating_participants(contest)
 
         # 3. Degenerate field (0 or 1 rated) — no opponents, just mark done.
         if len(ordered_uids) < 2:
@@ -316,17 +354,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         snapshot = {uid: users[uid].elo_rating for uid in ordered_uids}
 
         # 5. Ordered-by-place participants → pure ELO (deltas off the snapshot).
-        participants = [
-            EloParticipant(
-                user_id=cs.user_id,
-                rating=snapshot[cs.user_id],
-                place_key=(cs.score, cs.penalty, cs.last_ac_at),
-            )
-            for cs in scored
-        ] + [
-            EloParticipant(user_id=uid, rating=snapshot[uid], place_key=(0, 0, None))
-            for uid in zero_ids
-        ]
+        participants = _build_rating_entries(scored, zero_ids, snapshot)
         deltas = compute_elo_deltas(participants)
 
         # 6. Apply (one save per row — fields chosen so the avatar signal skips).
@@ -359,7 +387,38 @@ def apply_contest_ratings(contest: Contest) -> int:
         # 7. Mark done in the same transaction.
         contest.rating_applied = True
         contest.save(update_fields=["rating_applied"])
-        # Every row just grew a rating_delta — the cached pages are all wrong.
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
 
     return len(ordered_uids)
+
+
+def compute_predicted_deltas(contest: Contest) -> dict[int, int]:
+    """Read-only. {user_id: predicted_delta} if the contest ended right now.
+
+    No transaction, no locking, no writes — ratings are read as plain current
+    values, not a select_for_update snapshot, because nothing here commits.
+    Empty dict when the contest's rating is already applied (decision 7) or
+    the rating set has fewer than two people (mirrors apply_contest_ratings'
+    own "<2 → nothing to rate" branch, without the write).
+
+    Uses the exact same rating set and place keys as apply_contest_ratings
+    (via the two functions above) and the same compute_elo_deltas — so
+    "prediction == real delta when nothing changed between the two calls"
+    is not a coincidence, it's the same computation on the same inputs.
+    """
+    from apps.users.models import User
+    from apps.users.services import compute_elo_deltas
+
+    if contest.rating_applied:  # decision 7
+        return {}
+
+    ordered_uids, scored, zero_ids = _collect_rating_participants(contest)  # decision 5
+    if len(ordered_uids) < 2:
+        return {}
+
+    ratings_now = dict(
+        User.objects.filter(id__in=ordered_uids).values_list("id", "elo_rating")
+    )
+
+    participants = _build_rating_entries(scored, zero_ids, ratings_now)
+    return compute_elo_deltas(participants)  # not touched — same formula
