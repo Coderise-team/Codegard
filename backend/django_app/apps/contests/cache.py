@@ -62,3 +62,31 @@ def bust_leaderboard_cache(contest_id: int) -> None:
         cache.incr(key)
     except ValueError:
         cache.set(key, 1, None)
+
+
+def predicted_deltas_cache_key(contest_id: int) -> str:
+    """Cache key for one contest's predicted-delta dict.
+
+    Same generation counter as leaderboard pages (get_generation): a new
+    accepted submission bumps it via bust_leaderboard_cache, which orphans
+    this key exactly like every leaderboard page. No separate invalidation.
+    """
+    generation = get_generation(contest_id)
+    return f"contest:{contest_id}:lb:g{generation}:predictions"
+
+
+def get_predicted_deltas(contest) -> dict[int, int]:
+    """Predicted deltas for a contest, cached under the leaderboard generation.
+
+    Cache miss computes once (compute_predicted_deltas is O(rating set), not
+    O(page)) and stores with LEADERBOARD_TTL — the same lifetime as
+    leaderboard pages, per decision 8, not a lifetime of its own.
+    """
+    from apps.contests.services import compute_predicted_deltas
+
+    key = predicted_deltas_cache_key(contest.id)
+    deltas = cache.get(key)
+    if deltas is None:
+        deltas = compute_predicted_deltas(contest)
+        cache.set(key, deltas, LEADERBOARD_TTL)
+    return deltas
