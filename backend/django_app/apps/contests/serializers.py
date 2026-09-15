@@ -173,10 +173,17 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     solved_count = serializers.IntegerField(read_only=True)
     last_ac_at = serializers.DateTimeField(read_only=True, allow_null=True)
     rating_delta = serializers.IntegerField(read_only=True, allow_null=True)
+    predicted_delta = serializers.SerializerMethodField()
 
     def get_rank(self, obj):
         # Rank is injected via annotated queryset in the view
         return getattr(obj, "rank", None)
+
+    def get_predicted_delta(self, obj):
+        # Dict is injected via context by the view, computed once for the
+        # whole contest before pagination — not per row (see cache.py).
+        deltas = self.context.get("predicted_deltas") or {}
+        return deltas.get(obj.pk)
 
 
 # PERSONAL CONTEST DATA SERIALIZERS
