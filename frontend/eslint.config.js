@@ -6,7 +6,8 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import prettierConfig from 'eslint-config-prettier';
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Generated output, not source: the coverage report ships its own scripts.
+  globalIgnores(['dist', 'coverage']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

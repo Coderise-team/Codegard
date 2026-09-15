@@ -1,0 +1,5 @@
+# Build output and the coverage report: generated files nobody edits by hand.
+# Prettier does not read .gitignore, so a local `vitest run --coverage` would
+# otherwise leave `make lint` failing on a hundred generated HTML files.
+dist
+coverage

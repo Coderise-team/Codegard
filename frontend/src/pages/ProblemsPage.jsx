@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import Icons from '../components/Icons';
 import Toolbar, { SelectedTags } from '../components/problems/ProblemsToolbar';
 import ProblemList from '../components/problems/ProblemList';
@@ -9,6 +8,7 @@ import ProblemCards from '../components/problems/ProblemCards';
 import ProgressCard from '../components/problems/ProgressCard';
 import DailyRandomCard from '../components/problems/DailyRandomCard';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useSearchTerm } from '../hooks/useSearchTerm';
 import { useProblems } from '../hooks/useProblems';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useDifficultyBreakdown } from '../hooks/useDifficultyBreakdown';
@@ -38,8 +38,8 @@ const ORDER_FIELD = {
 export default function ProblemsPage() {
   const user = useCurrentUser();
   const navigate = useNavigate();
-  const [navOpen, setNavOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [term, setTerm] = useSearchTerm();
 
   // ---- view toggle (list = row-cards, grid = thick cards) ----
   const [view, setView] = useState('list');
@@ -92,15 +92,17 @@ export default function ProblemsPage() {
   // Memoised so useProblems only reloads when a filter/sort actually changes.
   const params = useMemo(() => {
     const p = {};
+    if (term) p.search = term;
     if (diff !== 'all') p.difficulty = DIFF_PARAM[diff];
     if (status !== 'all') p.status = status;
     if (tagsSel.length) p.tag = tagsSel;
     if (sortCol)
       p.ordering = (sortDir === 'desc' ? '-' : '') + ORDER_FIELD[sortCol];
     return p;
-  }, [diff, status, tagsSel, sortCol, sortDir]);
+  }, [term, diff, status, tagsSel, sortCol, sortDir]);
 
-  const { items, total, hasMore, loading, loadMore } = useProblems(params);
+  const { items, total, hasMore, loading, error, loadMore } =
+    useProblems(params);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore);
 
   // solved/total per difficulty (rail progress + header totals). The endpoint's
@@ -147,95 +149,126 @@ export default function ProblemsPage() {
       />
     );
 
+  // A search that found nothing and a filter that left nothing need different
+  // wording, because the way out of each is different. The term is never
+  // printed back: it comes from the address, so a crafted link could put any
+  // text on a page that looks like ours.
   const empty = (
     <div className="ps-emptywrap">
       <div className="ps-empty">
         <div className="ei">
           <Icons.search size={22} />
         </div>
-        <div className="et">No problems match these filters</div>
-        <div className="es">Try clearing the difficulty, status or tags.</div>
-        <button className="btn" onClick={resetFilters}>
-          Reset filters
-        </button>
+        {term ? (
+          <>
+            <div className="et">Nothing found for that search</div>
+            <div className="es">Check the spelling, or try a shorter word.</div>
+            <button className="btn" onClick={() => setTerm('')}>
+              Clear search
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="et">No problems match these filters</div>
+            <div className="es">
+              Try clearing the difficulty, status or tags.
+            </div>
+            <button className="btn" onClick={resetFilters}>
+              Reset filters
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  // A request that failed must not be read as "nothing matched": telling
+  // someone to check their spelling when the server is down blames them for it.
+  const failed = (
+    <div className="ps-emptywrap">
+      <div className="ps-empty">
+        <div className="ei">
+          <Icons.x size={22} />
+        </div>
+        <div className="et">Problems unavailable</div>
+        <div className="es">
+          The catalog could not be loaded. Try again later.
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
+    <AppShell
+      title="Problems"
+      search={{
+        placeholder: 'Search problems…',
+        value: term,
+        onChange: setTerm,
+      }}
+    >
+      <div className="canvas scroll">
+        <div className="ps-canvas">
+          <div className="ps-head">
+            <h1>Problemset</h1>
+            <span className="ps-count">
+              <b>{total}</b> problems
+            </span>
+            <div className="ps-diffsum">
+              {[
+                ['Easy', 'd-easy'],
+                ['Medium', 'd-medium'],
+                ['Hard', 'd-hard'],
+              ].map(([d, c]) => (
+                <div key={d} className={`ds ${c}`}>
+                  <span className="n">{byDiff[d].total}</span>
+                  <span className="k">{d}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      <div className="main">
-        <Navbar
-          user={user}
-          title="Problems"
-          onMenuClick={() => setNavOpen(true)}
-        />
+          <div className="ps-body">
+            <div className="ps-main">
+              <Toolbar
+                diff={diff}
+                onDiff={setDiff}
+                status={status}
+                onStatus={setStatus}
+                view={view}
+                onView={setView}
+                tags={tags}
+                counts={tagCounts}
+                tagsSel={tagsSel}
+                onToggleTag={toggleTag}
+              />
 
-        <div className="canvas scroll">
-          <div className="ps-canvas">
-            <div className="ps-head">
-              <h1>Problemset</h1>
-              <span className="ps-count">
-                <b>{total}</b> problems
-              </span>
-              <div className="ps-diffsum">
-                {[
-                  ['Easy', 'd-easy'],
-                  ['Medium', 'd-medium'],
-                  ['Hard', 'd-hard'],
-                ].map(([d, c]) => (
-                  <div key={d} className={`ds ${c}`}>
-                    <span className="n">{byDiff[d].total}</span>
-                    <span className="k">{d}</span>
-                  </div>
-                ))}
-              </div>
+              <SelectedTags
+                tagsSel={tagsSel}
+                onToggle={toggleTag}
+                onClear={clearTags}
+              />
+
+              {/* Rows already on screen survive a failed next page: the error
+                  only takes over when there is nothing to read. */}
+              {items.length ? list : loading ? null : error ? failed : empty}
+
+              {hasMore && (
+                <div
+                  ref={sentinelRef}
+                  className="ps-sentinel"
+                  aria-hidden="true"
+                />
+              )}
             </div>
 
-            <div className="ps-body">
-              <div className="ps-main">
-                <Toolbar
-                  diff={diff}
-                  onDiff={setDiff}
-                  status={status}
-                  onStatus={setStatus}
-                  view={view}
-                  onView={setView}
-                  tags={tags}
-                  counts={tagCounts}
-                  tagsSel={tagsSel}
-                  onToggleTag={toggleTag}
-                />
-
-                <SelectedTags
-                  tagsSel={tagsSel}
-                  onToggle={toggleTag}
-                  onClear={clearTags}
-                />
-
-                {items.length ? list : loading ? null : empty}
-
-                {hasMore && (
-                  <div
-                    ref={sentinelRef}
-                    className="ps-sentinel"
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-
-              <aside className="ps-rail">
-                <ProgressCard byDiff={byDiff} />
-                {daily && (
-                  <DailyRandomCard daily={daily} onRandom={pickRandom} />
-                )}
-              </aside>
-            </div>
+            <aside className="ps-rail">
+              <ProgressCard byDiff={byDiff} />
+              {daily && <DailyRandomCard daily={daily} onRandom={pickRandom} />}
+            </aside>
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

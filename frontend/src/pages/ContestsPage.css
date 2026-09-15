@@ -306,6 +306,9 @@
   font-size: 12.5px;
   margin-top: 6px;
 }
+.ct-empty .btn {
+  margin-top: 16px;
+}
 
 /* ============================================================
    Responsive — phones (≤640): the row card wraps its right cluster

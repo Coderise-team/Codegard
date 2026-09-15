@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
+import AppShell from '../components/layout/AppShell';
 import StatsStrip from '../components/dashboard/StatsStrip';
 import ActivityHeatmap from '../components/dashboard/ActivityHeatmap';
 import RecentSubmissions from '../components/dashboard/RecentSubmissions';
@@ -26,7 +25,6 @@ import './ProfilePage.css';
 export default function ProfilePage() {
   const viewer = useCurrentUser();
   const { username } = useParams();
-  const [navOpen, setNavOpen] = useState(false);
 
   const { data: profile, loading, error, refetch } = useProfile(username);
   const user = profile?.user;
@@ -81,52 +79,42 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="dash" data-density="compact" style={rankVars}>
-      <Sidebar user={viewer} open={navOpen} onClose={() => setNavOpen(false)} />
+    <AppShell title="Profile" style={rankVars}>
+      <div className="canvas scroll">
+        <div className="canvas-in">
+          {loading && <div className="list-msg">Loading…</div>}
+          {error && (
+            <div className="list-msg">
+              Could not load this profile. Please try again.
+            </div>
+          )}
 
-      <div className="main">
-        <Navbar
-          user={viewer}
-          title="Profile"
-          onMenuClick={() => setNavOpen(true)}
-        />
+          {user && (
+            <div className="lay-overview">
+              <ProfileHeader
+                user={user}
+                delta={delta}
+                isOwner={isOwner}
+                onSaved={refetch}
+              />
+              <StatsStrip username={username} extraStats={extraStats} />
 
-        <div className="canvas scroll">
-          <div className="canvas-in">
-            {loading && <div className="list-msg">Loading…</div>}
-            {error && (
-              <div className="list-msg">
-                Could not load this profile. Please try again.
-              </div>
-            )}
-
-            {user && (
-              <div className="lay-overview">
-                <ProfileHeader
-                  user={user}
-                  delta={delta}
-                  isOwner={isOwner}
-                  onSaved={refetch}
-                />
-                <StatsStrip username={username} extraStats={extraStats} />
-
-                <div className="cols">
-                  <div className="col-main">
-                    <RatingChart user={user} history={history} />
-                    <ActivityHeatmap username={username} />
-                    <RecentSubmissions username={username} />
-                  </div>
-                  <div className="col-rail">
-                    <ProfileRing user={user} />
-                    <DifficultyBreakdown username={username} />
-                    <PastContests username={username} />
-                  </div>
+              <div className="cols">
+                <div className="col-main">
+                  <RatingChart user={user} history={history} />
+                  <ActivityHeatmap username={username} />
+                  <RecentSubmissions username={username} />
+                </div>
+                <div className="col-rail">
+                  <ProfileRing user={user} />
+                  <DifficultyBreakdown username={username} />
+                  <PastContests username={username} />
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

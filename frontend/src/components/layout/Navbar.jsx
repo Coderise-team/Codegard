@@ -1,15 +1,26 @@
 import Icons from '../Icons';
 import UserMenu from './UserMenu';
+import SearchField from './SearchField';
 
 /**
  * Navbar — top dashboard bar (breadcrumb, search, user menu).
  *
+ * Search belongs to the page below, not to the bar: every page searches its own
+ * thing, and a page with nothing to search declares nothing and gets no field.
+ *
  * Props:
  *   user        — { username, avatar }
- *   title       — breadcrumb string (e.g. "Dashboard")
+ *   title       — breadcrumb (string or markup)
  *   onMenuClick — open the sidebar drawer (phone only; burger button)
+ *   search      — { placeholder, value, onChange, onSubmit } from the page, or
+ *                 nothing
  */
-export default function Navbar({ user, title = 'Dashboard', onMenuClick }) {
+export default function Navbar({
+  user,
+  title = 'Dashboard',
+  onMenuClick,
+  search,
+}) {
   return (
     <header className="tbar">
       <button
@@ -22,11 +33,7 @@ export default function Navbar({ user, title = 'Dashboard', onMenuClick }) {
       <div className="crumb">{title}</div>
       <div className="tbar-spacer" />
 
-      <div className="gsearch">
-        <Icons.search size={15} />
-        <input placeholder="Search problems, users, contests…" />
-        <span className="kbd">/</span>
-      </div>
+      {search && <SearchField {...search} />}
 
       <UserMenu user={user} />
     </header>
