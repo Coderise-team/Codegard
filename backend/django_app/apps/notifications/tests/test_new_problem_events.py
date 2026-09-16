@@ -259,7 +259,9 @@ def test_announcing_a_batch_does_not_query_per_problem(
     make_user("member", 1200)
 
     # 6 problems: without the prefetch this alone cost 6 contest lookups.
-    with django_assert_num_queries(18):
+    # Two of the 20 are the SAVEPOINT / RELEASE of the transaction that keeps
+    # the reveal and its announcement together, not lookups.
+    with django_assert_num_queries(20):
         publish_finished_contest_problems()
 
 

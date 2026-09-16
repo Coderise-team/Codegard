@@ -14,7 +14,11 @@ from unittest.mock import patch
 
 import apps.notifications.services as services
 import pytest
-from apps.contests.tasks import apply_finished_contest_ratings, update_contest_statuses
+from apps.contests.tasks import (
+    apply_finished_contest_ratings,
+    publish_finished_contest_problems,
+    update_contest_statuses,
+)
 from apps.notifications.models import Notification
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
@@ -113,3 +117,80 @@ def test_the_status_task_survives_a_failed_announcement():
     assert Notification.objects.filter(
         user=entrant, type=Notification.Type.CONTEST_STARTED
     ).exists()
+
+
+# --- a failed announcement is retried, not lost ----------------------------
+
+
+def _fail_once(real, type):
+    """A stand-in for `create_bulk` that raises the first time it is asked to
+    create `type`, and behaves normally from then on."""
+    state = {"failed": False}
+
+    def flaky(*args, **kwargs):
+        if kwargs.get("type") == type and not state["failed"]:
+            state["failed"] = True
+            raise RuntimeError("db blip")
+        return real(*args, **kwargs)
+
+    return flaky
+
+
+@pytest.mark.django_db(transaction=True)
+def test_a_failed_contest_end_announcement_is_retried_with_the_rating():
+    """Rating and announcement commit together, so a failed announcement rolls
+    the rating back and the next run redoes both — instead of leaving a rated
+    contest that no run would ever announce."""
+    contest = make_contest("Round 1", starts_in=-3, ends_in=-1)
+    problem = make_problem("Two Sum")
+    contest.problems.add(problem)
+    winner = make_user("winner", 1200)
+    loser = make_user("loser", 1200)
+    contest.participants.add(winner, loser)
+    make_submission(winner, problem, contest, Submission.Verdict.AC)
+    make_submission(loser, problem, contest, Submission.Verdict.WA)
+    flaky = _fail_once(services.create_bulk, Notification.Type.CONTEST_ENDED)
+
+    with (
+        patch("channels.layers.get_channel_layer", return_value=None),
+        patch.object(services, "create_bulk", side_effect=flaky),
+    ):
+        apply_finished_contest_ratings()
+
+        contest.refresh_from_db()
+        winner.refresh_from_db()
+        assert contest.rating_applied is False  # rolled back, not stranded
+        assert winner.elo_rating == 1200  # no half-applied rating either
+
+        apply_finished_contest_ratings()
+
+    contest.refresh_from_db()
+    assert contest.rating_applied is True
+    assert (
+        Notification.objects.filter(type=Notification.Type.CONTEST_ENDED).count() == 2
+    )
+
+
+@pytest.mark.django_db(transaction=True)
+def test_a_failed_new_problem_announcement_keeps_the_problem_hidden_until_retried():
+    """Reveal and announcement commit together, so a failed announcement leaves
+    the problem hidden and the next run publishes and announces it — instead of
+    a visible problem the task can no longer find."""
+    make_user("member", 1200)
+    contest = make_contest("Round 1", starts_in=-3, ends_in=-1)
+    contest.problems.add(make_problem("Alpha", is_hidden=True))
+    flaky = _fail_once(services.create_bulk, Notification.Type.NEW_PROBLEM)
+
+    with (
+        patch("channels.layers.get_channel_layer", return_value=None),
+        patch.object(services, "create_bulk", side_effect=flaky),
+    ):
+        with pytest.raises(RuntimeError):
+            publish_finished_contest_problems()
+
+        assert Problem.objects.get(title="Alpha").is_hidden is True  # rolled back
+
+        publish_finished_contest_problems()
+
+    assert Problem.objects.get(title="Alpha").is_hidden is False
+    assert Notification.objects.filter(type=Notification.Type.NEW_PROBLEM).exists()
