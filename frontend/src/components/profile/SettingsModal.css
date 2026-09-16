@@ -1,7 +1,8 @@
 /* ============================================================
    SETTINGS MODAL
-   Content of the settings dialog. The frame itself is Modal.css;
-   these are named sm-* to stay out of the page stylesheets' way.
+   Content of the settings dialog. The frame and the form fields
+   are Modal.css; these are named sm-* to stay out of the page
+   stylesheets' way.
    ============================================================ */
 .sm-tabs {
   display: flex;
@@ -30,67 +31,15 @@
   background: var(--gold-soft);
 }
 
-/* ── Forms ──────────────────────────────────────────────────── */
-.sm-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
 .sm-row {
   display: flex;
   gap: 12px;
 }
-.sm-row .sm-field {
+.sm-row .modal-field {
   flex: 1;
   min-width: 0;
 }
-.sm-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.sm-label {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--fg2);
-}
-.sm-count {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--fg3);
-  font-variant-numeric: tabular-nums;
-}
-.sm-input {
-  width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: var(--r-sm);
-  font-family: var(--ui);
-  font-size: 13.5px;
-  color: var(--fg);
-  background: var(--card-2);
-  border: 1px solid var(--border-2);
-  outline: none;
-  transition: 0.14s;
-}
-.sm-input:focus {
-  border-color: var(--gold-line);
-}
-.sm-textarea {
-  height: auto;
-  padding: 10px 12px;
-  line-height: 1.5;
-  resize: none;
-}
+
 /* Drag strip along the whole bottom edge, replacing the native corner grip.
    It sits over the textarea's bottom padding, so it never covers any text. */
 .sm-textwrap {
@@ -121,32 +70,6 @@
 }
 .sm-grip:hover::after {
   opacity: 1;
-}
-.sm-err {
-  font-size: 12px;
-  color: var(--wa);
-}
-.sm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.sm-done {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 14px 0 6px;
-  text-align: center;
-}
-.sm-done svg {
-  color: var(--ac);
-}
-.sm-done p {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--fg2);
 }
 
 @media (max-width: 460px) {

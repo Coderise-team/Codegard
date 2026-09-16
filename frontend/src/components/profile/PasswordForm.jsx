@@ -63,7 +63,7 @@ export default function PasswordForm({ onClose }) {
 
   if (done) {
     return (
-      <div className="sm-done">
+      <div className="modal-done">
         <Icons.check size={16} />
         <p>
           Your password has been changed. Any other device signed in to this
@@ -77,56 +77,56 @@ export default function PasswordForm({ onClose }) {
   }
 
   return (
-    <form className="sm-form" onSubmit={onSubmit} noValidate>
-      <label className="sm-field">
-        <span className="sm-label">Current password</span>
+    <form className="modal-form" onSubmit={onSubmit} noValidate>
+      <label className="modal-field">
+        <span className="modal-label">Current password</span>
         <input
           type="password"
-          className="sm-input"
+          className="modal-input"
           value={values.old_password}
           onChange={change('old_password')}
           autoComplete="current-password"
         />
         {errors.old_password && (
-          <span className="sm-err">{firstError(errors.old_password)}</span>
+          <span className="modal-err">{firstError(errors.old_password)}</span>
         )}
       </label>
 
-      <label className="sm-field">
-        <span className="sm-label">New password</span>
+      <label className="modal-field">
+        <span className="modal-label">New password</span>
         <input
           type="password"
-          className="sm-input"
+          className="modal-input"
           value={values.new_password}
           onChange={change('new_password')}
           autoComplete="new-password"
         />
         {errors.new_password && (
-          <span className="sm-err">{firstError(errors.new_password)}</span>
+          <span className="modal-err">{firstError(errors.new_password)}</span>
         )}
       </label>
 
-      <label className="sm-field">
-        <span className="sm-label">Confirm new password</span>
+      <label className="modal-field">
+        <span className="modal-label">Confirm new password</span>
         <input
           type="password"
-          className="sm-input"
+          className="modal-input"
           value={values.confirm}
           onChange={change('confirm')}
           autoComplete="new-password"
         />
-        {errors.confirm && <span className="sm-err">{errors.confirm}</span>}
+        {errors.confirm && <span className="modal-err">{errors.confirm}</span>}
       </label>
 
       {errors.non_field_errors &&
         asList(errors.non_field_errors).map((message) => (
-          <div className="sm-err" key={message}>
+          <div className="modal-err" key={message}>
             {message}
           </div>
         ))}
-      {errors.form && <div className="sm-err">{errors.form}</div>}
+      {errors.form && <div className="modal-err">{errors.form}</div>}
 
-      <div className="sm-actions">
+      <div className="modal-actions">
         <button
           type="button"
           className="btn btn-sm btn-ghost"
