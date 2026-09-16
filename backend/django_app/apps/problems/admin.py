@@ -11,6 +11,7 @@ data-entry time by refusing to save an incomplete problem.
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.models import BaseInlineFormSet
 from django.utils import timezone
 
@@ -218,18 +219,35 @@ class ProblemReportAdmin(admin.ModelAdmin):
 
     @admin.action(description="Accept selected reports")
     def accept_reports(self, request, queryset):
-        updated = queryset.exclude(status=ProblemReport.Status.ACCEPTED).update(
-            status=ProblemReport.Status.ACCEPTED,
-            resolved_by=request.user,
-            resolved_at=timezone.now(),
-        )
+        updated = self._resolve(request, queryset, ProblemReport.Status.ACCEPTED)
         self.message_user(request, f"{updated} report(s) accepted.")
 
     @admin.action(description="Reject selected reports")
     def reject_reports(self, request, queryset):
-        updated = queryset.exclude(status=ProblemReport.Status.REJECTED).update(
-            status=ProblemReport.Status.REJECTED,
-            resolved_by=request.user,
-            resolved_at=timezone.now(),
-        )
+        updated = self._resolve(request, queryset, ProblemReport.Status.REJECTED)
         self.message_user(request, f"{updated} report(s) rejected.")
+
+    def _resolve(self, request, queryset, status) -> int:
+        """Give every selected report `status`, one save at a time.
+
+        Deliberately not a single ``queryset.update()``: a bulk UPDATE bypasses
+        ``save()`` and with it the signals, so a report resolved from this list
+        would never tell its author — while the same change made in the report's
+        own form would. Saving each report runs the exact path the form runs,
+        which keeps the "announce only a report leaving `new`" rule in the
+        signal and nowhere else. The queue is resolved a handful of reports at
+        a time, so a save per row costs nothing that matters.
+
+        One transaction for the whole selection: either every report is
+        resolved or none is, and the doorbells ring only after it commits.
+        """
+        now = timezone.now()
+        updated = 0
+        with transaction.atomic():
+            for report in queryset.exclude(status=status):
+                report.status = status
+                report.resolved_by = request.user
+                report.resolved_at = now
+                report.save(update_fields=["status", "resolved_by", "resolved_at"])
+                updated += 1
+        return updated
