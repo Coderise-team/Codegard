@@ -44,14 +44,23 @@ export default function Modal({ title, onClose, children }) {
         return;
       }
       if (event.key !== 'Tab') return;
-      const nodes = panelRef.current?.querySelectorAll(FOCUSABLE);
+      const panel = panelRef.current;
+      const nodes = panel?.querySelectorAll(FOCUSABLE);
       if (!nodes?.length) return;
       const first = nodes[0];
       const last = nodes[nodes.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      const active = document.activeElement;
+      // Focus rests on the panel right after opening, and falls back to <body>
+      // when the focused control is disabled or unmounted (a form swapped for
+      // its done screen). From either place the browser's next stop is on the
+      // page behind, so Tab is taken back into the dialog.
+      if (active === panel || !panel.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && active === first) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
+      } else if (!event.shiftKey && active === last) {
         event.preventDefault();
         first.focus();
       }

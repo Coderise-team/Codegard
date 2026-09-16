@@ -64,6 +64,22 @@ describe('Modal', () => {
     expect(last).toHaveFocus();
   });
 
+  it('takes Tab back into the panel when focus is outside its controls', () => {
+    renderModal();
+    const close = screen.getByRole('button', { name: 'Close' });
+    const last = screen.getByLabelText('Last');
+
+    // Right after opening, focus rests on the panel itself.
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(last).toHaveFocus();
+
+    // A focused control that gets disabled or unmounted leaves focus on <body>.
+    last.blur();
+    expect(document.body).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(close).toHaveFocus();
+  });
+
   it('holds the page scroll and focus while open and gives both back', () => {
     const opener = document.createElement('button');
     document.body.appendChild(opener);
