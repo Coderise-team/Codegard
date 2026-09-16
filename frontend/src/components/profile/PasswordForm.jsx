@@ -2,8 +2,7 @@ import { useState } from 'react';
 import Icons from '../Icons';
 import { changePassword } from '../../api/auth';
 import { tokenStorage } from '../../api/client';
-
-const firstError = (value) => (Array.isArray(value) ? value[0] : value);
+import { firstError } from '../../utils/errors';
 
 // Django's password validators report every rule that failed at once, all of
 // them under non_field_errors, so they are listed rather than reduced to one.

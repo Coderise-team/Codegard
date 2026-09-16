@@ -1,15 +1,13 @@
 import { useRef, useState } from 'react';
 import { updateProfile } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
+import { firstError } from '../../utils/errors';
 
 // Matches MAX_BIO_LENGTH in the backend serializer.
 const MAX_BIO = 300;
 
 // Shortest the bio box may be dragged, in pixels.
 const MIN_BIO_HEIGHT = 84;
-
-// DRF reports field errors as a list of messages; only the first is shown.
-const firstError = (value) => (Array.isArray(value) ? value[0] : value);
 
 /**
  * ProfileForm — the Settings dialog's Profile tab: full name and bio.

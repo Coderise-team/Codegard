@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { isNotFound } from './errors';
+import { firstError, isNotFound } from './errors';
 
 describe('isNotFound', () => {
   it('is true for a 404 answer from the backend', () => {
@@ -17,5 +17,17 @@ describe('isNotFound', () => {
     expect(isNotFound({ message: 'Network Error' })).toBe(false);
     expect(isNotFound(null)).toBe(false);
     expect(isNotFound(undefined)).toBe(false);
+  });
+});
+
+describe('firstError', () => {
+  it('takes the first message of a field error list', () => {
+    expect(firstError(['Too short.', 'Too common.'])).toBe('Too short.');
+  });
+
+  it('passes a single message through as it is', () => {
+    expect(firstError('The two passwords do not match.')).toBe(
+      'The two passwords do not match.'
+    );
   });
 });
