@@ -223,8 +223,8 @@ def notify_contests_starting_soon(self) -> dict:
     Runs every minute against a 15-minute window, so a contest falls into the
     selection on roughly fifteen consecutive runs. The first one creates the
     rows and the rest are silent: ``create_bulk`` subtracts the people who
-    already have the notification, so the later runs cost one SELECT, write
-    nothing and ring nobody.
+    already have the notification, so the later runs only read, write nothing
+    and ring nobody.
     """
     from apps.notifications.models import Notification
     from apps.notifications.services import create_bulk, notify_user
@@ -281,12 +281,13 @@ def _announce_finished_contest(contest: Contest) -> None:
     Deliberately separate from the ``rating_changed`` / ``rank_changed`` pair
     that ``apply_contest_ratings`` just created: those are about what happened
     to one person, this is about the round itself, and it is the only one that
-    reaches an entrant who scored nothing. Merging them would leave that person
-    with silence.
+    reaches a registered entrant who never submitted — such an entrant is not
+    rated, so merging the two would leave them with silence.
 
-    Keyed on ``end_time`` for the same reason ``contest_started`` is keyed on
-    the start: re-running the batch is silent, while an admin who moves the
-    finish line ends a genuinely different round.
+    Announced once per contest: the batch only picks up contests whose rating
+    is not yet applied, so a rated contest never comes back here. ``end_time``
+    in the key mirrors ``contest_started`` and keeps a repeat inside that same
+    batch silent.
     """
     from apps.notifications.models import Notification
     from apps.notifications.services import create_bulk, notify_user

@@ -160,8 +160,8 @@ def test_a_contest_still_running_keeps_its_problems_quiet(db, member):
 
 @pytest.mark.django_db
 def test_a_re_saved_problem_is_not_announced_twice(finished_round, member):
-    """Both paths key on problem_<id>_new, so the batch and a later admin save
-    cannot deliver the same problem twice."""
+    """A re-save of a problem the batch already made public is not a reveal,
+    so the signal's transition check keeps it from going out again."""
     _, first, _ = finished_round
     publish_finished_contest_problems()
     before = new_problem_for(member).count()
