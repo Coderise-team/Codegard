@@ -22,9 +22,11 @@ def cleanup_old_notifications(self) -> dict:
     """
     Periodic task: drop notifications nobody needs any more.
 
-    Two passes rather than one condition, so each is a plain range scan on the
-    column it is about. The seen pass never touches an unseen row on its own:
-    ``seen_at < cutoff`` is not true of NULL.
+    Two passes rather than one combined condition, so each reads as the single
+    rule it applies. Neither column leads an index, so both scan the table —
+    fine once a day at the current size; a partial index on ``seen_at`` is the
+    step to take if the table grows. The seen pass never touches an unseen row
+    on its own: ``seen_at < cutoff`` is not true of NULL.
 
     Idempotent and safe to miss — it compares timestamps instead of catching a
     moment, so a run skipped while the worker was down simply clears more on

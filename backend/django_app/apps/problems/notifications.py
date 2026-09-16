@@ -41,9 +41,11 @@ def announce_new_problems(problems) -> None:
     would receive "contest finished", a rating, possibly a rank, and then eight
     separate "new problem" notes about the problems they were just solving.
 
-    Both paths use the key ``problem_<id>_new``, so a problem the batch task
-    already announced stays silent if an admin later re-saves it — and a person
-    who joined the platform in between does not get yesterday's news.
+    Both paths use the key ``problem_<id>_new``, so a problem reaching the
+    catalog through both of them is still announced once. A later re-save of a
+    problem that is already public is stopped earlier, by the signal's
+    transition check — the key alone would not stop it, since someone who
+    joined in between has no row yet and would get yesterday's news.
     """
     from apps.notifications.models import Notification
     from apps.notifications.services import create_bulk, notify_user

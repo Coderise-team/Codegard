@@ -106,8 +106,8 @@ def notify_user(user_id) -> None:
     rings the notification is already saved, so nothing is lost if the ring
     does not get through — the client still finds it on its next fetch. Raised,
     the same Redis hiccup would skip every doorbell after it in the run, turn a
-    successful admin save into a 500, and abort the rating batch before it
-    announced the contest's end.
+    successful admin save into a 500, and fail a task whose work is already
+    committed.
 
     Caught here rather than with ``on_commit(..., robust=True)``: Django's
     robust handler logs through ``func.__qualname__``, which a ``partial`` does

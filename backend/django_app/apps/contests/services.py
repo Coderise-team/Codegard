@@ -363,10 +363,9 @@ def apply_contest_ratings(contest: Contest) -> int:
             EloHistory.objects.create(user=user, rating=new_rating)
 
             # Written inside the transaction, with the ratings they describe:
-            # either both are durable or neither happened. Creating them after
-            # the commit would risk announcing a rating that rolled back, and
-            # `rating_applied` is already set here, so a crash would mean the
-            # retry never comes.
+            # either both are durable or neither happened. Created after the
+            # commit instead, a crash in between would leave `rating_applied`
+            # already committed, and the retry would never come.
             if _create_rating_notifications(user, contest, snapshot[uid], new_rating):
                 to_ring.add(uid)
 
