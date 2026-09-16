@@ -51,7 +51,14 @@ def update_contest_statuses(self) -> dict:
     )
     pending_updated = pending.update(status=Contest.Status.PENDING, updated_at=now)
 
-    _announce_started_contests(now)
+    # The announcement rides along with this task but must never take it down:
+    # the statuses above are already written, and a failed announcement costs
+    # nothing — the contest is still running on the next minute's run, and the
+    # dedup key lets that run deliver it exactly once.
+    try:
+        _announce_started_contests(now)
+    except Exception:
+        logger.exception("Failed to announce started contests")
 
     total_current = {
         "finished": Contest.objects.filter(status=Contest.Status.FINISHED).count(),
@@ -130,8 +137,14 @@ def apply_finished_contest_ratings(self) -> dict:
             # Only now are the results final. apply_contest_ratings has already
             # written the deltas and busted the leaderboard cache, so a client
             # refetching on this event sees the rated table.
-            _broadcast_contest_ended([contest.pk])
+            #
+            # The notification is written before the live-page broadcast, not
+            # after: it only touches the database, while the broadcast goes
+            # through Redis and raises when Redis is unavailable. In the other
+            # order an outage would skip the announcement, and since the contest
+            # is already rated, no later run would ever make it.
             _announce_finished_contest(contest)
+            _broadcast_contest_ended([contest.pk])
         except Exception:
             logger.exception("Failed to apply ratings for contest %s", contest.pk)
 

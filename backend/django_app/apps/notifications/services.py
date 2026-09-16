@@ -13,10 +13,14 @@ the recipients it actually reached, then rings each of them once from
 ``transaction.on_commit`` — see ``notify_user``.
 """
 
+import logging
+
 from apps.realtime.broadcast import group_send
 from apps.realtime.events import NotificationEvents
 
 from .models import Notification
+
+logger = logging.getLogger(__name__)
 
 
 def create_notification(*, user, type, dedup_key, title, body, link=""):
@@ -97,5 +101,19 @@ def notify_user(user_id) -> None:
     nothing. Ring once per person per run, not once per row — the signal carries
     no data, so eight of them and one of them cost the client the same single
     refetch.
+
+    A failure here is logged and swallowed, never raised. By the time the bell
+    rings the notification is already saved, so nothing is lost if the ring
+    does not get through — the client still finds it on its next fetch. Raised,
+    the same Redis hiccup would skip every doorbell after it in the run, turn a
+    successful admin save into a 500, and abort the rating batch before it
+    announced the contest's end.
+
+    Caught here rather than with ``on_commit(..., robust=True)``: Django's
+    robust handler logs through ``func.__qualname__``, which a ``partial`` does
+    not have, so the logging itself would raise.
     """
-    group_send(f"user_{user_id}", {"type": NotificationEvents.NOTIFICATION})
+    try:
+        group_send(f"user_{user_id}", {"type": NotificationEvents.NOTIFICATION})
+    except Exception:
+        logger.exception("Failed to ring the notification bell for user %s", user_id)
