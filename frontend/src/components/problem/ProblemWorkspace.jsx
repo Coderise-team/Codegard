@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import Icons from '../Icons';
 import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
 import LangSelect from './LangSelect';
+import ReportButton from './ReportButton';
 import './ProblemWorkspace.css';
 
 // Monaco is heavy — load it (and its chunk) only when the workspace renders.
@@ -89,9 +89,7 @@ export default function ProblemWorkspace({
             />
           </div>
           <div className="pp-et-right">
-            <button className="pp-tool-link">
-              <Icons.flag size={14} /> Report
-            </button>
+            <ReportButton problemId={problem.id} />
           </div>
         </div>
 
