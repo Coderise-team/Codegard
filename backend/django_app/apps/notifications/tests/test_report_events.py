@@ -168,3 +168,112 @@ def test_announcing_a_pending_report_directly_is_a_no_op(report, user):
     announce_report_resolved(report)  # status is still `new`
 
     assert not resolved_for(user).exists()
+
+
+# --- the bulk actions in the report queue ----------------------------------
+
+QUEUE_URL = "/admin/problems/problemreport/"
+
+
+def file_report(problem, author, reason=ProblemReport.Reason.WRONG_TEST):
+    return ProblemReport.objects.create(
+        problem=problem,
+        problem_title=problem.title,
+        user=author,
+        reason=reason,
+        message="Something is off with the tests.",
+    )
+
+
+def run_action(admin_client, action, reports):
+    return admin_client.post(
+        QUEUE_URL,
+        {"action": action, "_selected_action": [str(r.pk) for r in reports]},
+        follow=True,
+    )
+
+
+@pytest.mark.django_db
+def test_accepting_reports_in_bulk_tells_every_author(admin_client):
+    """Resolving from the queue list used to be a bulk UPDATE that skipped the
+    signals, so the authors never heard back — unlike the same change made in a
+    report's own form."""
+    problem = make_problem("Two Sum", is_hidden=False)
+    first = make_user("first", 1200)
+    second = make_user("second", 1200)
+    reports = [file_report(problem, first), file_report(problem, second)]
+
+    run_action(admin_client, "accept_reports", reports)
+
+    for author in (first, second):
+        assert resolved_for(author).get().body == "Your report on Two Sum was accepted"
+
+
+@pytest.mark.django_db
+def test_rejecting_reports_in_bulk_tells_every_author(admin_client):
+    problem = make_problem("Two Sum", is_hidden=False)
+    author = make_user("author", 1200)
+
+    run_action(admin_client, "reject_reports", [file_report(problem, author)])
+
+    assert resolved_for(author).get().body == "Your report on Two Sum was rejected"
+
+
+@pytest.mark.django_db
+def test_the_bulk_action_still_records_who_resolved_it(admin_client):
+    """The switch from one UPDATE to a save per report keeps what the action
+    already did: the resolver and the time are stamped on each report."""
+    problem = make_problem("Two Sum", is_hidden=False)
+    report = file_report(problem, make_user("author", 1200))
+
+    run_action(admin_client, "accept_reports", [report])
+
+    report.refresh_from_db()
+    assert report.status == ProblemReport.Status.ACCEPTED
+    assert report.resolved_by.is_superuser  # the admin who ran the action
+    assert report.resolved_at is not None
+
+
+@pytest.mark.django_db
+def test_a_bulk_action_follows_the_same_rule_as_the_form(admin_client):
+    """Only a report leaving `new` is announced. Flipping an already-resolved
+    report the other way is not a fresh review, from the list or from the form."""
+    problem = make_problem("Two Sum", is_hidden=False)
+    author = make_user("author", 1200)
+    report = file_report(problem, author)
+    run_action(admin_client, "accept_reports", [report])
+
+    run_action(admin_client, "reject_reports", [report])
+
+    assert resolved_for(author).count() == 1  # the accept, nothing for the flip
+
+
+@pytest.mark.django_db
+def test_reports_already_in_that_status_are_left_alone(admin_client):
+    problem = make_problem("Two Sum", is_hidden=False)
+    author = make_user("author", 1200)
+    report = file_report(problem, author)
+    run_action(admin_client, "accept_reports", [report])
+
+    response = run_action(admin_client, "accept_reports", [report])
+
+    assert "0 report(s) accepted." in response.content.decode()
+    assert resolved_for(author).count() == 1
+
+
+@pytest.mark.django_db
+def test_a_bulk_action_rings_each_author_after_commit(
+    admin_client, django_capture_on_commit_callbacks
+):
+    problem = make_problem("Two Sum", is_hidden=False)
+    first = make_user("first", 1200)
+    second = make_user("second", 1200)
+    reports = [file_report(problem, first), file_report(problem, second)]
+
+    with patch("apps.notifications.services.notify_user") as ring:
+        with django_capture_on_commit_callbacks(execute=True):
+            run_action(admin_client, "accept_reports", reports)
+
+    assert sorted(c.args[0] for c in ring.call_args_list) == sorted(
+        [first.pk, second.pk]
+    )
