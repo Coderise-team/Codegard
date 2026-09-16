@@ -18,7 +18,7 @@ const MAX_MESSAGE = 5000;
  * Mounted only while it is open, so every report starts from an empty form.
  * Submit stays disabled until a reason is picked and the description is long
  * enough. The backend's own refusals (too many unresolved reports on this
- * problem, too many reports an hour) come back as `detail` and are shown above
+ * problem, too many attempts an hour) come back as `detail` and are shown above
  * the buttons.
  *
  * Props:

@@ -112,7 +112,7 @@ describe('ReportDialog', () => {
       'You already have 5 unresolved reports on this problem.',
     ],
     [
-      'too many reports an hour',
+      'too many attempts an hour',
       429,
       'Request was throttled. Expected available in 3540 seconds.',
     ],
