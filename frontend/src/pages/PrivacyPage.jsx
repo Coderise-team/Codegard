@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import BrandMark from '../components/BrandMark';
 import './PrivacyPage.css';
 
 // Public, auth-free page: a Google verification reviewer must be able to read it
@@ -40,7 +41,7 @@ export default function PrivacyPage() {
     <div className="privacy scroll">
       <header className="privacy-top">
         <Link to="/" className="logo">
-          <span className="mark">C</span>
+          <BrandMark className="mark" />
           <span>
             <span className="wm-a">Code</span>
             <span className="wm-b">gard</span>
