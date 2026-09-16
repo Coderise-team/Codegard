@@ -132,18 +132,21 @@ def apply_finished_contest_ratings(self) -> dict:
     participants_updated = 0
     for contest in contests:
         try:
-            participants_updated += apply_contest_ratings(contest)
+            # Rating and announcing commit together. `rating_applied` is what
+            # tells later runs to skip this contest, so if it could commit on
+            # its own, a failure in the announcement would leave a rated
+            # contest that no run ever announces. In one transaction, that
+            # failure rolls the rating back too and the next run redoes both.
+            with transaction.atomic():
+                rated = apply_contest_ratings(contest)
+                _announce_finished_contest(contest)
+            participants_updated += rated
             processed += 1
             # Only now are the results final. apply_contest_ratings has already
             # written the deltas and busted the leaderboard cache, so a client
-            # refetching on this event sees the rated table.
-            #
-            # The notification is written before the live-page broadcast, not
-            # after: it only touches the database, while the broadcast goes
-            # through Redis and raises when Redis is unavailable. In the other
-            # order an outage would skip the announcement, and since the contest
-            # is already rated, no later run would ever make it.
-            _announce_finished_contest(contest)
+            # refetching on this event sees the rated table. The broadcast goes
+            # last and outside the transaction: it runs through Redis, and an
+            # outage there must not undo a rating that is already durable.
             _broadcast_contest_ended([contest.pk])
         except Exception:
             logger.exception("Failed to apply ratings for contest %s", contest.pk)
@@ -179,11 +182,16 @@ def publish_finished_contest_problems(self) -> dict:
     # problem signal that normally announces a reveal never runs here and this
     # task has to do the announcing itself. Afterwards these rows no longer
     # match the filter, hence the list().
-    revealed = list(still_hidden.distinct())
-
-    published = still_hidden.update(is_hidden=False)
-
-    announce_new_problems(revealed)
+    #
+    # The reveal and its announcement commit together. Once a problem is
+    # visible it no longer matches this filter, so a reveal committed on its own
+    # followed by a failed announcement would never be announced by any later
+    # run. In one transaction, that failure keeps the problems hidden and the
+    # next run publishes and announces them both.
+    with transaction.atomic():
+        revealed = list(still_hidden.distinct())
+        published = still_hidden.update(is_hidden=False)
+        announce_new_problems(revealed)
 
     summary = {"published": published}
     logger.info("publish_finished_contest_problems %s", summary)
