@@ -33,8 +33,6 @@ describe('PrivacyPage', () => {
   it('links the brand logo back to the home page', () => {
     renderPage();
 
-    // The shared logo renders as C / Code / gard spans, so its accessible name
-    // is "CCodegard" — match it with a regex rather than an exact label.
     expect(screen.getByRole('link', { name: /Codegard/ })).toHaveAttribute(
       'href',
       '/'

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import BrandMark from '../BrandMark';
 import Icons from '../Icons';
 import UserMenu from '../layout/UserMenu';
 import './SoloTopbar.css';
@@ -19,7 +20,7 @@ export default function SoloTopbar({ title, user, onMenuClick }) {
           <Icons.menu size={18} />
         </button>
         <Link to="/" className="logo">
-          <span className="mark">C</span>
+          <BrandMark className="mark" />
           <span>
             <span className="wm-a">Code</span>
             <span className="wm-b">gard</span>
