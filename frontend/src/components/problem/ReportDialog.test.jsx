@@ -69,23 +69,27 @@ describe('ReportDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps Send report disabled until a reason and 10 characters are given', () => {
+  it('names what is missing instead of sending, and drops each note once fixed', () => {
+    const noReason = 'Choose a reason.';
+    const tooShort = 'Describe the issue in at least 10 characters.';
     renderDialog();
-    expect(sendButton()).toBeDisabled();
+    expect(screen.queryByText(noReason)).not.toBeInTheDocument();
 
-    type('Sample 3 expects 5.');
-    expect(sendButton()).toBeDisabled();
+    fireEvent.click(sendButton());
+    expect(reportProblem).not.toHaveBeenCalled();
+    expect(screen.getByText(noReason)).toBeInTheDocument();
+    expect(screen.getByText(tooShort)).toBeInTheDocument();
 
     pick('Wrong test');
-    expect(sendButton()).toBeEnabled();
+    expect(screen.queryByText(noReason)).not.toBeInTheDocument();
 
     // The backend measures the text without surrounding whitespace, so padding
-    // must not unlock the button either.
+    // must not count towards the minimum either.
     type('    123456789    ');
-    expect(sendButton()).toBeDisabled();
+    expect(screen.getByText(tooShort)).toBeInTheDocument();
 
     type('1234567890');
-    expect(sendButton()).toBeEnabled();
+    expect(screen.queryByText(tooShort)).not.toBeInTheDocument();
   });
 
   it('sends the report and thanks the user', async () => {

@@ -12,14 +12,26 @@ import './ReportDialog.css';
 const MIN_MESSAGE = 10;
 const MAX_MESSAGE = 5000;
 
+// What is still missing before the report can go out, keyed like the
+// backend's field errors. The maximum needs no check: the field's maxLength
+// cuts typed and pasted text alike.
+const checkReport = (reason, message) => {
+  const missing = {};
+  if (!reason) missing.reason = 'Choose a reason.';
+  if (message.trim().length < MIN_MESSAGE)
+    missing.message = `Describe the issue in at least ${MIN_MESSAGE} characters.`;
+  return missing;
+};
+
 /**
  * ReportDialog — the form for reporting a problem: a reason and a description.
  *
  * Mounted only while it is open, so every report starts from an empty form.
- * Submit stays disabled until a reason is picked and the description is long
- * enough. The backend's own refusals (too many unresolved reports on this
- * problem, too many attempts an hour) come back as `detail` and are shown above
- * the buttons.
+ * Send report is always clickable: a first press with something missing sends
+ * nothing and names what is missing under each field, and from then on those
+ * messages follow the fields as they are fixed. The backend's own refusals
+ * (too many unresolved reports on this problem, too many attempts an hour)
+ * come back as `detail` and are shown above the buttons.
  *
  * Props:
  *   problemId — catalog id of the problem being reported
@@ -31,17 +43,22 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
   const { data: reasons, loading, error } = useReportReasons();
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState('');
-  const [errors, setErrors] = useState({});
+  const [tried, setTried] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  const canSubmit =
-    Boolean(reason) && message.trim().length >= MIN_MESSAGE && !busy;
+  const missing = tried ? checkReport(reason, message) : {};
+  const reasonError = missing.reason ?? firstError(serverErrors.reason);
+  const messageError = missing.message ?? firstError(serverErrors.message);
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    setTried(true);
+    setServerErrors({});
+    if (Object.keys(checkReport(reason, message)).length) return;
+
     setBusy(true);
-    setErrors({});
     try {
       const body = { reason, message };
       if (contestId) body.contest = contestId;
@@ -49,7 +66,7 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
       setDone(true);
     } catch (err) {
       const body = err.response?.data;
-      setErrors(
+      setServerErrors(
         body && typeof body === 'object'
           ? body
           : { form: 'Could not send the report. Please try again.' }
@@ -86,9 +103,20 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
   } else {
     content = (
       <form className="modal-form" onSubmit={onSubmit} noValidate>
+        <p className="rd-intro">
+          Spotted something wrong with this problem? Tell us what happened and
+          we&apos;ll look into it as soon as we can. Pick a reason and describe
+          what went wrong.
+        </p>
+
         <div className="modal-field">
           <span className="modal-label" id={reasonsLabelId}>
-            Reason
+            <span>
+              Reason{' '}
+              <span className="modal-required" aria-hidden="true">
+                *
+              </span>
+            </span>
           </span>
           {loading ? (
             <p className="rd-note">Loading…</p>
@@ -97,6 +125,7 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
               className="rd-options"
               role="radiogroup"
               aria-labelledby={reasonsLabelId}
+              aria-required="true"
             >
               {reasons.map((r) => (
                 <label key={r.id} className="rd-option">
@@ -112,14 +141,17 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
               ))}
             </div>
           )}
-          {errors.reason && (
-            <span className="modal-err">{firstError(errors.reason)}</span>
-          )}
+          {reasonError && <span className="modal-err">{reasonError}</span>}
         </div>
 
         <label className="modal-field">
           <span className="modal-label">
-            Details
+            <span>
+              Details{' '}
+              <span className="modal-required" aria-hidden="true">
+                *
+              </span>
+            </span>
             <span className="modal-count">
               {message.length}/{MAX_MESSAGE}
             </span>
@@ -130,16 +162,22 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
             onChange={(event) => setMessage(event.target.value)}
             maxLength={MAX_MESSAGE}
             rows={5}
+            aria-required="true"
             placeholder="What is wrong, and where? A test or a line of the statement helps."
           />
-          <span className="rd-hint">At least {MIN_MESSAGE} characters.</span>
-          {errors.message && (
-            <span className="modal-err">{firstError(errors.message)}</span>
+          {messageError ? (
+            <span className="modal-err">{messageError}</span>
+          ) : (
+            <span className="rd-hint">At least {MIN_MESSAGE} characters.</span>
           )}
         </label>
 
-        {errors.detail && <div className="modal-err">{errors.detail}</div>}
-        {errors.form && <div className="modal-err">{errors.form}</div>}
+        {serverErrors.detail && (
+          <div className="modal-err">{serverErrors.detail}</div>
+        )}
+        {serverErrors.form && (
+          <div className="modal-err">{serverErrors.form}</div>
+        )}
 
         <div className="modal-actions">
           <button
@@ -153,7 +191,7 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={!canSubmit}
+            disabled={busy || loading}
           >
             {busy ? 'Sending…' : 'Send report'}
           </button>

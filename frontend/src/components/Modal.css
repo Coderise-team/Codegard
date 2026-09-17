@@ -87,6 +87,9 @@
   text-transform: uppercase;
   color: var(--fg2);
 }
+.modal-required {
+  color: var(--wa);
+}
 .modal-count {
   font-family: var(--mono);
   font-size: 12px;
