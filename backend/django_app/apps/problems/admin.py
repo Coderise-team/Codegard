@@ -164,12 +164,20 @@ class DailyProblemAdmin(admin.ModelAdmin):
 class ProblemReportAdmin(admin.ModelAdmin):
     """The report queue: one page to triage everything the judge doesn't catch."""
 
-    list_display = ("problem_title", "user", "reason", "status", "created_at")
+    list_display = (
+        "problem_title",
+        "contest",
+        "user",
+        "reason",
+        "status",
+        "created_at",
+    )
     list_filter = ("status", "reason")
     search_fields = ("user__username", "problem_title")
     readonly_fields = (
         "problem",
         "problem_title",
+        "contest",
         "user",
         "reason",
         "message",
@@ -184,6 +192,7 @@ class ProblemReportAdmin(admin.ModelAdmin):
                 "fields": (
                     "problem",
                     "problem_title",
+                    "contest",
                     "user",
                     "reason",
                     "message",
@@ -199,7 +208,7 @@ class ProblemReportAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("problem", "user", "resolved_by")
+            .select_related("problem", "contest", "user", "resolved_by")
         )
 
     def has_add_permission(self, request):
