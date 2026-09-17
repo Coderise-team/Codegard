@@ -1,17 +1,14 @@
+from unittest.mock import patch
+
 import pytest
 from django.urls import reverse
-from unittest.mock import patch
 from rest_framework import status
-from apps.problems.models import Problem
 
 from django_app.factories import make_problem, make_submission
-
-from django_app.conftest import api_client
 
 
 @pytest.mark.django_db
 class TestSubmissionCreate:
-    
     def test_acceptance_rate(self, api_client, user):
         problem = make_problem()
 
@@ -34,11 +31,7 @@ class TestSubmissionCreate:
         url = reverse("submissions-list")
         code = 12345
 
-        data = {
-            "problem": problem.pk,
-            "code": code,
-            "language": "python"
-        }
+        data = {"problem": problem.pk, "code": code, "language": "python"}
         first_response = user_client.post(url, data, format="json")
         second_response = user_client.post(url, data, format="json")
 

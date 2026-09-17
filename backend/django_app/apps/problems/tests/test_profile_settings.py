@@ -1,6 +1,6 @@
 from apps.users.tests.test_avatar import _give_avatar
-from rest_framework import status
 from django.core.files.storage import default_storage
+from rest_framework import status
 
 
 def test_profile_empty_fields(db, user, user_client):
