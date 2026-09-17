@@ -3,7 +3,7 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from timezone import timedelta
+from datetime import timedelta
 
 from .models import Submission
 from .serializers import SubmissionCreateSerializer, SubmissionSerializer
@@ -64,7 +64,7 @@ class SubmissionViewSet(
         if Submission.objects.filter(
             user=request.user,
             problem=problem,
-            source_code=serializer.validated_data["source_code"],
+            code=serializer.validated_data["code"],
             created_at__gte=timezone.now()
             - timedelta(seconds=DUPLICATE_SUBMISSION_WINDOW_SECONDS),
         ).exists():
