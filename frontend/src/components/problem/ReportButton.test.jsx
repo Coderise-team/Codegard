@@ -4,11 +4,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import ReportButton from './ReportButton';
 
 // The form itself is covered in ReportDialog.test.jsx; here only whether the
-// button opens and closes it for the right problem.
+// button opens and closes it for the right problem and round.
 vi.mock('./ReportDialog', () => ({
-  default: ({ problemId, onClose }) => (
+  default: ({ problemId, contestId, onClose }) => (
     <div>
-      report form for {problemId}
+      report form for {problemId} in {contestId}
       <button onClick={onClose}>close form</button>
     </div>
   ),
@@ -16,11 +16,11 @@ vi.mock('./ReportDialog', () => ({
 
 describe('ReportButton', () => {
   it('opens the report form for its problem and closes it again', () => {
-    render(<ReportButton problemId={42} />);
+    render(<ReportButton problemId={42} contestId={7} />);
     expect(screen.queryByText(/report form/)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Report' }));
-    expect(screen.getByText('report form for 42')).toBeInTheDocument();
+    expect(screen.getByText('report form for 42 in 7')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'close form' }));
     expect(screen.queryByText(/report form/)).not.toBeInTheDocument();

@@ -23,9 +23,10 @@ const MAX_MESSAGE = 5000;
  *
  * Props:
  *   problemId — catalog id of the problem being reported
+ *   contestId — the round the report is filed from; absent in the catalog
  *   onClose   — close the dialog
  */
-export default function ReportDialog({ problemId, onClose }) {
+export default function ReportDialog({ problemId, contestId, onClose }) {
   const reasonsLabelId = useId();
   const { data: reasons, loading, error } = useReportReasons();
   const [reason, setReason] = useState('');
@@ -42,7 +43,9 @@ export default function ReportDialog({ problemId, onClose }) {
     setBusy(true);
     setErrors({});
     try {
-      await reportProblem(problemId, { reason, message });
+      const body = { reason, message };
+      if (contestId) body.contest = contestId;
+      await reportProblem(problemId, body);
       setDone(true);
     } catch (err) {
       const body = err.response?.data;

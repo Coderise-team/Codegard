@@ -18,8 +18,8 @@ const REASONS = [
 
 const onClose = vi.fn();
 
-const renderDialog = () =>
-  render(<ReportDialog problemId={42} onClose={onClose} />);
+const renderDialog = (props) =>
+  render(<ReportDialog problemId={42} onClose={onClose} {...props} />);
 
 const pick = (name) => fireEvent.click(screen.getByRole('radio', { name }));
 
@@ -103,6 +103,21 @@ describe('ReportDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to problem' }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('files the report against the round it was opened from', async () => {
+    reportProblem.mockResolvedValue({ detail: 'Report submitted.' });
+    renderDialog({ contestId: 7 });
+    fillAndSend();
+
+    expect(
+      await screen.findByText(/thanks for the report/i)
+    ).toBeInTheDocument();
+    expect(reportProblem).toHaveBeenCalledWith(42, {
+      reason: 'wrong_test',
+      message: 'Sample 3 expects 5, not 4.',
+      contest: 7,
+    });
   });
 
   describe.each([

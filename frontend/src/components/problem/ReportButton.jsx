@@ -7,8 +7,9 @@ import ReportDialog from './ReportDialog';
  *
  * Props:
  *   problemId — catalog id of the problem on screen
+ *   contestId — the round the page is opened from; absent in the catalog
  */
-export default function ReportButton({ problemId }) {
+export default function ReportButton({ problemId, contestId }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,7 +22,11 @@ export default function ReportButton({ problemId }) {
         <Icons.flag size={14} /> Report
       </button>
       {open && (
-        <ReportDialog problemId={problemId} onClose={() => setOpen(false)} />
+        <ReportDialog
+          problemId={problemId}
+          contestId={contestId}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );

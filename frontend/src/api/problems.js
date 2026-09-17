@@ -50,7 +50,8 @@ export async function getReportReasons() {
 }
 
 // POST problems/{id}/report/ -> file a complaint about a problem
-// ({ reason, message }) and get back a { detail } confirmation. The backend
+// ({ reason, message, contest? }, contest being the round it is filed from)
+// and get back a { detail } confirmation. The backend
 // answers 400 with a { detail } of its own while the user already has five
 // unresolved reports on that problem, and 429 past ten attempts an hour
 // (refused ones count too).
