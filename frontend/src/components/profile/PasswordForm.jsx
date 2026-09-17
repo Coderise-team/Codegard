@@ -63,12 +63,12 @@ export default function PasswordForm({ onClose }) {
   if (done) {
     return (
       <div className="modal-done">
-        <Icons.check size={16} />
+        <Icons.check size={24} />
         <p>
           Your password has been changed. Any other device signed in to this
           account has been logged out.
         </p>
-        <button type="button" className="btn btn-sm" onClick={onClose}>
+        <button type="button" className="btn btn-primary" onClick={onClose}>
           Close
         </button>
       </div>
@@ -128,13 +128,13 @@ export default function PasswordForm({ onClose }) {
       <div className="modal-actions">
         <button
           type="button"
-          className="btn btn-sm btn-ghost"
+          className="btn btn-ghost"
           onClick={onClose}
           disabled={busy}
         >
           Cancel
         </button>
-        <button type="submit" className="btn btn-sm" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? 'Changing…' : 'Change password'}
         </button>
       </div>

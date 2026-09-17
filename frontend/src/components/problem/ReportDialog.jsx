@@ -63,9 +63,9 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
   if (done) {
     content = (
       <div className="modal-done">
-        <Icons.check size={16} />
+        <Icons.check size={24} />
         <p>Thanks for the report. We will be sure to review it.</p>
-        <button type="button" className="btn btn-sm" onClick={onClose}>
+        <button type="button" className="btn btn-primary" onClick={onClose}>
           Back to problem
         </button>
       </div>
@@ -77,7 +77,7 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
           The report form could not be loaded. Please try again later.
         </p>
         <div className="modal-actions">
-          <button type="button" className="btn btn-sm" onClick={onClose}>
+          <button type="button" className="btn" onClick={onClose}>
             Close
           </button>
         </div>
@@ -144,13 +144,17 @@ export default function ReportDialog({ problemId, contestId, onClose }) {
         <div className="modal-actions">
           <button
             type="button"
-            className="btn btn-sm btn-ghost"
+            className="btn btn-ghost"
             onClick={onClose}
             disabled={busy}
           >
             Cancel
           </button>
-          <button type="submit" className="btn btn-sm" disabled={!canSubmit}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={!canSubmit}
+          >
             {busy ? 'Sending…' : 'Send report'}
           </button>
         </div>

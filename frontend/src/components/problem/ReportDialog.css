@@ -7,28 +7,28 @@
 .rd-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* A real radio input drives each option; it is hidden, and the label wears
    its checked and focused states. */
 .rd-option {
   position: relative;
-  height: 32px;
-  padding: 0 12px;
+  height: 38px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   border-radius: var(--r-sm);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--fg2);
+  color: var(--fg);
   background: var(--card-2);
   border: 1px solid var(--border-2);
   cursor: pointer;
   transition: 0.14s;
 }
 .rd-option:hover {
-  color: var(--fg);
+  border-color: #353c52;
 }
 .rd-option:has(input:checked) {
   color: var(--gold-hi);
@@ -50,6 +50,7 @@
 
 .rd-hint,
 .rd-note {
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--fg2);
 }

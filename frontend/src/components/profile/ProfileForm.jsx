@@ -140,13 +140,13 @@ export default function ProfileForm({ onSaved, onClose }) {
       <div className="modal-actions">
         <button
           type="button"
-          className="btn btn-sm btn-ghost"
+          className="btn btn-ghost"
           onClick={onClose}
           disabled={busy}
         >
           Cancel
         </button>
-        <button type="submit" className="btn btn-sm" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? 'Saving…' : 'Save changes'}
         </button>
       </div>
