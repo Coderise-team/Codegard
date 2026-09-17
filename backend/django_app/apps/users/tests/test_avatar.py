@@ -171,8 +171,8 @@ def test_clear_deletes_both_files(user, fs_storage):
     _give_avatar(user)
     master, thumb = user.avatar.name, user.avatar_thumb.name
 
-    user.avatar = None
-    user.avatar_thumb = None
+    user.avatar = ""
+    user.avatar_thumb = ""
     user.save(update_fields=["avatar", "avatar_thumb"])
 
     assert not default_storage.exists(master)

@@ -91,7 +91,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
         # Acceptance counters in one pass - both counts over the same 'submissions'
         # relation, so it's a single JOIN with no fan-out (no distinct needed).
         queryset = queryset.annotate(
-            total_submissions=Count("submissions"),
+            total_submissions=Count(
+                "submissions", filter=Q(submissions__verdict__isnull=False)
+            ),
             ac_submissions=Count(
                 "submissions",
                 filter=Q(submissions__verdict=Submission.Verdict.AC),
@@ -166,7 +168,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
             Problem.objects.filter(pk=problem_id)
             .prefetch_related("tags")
             .annotate(
-                total_submissions=Count("submissions"),
+                total_submissions=Count(
+                    "submissions", filter=Q(submissions__verdict__isnull=False)
+                ),
                 ac_submissions=Count(
                     "submissions",
                     filter=Q(submissions__verdict=Submission.Verdict.AC),
@@ -206,7 +210,9 @@ class ProblemViewSet(viewsets.ModelViewSet):
             .exclude(id__in=solved_ids)
             .prefetch_related("tags")
             .annotate(
-                total_submissions=Count("submissions"),
+                total_submissions=Count(
+                    "submissions", filter=Q(submissions__verdict__isnull=False)
+                ),
                 ac_submissions=Count(
                     "submissions",
                     filter=Q(submissions__verdict=Submission.Verdict.AC),
