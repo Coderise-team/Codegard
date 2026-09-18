@@ -4,12 +4,12 @@
    Modal.css; these are named rd-* to stay out of the page
    stylesheets' way.
    ============================================================ */
-/* Same colour and rhythm as a problem statement, so it reads as text to read,
-   not as a hint. */
+/* Same size, colour and rhythm as a problem statement: this is text to read,
+   not a hint. */
 .rd-intro {
   font-size: 14.5px;
   line-height: 1.6;
-  color: #c9cdda;
+  color: var(--fg-read);
 }
 
 .rd-options {
