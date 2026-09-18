@@ -372,6 +372,24 @@ def test_staff_sees_list_and_detail(custom_admin_client, user, problem):
 
 
 @pytest.mark.django_db
+def test_staff_sees_the_round_a_report_came_from(custom_admin_client, user, problem):
+    contest = make_contest()
+    report = ProblemReport.objects.create(
+        problem=problem,
+        problem_title=problem.title,
+        contest=contest,
+        user=user,
+        reason=ProblemReport.Reason.WRONG_TEST,
+        message="Something is off with the tests.",
+    )
+
+    detail_resp = custom_admin_client.get(reverse("reports-detail", args=[report.id]))
+
+    assert detail_resp.status_code == status.HTTP_200_OK
+    assert detail_resp.json()["contest"] == contest.id
+
+
+@pytest.mark.django_db
 def test_regular_user_gets_403_anonymous_gets_401(api_client, user, problem):
     ProblemReport.objects.create(
         problem=problem,

@@ -55,6 +55,20 @@ describe('ReportDialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('waits for the reasons before letting the report go', () => {
+    useReportReasons.mockReturnValue({
+      data: null,
+      loading: true,
+      error: null,
+    });
+    renderDialog();
+
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    // Pressing now could only answer "choose a reason" with nothing to choose.
+    expect(sendButton()).toBeDisabled();
+  });
+
   it('says the form is unavailable when the reasons could not be loaded', () => {
     useReportReasons.mockReturnValue({
       data: null,
