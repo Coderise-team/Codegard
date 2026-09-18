@@ -10,6 +10,8 @@ Formula:
   leaderboard = sorted by score DESC, penalty ASC, last_ac_at ASC
 """
 
+from functools import partial
+
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -275,6 +277,7 @@ def apply_contest_ratings(contest: Contest) -> int:
     score=0 / last place and a freshly created ContestScore. Pure no-shows
     (joined but never submitted) are not rated.
     """
+    from apps.notifications.services import notify_user
     from apps.submissions.models import Submission
     from apps.users.models import EloHistory, User
     from apps.users.services import EloParticipant, compute_elo_deltas
@@ -331,6 +334,9 @@ def apply_contest_ratings(contest: Contest) -> int:
 
         # 6. Apply (one save per row — fields chosen so the avatar signal skips).
         scored_by_uid = {cs.user_id: cs for cs in scored}
+        # Who ends up with something new to read. Collected across the whole
+        # loop so each person is rung once, however many rows they got.
+        to_ring: set[int] = set()
         for uid in ordered_uids:
             user = users[uid]
             new_rating = snapshot[uid] + deltas[uid]
@@ -356,10 +362,79 @@ def apply_contest_ratings(contest: Contest) -> int:
                 )
             EloHistory.objects.create(user=user, rating=new_rating)
 
+            # Written inside the transaction, with the ratings they describe:
+            # either both are durable or neither happened. Created after the
+            # commit instead, a crash in between would leave `rating_applied`
+            # already committed, and the retry would never come.
+            if _create_rating_notifications(user, contest, snapshot[uid], new_rating):
+                to_ring.add(uid)
+
         # 7. Mark done in the same transaction.
         contest.rating_applied = True
         contest.save(update_fields=["rating_applied"])
         # Every row just grew a rating_delta — the cached pages are all wrong.
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
+        # One doorbell per person, never one per row: the signal carries no
+        # data, so two of them cost the client the same single refetch as one.
+        for user_id in to_ring:
+            transaction.on_commit(partial(notify_user, user_id))
 
     return len(ordered_uids)
+
+
+def _create_rating_notifications(
+    user, contest: Contest, old_rating: int, new_rating: int
+) -> bool:
+    """Tell one contestant what the round did to their standing.
+
+    Two separate notifications, on purpose: "your rating moved" and "you reached
+    a new rank" are different news, and together with `contest_ended` they lead
+    to different places. Merging them would cost clarity to save a row.
+
+    Returns whether anything was actually created, so the caller can ring that
+    person once instead of once per row.
+    """
+    from apps.notifications.models import Notification
+    from apps.notifications.services import create_notification
+    from apps.users.services import get_rank
+
+    # Both events are about where the user now stands, so both point at the
+    # profile — that is the page showing the rating and the rank.
+    link = f"/users/{user.username}"
+    created_any = False
+
+    delta = new_rating - old_rating
+    # A delta of exactly zero is reachable (the ELO maths rounds), and
+    # "Rating changed: 0 -> 1461" would be a notification about nothing. Such a
+    # contestant still hears from `contest_ended` that the round is over.
+    if delta:
+        _, created = create_notification(
+            user=user,
+            type=Notification.Type.RATING_CHANGED,
+            dedup_key=f"contest_{contest.pk}_rating",
+            title="Rating changed",
+            body=f"{delta:+d} → {new_rating}",
+            link=link,
+        )
+        created_any = created_any or created
+
+    old_rank = get_rank(old_rating)
+    new_rank = get_rank(new_rating)
+    if old_rank != new_rank:
+        # Ranks are a monotonic function of rating, so once the names differ the
+        # direction of the move is simply the sign of the delta — no need to
+        # walk RANK_THRESHOLDS looking for positions.
+        promoted = delta > 0
+        _, created = create_notification(
+            user=user,
+            type=Notification.Type.RANK_CHANGED,
+            dedup_key=f"contest_{contest.pk}_rank",
+            title="New rank" if promoted else "Rank changed",
+            body=(
+                f"You reached {new_rank}" if promoted else f"You dropped to {new_rank}"
+            ),
+            link=link,
+        )
+        created_any = created_any or created
+
+    return created_any
