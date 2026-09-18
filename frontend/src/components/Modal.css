@@ -1,0 +1,173 @@
+/* ============================================================
+   MODAL
+   Rendered in a portal on <body>, so these live outside the page
+   stylesheets and are named modal-* to stay out of their way.
+   Sizes follow the pages: body text 14-14.5 px like a problem
+   statement, 12 px uppercase labels like its section headings,
+   fields and errors like the sign-in form.
+   ============================================================ */
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 560px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-head h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  color: var(--fg2);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: 0.14s;
+}
+.modal-close:hover {
+  color: var(--fg);
+  background: var(--card-2);
+}
+
+/* Scrolls on its own so the title bar stays put on short screens. */
+.modal-body {
+  padding: 22px 24px 24px;
+  overflow-y: auto;
+}
+
+/* ── Form fields ────────────────────────────────────────────── */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modal-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg2);
+}
+.modal-required {
+  color: var(--wa);
+}
+.modal-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.modal-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: var(--r);
+  font-family: var(--ui);
+  font-size: 14.5px;
+  color: var(--fg);
+  background: var(--card-2);
+  border: 1px solid var(--border-2);
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.modal-input:focus {
+  border-color: var(--gold-line);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+/* After .modal-input: a textarea carries both classes and must win. */
+.modal-textarea {
+  height: auto;
+  padding: 12px 14px;
+  line-height: 1.6;
+  resize: none;
+}
+/* A card, as on the sign-in form: bare red text on a dark panel is easy to
+   miss. */
+.modal-err {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--wa);
+  background: var(--wa-soft);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.modal-done {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 18px 0 8px;
+  text-align: center;
+}
+.modal-done svg {
+  color: var(--ac);
+}
+.modal-done p {
+  max-width: 400px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+@media (max-width: 460px) {
+  .modal-head {
+    padding: 16px 18px;
+  }
+  .modal-body {
+    padding: 18px;
+  }
+  .modal-actions .btn {
+    flex: 1;
+  }
+}

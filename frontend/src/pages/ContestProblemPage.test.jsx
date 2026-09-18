@@ -51,7 +51,9 @@ vi.mock('../components/problem/ContestTopbar', () => ({
   default: () => <div data-testid="topbar" />,
 }));
 vi.mock('../components/problem/ProblemWorkspace', () => ({
-  default: () => <div data-testid="workspace" />,
+  default: ({ contestId }) => (
+    <div data-testid="workspace" data-contest={contestId} />
+  ),
 }));
 vi.mock('../components/problem/VerdictToast', () => ({ default: () => null }));
 vi.mock('../components/problem/ContestLeaderboard', () => ({
@@ -144,5 +146,20 @@ describe('ContestProblemPage', () => {
     expect(screen.getByTestId('workspace')).toBeTruthy();
     expect(screen.getByTestId('topbar')).toBeTruthy();
     expect(screen.queryByTestId('message')).toBeNull();
+  });
+
+  it('hands the round id to the workspace, so a report is filed against it', () => {
+    hooks.useContestProblem.mockReturnValue({
+      contest: liveContest(),
+      problem: { id: 11 },
+      loading: false,
+      notFound: false,
+    });
+
+    render(<ContestProblemPage />);
+    expect(screen.getByTestId('workspace')).toHaveAttribute(
+      'data-contest',
+      '7'
+    );
   });
 });

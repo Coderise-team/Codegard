@@ -4,3 +4,8 @@
 export function isNotFound(error) {
   return error?.response?.status === 404;
 }
+
+// DRF reports a field's errors as a list of messages; a form shows the first.
+export function firstError(value) {
+  return Array.isArray(value) ? value[0] : value;
+}

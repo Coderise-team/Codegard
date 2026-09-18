@@ -89,7 +89,8 @@ class ProblemReport(models.Model):
     a record of what went wrong and a safeguard against accidental deletion of
     a problem that's under discussion. ``problem_title`` is a snapshot taken
     at submission time so a report about a since-deleted (or renamed) problem
-    still reads sensibly.
+    still reads sensibly. ``contest`` is the round the report was filed from,
+    empty when it came from the catalog.
     """
 
     class Reason(models.TextChoices):
@@ -117,6 +118,15 @@ class ProblemReport(models.Model):
         max_length=255,
         help_text="Snapshot of the problem's title at submission time. Not "
         "updated on rename, and stays readable after the problem is deleted.",
+    )
+    contest = models.ForeignKey(
+        "contests.Contest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="problem_reports",
+        help_text="The round the report was filed from; empty for the catalog. "
+        "SET_NULL: deleting the contest must not delete the report.",
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

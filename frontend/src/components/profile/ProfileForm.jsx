@@ -1,15 +1,13 @@
 import { useRef, useState } from 'react';
 import { updateProfile } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
+import { firstError } from '../../utils/errors';
 
 // Matches MAX_BIO_LENGTH in the backend serializer.
 const MAX_BIO = 300;
 
 // Shortest the bio box may be dragged, in pixels.
 const MIN_BIO_HEIGHT = 84;
-
-// DRF reports field errors as a list of messages; only the first is shown.
-const firstError = (value) => (Array.isArray(value) ? value[0] : value);
 
 /**
  * ProfileForm — the Settings dialog's Profile tab: full name and bio.
@@ -78,48 +76,48 @@ export default function ProfileForm({ onSaved, onClose }) {
   };
 
   return (
-    <form className="sm-form" onSubmit={onSubmit} noValidate>
+    <form className="modal-form" onSubmit={onSubmit} noValidate>
       <div className="sm-row">
-        <label className="sm-field">
-          <span className="sm-label">First name</span>
+        <label className="modal-field">
+          <span className="modal-label">First name</span>
           <input
-            className="sm-input"
+            className="modal-input"
             value={values.first_name}
             onChange={change('first_name')}
             maxLength={150}
             autoComplete="given-name"
           />
           {errors.first_name && (
-            <span className="sm-err">{firstError(errors.first_name)}</span>
+            <span className="modal-err">{firstError(errors.first_name)}</span>
           )}
         </label>
 
-        <label className="sm-field">
-          <span className="sm-label">Last name</span>
+        <label className="modal-field">
+          <span className="modal-label">Last name</span>
           <input
-            className="sm-input"
+            className="modal-input"
             value={values.last_name}
             onChange={change('last_name')}
             maxLength={150}
             autoComplete="family-name"
           />
           {errors.last_name && (
-            <span className="sm-err">{firstError(errors.last_name)}</span>
+            <span className="modal-err">{firstError(errors.last_name)}</span>
           )}
         </label>
       </div>
 
-      <label className="sm-field">
-        <span className="sm-label">
+      <label className="modal-field">
+        <span className="modal-label">
           Bio
-          <span className="sm-count">
+          <span className="modal-count">
             {values.bio.length}/{MAX_BIO}
           </span>
         </span>
         <div className="sm-textwrap">
           <textarea
             ref={bioRef}
-            className="sm-input sm-textarea scroll"
+            className="modal-input modal-textarea scroll"
             value={values.bio}
             onChange={change('bio')}
             maxLength={MAX_BIO}
@@ -132,21 +130,23 @@ export default function ProfileForm({ onSaved, onClose }) {
             aria-hidden="true"
           />
         </div>
-        {errors.bio && <span className="sm-err">{firstError(errors.bio)}</span>}
+        {errors.bio && (
+          <span className="modal-err">{firstError(errors.bio)}</span>
+        )}
       </label>
 
-      {errors.form && <div className="sm-err">{errors.form}</div>}
+      {errors.form && <div className="modal-err">{errors.form}</div>}
 
-      <div className="sm-actions">
+      <div className="modal-actions">
         <button
           type="button"
-          className="btn btn-sm btn-ghost"
+          className="btn btn-ghost"
           onClick={onClose}
           disabled={busy}
         >
           Cancel
         </button>
-        <button type="submit" className="btn btn-sm" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? 'Saving…' : 'Save changes'}
         </button>
       </div>

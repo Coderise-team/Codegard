@@ -165,6 +165,7 @@ export default function ContestProblemPage() {
             !isLive ? 'Contest has ended' : busy ? 'Judging…' : undefined
           }
           onSubmit={submit}
+          contestId={Number(id)}
           rail={
             showLb ? (
               <ContestLeaderboard

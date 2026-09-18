@@ -1,0 +1,65 @@
+/* ============================================================
+   REPORT DIALOG
+   Content of the report dialog. The frame and the form fields are
+   Modal.css; these are named rd-* to stay out of the page
+   stylesheets' way.
+   ============================================================ */
+/* Same size, colour and rhythm as a problem statement: this is text to read,
+   not a hint. */
+.rd-intro {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--fg-read);
+}
+
+.rd-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* A real radio input drives each option; it is hidden, and the label wears
+   its checked and focused states. */
+.rd-option {
+  position: relative;
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  background: var(--card-2);
+  border: 1px solid var(--border-2);
+  cursor: pointer;
+  transition: 0.14s;
+}
+.rd-option:hover {
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
+}
+.rd-option:has(input:checked) {
+  color: var(--gold-hi);
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+}
+.rd-option:has(input:focus-visible) {
+  outline: 2px solid var(--gold-line);
+  outline-offset: 2px;
+}
+.rd-option input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rd-hint,
+.rd-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg2);
+}

@@ -13,7 +13,7 @@ from django.core.cache import cache
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
-from factories import make_problem
+from factories import make_contest, make_problem
 from rest_framework import status
 
 # api_client, user, other, admin, user_client, custom_admin_client and
@@ -58,6 +58,7 @@ def test_authenticated_valid_report_creates_row(user_client, user, problem):
     assert report.problem == problem
     assert report.reason == ProblemReport.Reason.WRONG_TEST
     assert report.status == ProblemReport.Status.NEW
+    assert report.contest is None
 
 
 @pytest.mark.django_db
@@ -227,6 +228,47 @@ def test_limit_is_per_problem(user_client, problem):
     assert resp.status_code == status.HTTP_201_CREATED
 
 
+# ---- Filed from a contest --------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_report_from_a_contest_records_the_round(user_client, problem):
+    contest = make_contest()
+    contest.problems.add(problem)
+
+    resp = user_client.post(
+        _report_url(problem.id), _valid_payload(contest=contest.id), format="json"
+    )
+
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert ProblemReport.objects.get().contest == contest
+
+
+@pytest.mark.django_db
+def test_contest_is_kept_after_the_problem_was_pulled_from_it(user_client, problem):
+    # The page was opened from the round; an admin removing the broken problem
+    # mid-round must not turn the reports that follow away, or strip the round.
+    contest = make_contest()
+
+    resp = user_client.post(
+        _report_url(problem.id), _valid_payload(contest=contest.id), format="json"
+    )
+
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert ProblemReport.objects.get().contest == contest
+
+
+@pytest.mark.django_db
+def test_unknown_contest_is_accepted_without_a_contest(user_client, problem):
+    # A round deleted while its page was open: nothing left to point at.
+    resp = user_client.post(
+        _report_url(problem.id), _valid_payload(contest=999999), format="json"
+    )
+
+    assert resp.status_code == status.HTTP_201_CREATED
+    assert ProblemReport.objects.get().contest is None
+
+
 # ---- Surviving deletion (decisions 9, 10) -----------------------------------
 
 
@@ -248,6 +290,20 @@ def test_report_survives_author_deletion(user_client, user, problem):
 
     report = ProblemReport.objects.get()
     assert report.user is None
+
+
+@pytest.mark.django_db
+def test_report_survives_contest_deletion(user_client, problem):
+    contest = make_contest()
+    contest.problems.add(problem)
+    user_client.post(
+        _report_url(problem.id), _valid_payload(contest=contest.id), format="json"
+    )
+    contest.delete()
+
+    report = ProblemReport.objects.get()
+    assert report.contest is None
+    assert report.problem == problem
 
 
 @pytest.mark.django_db
@@ -312,6 +368,25 @@ def test_staff_sees_list_and_detail(custom_admin_client, user, problem):
     detail_resp = custom_admin_client.get(reverse("reports-detail", args=[report.id]))
     assert detail_resp.status_code == status.HTTP_200_OK
     assert detail_resp.json()["problem_title"] == problem.title
+    assert detail_resp.json()["contest"] is None
+
+
+@pytest.mark.django_db
+def test_staff_sees_the_round_a_report_came_from(custom_admin_client, user, problem):
+    contest = make_contest()
+    report = ProblemReport.objects.create(
+        problem=problem,
+        problem_title=problem.title,
+        contest=contest,
+        user=user,
+        reason=ProblemReport.Reason.WRONG_TEST,
+        message="Something is off with the tests.",
+    )
+
+    detail_resp = custom_admin_client.get(reverse("reports-detail", args=[report.id]))
+
+    assert detail_resp.status_code == status.HTTP_200_OK
+    assert detail_resp.json()["contest"] == contest.id
 
 
 @pytest.mark.django_db

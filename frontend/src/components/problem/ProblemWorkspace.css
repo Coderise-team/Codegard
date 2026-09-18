@@ -132,7 +132,7 @@
 .pp-stmt {
   font-size: 14.5px;
   line-height: 1.72;
-  color: #c9cdda;
+  color: var(--fg-read);
 }
 .pp-stmt h3 {
   font-size: 12px;
