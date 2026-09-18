@@ -36,7 +36,8 @@
   transition: 0.14s;
 }
 .rd-option:hover {
-  border-color: #353c52;
+  color: var(--gold-hi);
+  border-color: var(--gold-line);
 }
 .rd-option:has(input:checked) {
   color: var(--gold-hi);
