@@ -325,7 +325,7 @@ class ContestViewSet(viewsets.ModelViewSet):
         # All my submissions for this contest in ONE query, grouped in memory.
         verdicts_by_problem = defaultdict(set)
         for problem_id, verdict in Submission.objects.filter(
-                user=request.user, contest=contest
+            user=request.user, contest=contest
         ).values_list("problem_id", "verdict"):
             verdicts_by_problem[problem_id].add(verdict)
 

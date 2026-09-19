@@ -262,6 +262,7 @@ def get_contest_history(user):
         .order_by("-contest__end_time", "-id")
     )
 
+
 def _collect_rating_participants(contest: Contest):
     """Read-only. Rating set for a contest, in place order (decision 5).
 
@@ -311,6 +312,7 @@ def _build_rating_entries(scored, zero_ids, ratings_by_uid):
         EloParticipant(user_id=uid, rating=ratings_by_uid[uid], place_key=(0, 0, None))
         for uid in zero_ids
     ]
+
 
 def apply_contest_ratings(contest: Contest) -> int:
     """

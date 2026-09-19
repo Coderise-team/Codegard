@@ -5,18 +5,20 @@ same conftest/factories as test_rating.py.
 """
 
 import pytest
+from apps.contests.models import ContestScore
 from apps.contests.services import (
     apply_contest_ratings,
     compute_predicted_deltas,
 )
-from apps.contests.models import ContestScore
 from apps.submissions.models import Submission
 from factories import make_submission
 
 
 @pytest.mark.django_db
 class TestPredictedDeltasCalculation:
-    def test_each_rated_participant_gets_a_prediction(self, users, problems, finished_contest):
+    def test_each_rated_participant_gets_a_prediction(
+        self, users, problems, finished_contest
+    ):
         a, b, _ = users
         c = finished_contest
         make_submission(a, problems[0], c)
@@ -52,7 +54,9 @@ class TestPredictedDeltasCalculation:
         assert deltas[a.id] > 0
         assert deltas[b.id] < 0
 
-    def test_same_result_same_rating_same_delta(self, users, problems, finished_contest):
+    def test_same_result_same_rating_same_delta(
+        self, users, problems, finished_contest
+    ):
         a, b, c_user = users
         c = finished_contest
         make_submission(a, problems[0], c)
@@ -73,7 +77,7 @@ class TestPredictedDeltasCalculation:
         assert deltas[a.id] == deltas[c_user.id]
 
     def test_same_result_different_rating_weaker_gains_more(
-            self, users, problems, finished_contest
+        self, users, problems, finished_contest
     ):
         a, b, _ = users
         b.elo_rating = 1000  # weaker than a's 1200
@@ -132,7 +136,9 @@ class TestRatingSetMembership:
 
 @pytest.mark.django_db
 class TestLifecycle:
-    def test_prediction_present_before_rating_applied(self, users, problems, finished_contest):
+    def test_prediction_present_before_rating_applied(
+        self, users, problems, finished_contest
+    ):
         a, b, _ = users
         c = finished_contest
         make_submission(a, problems[0], c)
@@ -140,7 +146,9 @@ class TestLifecycle:
 
         assert compute_predicted_deltas(c) != {}
 
-    def test_prediction_empty_after_rating_applied(self, users, problems, finished_contest):
+    def test_prediction_empty_after_rating_applied(
+        self, users, problems, finished_contest
+    ):
         a, b, _ = users
         c = finished_contest
         make_submission(a, problems[0], c)
@@ -166,7 +174,9 @@ class TestLifecycle:
         apply_contest_ratings(c)
 
         actual = dict(
-            ContestScore.objects.filter(contest=c).values_list("user_id", "rating_delta")
+            ContestScore.objects.filter(contest=c).values_list(
+                "user_id", "rating_delta"
+            )
         )
         assert predicted == actual
 

@@ -21,7 +21,7 @@ def my_standing_url(contest):
 @pytest.mark.django_db
 class TestPredictionCache:
     def test_second_request_does_not_recompute(
-            self, api_client, users, problems, finished_contest, monkeypatch
+        self, api_client, users, problems, finished_contest, monkeypatch
     ):
         a, b, _ = users
         c = finished_contest
@@ -46,7 +46,7 @@ class TestPredictionCache:
         assert len(calls) == 1
 
     def test_new_accepted_submission_bumps_generation_and_recomputes(
-            self, users, problems, finished_contest, monkeypatch
+        self, users, problems, finished_contest, monkeypatch
     ):
         from apps.contests.cache import bust_leaderboard_cache
 
@@ -78,7 +78,7 @@ class TestPredictionCache:
         assert len(calls) == 2
 
     def test_leaderboard_and_my_standing_agree(
-            self, api_client, users, problems, finished_contest
+        self, api_client, users, problems, finished_contest
     ):
         a, b, c_user = users
         c = finished_contest
