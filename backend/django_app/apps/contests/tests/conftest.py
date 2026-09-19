@@ -33,3 +33,10 @@ def problems(db):
 def finished_contest(db):
     """A contest that ran from three hours ago until an hour ago."""
     return make_contest("Finished", starts_in=-3, ends_in=-1)
+
+
+@pytest.fixture
+def another_finished_contest(db):
+    """A second, independent finished contest — for tests that check one
+    contest's recalculation doesn't leak into another's cached state."""
+    return make_contest("Another Finished", starts_in=-3, ends_in=-1)

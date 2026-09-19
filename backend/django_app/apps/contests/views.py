@@ -16,7 +16,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from .cache import LEADERBOARD_TTL, leaderboard_page_key
+from .cache import LEADERBOARD_TTL, get_predicted_deltas, leaderboard_page_key
 from .models import Contest, ContestScore
 from .pagination import ContestPanelPagination
 from .serializers import (
@@ -281,7 +281,15 @@ class ContestViewSet(viewsets.ModelViewSet):
         # so tied rows share a place and the number stays global across pages.
         page = paginator.paginate_queryset(get_leaderboard(contest), request, view=self)
 
-        serializer = LeaderboardEntrySerializer(page, many=True)
+        # Computed once for the WHOLE contest (all participants against each
+        # other), not per page/per row — see compute_predicted_deltas. Its own
+        # cache (cache.py) shares this same page's TTL and generation, so both
+        # go stale together on the next accepted submission.
+        predicted_deltas = get_predicted_deltas(contest)
+
+        serializer = LeaderboardEntrySerializer(
+            page, many=True, context={"predicted_deltas": predicted_deltas}
+        )
         response = paginator.get_paginated_response(serializer.data)
         cache.set(key, response.data, LEADERBOARD_TTL)
         return response
@@ -306,6 +314,14 @@ class ContestViewSet(viewsets.ModelViewSet):
         # _leaderboard_rank returns None only for genuine non-participants.
         rank = _leaderboard_rank(contest, request.user.pk)
 
+        # Same shared dict as the leaderboard page — not recomputed here, just
+        # read (from cache, or computed once and cached if this is the first
+        # hit since the last accepted submission). Guarantees my-standing and
+        # any leaderboard page agree for the same user without a second
+        # calculation living anywhere.
+        predicted_deltas = get_predicted_deltas(contest)
+        predicted_delta = predicted_deltas.get(request.user.pk)
+
         # All my submissions for this contest in ONE query, grouped in memory.
         verdicts_by_problem = defaultdict(set)
         for problem_id, verdict in Submission.objects.filter(
@@ -325,5 +341,11 @@ class ContestViewSet(viewsets.ModelViewSet):
             problems.append({"id": problem.id, "status": problem_status})
 
         return Response(
-            {"rank": rank, "score": score, "solved": solved, "problems": problems}
+            {
+                "rank": rank,
+                "score": score,
+                "solved": solved,
+                "predicted_delta": predicted_delta,
+                "problems": problems,
+            }
         )
