@@ -259,7 +259,9 @@ def notify_contests_starting_soon(self) -> dict:
         return {"contests_announced": 0, "users_notified": 0}
 
     audience = list(
-        get_user_model().objects.filter(is_active=True).values_list("id", flat=True)
+        get_user_model()
+        .objects.filter(is_active=True, is_staff=False)
+        .values_list("id", flat=True)
     )
 
     to_ring: set[int] = set()

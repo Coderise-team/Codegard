@@ -35,7 +35,8 @@ def announce_new_problems(problems) -> None:
     """Announce problems that have just become visible in the catalog.
 
     Two audiences, because one of them has just spent two hours on these very
-    problems. Everyone active hears about each problem by name; the people who
+    problems. Every active player hears about each problem by name (staff are
+    left out: they are the ones publishing it); the people who
     played the contest a problem came out of get a single summary line about
     that contest instead. Without the split, the minute a round ends an entrant
     would receive "contest finished", a rating, possibly a rank, and then eight
@@ -56,7 +57,9 @@ def announce_new_problems(problems) -> None:
 
     now = timezone.now()
     audience = set(
-        get_user_model().objects.filter(is_active=True).values_list("id", flat=True)
+        get_user_model()
+        .objects.filter(is_active=True, is_staff=False)
+        .values_list("id", flat=True)
     )
     if not audience:
         return

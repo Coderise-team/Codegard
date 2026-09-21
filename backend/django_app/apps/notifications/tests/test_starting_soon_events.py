@@ -1,12 +1,12 @@
 """The contest_starting_soon beat task.
 
 Two things make this task different from the other sources. Its audience is
-every active user rather than a contest's own participants — registration
-closes at the start, so the notification exists to get someone *into* the round
-— and it runs every minute against a fifteen-minute window, which means one
-contest is selected on about fifteen consecutive runs. Only the first of those
-may write or ring; the rest are the reason the creation service subtracts
-before it inserts.
+every active player (staff excluded) rather than a contest's own
+participants — registration closes at the start, so the notification exists to
+get someone *into* the round — and it runs every minute against a
+fifteen-minute window, which means one contest is selected on about fifteen
+consecutive runs. Only the first of those may write or ring; the rest are the
+reason the creation service subtracts before it inserts.
 """
 
 from datetime import timedelta
@@ -108,6 +108,19 @@ def test_a_deactivated_account_is_skipped(db):
     notify_contests_starting_soon()
 
     assert not soon_for(disabled).exists()
+
+
+@pytest.mark.django_db
+def test_staff_are_not_invited_to_the_round(db):
+    """Staff run the platform, they do not play on it."""
+    contest_starting_in(10)
+    admin = make_user("admin", 1200, is_staff=True)
+    member = make_user("member", 1200)
+
+    notify_contests_starting_soon()
+
+    assert not soon_for(admin).exists()
+    assert soon_for(member).exists()
 
 
 # --- the repeat runs -------------------------------------------------------

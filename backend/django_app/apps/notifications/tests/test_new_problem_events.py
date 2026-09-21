@@ -84,6 +84,17 @@ def test_a_deactivated_account_hears_nothing(db):
 
 
 @pytest.mark.django_db
+def test_staff_do_not_hear_about_problems_they_published(member):
+    """Staff put the problem there themselves; the news is for the players."""
+    admin = make_user("admin", 1200, is_staff=True)
+
+    make_problem("Two Sum", is_hidden=False)
+
+    assert not new_problem_for(admin).exists()
+    assert new_problem_for(member).exists()
+
+
+@pytest.mark.django_db
 def test_publishing_with_nobody_around_does_not_break(db):
     make_problem("Two Sum", is_hidden=False)  # should not raise
 
