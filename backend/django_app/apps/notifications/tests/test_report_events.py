@@ -277,3 +277,78 @@ def test_a_bulk_action_rings_each_author_after_commit(
     assert sorted(c.args[0] for c in ring.call_args_list) == sorted(
         [first.pk, second.pk]
     )
+
+
+# --- the link of a report filed from a round -------------------------------
+
+
+def report_from_round(author, *, problem_hidden, round_running=True):
+    from factories import make_contest
+
+    contest = make_contest(
+        "Live Round",
+        starts_in=-1 if round_running else -3,
+        ends_in=1 if round_running else -1,
+    )
+    problem = make_problem("Round Problem", is_hidden=problem_hidden)
+    contest.problems.add(problem)
+    report = ProblemReport.objects.create(
+        problem=problem,
+        problem_title=problem.title,
+        user=author,
+        contest=contest,
+        reason=ProblemReport.Reason.WRONG_TEST,
+        message="Something is off with the tests.",
+    )
+    return report, contest, problem
+
+
+@pytest.mark.django_db
+def test_a_report_from_a_live_round_leads_to_the_round(user, user_client):
+    """The round's problems stay out of the catalog until it ends, so the
+    problem's own page is a 404 for the reader — the round is where they can
+    see it."""
+    report, contest, problem = report_from_round(user, problem_hidden=True)
+
+    review(report, ProblemReport.Status.ACCEPTED)
+
+    link = resolved_for(user).get().link
+    assert link == f"/contests/{contest.pk}"
+    # The reason for the rule, checked against the real endpoints.
+    assert user_client.get(f"/api/problems/{problem.pk}/").status_code == 404
+    assert user_client.get(f"/api/contests/{contest.pk}/").status_code == 200
+
+
+@pytest.mark.django_db
+def test_a_report_from_a_finished_round_leads_to_the_problem(user):
+    """Once the round is over and its problems are public, the problem's page
+    works again and is the better place to land."""
+    report, _, problem = report_from_round(
+        user, problem_hidden=False, round_running=False
+    )
+
+    review(report, ProblemReport.Status.ACCEPTED)
+
+    assert resolved_for(user).get().link == f"/problems/{problem.pk}"
+
+
+@pytest.mark.django_db
+def test_a_catalog_report_still_leads_to_the_problem(report, user):
+    assert report.contest_id is None
+
+    review(report, ProblemReport.Status.REJECTED)
+
+    assert resolved_for(user).get().link == f"/problems/{report.problem_id}"
+
+
+@pytest.mark.django_db
+def test_a_report_from_a_round_whose_problem_was_deleted_is_not_clickable(user):
+    """A deleted problem wins over the round: the report is about a problem that
+    no longer exists anywhere."""
+    report, _, problem = report_from_round(user, problem_hidden=True)
+    problem.delete()
+    report.refresh_from_db()
+
+    review(report, ProblemReport.Status.ACCEPTED)
+
+    assert resolved_for(user).get().link == ""

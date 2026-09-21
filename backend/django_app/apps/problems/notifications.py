@@ -125,6 +125,29 @@ _REPORT_OUTCOMES = {
 }
 
 
+def _report_link(report) -> str:
+    """Where the notification about a judged report should lead.
+
+    The problem's own page, normally. Two exceptions:
+
+    - The problem is gone. A report outlives the problem it was about (the FK
+      is SET_NULL), and there is nowhere to send the reader, so the row simply
+      stops being clickable while the text still names what it was about.
+    - The report was filed from a round that is still running. Its problems
+      stay hidden from the catalog until the round ends, so ``/problems/<id>``
+      answers 404 for the reader, while the round's own page shows the problem
+      to its entrants. The round is where the reader can actually see it.
+      Decided when the notification is written, like its text: once the round
+      ends and the problem is published, the link still leads to the round,
+      which lists that problem.
+    """
+    if report.problem_id is None:
+        return ""
+    if report.contest_id is not None and report.problem.is_hidden:
+        return f"/contests/{report.contest_id}"
+    return f"/problems/{report.problem_id}"
+
+
 def announce_report_resolved(report) -> None:
     """Tell the person who filed a report how it was judged.
 
@@ -133,10 +156,8 @@ def announce_report_resolved(report) -> None:
 
     The title of the problem always comes from the report's own snapshot, not
     from the live row. That keeps one text template instead of two, and leaves
-    ``problem`` to be checked in exactly one place: the link. A report outlives
-    the problem it was about (both FKs are SET_NULL), so when the problem is
-    gone there is nowhere to send the reader — the row simply stops being
-    clickable, while the text still names what the report was about.
+    ``problem`` to be checked in exactly one place: the link — see
+    ``_report_link``.
     """
     from apps.notifications.models import Notification
     from apps.notifications.services import create_notification, notify_users
@@ -156,7 +177,7 @@ def announce_report_resolved(report) -> None:
         dedup_key=f"report_{report.pk}_{report.status}",
         title="Report reviewed",
         body=f"Your report on {report.problem_title} was {outcome}",
-        link=f"/problems/{report.problem_id}" if report.problem_id else "",
+        link=_report_link(report),
     )
     if created:
         transaction.on_commit(partial(notify_users, [report.user_id]))
