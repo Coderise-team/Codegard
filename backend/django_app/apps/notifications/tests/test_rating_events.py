@@ -150,50 +150,39 @@ def test_re_rating_the_same_contest_does_not_duplicate(contest):
 
 
 @pytest.mark.django_db
-def test_a_person_is_rung_once_even_with_two_notifications(
-    contest, django_capture_on_commit_callbacks
-):
-    """The promoted winner gets rating_changed AND rank_changed — one ring."""
+def test_rating_hands_back_everyone_it_notified(contest):
+    """The rating does not ring anyone itself: it hands back who got something
+    new, and the batch rings them once together with "contest finished"."""
     with patch("apps.notifications.services.notify_user") as ring:
-        with django_capture_on_commit_callbacks(execute=True):
-            winner, loser = play(contest, 1399, 1399)
-            apply_contest_ratings(contest)
+        winner, loser = play(contest, 1399, 1399)
+        result = apply_contest_ratings(contest)
 
-    assert notifications_for(winner, Notification.Type.RATING_CHANGED).exists()
+    assert result.to_ring == {winner.pk, loser.pk}
     assert notifications_for(winner, Notification.Type.RANK_CHANGED).exists()
-    rung = [call.args[0] for call in ring.call_args_list]
-    assert sorted(rung) == sorted([winner.pk, loser.pk])  # once each, nobody twice
+    ring.assert_not_called()
 
 
 @pytest.mark.django_db
-def test_nobody_is_rung_when_there_was_no_news(
-    contest, django_capture_on_commit_callbacks
-):
+def test_nobody_is_handed_back_when_there_was_no_news(contest):
     problem = contest.problems.first()
     a = make_user("a", 1200)
     b = make_user("b", 1200)
+    make_submission(a, problem, contest, Submission.Verdict.WA)
+    make_submission(b, problem, contest, Submission.Verdict.WA)
 
-    with patch("apps.notifications.services.notify_user") as ring:
-        with django_capture_on_commit_callbacks(execute=True):
-            make_submission(a, problem, contest, Submission.Verdict.WA)
-            make_submission(b, problem, contest, Submission.Verdict.WA)
-            apply_contest_ratings(contest)
+    result = apply_contest_ratings(contest)
 
-    ring.assert_not_called()
+    assert result.to_ring == set()
 
 
 @pytest.mark.django_db
-def test_an_unrated_contest_notifies_nobody(
-    contest, django_capture_on_commit_callbacks
-):
+def test_an_unrated_contest_notifies_nobody(contest):
     """A single entrant has no opponents, so nothing is rated and nothing said."""
     problem = contest.problems.first()
     alone = make_user("alone", 1200)
+    make_submission(alone, problem, contest, Submission.Verdict.AC)
 
-    with patch("apps.notifications.services.notify_user") as ring:
-        with django_capture_on_commit_callbacks(execute=True):
-            make_submission(alone, problem, contest, Submission.Verdict.AC)
-            apply_contest_ratings(contest)
+    result = apply_contest_ratings(contest)
 
+    assert result == (0, set())
     assert Notification.objects.count() == 0
-    ring.assert_not_called()

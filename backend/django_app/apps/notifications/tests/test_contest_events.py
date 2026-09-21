@@ -292,3 +292,75 @@ def test_the_end_of_the_round_rings_every_participant(
             run_rating_batch()
 
     assert {call.args[0] for call in ring.call_args_list} == {winner.pk, loser.pk}
+
+
+# --- one ring per person for the whole rating batch ------------------------
+
+
+@pytest.mark.django_db
+def test_the_end_of_a_rated_contest_rings_each_participant_once(
+    played_contest, django_capture_on_commit_callbacks
+):
+    """A participant gets "rating changed" and "contest finished" from the same
+    run — two rows in the feed, one ring. They used to be rung twice, once by
+    the rating and once by the announcement, 17 ms apart."""
+    _, winner, loser = played_contest
+
+    with patch("apps.notifications.services.notify_user") as ring:
+        with django_capture_on_commit_callbacks(execute=True):
+            run_rating_batch()
+
+    assert ended_for(winner).exists()
+    assert Notification.objects.filter(
+        user=winner, type=Notification.Type.RATING_CHANGED
+    ).exists()
+    rung = [call.args[0] for call in ring.call_args_list]
+    assert sorted(rung) == sorted([winner.pk, loser.pk])  # once each
+
+
+@pytest.mark.django_db
+def test_two_contests_ending_together_ring_a_shared_entrant_once(
+    django_capture_on_commit_callbacks,
+):
+    from apps.submissions.models import Submission
+    from factories import make_problem, make_submission
+
+    shared = make_user("shared", 1200)
+    for title in ("Round A", "Round B"):
+        contest = make_contest(title, starts_in=-3, ends_in=-1)
+        problem = make_problem(f"{title} problem")
+        contest.problems.add(problem)
+        rival = make_user(f"rival_{title[-1]}", 1200)
+        contest.participants.add(shared, rival)
+        make_submission(shared, problem, contest, Submission.Verdict.AC)
+        make_submission(rival, problem, contest, Submission.Verdict.WA)
+
+    with patch("apps.notifications.services.notify_user") as ring:
+        with django_capture_on_commit_callbacks(execute=True):
+            run_rating_batch()
+
+    rung = [call.args[0] for call in ring.call_args_list]
+    assert rung.count(shared.pk) == 1
+    assert ended_for(shared).count() == 2  # both rounds are in the feed
+
+
+@pytest.mark.django_db
+def test_a_contest_that_rolled_back_rings_nobody(
+    played_contest, django_capture_on_commit_callbacks
+):
+    """Recipients are collected only after a contest's transaction commits, so a
+    contest that failed and rolled back does not ring people about rows that
+    no longer exist."""
+    import apps.notifications.services as services
+
+    _, winner, loser = played_contest
+
+    with (
+        patch.object(services, "create_bulk", side_effect=RuntimeError("db blip")),
+        patch("apps.notifications.services.notify_user") as ring,
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            run_rating_batch()
+
+    ring.assert_not_called()
+    assert not ended_for(winner).exists()

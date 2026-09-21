@@ -115,6 +115,8 @@ def apply_finished_contest_ratings(self) -> dict:
     oldest first. Each contest is isolated in its own try so one bad contest
     doesn't sink the batch.
     """
+    from apps.notifications.services import notify_users
+
     from .services import apply_contest_ratings
 
     logger.info(
@@ -130,6 +132,11 @@ def apply_finished_contest_ratings(self) -> dict:
 
     processed = 0
     participants_updated = 0
+    # Everyone this run notified, across every contest it rated. A contestant
+    # gets a rating (and maybe a rank) and "contest finished" from the same
+    # run, and may have played two rounds that ended together — the signal
+    # carries no data, so one ring covers all of it.
+    to_ring: set[int] = set()
     for contest in contests:
         try:
             # Rating and announcing commit together. `rating_applied` is what
@@ -138,10 +145,13 @@ def apply_finished_contest_ratings(self) -> dict:
             # contest that no run ever announces. In one transaction, that
             # failure rolls the rating back too and the next run redoes both.
             with transaction.atomic():
-                rated = apply_contest_ratings(contest)
-                _announce_finished_contest(contest)
-            participants_updated += rated
+                result = apply_contest_ratings(contest)
+                ended_for = _announce_finished_contest(contest)
+            # Counted only once the transaction has committed: a contest that
+            # rolled back announced nothing and is retried next run.
+            participants_updated += result.rated
             processed += 1
+            to_ring |= result.to_ring | ended_for
             # Only now are the results final. apply_contest_ratings has already
             # written the deltas and busted the leaderboard cache, so a client
             # refetching on this event sees the rated table. The broadcast goes
@@ -150,6 +160,9 @@ def apply_finished_contest_ratings(self) -> dict:
             _broadcast_contest_ended([contest.pk])
         except Exception:
             logger.exception("Failed to apply ratings for contest %s", contest.pk)
+
+    # Every contest above has committed on its own by now; ring once per person.
+    transaction.on_commit(partial(notify_users, to_ring))
 
     summary = {
         "contests_processed": processed,
@@ -274,7 +287,7 @@ def notify_contests_starting_soon(self) -> dict:
     return summary
 
 
-def _announce_finished_contest(contest: Contest) -> None:
+def _announce_finished_contest(contest: Contest) -> set[int]:
     """Tell participants the round is over and the results are in.
 
     Deliberately separate from the ``rating_changed`` / ``rank_changed`` pair
@@ -287,11 +300,14 @@ def _announce_finished_contest(contest: Contest) -> None:
     is not yet applied, so a rated contest never comes back here. ``end_time``
     in the key mirrors ``contest_started`` and keeps a repeat inside that same
     batch silent.
+
+    Returns who got a row instead of ringing them: the batch rings them together
+    with the ratings, once per person.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_bulk, notify_users
+    from apps.notifications.services import create_bulk
 
-    recipients = create_bulk(
+    return create_bulk(
         contest.participants.values_list("id", flat=True),
         type=Notification.Type.CONTEST_ENDED,
         dedup_key=f"contest_{contest.pk}_ended_{int(contest.end_time.timestamp())}",
@@ -299,7 +315,6 @@ def _announce_finished_contest(contest: Contest) -> None:
         body=f"{contest.title} has ended — results are in",
         link=f"/contests/{contest.pk}",
     )
-    transaction.on_commit(partial(notify_users, recipients))
 
 
 def _announce_started_contests(now) -> None:

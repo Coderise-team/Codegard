@@ -10,7 +10,7 @@ Formula:
   leaderboard = sorted by score DESC, penalty ASC, last_ac_at ASC
 """
 
-from functools import partial
+from typing import NamedTuple
 
 from django.db import transaction
 from django.db.models import (
@@ -265,9 +265,23 @@ def get_contest_history(user):
     )
 
 
-def apply_contest_ratings(contest: Contest) -> int:
+class RatingResult(NamedTuple):
+    """What rating one contest produced.
+
+    ``rated`` is how many contestants got a new rating — the task's report.
+    ``to_ring`` is who received a notification, handed back rather than rung
+    here: the batch announces the contest's end in the same run, and the
+    people it reaches overlap with these, so the batch rings everyone once.
     """
-    Award ELO for one finished contest. Returns the number of participants updated.
+
+    rated: int
+    to_ring: set[int]
+
+
+def apply_contest_ratings(contest: Contest) -> RatingResult:
+    """
+    Award ELO for one finished contest. Returns a ``RatingResult``: how many
+    contestants were rated, and who got a notification and still needs a ring.
 
     Idempotent: locks the Contest row and re-checks `rating_applied`, so two
     overlapping beat runs never double-count. Everything is one transaction, so
@@ -277,7 +291,6 @@ def apply_contest_ratings(contest: Contest) -> int:
     score=0 / last place and a freshly created ContestScore. Pure no-shows
     (joined but never submitted) are not rated.
     """
-    from apps.notifications.services import notify_users
     from apps.submissions.models import Submission
     from apps.users.models import EloHistory, User
     from apps.users.services import EloParticipant, compute_elo_deltas
@@ -286,7 +299,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         # 1. Lock the contest and re-check the flag (the task's filter is not enough).
         contest = Contest.objects.select_for_update().get(pk=contest.pk)
         if contest.rating_applied:
-            return 0
+            return RatingResult(0, set())
 
         # 2. Build the set: everyone who submitted at least once.
         submitter_ids = set(
@@ -307,7 +320,7 @@ def apply_contest_ratings(contest: Contest) -> int:
             contest.rating_applied = True
             contest.save(update_fields=["rating_applied"])
             transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
-            return 0
+            return RatingResult(0, set())
 
         # 4. Lock users (stable order, anti-deadlock) and snapshot ratings BEFORE.
         users = {
@@ -374,11 +387,8 @@ def apply_contest_ratings(contest: Contest) -> int:
         contest.save(update_fields=["rating_applied"])
         # Every row just grew a rating_delta — the cached pages are all wrong.
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
-        # One doorbell per person, never one per row: the signal carries no
-        # data, so two of them cost the client the same single refetch as one.
-        transaction.on_commit(partial(notify_users, to_ring))
 
-    return len(ordered_uids)
+    return RatingResult(len(ordered_uids), to_ring)
 
 
 def _create_rating_notifications(
