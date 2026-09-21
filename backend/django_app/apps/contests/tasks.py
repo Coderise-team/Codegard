@@ -227,7 +227,7 @@ def notify_contests_starting_soon(self) -> dict:
     and ring nobody.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_bulk, notify_user
+    from apps.notifications.services import create_bulk, notify_users
 
     logger.info("[notify_contests_starting_soon] started | task_id=%s", self.request.id)
 
@@ -267,8 +267,7 @@ def notify_contests_starting_soon(self) -> dict:
         to_ring |= recipients
 
     # One doorbell per person for the whole run, not one per contest.
-    for user_id in to_ring:
-        transaction.on_commit(partial(notify_user, user_id))
+    transaction.on_commit(partial(notify_users, to_ring))
 
     summary = {"contests_announced": announced, "users_notified": len(to_ring)}
     logger.info("notify_contests_starting_soon %s", summary)
@@ -290,7 +289,7 @@ def _announce_finished_contest(contest: Contest) -> None:
     batch silent.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_bulk, notify_user
+    from apps.notifications.services import create_bulk, notify_users
 
     recipients = create_bulk(
         contest.participants.values_list("id", flat=True),
@@ -300,8 +299,7 @@ def _announce_finished_contest(contest: Contest) -> None:
         body=f"{contest.title} has ended — results are in",
         link=f"/contests/{contest.pk}",
     )
-    for user_id in recipients:
-        transaction.on_commit(partial(notify_user, user_id))
+    transaction.on_commit(partial(notify_users, recipients))
 
 
 def _announce_started_contests(now) -> None:
@@ -321,7 +319,7 @@ def _announce_started_contests(now) -> None:
     again, which is right — people are waiting to hear when the round begins.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_bulk, notify_user
+    from apps.notifications.services import create_bulk, notify_users
 
     to_ring: set[int] = set()
     running = Contest.objects.filter(start_time__lte=now, end_time__gte=now)
@@ -338,8 +336,7 @@ def _announce_started_contests(now) -> None:
         to_ring |= recipients
 
     # One doorbell per person for the whole run, not one per contest.
-    for user_id in to_ring:
-        transaction.on_commit(partial(notify_user, user_id))
+    transaction.on_commit(partial(notify_users, to_ring))
 
 
 def _broadcast_contest_ended(contest_ids: list[int]) -> None:

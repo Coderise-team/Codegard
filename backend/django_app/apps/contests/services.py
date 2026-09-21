@@ -277,7 +277,7 @@ def apply_contest_ratings(contest: Contest) -> int:
     score=0 / last place and a freshly created ContestScore. Pure no-shows
     (joined but never submitted) are not rated.
     """
-    from apps.notifications.services import notify_user
+    from apps.notifications.services import notify_users
     from apps.submissions.models import Submission
     from apps.users.models import EloHistory, User
     from apps.users.services import EloParticipant, compute_elo_deltas
@@ -376,8 +376,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
         # One doorbell per person, never one per row: the signal carries no
         # data, so two of them cost the client the same single refetch as one.
-        for user_id in to_ring:
-            transaction.on_commit(partial(notify_user, user_id))
+        transaction.on_commit(partial(notify_users, to_ring))
 
     return len(ordered_uids)
 

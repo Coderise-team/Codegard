@@ -76,8 +76,11 @@ def test_publishing_a_problem_does_not_fail_when_redis_is_down():
 
 
 @pytest.mark.django_db(transaction=True)
-def test_one_failed_doorbell_does_not_silence_the_rest():
-    """Every recipient is still tried: the first failure used to skip them all."""
+def test_an_unreachable_redis_is_tried_once_not_once_per_person():
+    """A real unreachable Redis spends about four seconds on every send before
+    it gives up, and the rings go one after another. Trying everyone would hold
+    the admin's request for four seconds per person, so the first failure ends
+    the run: one attempt, however many people are waiting."""
     for i in range(5):
         make_user(f"member{i}", 1200)
     layer = RedisDown()
@@ -85,7 +88,9 @@ def test_one_failed_doorbell_does_not_silence_the_rest():
     with patch("channels.layers.get_channel_layer", return_value=layer):
         make_problem("Two Sum", is_hidden=False)
 
-    assert layer.attempts == 5
+    assert layer.attempts == 1
+    # Nothing is lost: every notification is already saved for the next fetch.
+    assert Notification.objects.filter(type=Notification.Type.NEW_PROBLEM).count() == 5
 
 
 # --- a failed announcement does not take the status task down --------------

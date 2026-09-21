@@ -48,7 +48,7 @@ def announce_new_problems(problems) -> None:
     joined in between has no row yet and would get yesterday's news.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_bulk, notify_user
+    from apps.notifications.services import create_bulk, notify_users
 
     problem_ids = [problem.pk for problem in problems]
     if not problem_ids:
@@ -113,8 +113,7 @@ def announce_new_problems(problems) -> None:
         )
 
     # One doorbell per person for the whole batch, not one per problem.
-    for user_id in to_ring:
-        transaction.on_commit(partial(notify_user, user_id))
+    transaction.on_commit(partial(notify_users, to_ring))
 
 
 # The user-facing word for each resolution. Kept separate from the column value
@@ -140,7 +139,7 @@ def announce_report_resolved(report) -> None:
     clickable, while the text still names what the report was about.
     """
     from apps.notifications.models import Notification
-    from apps.notifications.services import create_notification, notify_user
+    from apps.notifications.services import create_notification, notify_users
 
     outcome = _REPORT_OUTCOMES.get(report.status)
     if outcome is None:
@@ -160,4 +159,4 @@ def announce_report_resolved(report) -> None:
         link=f"/problems/{report.problem_id}" if report.problem_id else "",
     )
     if created:
-        transaction.on_commit(partial(notify_user, report.user_id))
+        transaction.on_commit(partial(notify_users, [report.user_id]))

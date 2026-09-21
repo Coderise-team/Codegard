@@ -16,6 +16,7 @@ from apps.notifications.services import (
     create_bulk,
     create_notification,
     notify_user,
+    notify_users,
 )
 from factories import make_notification, make_user
 
@@ -230,3 +231,33 @@ def test_notify_user_survives_an_unconfigured_channel_layer():
     """Plain unit tests run without a channel layer; ringing must be a no-op."""
     with patch("channels.layers.get_channel_layer", return_value=None):
         notify_user(1)  # should not raise
+
+
+# --- notify_users ----------------------------------------------------------
+
+
+def test_notify_users_rings_everyone_it_is_given():
+    with patch("apps.notifications.services.group_send") as send:
+        notify_users([1, 2, 3])
+
+    assert [c.args[0] for c in send.call_args_list] == ["user_1", "user_2", "user_3"]
+
+
+def test_notify_users_stops_at_the_first_failure(caplog):
+    """The next sends would hit the same unreachable Redis and wait just as
+    long, so the run ends there. The failure is logged, not raised."""
+    with patch(
+        "apps.notifications.services.group_send",
+        side_effect=[None, ConnectionError("redis down"), None],
+    ) as send:
+        notify_users([1, 2, 3])  # must not raise
+
+    assert send.call_count == 2  # user 3 is never tried
+    assert "skipping the remaining rings" in caplog.text
+
+
+def test_notify_users_with_nobody_to_ring_does_nothing():
+    with patch("apps.notifications.services.group_send") as send:
+        notify_users([])
+
+    send.assert_not_called()
