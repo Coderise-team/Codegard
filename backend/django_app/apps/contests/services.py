@@ -10,6 +10,8 @@ Formula:
   leaderboard = sorted by score DESC, penalty ASC, last_ac_at ASC
 """
 
+from typing import NamedTuple
+
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -263,9 +265,23 @@ def get_contest_history(user):
     )
 
 
-def apply_contest_ratings(contest: Contest) -> int:
+class RatingResult(NamedTuple):
+    """What rating one contest produced.
+
+    ``rated`` is how many contestants got a new rating — the task's report.
+    ``to_ring`` is who received a notification, handed back rather than rung
+    here: the batch announces the contest's end in the same run, and the
+    people it reaches overlap with these, so the batch rings everyone once.
     """
-    Award ELO for one finished contest. Returns the number of participants updated.
+
+    rated: int
+    to_ring: set[int]
+
+
+def apply_contest_ratings(contest: Contest) -> RatingResult:
+    """
+    Award ELO for one finished contest. Returns a ``RatingResult``: how many
+    contestants were rated, and who got a notification and still needs a ring.
 
     Idempotent: locks the Contest row and re-checks `rating_applied`, so two
     overlapping beat runs never double-count. Everything is one transaction, so
@@ -283,7 +299,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         # 1. Lock the contest and re-check the flag (the task's filter is not enough).
         contest = Contest.objects.select_for_update().get(pk=contest.pk)
         if contest.rating_applied:
-            return 0
+            return RatingResult(0, set())
 
         # 2. Build the set: everyone who submitted at least once.
         submitter_ids = set(
@@ -304,7 +320,7 @@ def apply_contest_ratings(contest: Contest) -> int:
             contest.rating_applied = True
             contest.save(update_fields=["rating_applied"])
             transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
-            return 0
+            return RatingResult(0, set())
 
         # 4. Lock users (stable order, anti-deadlock) and snapshot ratings BEFORE.
         users = {
@@ -331,6 +347,9 @@ def apply_contest_ratings(contest: Contest) -> int:
 
         # 6. Apply (one save per row — fields chosen so the avatar signal skips).
         scored_by_uid = {cs.user_id: cs for cs in scored}
+        # Who ends up with something new to read. Collected across the whole
+        # loop so each person is rung once, however many rows they got.
+        to_ring: set[int] = set()
         for uid in ordered_uids:
             user = users[uid]
             new_rating = snapshot[uid] + deltas[uid]
@@ -356,10 +375,75 @@ def apply_contest_ratings(contest: Contest) -> int:
                 )
             EloHistory.objects.create(user=user, rating=new_rating)
 
+            # Written inside the transaction, with the ratings they describe:
+            # either both are durable or neither happened. Created after the
+            # commit instead, a crash in between would leave `rating_applied`
+            # already committed, and the retry would never come.
+            if _create_rating_notifications(user, contest, snapshot[uid], new_rating):
+                to_ring.add(uid)
+
         # 7. Mark done in the same transaction.
         contest.rating_applied = True
         contest.save(update_fields=["rating_applied"])
         # Every row just grew a rating_delta — the cached pages are all wrong.
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
 
-    return len(ordered_uids)
+    return RatingResult(len(ordered_uids), to_ring)
+
+
+def _create_rating_notifications(
+    user, contest: Contest, old_rating: int, new_rating: int
+) -> bool:
+    """Tell one contestant what the round did to their standing.
+
+    Two separate notifications, on purpose: "your rating moved" and "you reached
+    a new rank" are different news, and together with `contest_ended` they lead
+    to different places. Merging them would cost clarity to save a row.
+
+    Returns whether anything was actually created, so the caller can ring that
+    person once instead of once per row.
+    """
+    from apps.notifications.models import Notification
+    from apps.notifications.services import create_notification
+    from apps.users.services import get_rank
+
+    # Both events are about where the user now stands, so both point at the
+    # profile — that is the page showing the rating and the rank.
+    link = f"/users/{user.username}"
+    created_any = False
+
+    delta = new_rating - old_rating
+    # A delta of exactly zero is reachable (the ELO maths rounds), and
+    # "Rating changed: 0 -> 1461" would be a notification about nothing. Such a
+    # contestant still hears from `contest_ended` that the round is over.
+    if delta:
+        _, created = create_notification(
+            user=user,
+            type=Notification.Type.RATING_CHANGED,
+            dedup_key=f"contest_{contest.pk}_rating",
+            title="Rating changed",
+            body=f"{delta:+d} → {new_rating}",
+            link=link,
+        )
+        created_any = created_any or created
+
+    old_rank = get_rank(old_rating)
+    new_rank = get_rank(new_rating)
+    if old_rank != new_rank:
+        # Ranks are a monotonic function of rating, so once the names differ the
+        # direction of the move is simply the sign of the delta — no need to
+        # walk RANK_THRESHOLDS looking for positions.
+        promoted = delta > 0
+        _, created = create_notification(
+            user=user,
+            type=Notification.Type.RANK_CHANGED,
+            dedup_key=f"contest_{contest.pk}_rank",
+            title="New rank" if promoted else "Rank changed",
+            body=(
+                f"You reached {new_rank}" if promoted else f"You dropped to {new_rank}"
+            ),
+            link=link,
+        )
+        created_any = created_any or created
+
+    return created_any
