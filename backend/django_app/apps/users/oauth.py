@@ -27,7 +27,12 @@ _ENDPOINTS = {
         "authorize": "https://accounts.google.com/o/oauth2/v2/auth",
         "token": "https://oauth2.googleapis.com/token",
         "userinfo": "https://www.googleapis.com/oauth2/v3/userinfo",
-        "scope": "openid email profile",
+        # No `profile`: the only things read out of the userinfo response
+        # are `sub`, `email` and `email_verified`, and all three come with
+        # `openid email`. Asking for a scope we never read would put a
+        # claim on the consent screen — and in the privacy policy — that
+        # the code does not back.
+        "scope": "openid email",
     },
     "github": {
         "authorize": "https://github.com/login/oauth/authorize",
