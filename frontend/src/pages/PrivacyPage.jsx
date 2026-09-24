@@ -391,9 +391,10 @@ export default function PrivacyPage() {
             disappears from them.
           </li>
           <li>
-            <strong>Backups</strong> — encrypted snapshots on a rolling
-            schedule, so a copy of the database survives for a while after any
-            change to it.
+            <strong>Backups</strong> — encrypted snapshots of the database: a
+            full one every week and an incremental one every day. We keep seven
+            daily and two weekly copies, so the oldest of them is about two
+            weeks old.
           </li>
         </ul>
 
@@ -419,8 +420,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           Two things outlive the request by their nature: your data stays in our
-          backups until those copies age out, and in the server logs until they
-          rotate.
+          backups for up to about two weeks, until those copies age out, and in
+          the server logs until they rotate.
         </p>
 
         <h2 id="cookies">Cookies and local storage</h2>
