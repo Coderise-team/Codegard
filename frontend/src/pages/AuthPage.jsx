@@ -1,5 +1,10 @@
 import { useEffect, useId, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import './AuthPage.css';
 import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
@@ -252,6 +257,12 @@ function LoginForm({
       </div>
 
       <OAuthButtons onOAuth={onOAuth} disabled={loading} />
+
+      {/* Reachable from here too, but no consent is asked a second time — the
+          account already exists. */}
+      <p className="auth-legal">
+        <Link to="/privacy">Privacy Policy</Link>
+      </p>
     </form>
   );
 }
@@ -316,6 +327,16 @@ function RegisterForm({
       </div>
 
       <OAuthButtons onOAuth={onOAuth} disabled={loading} />
+
+      {/* "Acknowledge", not a tickbox: the policy is information we owe the
+          reader, not an agreement, so a consent checkbox here would claim
+          consent as the basis for everything — which the policy's own Legal
+          basis section contradicts. Below the OAuth buttons so it covers
+          signing up with a provider as well as with the form. */}
+      <p className="auth-legal">
+        By creating an account you acknowledge our{' '}
+        <Link to="/privacy">Privacy Policy</Link>.
+      </p>
     </form>
   );
 }
