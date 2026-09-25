@@ -156,9 +156,12 @@ export default function TermsPage() {
             reach the network from it, or read anything on the host.
           </li>
           <li>
-            Do not attack, overload or probe the platform. This includes working
-            around the request limits we set, and sending automated traffic the
-            interface does not itself produce.
+            Do not attack or overload the platform, and do not scan it for
+            weaknesses. This includes working around the request limits we set,
+            and sending automated traffic the interface does not itself produce.
+            If you do find a security problem, write to us at{' '}
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> instead of
+            using it.
           </li>
           <li>
             Do not try to reach other people&apos;s accounts, submissions or
