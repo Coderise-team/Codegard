@@ -188,6 +188,24 @@
   color: var(--gold);
 }
 
+/* ── Legal note ──────────────────────────────────────────────── */
+/* Quieter than the switch line below it: this is a notice to be found when
+   looked for, not a call to action competing with the submit button. */
+.auth-legal {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--fg2);
+}
+.auth-legal a {
+  color: var(--fg2);
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+.auth-legal a:hover {
+  color: var(--gold);
+}
+
 /* ── Error ───────────────────────────────────────────────────── */
 .auth-error {
   font-size: 12.5px;
