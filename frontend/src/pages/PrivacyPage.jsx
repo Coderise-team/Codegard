@@ -7,7 +7,7 @@ import './PrivacyPage.css';
 // while signed out, so it renders standalone (no Sidebar/Navbar app shell).
 
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
-const LAST_UPDATED = 'September 24, 2026';
+const LAST_UPDATED = 'September 25, 2026';
 
 // Section id → table-of-contents label. The order here is the order on the page.
 const SECTIONS = [
@@ -178,12 +178,13 @@ export default function PrivacyPage() {
           <li>run your submitted code in an isolated sandbox and grade it</li>
           <li>calculate contest results and ratings</li>
           <li>
-            send you notifications about contests, rating changes, and the
-            problem reports you filed
+            send you notifications about contests, new problems, rating and rank
+            changes, and the problem reports you filed
           </li>
           <li>
-            limit how often requests can be made from one address, to prevent
-            abuse
+            limit how often certain requests can be made — counted per account
+            when you are signed in, and per address when you are not — to
+            prevent abuse
           </li>
           <li>keep the service secure and diagnose technical problems</li>
         </ul>
@@ -333,12 +334,16 @@ export default function PrivacyPage() {
           </li>
           <li>the global standings</li>
           <li>
+            your rating history, your daily-challenge streak, your overall
+            acceptance rate, and how many contests you have entered
+          </li>
+          <li>
             your solved-by-difficulty breakdown, your activity calendar, and
             your contest history
           </li>
           <li>
-            the list of your submissions, with the problem, the verdict, and the
-            run time
+            the list of your submissions, with the problem, the verdict, the run
+            time, and when you sent it
           </li>
         </ul>
         <p>
@@ -449,11 +454,11 @@ export default function PrivacyPage() {
 
         <h2 id="automated">Automated grading and rating</h2>
         <p>
-          Your submission is run automatically and its output is compared byte
-          for byte with the expected answer; no human judgement goes into the
-          verdict. After a rated contest, your rating is recalculated
-          automatically from your placing and the ratings of the people you
-          competed against.
+          Your submission is run automatically and its output is compared with
+          the expected answer, ignoring whitespace at the ends of lines; no
+          human judgement goes into the verdict. After a rated contest, your
+          rating is recalculated automatically from your placing and the ratings
+          of the people you competed against.
         </p>
         <p>
           These automated steps decide your verdict and your place on the
@@ -508,8 +513,8 @@ export default function PrivacyPage() {
         <ul>
           <li>
             Submitted code runs in a container with no network access, a
-            read-only file system, and no privileges; the container is destroyed
-            after every run.
+            read-only file system, and as an unprivileged user; the container is
+            destroyed after every run.
           </li>
           <li>
             Avatar images are re-encoded when you upload them, which strips the

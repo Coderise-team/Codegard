@@ -1,6 +1,7 @@
 """Tests for the OAuth login flow: start -> callback -> redeem."""
 
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from apps.users import oauth
@@ -53,6 +54,29 @@ def test_start_returns_authorize_url_with_state(api_client):
     body = api_client.get(reverse("users:oauth-start", args=["google"])).json()
     assert "accounts.google.com" in body["authorize_url"]
     assert "state=" in body["authorize_url"]
+
+
+def _scope_of(body) -> list[str]:
+    return parse_qs(urlparse(body["authorize_url"]).query)["scope"][0].split()
+
+
+@pytest.mark.django_db
+def test_google_start_asks_only_for_openid_and_email(api_client):
+    """Pin the Google scope, because the privacy policy states it.
+
+    The policy tells the reader we never ask Google for a name or a picture.
+    That promise now lives in a legal document, so widening the scope again has
+    to fail a test rather than quietly turn the page into a lie.
+    """
+    body = api_client.get(reverse("users:oauth-start", args=["google"])).json()
+    assert _scope_of(body) == ["openid", "email"]
+
+
+@pytest.mark.django_db
+def test_github_start_asks_only_for_the_scopes_the_policy_names(api_client):
+    """Same pin for GitHub: the policy names these two scopes by name."""
+    body = api_client.get(reverse("users:oauth-start", args=["github"])).json()
+    assert _scope_of(body) == ["read:user", "user:email"]
 
 
 @pytest.mark.django_db
