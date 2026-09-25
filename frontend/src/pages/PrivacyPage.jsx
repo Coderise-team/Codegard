@@ -126,8 +126,8 @@ export default function PrivacyPage() {
           your email address before the &quot;@&quot;.
         </p>
         <p>
-          <strong>Data from GitHub Sign-In</strong> (scopes:{' '}
-          <code>read:user</code>, <code>user:email</code>):
+          <strong>Data from GitHub Sign-In</strong> (scope:{' '}
+          <code>user:email</code>):
         </p>
         <ul>
           <li>Your GitHub account identifier</li>

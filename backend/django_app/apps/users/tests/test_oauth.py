@@ -73,10 +73,10 @@ def test_google_start_asks_only_for_openid_and_email(api_client):
 
 
 @pytest.mark.django_db
-def test_github_start_asks_only_for_the_scopes_the_policy_names(api_client):
-    """Same pin for GitHub: the policy names these two scopes by name."""
+def test_github_start_asks_only_for_the_scope_the_policy_names(api_client):
+    """Same pin for GitHub: the policy names this scope by name."""
     body = api_client.get(reverse("users:oauth-start", args=["github"])).json()
-    assert _scope_of(body) == ["read:user", "user:email"]
+    assert _scope_of(body) == ["user:email"]
 
 
 @pytest.mark.django_db

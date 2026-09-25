@@ -39,7 +39,11 @@ _ENDPOINTS = {
         "token": "https://github.com/login/oauth/access_token",
         "userinfo": "https://api.github.com/user",
         "emails": "https://api.github.com/user/emails",
-        "scope": "read:user user:email",
+        # No `read:user`: the only things read out of the userinfo response
+        # are `id` and `login`, and GitHub returns both to a token holding
+        # `user:email` alone — verified against the live API. The emails
+        # endpoint is what actually needs a scope, and that is this one.
+        "scope": "user:email",
     },
 }
 
