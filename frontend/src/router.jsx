@@ -10,6 +10,7 @@ import ContestProblemPage from './pages/ContestProblemPage';
 import StandingsPage from './pages/StandingsPage';
 import ProfilePage from './pages/ProfilePage';
 import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import HomeRoute from './components/HomeRoute';
@@ -40,6 +41,9 @@ export const router = createBrowserRouter([
       // including a signed-out Google verification reviewer, so it sits outside
       // both PrivateRoute and GuestRoute.
       { path: '/privacy', element: <PrivacyPage /> },
+      // Public for the same reason: terms count as shown only if they can be
+      // read before an account exists, and the sign-up screens link here.
+      { path: '/terms', element: <TermsPage /> },
       // The root belongs to both audiences: it answers with the dashboard to a
       // member and with the landing page to a guest, so it sits outside both
       // guards and picks for itself.

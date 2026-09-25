@@ -29,6 +29,40 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      Structured data. This is where a search engine reads the site's name and
+      who is behind it, instead of guessing them from the title; it is what
+      makes a search for "Codegard" resolve to this site rather than to the
+      domain. Static markup, identical on every route, because the SPA has one
+      HTML shell and the facts here are about the site, not the page.
+
+      No SearchAction: that element promises a search URL a crawler may send
+      visitors to, and ours is behind the login. No sameAs either, until there
+      is a public profile to point at.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://codegard.dev/#organization",
+            "name": "Codegard",
+            "url": "https://codegard.dev/",
+            "logo": "https://codegard.dev/icon-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://codegard.dev/#website",
+            "name": "Codegard",
+            "url": "https://codegard.dev/",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://codegard.dev/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
