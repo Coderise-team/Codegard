@@ -26,6 +26,13 @@ const SECTIONS = [
   ['contact', 'Contact us'],
 ];
 
+/**
+ * TermsPage — the terms of service, read before an account exists.
+ *
+ * Standalone like the privacy policy: no AppShell, its own scroll area, and a
+ * logo that goes home. The sign-up screens link here, so it has to render for
+ * a visitor who is not signed in.
+ */
 export default function TermsPage() {
   useEffect(() => {
     const previous = document.title;
