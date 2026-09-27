@@ -75,18 +75,3 @@ def predicted_deltas_cache_key(contest_id: int) -> str:
     return f"contest:{contest_id}:lb:g{generation}:predictions"
 
 
-def get_predicted_deltas(contest) -> dict[int, int]:
-    """Predicted deltas for a contest, cached under the leaderboard generation.
-
-    Cache miss computes once (compute_predicted_deltas is O(rating set), not
-    O(page)) and stores with LEADERBOARD_TTL — the same lifetime as
-    leaderboard pages, per decision 8, not a lifetime of its own.
-    """
-    from apps.contests.services import compute_predicted_deltas
-
-    key = predicted_deltas_cache_key(contest.id)
-    deltas = cache.get(key)
-    if deltas is None:
-        deltas = compute_predicted_deltas(contest)
-        cache.set(key, deltas, LEADERBOARD_TTL)
-    return deltas
