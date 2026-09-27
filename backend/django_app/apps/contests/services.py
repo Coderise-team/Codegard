@@ -10,6 +10,7 @@ Formula:
   leaderboard = sorted by score DESC, penalty ASC, last_ac_at ASC
 """
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -25,7 +26,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, DenseRank
 from django.utils import timezone
 
-from .cache import bust_leaderboard_cache
+from .cache import bust_leaderboard_cache, bust_leaderboard_cache, predicted_deltas_cache_key
 from .models import Contest, ContestScore
 
 BASE_POINTS = 100
@@ -264,15 +265,14 @@ def get_contest_history(user):
 
 
 def _collect_rating_participants(contest: Contest):
-    """Read-only. Rating set for a contest, in place order (decision 5).
+    """Read-only. Rating set for a contest, in place order.
 
-    Same rule apply_contest_ratings has always used: everyone who submitted
-    at least once. ``scored`` are users with an existing ContestScore row
-    (created on their first AC — see calculate_score); ``zero_ids`` are
-    submitters who never got one (WA/TLE/etc. only, no AC yet), who rank
-    last with place_key (0, 0, None). Pure no-shows (registered, never
-    submitted) are absent by construction — get_scored_rows only returns
-    ContestScore rows, and zero_ids is submitter_ids minus scored_uids.
+    Everyone who submitted at least once. ``scored`` are users with an
+    existing ContestScore row (created on their first AC — see
+    calculate_score); ``zero_ids`` are submitters who never got one (WA/TLE/
+    etc. only, no AC yet), who rank last with place_key (0, 0, None). Pure
+    no-shows (registered, never submitted) are absent by construction — they
+    must stay unrated, exactly like the real ELO award.
 
     Returns (ordered_uids, scored, zero_ids) so callers can rebuild
     EloParticipant entries without re-querying.
@@ -284,6 +284,8 @@ def _collect_rating_participants(contest: Contest):
         .values_list("user_id", flat=True)
         .distinct()
     )
+    # get_scored_rows, NOT get_leaderboard: the latter includes every
+    # registered participant, and pure no-shows must stay unrated.
     scored = list(get_scored_rows(contest))  # ContestScore rows, in place order
     scored_uids = {cs.user_id for cs in scored}
     zero_ids = [uid for uid in submitter_ids if uid not in scored_uids]
@@ -322,10 +324,12 @@ def apply_contest_ratings(contest: Contest) -> int:
     overlapping beat runs never double-count. Everything is one transaction, so
     a mid-flight crash rolls back and the contest is retried next run.
 
-    Rating-set collection and place-key construction live in
-    _collect_rating_participants / _build_rating_entries, shared with the
-    read-only rating predictor — the transaction, locking, and writes stay
-    here.
+    Rating set = everyone who made >=1 submission. Those who solved nothing get
+    score=0 / last place and a freshly created ContestScore. Pure no-shows
+    (joined but never submitted) are not rated. Set collection and place-key
+    construction live in _collect_rating_participants / _build_rating_entries,
+    shared with the read-only rating predictor — the transaction, locking, and
+    writes stay here.
     """
     from apps.users.models import EloHistory, User
     from apps.users.services import compute_elo_deltas
@@ -389,6 +393,7 @@ def apply_contest_ratings(contest: Contest) -> int:
         # 7. Mark done in the same transaction.
         contest.rating_applied = True
         contest.save(update_fields=["rating_applied"])
+        # Every row just grew a rating_delta — the cached pages are all wrong.
         transaction.on_commit(lambda: bust_leaderboard_cache(contest.pk))
 
     return len(ordered_uids)
@@ -399,22 +404,22 @@ def compute_predicted_deltas(contest: Contest) -> dict[int, int]:
 
     No transaction, no locking, no writes — ratings are read as plain current
     values, not a select_for_update snapshot, because nothing here commits.
-    Empty dict when the contest's rating is already applied (decision 7) or
-    the rating set has fewer than two people (mirrors apply_contest_ratings'
-    own "<2 → nothing to rate" branch, without the write).
+    Empty dict once the contest's rating has been applied, or when the rating
+    set has fewer than two people (mirrors apply_contest_ratings' own
+    "<2 → nothing to rate" branch, without the write).
 
     Uses the exact same rating set and place keys as apply_contest_ratings
-    (via the two functions above) and the same compute_elo_deltas — so
-    "prediction == real delta when nothing changed between the two calls"
-    is not a coincidence, it's the same computation on the same inputs.
+    (via the two functions above) and the same compute_elo_deltas, so
+    "prediction == real delta when nothing changed between the two calls" is
+    guaranteed by sharing the computation, not by coincidence.
     """
     from apps.users.models import User
     from apps.users.services import compute_elo_deltas
 
-    if contest.rating_applied:  # decision 7
+    if contest.rating_applied:
         return {}
 
-    ordered_uids, scored, zero_ids = _collect_rating_participants(contest)  # decision 5
+    ordered_uids, scored, zero_ids = _collect_rating_participants(contest)
     if len(ordered_uids) < 2:
         return {}
 
@@ -423,4 +428,20 @@ def compute_predicted_deltas(contest: Contest) -> dict[int, int]:
     )
 
     participants = _build_rating_entries(scored, zero_ids, ratings_now)
-    return compute_elo_deltas(participants)  # not touched — same formula
+    return compute_elo_deltas(participants)
+
+
+def get_predicted_deltas(contest: Contest) -> dict[int, int]:
+    """Predicted deltas for a contest, cached under the leaderboard generation.
+
+    Cache miss runs the full comparison in compute_predicted_deltas once —
+    quadratic in the rating set size, each participant against every other —
+    and stores it with LEADERBOARD_TTL, the same lifetime as leaderboard
+    pages: this cache has no reason to outlive them.
+    """
+    key = predicted_deltas_cache_key(contest.pk)
+    deltas = cache.get(key)
+    if deltas is None:
+        deltas = compute_predicted_deltas(contest)
+        cache.set(key, deltas, LEADERBOARD_TTL)
+    return deltas
