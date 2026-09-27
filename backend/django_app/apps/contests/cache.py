@@ -73,5 +73,3 @@ def predicted_deltas_cache_key(contest_id: int) -> str:
     """
     generation = get_generation(contest_id)
     return f"contest:{contest_id}:lb:g{generation}:predictions"
-
-

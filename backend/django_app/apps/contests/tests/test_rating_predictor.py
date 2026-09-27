@@ -77,7 +77,9 @@ def test_same_result_same_rating_same_delta(users, problems, finished_contest):
 
 
 @pytest.mark.django_db
-def test_same_result_different_rating_weaker_gains_more(users, problems, finished_contest):
+def test_same_result_different_rating_weaker_gains_more(
+    users, problems, finished_contest
+):
     a, b, _ = users
     b.elo_rating = 1000  # weaker than a's 1200
     b.save(update_fields=["elo_rating"])
@@ -118,7 +120,9 @@ def test_registered_no_submission_gets_no_prediction(users, problems, finished_c
 
 
 @pytest.mark.django_db
-def test_submitted_nothing_solved_gets_last_place_prediction(users, problems, finished_contest):
+def test_submitted_nothing_solved_gets_last_place_prediction(
+    users, problems, finished_contest
+):
     a, b, _ = users
     c = finished_contest
     make_submission(a, problems[0], c)
@@ -154,7 +158,9 @@ def test_prediction_empty_after_rating_applied(users, problems, finished_contest
 
 
 @pytest.mark.django_db
-def test_prediction_matches_actual_delta_when_nothing_changes(users, problems, finished_contest):
+def test_prediction_matches_actual_delta_when_nothing_changes(
+    users, problems, finished_contest
+):
     """The most valuable test in the branch: proves we show people the real
     number, not a plausible-looking guess."""
     a, b, _ = users

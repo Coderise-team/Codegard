@@ -26,7 +26,11 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, DenseRank
 from django.utils import timezone
 
-from .cache import bust_leaderboard_cache, bust_leaderboard_cache, predicted_deltas_cache_key
+from .cache import (
+    LEADERBOARD_TTL,
+    bust_leaderboard_cache,
+    predicted_deltas_cache_key,
+)
 from .models import Contest, ContestScore
 
 BASE_POINTS = 100

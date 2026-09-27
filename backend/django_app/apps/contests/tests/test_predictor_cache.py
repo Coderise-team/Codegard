@@ -98,7 +98,9 @@ def test_new_accepted_submission_bumps_generation_and_recomputes(
 
 
 @pytest.mark.django_db
-def test_leaderboard_and_my_standing_agree(api_client, users, problems, finished_contest):
+def test_leaderboard_and_my_standing_agree(
+    api_client, users, problems, finished_contest
+):
     a, b, c_user = users
     c = finished_contest
     c.participants.add(a, b, c_user)  # get_leaderboard() reads from
@@ -136,7 +138,9 @@ def test_registered_non_submitter_leaderboard_row_is_null_not_zero(
     make_submission(b, problems[0], c)
 
     api_client.force_authenticate(a)
-    response = api_client.get(leaderboard_url(c))
+    # page_size big enough to fit all three participants on one page — this
+    # test is about the null-vs-zero distinction, not pagination.
+    response = api_client.get(f"/api/contests/{c.pk}/leaderboard/?page_size=10")
     rows = response.json()["results"]
     row = next(r for r in rows if r["username"] == lurker.username)
 
