@@ -180,9 +180,11 @@ class LeaderboardEntrySerializer(serializers.Serializer):
         return getattr(obj, "rank", None)
 
     def get_predicted_delta(self, obj):
-        # Dict is injected via context by the view, computed once for the
-        # whole contest before pagination — not per row (see cache.py).
-        deltas = self.context.get("predicted_deltas") or {}
+        # Deliberately no `or {}` fallback: a missing context here means
+        # whoever instantiated this serializer forgot to pass
+        # predicted_deltas, and that should raise loudly, not silently
+        # render every row's prediction as empty.
+        deltas = self.context["predicted_deltas"]
         return deltas.get(obj.pk)
 
 
