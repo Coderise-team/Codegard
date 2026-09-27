@@ -16,7 +16,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from .cache import LEADERBOARD_TTL, get_predicted_deltas, leaderboard_page_key
+from .cache import LEADERBOARD_TTL, leaderboard_page_key
 from .models import Contest, ContestScore
 from .pagination import ContestPanelPagination
 from .serializers import (
@@ -26,7 +26,7 @@ from .serializers import (
     ContestWriteSerializer,
     LeaderboardEntrySerializer,
 )
-from .services import get_leaderboard, get_participant_rank
+from .services import get_leaderboard, get_participant_rank, get_predicted_deltas
 
 # Trigram title search knobs. Queries under 3 chars have no useful trigram
 # signal. 0.35 is inherited from the problem catalog, where it was validated on
