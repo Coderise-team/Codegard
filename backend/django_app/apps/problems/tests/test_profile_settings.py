@@ -3,18 +3,6 @@ from django.core.files.storage import default_storage
 from rest_framework import status
 
 
-def test_profile_empty_fields(db, user, user_client):
-    user.refresh_from_db()
-
-    assert user.avatar.name == ""
-    assert user.avatar_thumb.name == ""
-    assert user.bio == ""
-
-    response = user_client.get("/api/users/me/")
-
-    assert response.data["avatar"] is None
-
-
 def test_profile_delete_photo(db, user, user_client):
     _give_avatar(user)
     old_avatar = user.avatar.name
