@@ -4,6 +4,7 @@ const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('./client', () => ({ default: { get, post } }));
 
 import * as contests from './contests';
+import * as notifications from './notifications';
 import * as problems from './problems';
 import * as standings from './standings';
 import * as submissions from './submissions';
@@ -201,6 +202,21 @@ const reads = [
     answer: { count: 1, results: [] },
     result: { count: 1, results: [] },
   },
+  {
+    // The feed scrolls page by page, so it needs the envelope with `next`.
+    name: 'notifications.getNotifications',
+    run: () => notifications.getNotifications({ page: 2 }),
+    calledWith: ['notifications/', { params: { page: 2 } }],
+    answer: { count: 21, next: null, results: [{ id: 812 }] },
+    result: { count: 21, next: null, results: [{ id: 812 }] },
+  },
+  {
+    name: 'notifications.getUnreadCount',
+    run: () => notifications.getUnreadCount(),
+    calledWith: ['notifications/unread-count/'],
+    answer: { count: 3 },
+    result: 3,
+  },
 ];
 
 beforeEach(() => {
@@ -267,6 +283,17 @@ describe('problems.reportProblem', () => {
 
     expect(post).toHaveBeenCalledWith('problems/42/report/', body);
     expect(data).toEqual({ detail: 'Report submitted.' });
+  });
+});
+
+describe('notifications.markSeen', () => {
+  it('posts the ids that were on screen and returns the unseen count left', async () => {
+    post.mockResolvedValue({ data: { count: 30 } });
+
+    await expect(notifications.markSeen([812, 813])).resolves.toBe(30);
+    expect(post).toHaveBeenCalledWith('notifications/seen/', {
+      ids: [812, 813],
+    });
   });
 });
 
