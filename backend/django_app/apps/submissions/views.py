@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -6,6 +9,8 @@ from rest_framework.views import APIView
 from .models import Submission
 from .serializers import SubmissionCreateSerializer, SubmissionSerializer
 from .tasks import push_to_judge_queue
+
+DUPLICATE_SUBMISSION_WINDOW_SECONDS = 30
 
 LANGUAGE_TEMPLATES = {
     Submission.Language.PYTHON: {
@@ -55,6 +60,22 @@ class SubmissionViewSet(
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        problem = serializer.validated_data["problem"]
+
+        if Submission.objects.filter(
+            user=request.user,
+            problem=problem,
+            code=serializer.validated_data["code"],
+            created_at__gte=timezone.now()
+            - timedelta(seconds=DUPLICATE_SUBMISSION_WINDOW_SECONDS),
+        ).exists():
+            return Response(
+                {
+                    "detail": "This solution has already been sent recently, "
+                    "wait for the verdict."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # Inject current user
         submission = serializer.save(user=request.user)
 

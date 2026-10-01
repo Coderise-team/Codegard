@@ -24,11 +24,11 @@ class User(AbstractUser):
     current and peak ELO rating)."""
 
     email = models.EmailField(unique=True)
-    avatar = models.ImageField(upload_to=user_avatar_upload_to, blank=True, null=True)
+    avatar = models.ImageField(upload_to=user_avatar_upload_to, blank=True, default="")
     avatar_thumb = models.ImageField(
-        upload_to=user_avatar_thumb_upload_to, blank=True, null=True
+        upload_to=user_avatar_thumb_upload_to, blank=True, default=""
     )
-    bio = models.TextField(blank=True, null=True)
+    bio = models.TextField(blank=True, default="")
     elo_rating = models.IntegerField(default=1200, db_index=True)
     max_rating = models.IntegerField(default=1200, db_index=True)
 

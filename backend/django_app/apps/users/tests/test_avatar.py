@@ -171,8 +171,8 @@ def test_clear_deletes_both_files(user, fs_storage):
     _give_avatar(user)
     master, thumb = user.avatar.name, user.avatar_thumb.name
 
-    user.avatar = None
-    user.avatar_thumb = None
+    user.avatar = ""
+    user.avatar_thumb = ""
     user.save(update_fields=["avatar", "avatar_thumb"])
 
     assert not default_storage.exists(master)
@@ -345,3 +345,72 @@ def test_stash_skips_when_old_row_is_missing(fs_storage):
     stash_old_avatar_on_change(User, ghost)
 
     assert getattr(ghost, "_avatar_files_to_delete", None) is None
+
+
+# --- delete -----------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_delete_clears_both_fields_and_files(user_client, user, fs_storage):
+    _give_avatar(user)
+    master, thumb = user.avatar.name, user.avatar_thumb.name
+
+    resp = user_client.delete(AVATAR_URL)
+
+    assert resp.status_code == 200
+    assert resp.data == {"avatar": None}
+    user.refresh_from_db()
+    assert user.avatar.name == ""
+    assert user.avatar_thumb.name == ""
+    assert not default_storage.exists(master)
+    assert not default_storage.exists(thumb)
+
+
+@pytest.mark.django_db
+def test_delete_repeated_removal_is_not_error(user_client, fs_storage):
+    resp = user_client.delete(AVATAR_URL)
+
+    assert resp.status_code == 200
+    assert resp.data == {"avatar": None}
+
+    resp = user_client.delete(AVATAR_URL)
+
+    assert resp.status_code == 200
+    assert resp.data == {"avatar": None}
+
+
+@pytest.mark.django_db
+def test_delete_anonymous_user_cannot_delete(api_client, fs_storage):
+    resp = api_client.delete(AVATAR_URL)
+
+    assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_delete_after_deletion_profile_returns_blank_avatar(
+    user_client, user, api_client, fs_storage
+):
+    _give_avatar(user)
+
+    resp = user_client.delete(AVATAR_URL)
+    avatar = api_client.get("/api/users/me/")
+
+    assert avatar.data["avatar"] is None
+    assert resp.status_code == 200
+    assert resp.data == {"avatar": None}
+
+
+@pytest.mark.django_db
+def test_delete_after_deletion_you_can_download_new_one(
+    user_client, user, api_client, fs_storage
+):
+    _give_avatar(user)
+
+    resp = user_client.delete(AVATAR_URL)
+    avatar = api_client.post(
+        AVATAR_URL, {"avatar": _image_upload()}, format="multipart"
+    )
+
+    assert resp.status_code == 200
+    assert avatar.status_code == 200
+    assert avatar.data["avatar"] is not None

@@ -25,8 +25,8 @@ class UserAdmin(DjangoUserAdmin):
         for user in queryset:
             if not (user.avatar or user.avatar_thumb):
                 continue
-            user.avatar = None
-            user.avatar_thumb = None
+            user.avatar = ""
+            user.avatar_thumb = ""
             user.save(update_fields=["avatar", "avatar_thumb"])
             cleared += 1
         self.message_user(request, f"Cleared {cleared} avatar(s).")
