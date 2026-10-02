@@ -229,19 +229,6 @@
   padding: 1px 5px;
 }
 
-.tbar .icon-btn .nd {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--wa);
-  border: 1.5px solid var(--card);
-}
-.tbar .icon-btn {
-  position: relative;
-}
 .tbar .user-chip {
   display: flex;
   align-items: center;

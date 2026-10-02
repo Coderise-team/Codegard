@@ -1,0 +1,148 @@
+/* NotificationPanel.css - the feed inside the right-edge Modal. Owned by the
+   component: the solo and contest workspaces load no page stylesheet, so
+   nothing here may lean on Dashboard.css. Sizes follow the parts with the
+   same role - list rows like the dashboard's, the new-row highlight like the
+   reader's own row in standings, empty and failed states like the empty
+   cards and the catalog's failed state. */
+
+.np-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.np-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.np-row {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+/* The icon sits halfway between the panel edge and the text: the left padding
+   and the gap are the same. */
+.np-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 20px 14px 16px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+a.np-item:hover {
+  background: var(--card-2);
+}
+
+.np-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: var(--card-2);
+  border: 1px solid var(--gold-line);
+  color: var(--fg);
+}
+
+.np-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.np-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.np-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--fg-read);
+  overflow-wrap: anywhere;
+}
+.np-time {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--fg2);
+  white-space: nowrap;
+}
+
+/* New since the panel opened: a violet wash and an edge bar, the same marking
+   as the reader's own row in the standings. Kept until the panel closes. */
+.np-row.fresh {
+  background: var(--gold-soft);
+}
+.np-row.fresh::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gold);
+}
+.np-row.fresh a.np-item:hover {
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+
+/* Loading, and the line under the list when the next page failed. */
+.np-msg {
+  padding: 26px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg2);
+}
+.np-retry {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--gold);
+  cursor: pointer;
+}
+.np-retry:hover {
+  color: var(--gold-hi);
+}
+
+/* Empty and failed feed. */
+.np-state {
+  padding: 56px 24px;
+  text-align: center;
+}
+.np-state .ei {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.np-state .ei.failed {
+  background: var(--card-2);
+  color: var(--fg3);
+}
+.np-state .et {
+  font-size: 14px;
+  font-weight: 700;
+}
+.np-state .es {
+  max-width: 280px;
+  margin: 6px auto 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg2);
+}
+.np-state .btn {
+  margin-top: 16px;
+}

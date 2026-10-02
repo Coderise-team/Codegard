@@ -18,11 +18,19 @@ const FOCUSABLE =
  * consumer's `modal-body`, so anything that must stay put (tabs) sits above it.
  *
  * Props:
- *   title    — heading text, also the dialog's accessible name
- *   onClose  — called on Escape, backdrop press or the close button
- *   children — dialog content
+ *   title     — heading text, also the dialog's accessible name
+ *   onClose   — called on Escape, backdrop press or the close button
+ *   placement — 'center' (default) or 'right': a full-height panel at the
+ *               right edge, for a list that is browsed rather than filled in
+ *   children  — dialog content
  */
-export default function Modal({ title, onClose, children }) {
+export default function Modal({
+  title,
+  onClose,
+  placement = 'center',
+  children,
+}) {
+  const drawer = placement === 'right' ? ' is-drawer' : '';
   const titleId = useId();
   const panelRef = useRef(null);
 
@@ -78,13 +86,13 @@ export default function Modal({ title, onClose, children }) {
 
   return createPortal(
     <div
-      className="modal-scrim"
+      className={`modal-scrim${drawer}`}
       // mousedown, not click: releasing the button outside after selecting text
       // inside the dialog would otherwise be read as a backdrop click.
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <div
-        className="modal-panel"
+        className={`modal-panel${drawer}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

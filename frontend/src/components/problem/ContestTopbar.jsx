@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import BrandMark from '../BrandMark';
 import Icons from '../Icons';
+import NotificationBell from '../layout/NotificationBell';
 import UserMenu from '../layout/UserMenu';
 import { contestState } from '../../hooks/useContest';
 import { indexToLetter } from '../../utils/contestLetters';
@@ -105,8 +106,8 @@ export default function ContestTopbar({
         </div>
       </div>
 
-      {/* Toggle and user are direct children (not wrapped in a right group) so
-          the phone layout can split them onto different rows. */}
+      {/* Toggle, bell and user are direct children (not wrapped in a right
+          group) so the phone layout can split them onto different rows. */}
       <button
         type="button"
         className={`ct-lb-toggle${showLeaderboard ? ' is-on' : ''}`}
@@ -119,6 +120,7 @@ export default function ContestTopbar({
         </span>
       </button>
 
+      <NotificationBell />
       <UserMenu user={user} />
     </header>
   );

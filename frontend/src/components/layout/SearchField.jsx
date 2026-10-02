@@ -67,7 +67,8 @@ export default function SearchField({
 
   // "/" focuses this field from anywhere on the page — the shortcut the key
   // badge shows. Skipped while another field has focus, or the slash would be
-  // taken out of the text being typed there.
+  // taken out of the text being typed there, and while a dialog is open: the
+  // field sits behind it, and the dialog owns the keyboard.
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
@@ -79,7 +80,8 @@ export default function SearchField({
         tag === 'INPUT' ||
         tag === 'TEXTAREA' ||
         tag === 'SELECT' ||
-        target?.isContentEditable
+        target?.isContentEditable ||
+        document.querySelector('[aria-modal="true"]')
       ) {
         return;
       }
