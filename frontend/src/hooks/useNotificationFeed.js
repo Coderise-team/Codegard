@@ -15,51 +15,39 @@ function merge(list, rows, { atTop }) {
 }
 
 /**
- * The feed behind the bell, loaded while the panel is open.
+ * The feed behind the bell, for the panel that mounts it.
  *
- * Opening loads the newest page; scrolling down appends the next ones. A ring
- * while open fetches page 1 again and puts anything new on top, without
- * touching what is already on screen.
+ * Mounting loads the newest page; scrolling down appends the next ones. A ring
+ * fetches page 1 again and puts anything new on top, without touching what is
+ * already on screen.
  *
- * Every row carries `fresh`: it was unseen when it arrived. The mark is kept
- * until the panel closes, even after the row is marked as seen on the server,
- * so a reader can tell what is new for as long as they are looking. Closing
- * drops the list, and the next opening starts over from the server.
+ * Every row carries `fresh`: it was unseen when it arrived. The mark lives as
+ * long as the panel does, even after the row is marked as seen on the server,
+ * so a reader can tell what is new for as long as they are looking. The next
+ * panel starts over from the server.
  *
  * Returns { items, loading, error, hasMore, loadMore, reload }.
  */
-export function useNotificationFeed(open) {
+export function useNotificationFeed() {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(open);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const rings = useNotificationsStore((s) => s.rings);
 
   const pageRef = useRef(1);
-  const genRef = useRef(0); // bumped on open/close/reload; guards stale answers
+  const genRef = useRef(0); // bumped on every (re)load; guards stale answers
   const fetchingRef = useRef(false);
 
-  // Adjust-during-render: each opening starts from an empty list.
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (prevOpen !== open) {
-    setPrevOpen(open);
-    setItems([]);
-    setError(null);
-    setHasMore(false);
-    setLoading(open);
-  }
-
   useEffect(() => {
-    genRef.current += 1;
-    if (!open) return;
-    const gen = genRef.current;
+    const gen = ++genRef.current;
     pageRef.current = 1;
     fetchingRef.current = false;
     getNotifications({ page: 1 })
       .then((res) => {
         if (gen !== genRef.current) return;
-        // Added to, not replacing: a ring right after opening can land first
+        // Added to, not replacing: a ring right after mounting can land first
         // with a newer row that this answer, taken a moment earlier, lacks.
         setItems((list) => merge(list, res.results, { atTop: false }));
         setHasMore(Boolean(res.next));
@@ -70,14 +58,13 @@ export function useNotificationFeed(open) {
         setError(err);
         setLoading(false);
       });
-  }, [open, attempt]);
+  }, [attempt]);
 
-  // Reacts to a ring, not to opening: the opening already loaded page 1.
+  // Reacts to a ring, not to mounting: the first load already took page 1.
   const handledRingRef = useRef(rings);
   useEffect(() => {
     if (rings === handledRingRef.current) return;
     handledRingRef.current = rings;
-    if (!open) return;
     const gen = genRef.current;
     getNotifications({ page: 1 })
       .then((res) => {
@@ -85,12 +72,12 @@ export function useNotificationFeed(open) {
         setItems((list) => merge(list, res.results, { atTop: true }));
       })
       .catch(() => {
-        // The rows on screen stay; the next ring or opening tries again.
+        // The rows on screen stay; the next ring or panel tries again.
       });
-  }, [open, rings]);
+  }, [rings]);
 
   const loadMore = useCallback(() => {
-    if (!open || fetchingRef.current || !hasMore) return;
+    if (fetchingRef.current || !hasMore) return;
     fetchingRef.current = true;
     const gen = genRef.current;
     const nextPage = pageRef.current + 1;
@@ -108,7 +95,7 @@ export function useNotificationFeed(open) {
       .finally(() => {
         if (gen === genRef.current) fetchingRef.current = false;
       });
-  }, [open, hasMore]);
+  }, [hasMore]);
 
   // Starts the list over after a failed first load.
   const reload = useCallback(() => {

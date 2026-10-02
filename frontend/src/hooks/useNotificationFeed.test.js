@@ -32,10 +32,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-const renderFeed = (open = true) =>
-  renderHook(({ on }) => useNotificationFeed(on), {
-    initialProps: { on: open },
-  });
+const renderFeed = () => renderHook(() => useNotificationFeed());
 
 const ring = () => act(() => useNotificationsStore.getState().noteRing());
 
@@ -46,15 +43,7 @@ beforeEach(() => {
 });
 
 describe('useNotificationFeed', () => {
-  it('asks for nothing while the panel is closed', () => {
-    const { result } = renderFeed(false);
-
-    expect(getNotifications).not.toHaveBeenCalled();
-    expect(result.current.items).toEqual([]);
-    expect(result.current.loading).toBe(false);
-  });
-
-  it('loads the newest page on opening and marks the unseen rows fresh', async () => {
+  it('loads the newest page on mounting and marks the unseen rows fresh', async () => {
     getNotifications.mockResolvedValue(page([row(3), row(2, true)], 'p2'));
     const { result } = renderFeed();
     expect(result.current.loading).toBe(true);
@@ -130,7 +119,7 @@ describe('useNotificationFeed', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('a ring while open puts new rows on top and keeps the marks on screen', async () => {
+  it('a ring puts new rows on top and keeps the marks on screen', async () => {
     getNotifications
       .mockResolvedValueOnce(page([row(2), row(1)]))
       // By now the server has 1 and 2 as seen; the panel must not care.
@@ -149,7 +138,7 @@ describe('useNotificationFeed', () => {
     ]);
   });
 
-  it('keeps a newer row a ring brought in before the opening answer landed', async () => {
+  it('keeps a newer row a ring brought in before the first answer landed', async () => {
     const opening = deferred();
     getNotifications
       .mockReturnValueOnce(opening.promise)
@@ -162,43 +151,6 @@ describe('useNotificationFeed', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(ids(result)).toEqual([3, 2, 1]);
-  });
-
-  it('a ring while closed asks for nothing', () => {
-    renderFeed(false);
-
-    ring();
-
-    expect(getNotifications).not.toHaveBeenCalled();
-  });
-
-  it('closing drops the list and ignores an answer still on its way', async () => {
-    const late = deferred();
-    getNotifications.mockReturnValueOnce(late.promise);
-    const { result, rerender } = renderFeed();
-
-    rerender({ on: false });
-    late.resolve(page([row(1)]));
-    await act(() => late.promise);
-
-    expect(result.current.items).toEqual([]);
-  });
-
-  it('opening again starts over from the server', async () => {
-    getNotifications
-      .mockResolvedValueOnce(page([row(1)]))
-      .mockResolvedValueOnce(page([row(2), row(1, true)]));
-    const { result, rerender } = renderFeed();
-    await waitFor(() => expect(result.current.items).toHaveLength(1));
-
-    rerender({ on: false });
-    rerender({ on: true });
-    await waitFor(() => expect(result.current.items).toHaveLength(2));
-
-    expect(result.current.items.map((n) => [n.id, n.fresh])).toEqual([
-      [2, true],
-      [1, false],
-    ]);
   });
 
   it('keeps a failed first load and loads again on reload', async () => {

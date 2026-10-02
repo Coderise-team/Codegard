@@ -71,8 +71,8 @@ function NotificationRow({ notification, track, onClose }) {
  */
 export default function NotificationPanel({ onClose }) {
   const { items, loading, error, hasMore, loadMore, reload } =
-    useNotificationFeed(true);
-  const track = useSeenTracker(true);
+    useNotificationFeed();
+  const track = useSeenTracker();
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !error);
 
   let content;
