@@ -433,6 +433,11 @@
   color: var(--fg);
   background: var(--card-2);
 }
+.pp-tool-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 /* Code surface — Monaco host fills the pane between toolbar and action bar.
    overflow+min-width keep Monaco's inline pixel width from widening the

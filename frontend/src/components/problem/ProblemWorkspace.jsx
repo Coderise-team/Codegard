@@ -3,6 +3,7 @@ import ProblemPanel from './ProblemPanel';
 import ActionBar from './ActionBar';
 import LangSelect from './LangSelect';
 import ReportButton from './ReportButton';
+import UndoRedo from './UndoRedo';
 import { useCurrentUser } from '../../hooks/useCurrentUser';
 import { useCodeDraft } from '../../hooks/useCodeDraft';
 import { draftSlot } from '../../utils/codeDrafts';
@@ -63,6 +64,8 @@ export default function ProblemWorkspace({
   );
   const lang = languages.find((l) => l.id === langId);
   const [problemW, setProblemW] = useState(44);
+  // The Monaco instance, once mounted — the toolbar Undo / Redo act on it.
+  const [editor, setEditor] = useState(null);
 
   // The active drag's listener cleanup — also runs on unmount, so a drag
   // interrupted by navigation doesn't leave window listeners behind.
@@ -112,6 +115,7 @@ export default function ProblemWorkspace({
             />
           </div>
           <div className="pp-et-right">
+            <UndoRedo editor={editor} />
             <ReportButton problemId={problem.id} contestId={contestId} />
           </div>
         </div>
@@ -124,6 +128,7 @@ export default function ProblemWorkspace({
             language={langId}
             startCode={startCode}
             onChange={setCode}
+            onMount={setEditor}
           />
         </Suspense>
 

@@ -72,8 +72,15 @@ let editorSeq = 0;
  *   language  — Monaco language id (matches the backend language id)
  *   startCode — the code the language started with; seeds its model
  *   onChange  — called with the new code
+ *   onMount   — called with the Monaco editor instance once it is ready
  */
-export default function CodeEditor({ value, language, startCode, onChange }) {
+export default function CodeEditor({
+  value,
+  language,
+  startCode,
+  onChange,
+  onMount,
+}) {
   const [prefix] = useState(() => `editor-${++editorSeq}/`);
 
   // The wrapper disposes only the model on screen when it unmounts; the
@@ -100,6 +107,7 @@ export default function CodeEditor({ value, language, startCode, onChange }) {
         theme={THEME}
         options={OPTIONS}
         onChange={(v) => onChange(v ?? '')}
+        onMount={(editor) => onMount(editor)}
       />
     </div>
   );
