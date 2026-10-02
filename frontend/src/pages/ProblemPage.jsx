@@ -24,7 +24,11 @@ export default function ProblemPage() {
   const [navOpen, setNavOpen] = useState(false);
   const { data: problem, loading, error } = useProblem(id);
   const { data: languages, loading: langsLoading } = useLanguages();
-  const { data: submissions, reload } = useProblemSubmissions(id);
+  const {
+    data: submissions,
+    loading: subsLoading,
+    reload,
+  } = useProblemSubmissions(id);
   const { busy, toast, setToast, submit } = useSubmitFlow(
     (code, language) => ({ problem: Number(id), code, language }),
     reload
@@ -41,9 +45,11 @@ export default function ProblemPage() {
     );
   }
 
-  // The workspace needs both the statement and the language templates
-  // (the editor starts from the selected language's starter code).
-  const ready = problem && languages?.length;
+  // The workspace needs the statement, the language templates and this
+  // problem's submissions: the editor starts from the draft, else the latest
+  // submission, else the starter code, and it picks them once, on mount. A
+  // failed submissions load still opens it, with no submissions.
+  const ready = problem && languages?.length && !subsLoading;
 
   return (
     <div className="pp-app" data-density="compact">
@@ -55,6 +61,7 @@ export default function ProblemPage() {
       />
       {ready ? (
         <ProblemWorkspace
+          key={problem.id}
           problem={problem}
           submissions={submissions ?? []}
           languages={languages}
@@ -64,7 +71,7 @@ export default function ProblemPage() {
         />
       ) : (
         <div className="pp-empty">
-          {loading || langsLoading
+          {loading || langsLoading || subsLoading
             ? 'Loading problem…'
             : 'Could not load the problem. Please try again.'}
         </div>
