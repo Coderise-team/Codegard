@@ -137,7 +137,7 @@ export default function NotificationPanel({ onClose }) {
 
   return (
     <Modal title="Notifications" onClose={onClose} placement="right">
-      <div className="np-body">{content}</div>
+      <div className="np-body scroll">{content}</div>
     </Modal>
   );
 }

@@ -82,6 +82,24 @@
     transform: translateX(100%);
   }
 }
+/* A list carries no form below its title, so the title bar is only as tall
+   as the page's top bar, and the close button is outlined in the accent. */
+.is-drawer .modal-head {
+  height: var(--topbar-h);
+  flex: 0 0 auto;
+  padding: 0 14px 0 20px;
+}
+.is-drawer .modal-head h2 {
+  font-size: 16px;
+}
+.is-drawer .modal-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--gold-line);
+}
+.is-drawer .modal-close:hover {
+  border-color: var(--gold);
+}
 
 /* Scrolls on its own so the title bar stays put on short screens. */
 .modal-body {
