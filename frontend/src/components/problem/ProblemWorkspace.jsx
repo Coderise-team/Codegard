@@ -51,6 +51,7 @@ export default function ProblemWorkspace({
   const {
     language: langId,
     code,
+    startCode,
     setLanguage,
     setCode,
     reset,
@@ -116,7 +117,12 @@ export default function ProblemWorkspace({
         <Suspense
           fallback={<div className="pp-editor-loading">Loading editor…</div>}
         >
-          <CodeEditor value={code} language={langId} onChange={setCode} />
+          <CodeEditor
+            value={code}
+            language={langId}
+            startCode={startCode}
+            onChange={setCode}
+          />
         </Suspense>
 
         <ActionBar
