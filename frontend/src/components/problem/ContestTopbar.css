@@ -13,9 +13,11 @@
   border-bottom: 1px solid var(--border);
   z-index: 30;
 }
-/* Five direct children — left group, problem strip, timer, toggle, user — laid
-   out by order so the responsive breakpoints can reflow them into rows. On a
-   wide screen: left | strip (fills, centered) | timer | toggle | user. */
+/* Six direct children — left group, problem strip, timer, toggle, bell, user —
+   laid out by order so the responsive breakpoints can reflow them into rows. On
+   a wide screen: left | strip (fills, centered) | timer | toggle | bell | user.
+   The bell shares the user's order everywhere and comes first in the markup,
+   so the two always sit side by side. */
 .ct-left {
   order: 1;
   display: flex;
@@ -33,6 +35,7 @@
 .ct-lb-toggle {
   order: 4;
 }
+.ct-topbar > .nbell,
 .ct-topbar > .user-menu {
   order: 5;
 }
@@ -232,9 +235,9 @@
   }
 }
 
-/* Below ~900 the platform logo no longer fits alongside all the controls on
-   one row (row 1 needs ~850px with it), so drop it. The contest name stays. */
-@media (max-width: 900px) {
+/* Below ~960 the platform logo no longer fits alongside all the controls on
+   one row (row 1 needs ~900px with it), so drop it. The contest name stays. */
+@media (max-width: 960px) {
   .ct-left .logo,
   .ct-div {
     display: none;
@@ -245,18 +248,22 @@
    The narrowest phones (360px) can't fit the contest name and the timer on one
    line, so pair the name with the user instead — that always fits — and put the
    timer with the toggle on the next line.
-   Row 1: back (trophy + contest name), then the user (pinned right).
+   Row 1: back (trophy + contest name), then the bell and the user (pinned
+   right).
    Row 2: the leaderboard toggle, then the timer (pinned right).
-   Row 3: the problem strip, centered. (The logo is already gone, see ≤900.) */
+   Row 3: the problem strip, centered. (The logo is already gone, see ≤960.) */
 @media (max-width: 640px) {
   .ct-topbar {
     gap: 8px 10px;
     padding-left: 12px;
     padding-right: 12px;
   }
-  .ct-topbar > .user-menu {
+  .ct-topbar > .nbell {
     order: 2;
     margin-left: auto;
+  }
+  .ct-topbar > .user-menu {
+    order: 2;
     min-width: 0;
   }
   .ct-lb-toggle {
