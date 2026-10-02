@@ -59,6 +59,30 @@
   background: var(--card-2);
 }
 
+/* placement="right": the panel takes the full height at the right edge and
+   slides in like the phone sidebar drawer does from the left. */
+.modal-scrim.is-drawer {
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 0;
+}
+.modal-panel.is-drawer {
+  max-width: 400px;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .modal-panel.is-drawer {
+    animation: modal-drawer-in 0.22s ease;
+  }
+}
+@keyframes modal-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
 /* Scrolls on its own so the title bar stays put on short screens. */
 .modal-body {
   padding: 22px 24px 24px;
