@@ -22,6 +22,8 @@ const tabVisible = () => document.visibilityState === 'visible';
  *   - every 90 seconds while the tab is on screen;
  *   - when the tab comes back on screen, since nothing rings for a feed read
  *     in another tab.
+ *
+ * Signing out clears the count.
  */
 export function useUnreadCountSync() {
   const enabled = useAuthStore((s) => s.isAuthenticated);
@@ -43,6 +45,8 @@ export function useUnreadCountSync() {
     return () => {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisibility);
+      // Signed out: the next account must not inherit this one's number.
+      useNotificationsStore.getState().reset();
     };
   }, [enabled]);
 

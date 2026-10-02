@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
 import { getUnreadCount, markSeen } from '../api/notifications';
-import { useAuthStore } from './authStore';
 
 /**
  * Unread count behind the bell, shared by every top bar that draws one.
@@ -42,14 +41,10 @@ export const useNotificationsStore = create((set) => {
       apply(ticket, await markSeen(ids));
     },
 
-    // Answers still in flight belong to the session that just ended.
+    // Called when the session ends: answers still in flight belong to it.
     reset: () => {
       applied = issued;
       set({ count: 0 });
     },
   };
-});
-
-useAuthStore.subscribe((state, prev) => {
-  if (prev.user && !state.user) useNotificationsStore.getState().reset();
 });

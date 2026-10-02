@@ -17,6 +17,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNotificationsStore } from '../store/notificationsStore';
 
 const refreshCount = vi.fn();
+const reset = vi.fn();
 let visibility = 'visible';
 Object.defineProperty(document, 'visibilityState', {
   configurable: true,
@@ -44,7 +45,8 @@ beforeEach(() => {
   signal.value = 0;
   signal.enabled = [];
   refreshCount.mockReset();
-  useNotificationsStore.setState({ refreshCount });
+  reset.mockReset();
+  useNotificationsStore.setState({ refreshCount, reset });
   useAuthStore.setState({ user: { username: 'alice' }, isAuthenticated: true });
 });
 
@@ -108,14 +110,16 @@ describe('useUnreadCountSync', () => {
     expect(refreshCount).toHaveBeenCalledTimes(1);
   });
 
-  it('stops polling and listening once signed out', () => {
+  it('clears the count, stops polling and listening once signed out', () => {
     renderHook(() => useUnreadCountSync());
     refreshCount.mockClear();
+    expect(reset).not.toHaveBeenCalled();
 
     signIn(false);
     act(() => vi.advanceTimersByTime(90000));
     setVisibility('visible');
 
+    expect(reset).toHaveBeenCalledTimes(1);
     expect(signal.enabled.at(-1)).toBe(false);
     expect(refreshCount).not.toHaveBeenCalled();
   });

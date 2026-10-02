@@ -5,11 +5,8 @@ const { api } = vi.hoisted(() => ({
 }));
 
 vi.mock('../api/notifications', () => api);
-vi.mock('../api/auth', () => ({}));
-vi.mock('../api/client', () => ({ tokenStorage: {} }));
 
 import { useNotificationsStore } from './notificationsStore';
-import { useAuthStore } from './authStore';
 
 const store = () => useNotificationsStore.getState();
 
@@ -25,7 +22,6 @@ function deferred() {
 beforeEach(() => {
   vi.clearAllMocks();
   store().reset();
-  useAuthStore.setState({ user: { username: 'alice' } });
 });
 
 describe('notificationsStore', () => {
@@ -97,14 +93,14 @@ describe('notificationsStore', () => {
     expect(store().count).toBe(31);
   });
 
-  it('logging out clears the count and ignores answers still in flight', async () => {
+  it('reset clears the count and ignores answers still in flight', async () => {
     api.getUnreadCount.mockResolvedValueOnce(4);
     await store().refreshCount();
     const late = deferred();
     api.getUnreadCount.mockReturnValueOnce(late.promise);
     const pending = store().refreshCount();
 
-    useAuthStore.setState({ user: null });
+    store().reset();
     late.resolve(4);
     await pending;
 
