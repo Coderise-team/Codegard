@@ -20,6 +20,19 @@ describe('Modal', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens centred by default and at the right edge on request', () => {
+    const { unmount } = renderModal();
+    expect(screen.getByRole('dialog').classList.contains('is-drawer')).toBe(
+      false
+    );
+    unmount();
+
+    renderModal({ placement: 'right' });
+    const panel = screen.getByRole('dialog');
+    expect(panel.classList.contains('is-drawer')).toBe(true);
+    expect(panel.parentElement.classList.contains('is-drawer')).toBe(true);
+  });
+
   it('closes on Escape', () => {
     const onClose = vi.fn();
     renderModal({ onClose });
