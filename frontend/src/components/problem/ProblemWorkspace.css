@@ -263,6 +263,14 @@
 .pp-subs-table tr:hover td {
   background: var(--card);
 }
+/* A submission row loads its code into the editor on click / Enter. */
+.pp-subs-table tbody tr {
+  cursor: pointer;
+}
+.pp-subs-table tbody tr:focus-visible {
+  outline: 2px solid var(--gold-line);
+  outline-offset: -2px;
+}
 .pp-fg2 {
   color: var(--fg2);
   font-size: 12.5px;
@@ -424,6 +432,11 @@
 .pp-tool-link:hover {
   color: var(--fg);
   background: var(--card-2);
+}
+.pp-tool-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* Code surface — Monaco host fills the pane between toolbar and action bar.

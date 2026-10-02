@@ -46,10 +46,11 @@ export default function ContestProblemPage() {
   const { data: languages, loading: langsLoading } = useLanguages();
   // Scope submissions to this round — the contest workspace must not surface
   // training attempts at the same problem.
-  const { data: submissions, reload } = useProblemSubmissions(
-    problem?.id,
-    Number(id)
-  );
+  const {
+    data: submissions,
+    loading: subsLoading,
+    reload,
+  } = useProblemSubmissions(problem?.id, Number(id));
 
   // Same submit -> judge -> toast flow as the solo page, but the attempt is
   // filed against the round, so it counts toward the standings and rating.
@@ -135,9 +136,11 @@ export default function ContestProblemPage() {
     );
   }
 
-  // The workspace needs both the statement and the language templates (the
-  // editor starts from the selected language's starter code).
-  const ready = problem && languages?.length;
+  // The workspace needs the statement, the language templates and this
+  // round's submissions: the editor starts from the draft, else the latest
+  // submission, else the starter code, and it picks them once, on mount. A
+  // failed submissions load still opens it, with no submissions.
+  const ready = problem && languages?.length && !subsLoading;
 
   return (
     <div className="cpp-app">
@@ -156,6 +159,7 @@ export default function ContestProblemPage() {
       )}
       {ready ? (
         <ProblemWorkspace
+          key={problem.id}
           problem={problem}
           submissions={submissions ?? []}
           languages={languages}
@@ -180,7 +184,9 @@ export default function ContestProblemPage() {
         />
       ) : (
         <div className="cpp-empty">
-          {loading || langsLoading
+          {/* Submissions load only once the problem is known, so without a
+              problem they never finish and must not hold the error back. */}
+          {loading || langsLoading || (problem && subsLoading)
             ? 'Loading problem…'
             : 'Could not load the problem. Please try again.'}
         </div>
