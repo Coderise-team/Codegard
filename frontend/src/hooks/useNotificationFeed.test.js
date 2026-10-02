@@ -114,6 +114,22 @@ describe('useNotificationFeed', () => {
     expect(result.current.hasMore).toBe(true);
   });
 
+  it('clears the error once the next page loads on a retry', async () => {
+    getNotifications
+      .mockResolvedValueOnce(page([row(2)], 'p2'))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(page([row(1)]));
+    const { result } = renderFeed();
+    await waitFor(() => expect(result.current.hasMore).toBe(true));
+    act(() => result.current.loadMore());
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+
+    act(() => result.current.loadMore());
+    await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+    expect(result.current.error).toBeNull();
+  });
+
   it('a ring while open puts new rows on top and keeps the marks on screen', async () => {
     getNotifications
       .mockResolvedValueOnce(page([row(2), row(1)]))

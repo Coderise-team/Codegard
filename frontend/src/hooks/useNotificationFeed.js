@@ -98,6 +98,7 @@ export function useNotificationFeed(open) {
         pageRef.current = nextPage;
         setItems((list) => merge(list, res.results, { atTop: false }));
         setHasMore(Boolean(res.next));
+        setError(null);
       })
       .catch((err) => {
         if (gen === genRef.current) setError(err);
