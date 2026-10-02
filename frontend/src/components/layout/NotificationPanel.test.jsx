@@ -13,6 +13,7 @@ vi.mock('../../hooks/useSeenTracker', () => ({
   useSeenTracker: () => track,
 }));
 
+import Icons from '../Icons';
 import NotificationPanel from './NotificationPanel';
 
 const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
@@ -149,11 +150,13 @@ describe('NotificationPanel', () => {
         row({ id: 2, type: 'something_new' }),
       ],
     });
-    const { container } = renderPanel();
+    renderPanel();
+    const drawn = (Icon) =>
+      render(<Icon size={16} />).container.querySelector('svg').innerHTML;
 
-    const icons = [...container.ownerDocument.querySelectorAll('.np-ic svg')];
-    expect(icons).toHaveLength(2);
-    expect(icons[0].innerHTML).not.toBe(icons[1].innerHTML);
+    const icons = [...document.querySelectorAll('.np-ic svg')];
+    expect(icons[0].innerHTML).toBe(drawn(Icons.trophy));
+    expect(icons[1].innerHTML).toBe(drawn(Icons.bell));
   });
 
   it('keeps a loading line under the list while more pages remain', () => {
