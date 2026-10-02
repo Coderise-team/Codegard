@@ -55,6 +55,7 @@ export default function ProblemWorkspace({
     setLanguage,
     setCode,
     reset,
+    loadSubmission,
   } = useCodeDraft(
     draftSlot(user?.username, problem.id, contestId),
     languages,
@@ -89,6 +90,7 @@ export default function ProblemWorkspace({
       <ProblemPanel
         problem={problem}
         submissions={submissions}
+        onPickSubmission={loadSubmission}
         tab={tab}
         onTab={setTab}
         style={{ flexBasis: `${problemW}%` }}
