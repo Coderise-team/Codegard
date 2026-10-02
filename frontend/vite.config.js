@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => {
           'src/router.jsx',
           'src/data/**',
           'src/components/BrandMark.jsx',
+          'src/components/NotificationsSync.jsx',
           'src/components/dashboard/**',
           'src/components/problems/**',
           'src/components/contests/PastRow.jsx',
