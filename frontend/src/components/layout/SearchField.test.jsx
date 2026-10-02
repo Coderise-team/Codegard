@@ -121,6 +121,27 @@ describe('SearchField', () => {
 
       expect(field()).not.toHaveFocus();
     });
+
+    it('stays out of the way while a dialog is open over the page', () => {
+      render(
+        <>
+          <SearchField
+            placeholder="Search problems…"
+            value=""
+            onChange={noop}
+          />
+          <div role="dialog" aria-modal="true" tabIndex={-1}>
+            <a href="/problems/1">A row</a>
+          </div>
+        </>
+      );
+      const row = screen.getByRole('link', { name: 'A row' });
+      row.focus();
+
+      fireEvent.keyDown(row, { key: '/' });
+
+      expect(row).toHaveFocus();
+    });
   });
 
   it('opens from its button and closes when focus leaves', () => {
