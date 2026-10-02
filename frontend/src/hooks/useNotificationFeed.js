@@ -59,7 +59,9 @@ export function useNotificationFeed(open) {
     getNotifications({ page: 1 })
       .then((res) => {
         if (gen !== genRef.current) return;
-        setItems(merge([], res.results, { atTop: false }));
+        // Added to, not replacing: a ring right after opening can land first
+        // with a newer row that this answer, taken a moment earlier, lacks.
+        setItems((list) => merge(list, res.results, { atTop: false }));
         setHasMore(Boolean(res.next));
         setLoading(false);
       })

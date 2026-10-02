@@ -149,6 +149,21 @@ describe('useNotificationFeed', () => {
     ]);
   });
 
+  it('keeps a newer row a ring brought in before the opening answer landed', async () => {
+    const opening = deferred();
+    getNotifications
+      .mockReturnValueOnce(opening.promise)
+      .mockResolvedValueOnce(page([row(3), row(2)]));
+    const { result } = renderFeed();
+
+    ring();
+    await waitFor(() => expect(ids(result)).toEqual([3, 2]));
+    opening.resolve(page([row(2), row(1)]));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(ids(result)).toEqual([3, 2, 1]);
+  });
+
   it('a ring while closed asks for nothing', () => {
     renderFeed(false);
 
