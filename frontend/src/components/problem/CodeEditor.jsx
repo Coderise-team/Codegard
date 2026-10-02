@@ -86,11 +86,15 @@ export default function CodeEditor({
   onChange,
   onMount,
 }) {
-  // The latest code, for the model-switch listener below. Set in a layout
-  // effect, so it is fresh before the wrapper switches models in its effects.
+  // The latest code and change handler. Set in a layout effect, so both are
+  // fresh before the wrapper switches models in its effects: its change
+  // listener still belongs to the previous render then, and calling an older
+  // `onChange` would file the code under the language being left.
   const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
   useLayoutEffect(() => {
     valueRef.current = value;
+    onChangeRef.current = onChange;
   });
 
   const catchUp = (editor) => {
@@ -119,7 +123,7 @@ export default function CodeEditor({
         language={language}
         theme={THEME}
         options={OPTIONS}
-        onChange={(v) => onChange(v ?? '')}
+        onChange={(v) => onChangeRef.current(v ?? '')}
         onMount={handleMount}
       />
     </div>
