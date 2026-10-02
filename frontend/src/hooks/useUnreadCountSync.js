@@ -18,7 +18,8 @@ const tabVisible = () => document.visibilityState === 'visible';
  *
  * The count is asked for:
  *   - right away, so a returning user sees it without waiting for a ring;
- *   - on a ring, paced so a burst of rings costs one request;
+ *   - on a ring, paced so a burst of rings costs one request; the ring is also
+ *     passed on to the store, for an open feed to pick up;
  *   - every 90 seconds while the tab is on screen;
  *   - when the tab comes back on screen, since nothing rings for a feed read
  *     in another tab.
@@ -56,6 +57,8 @@ export function useUnreadCountSync() {
   useEffect(() => {
     if (paced === handledRef.current) return;
     handledRef.current = paced;
-    if (enabled) refreshCount();
+    if (!enabled) return;
+    refreshCount();
+    useNotificationsStore.getState().noteRing();
   }, [enabled, paced]);
 }

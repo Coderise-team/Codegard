@@ -23,6 +23,11 @@ export const useNotificationsStore = create((set) => {
 
   return {
     count: 0,
+    // Bumped once per paced ring (and per reconnect), so an open feed knows to
+    // fetch its first page again.
+    rings: 0,
+
+    noteRing: () => set((s) => ({ rings: s.rings + 1 })),
 
     // Background refetch: a failure keeps the last known number, the next
     // ring, timer tick or tab return asks again.

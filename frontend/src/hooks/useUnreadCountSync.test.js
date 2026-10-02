@@ -74,9 +74,10 @@ describe('useUnreadCountSync', () => {
     expect(refreshCount).toHaveBeenCalledTimes(1);
   });
 
-  it('turns a burst of rings into one paced request', () => {
+  it('turns a burst of rings into one paced request and one ring for the feed', () => {
     const { rerender } = renderHook(() => useUnreadCountSync());
     refreshCount.mockClear();
+    const ringsBefore = useNotificationsStore.getState().rings;
 
     ring(rerender);
     ring(rerender);
@@ -85,6 +86,7 @@ describe('useUnreadCountSync', () => {
 
     act(() => vi.advanceTimersByTime(1500));
     expect(refreshCount).toHaveBeenCalledTimes(1);
+    expect(useNotificationsStore.getState().rings).toBe(ringsBefore + 1);
   });
 
   it('polls every 90 seconds only while the tab is on screen', () => {
