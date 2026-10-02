@@ -176,4 +176,13 @@ describe('NotificationPanel', () => {
     expect(feed.current.loadMore).toHaveBeenCalledTimes(1);
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
+
+  it('offers no retry for rows a ring brought in after a failed first load', () => {
+    setFeed({ items: [row()], hasMore: false, error: new Error('offline') });
+    renderPanel();
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.queryByText(/Could not load more/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
 });

@@ -117,7 +117,10 @@ export default function NotificationPanel({ onClose }) {
             />
           ))}
         </ul>
-        {error ? (
+        {/* Only a failed next page earns a retry here: after a failed first
+            load the rows on screen came from a ring, and no next page is
+            known yet to retry. */}
+        {error && hasMore ? (
           <div className="np-msg">
             Could not load more.{' '}
             <button type="button" className="np-retry" onClick={loadMore}>
