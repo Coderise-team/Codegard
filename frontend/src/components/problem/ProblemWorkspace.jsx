@@ -49,6 +49,8 @@ export default function ProblemWorkspace({
 }) {
   const [tab, setTab] = useState('statement');
   const user = useCurrentUser();
+  // One problem in one place: names both its drafts and its editor history.
+  const slot = draftSlot(user?.username, problem.id, contestId);
   const {
     language: langId,
     code,
@@ -57,11 +59,7 @@ export default function ProblemWorkspace({
     setCode,
     reset,
     loadSubmission,
-  } = useCodeDraft(
-    draftSlot(user?.username, problem.id, contestId),
-    languages,
-    submissions
-  );
+  } = useCodeDraft(slot, languages, submissions);
   const lang = languages.find((l) => l.id === langId);
   const [problemW, setProblemW] = useState(44);
   // The Monaco instance, once mounted — the toolbar Undo / Redo act on it.
@@ -126,6 +124,7 @@ export default function ProblemWorkspace({
           <CodeEditor
             value={code}
             language={langId}
+            historyKey={slot}
             startCode={startCode}
             onChange={setCode}
             onMount={setEditor}

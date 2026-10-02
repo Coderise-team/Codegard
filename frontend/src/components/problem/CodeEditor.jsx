@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import Editor, { loader } from '@monaco-editor/react';
@@ -55,59 +55,72 @@ const OPTIONS = {
   hideCursorInOverviewRuler: true,
 };
 
-// Numbers each mounted editor, so its models never clash with another's.
-let editorSeq = 0;
-
 /**
  * CodeEditor — Monaco wrapper for the workspace editor pane.
  *
- * Each language gets its own Monaco model, so each keeps its own undo
- * history: undo never brings another language's code back. A model is created
- * on the language's first visit, holding `startCode`; code then put in from
- * outside (a loaded submission, Reset) is an ordinary edit, which undo can
- * take back. The models live as long as the editor does.
+ * Each language of each `historyKey` gets its own Monaco model, so each keeps
+ * its own undo history: undo never brings another language's code back, and
+ * coming back to a problem brings its history back too, until the page
+ * reloads. A model is created on its first visit, holding `startCode`; code
+ * then put in from outside (a loaded submission, Reset) is an ordinary edit,
+ * which undo can take back.
+ *
+ * A kept model can fall behind `value` (the draft changed in another tab, or
+ * could not be saved); it is then brought up to `value` with an ordinary edit
+ * when it comes on screen, so what is shown is always what gets submitted.
  *
  * Props:
- *   value     — current code
- *   language  — Monaco language id (matches the backend language id)
- *   startCode — the code the language started with; seeds its model
- *   onChange  — called with the new code
- *   onMount   — called with the Monaco editor instance once it is ready
+ *   value      — current code
+ *   language   — Monaco language id (matches the backend language id)
+ *   historyKey — whose models these are (one problem in one place); the same
+ *                key on a later mount picks the same models back up
+ *   startCode  — the code the language started with; seeds its model
+ *   onChange   — called with the new code
+ *   onMount    — called with the Monaco editor instance once it is ready
  */
 export default function CodeEditor({
   value,
   language,
+  historyKey,
   startCode,
   onChange,
   onMount,
 }) {
-  const [prefix] = useState(() => `editor-${++editorSeq}/`);
+  // The latest code, for the model-switch listener below. Set in a layout
+  // effect, so it is fresh before the wrapper switches models in its effects.
+  const valueRef = useRef(value);
+  useLayoutEffect(() => {
+    valueRef.current = value;
+  });
 
-  // The wrapper disposes only the model on screen when it unmounts; the
-  // other languages' models are left for this editor to drop.
-  useEffect(
-    () => () => {
-      const own = monaco.Uri.parse(prefix).toString();
-      monaco.editor
-        .getModels()
-        .filter((m) => m.uri.toString().startsWith(own))
-        .filter((m) => !m.isAttachedToEditor())
-        .forEach((m) => m.dispose());
-    },
-    [prefix]
-  );
+  const catchUp = (editor) => {
+    const model = editor.getModel();
+    const code = valueRef.current;
+    if (!model || model.getValue() === code) return;
+    editor.executeEdits('', [
+      { range: model.getFullModelRange(), text: code, forceMoveMarkers: true },
+    ]);
+    editor.pushUndoStop();
+  };
+
+  const handleMount = (editor) => {
+    catchUp(editor);
+    editor.onDidChangeModel(() => catchUp(editor));
+    onMount(editor);
+  };
 
   return (
     <div className="pp-editor-host">
       <Editor
-        path={`${prefix}${language}`}
+        path={`${encodeURIComponent(historyKey)}/${language}`}
+        keepCurrentModel
         defaultValue={startCode}
         value={value}
         language={language}
         theme={THEME}
         options={OPTIONS}
         onChange={(v) => onChange(v ?? '')}
-        onMount={(editor) => onMount(editor)}
+        onMount={handleMount}
       />
     </div>
   );
