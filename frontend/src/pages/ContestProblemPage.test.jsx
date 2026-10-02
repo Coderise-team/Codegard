@@ -50,11 +50,23 @@ vi.mock('../components/layout/Sidebar', () => ({ default: () => <div /> }));
 vi.mock('../components/problem/ContestTopbar', () => ({
   default: () => <div data-testid="topbar" />,
 }));
-vi.mock('../components/problem/ProblemWorkspace', () => ({
-  default: ({ contestId }) => (
-    <div data-testid="workspace" data-contest={contestId} />
-  ),
-}));
+// The stub remembers the problem it was mounted for, so a test can tell a
+// fresh workspace from one reused across problems.
+vi.mock('../components/problem/ProblemWorkspace', async () => {
+  const { useState } = await import('react');
+  return {
+    default: function Workspace({ contestId, problem }) {
+      const [mountedFor] = useState(problem.id);
+      return (
+        <div
+          data-testid="workspace"
+          data-contest={contestId}
+          data-mounted-for={mountedFor}
+        />
+      );
+    },
+  };
+});
 vi.mock('../components/problem/VerdictToast', () => ({ default: () => null }));
 vi.mock('../components/problem/ContestLeaderboard', () => ({
   default: () => <div />,
@@ -82,7 +94,11 @@ beforeEach(() => {
     data: [{ id: 1, name: 'Python' }],
     loading: false,
   });
-  hooks.useProblemSubmissions.mockReturnValue({ data: [], reload: vi.fn() });
+  hooks.useProblemSubmissions.mockReturnValue({
+    data: [],
+    loading: false,
+    reload: vi.fn(),
+  });
   hooks.useSubmitFlow.mockReturnValue({
     busy: false,
     toast: null,
@@ -161,5 +177,63 @@ describe('ContestProblemPage', () => {
       'data-contest',
       '7'
     );
+  });
+
+  it('opens a fresh workspace when the round moves to another problem', () => {
+    const at = (problem) =>
+      hooks.useContestProblem.mockReturnValue({
+        contest: liveContest(),
+        problem,
+        loading: false,
+        notFound: false,
+      });
+    at({ id: 11 });
+    const { rerender } = render(<ContestProblemPage />);
+
+    at({ id: 12 });
+    rerender(<ContestProblemPage />);
+
+    expect(screen.getByTestId('workspace')).toHaveAttribute(
+      'data-mounted-for',
+      '12'
+    );
+  });
+
+  it('holds the workspace until the round submissions load', () => {
+    hooks.useContestProblem.mockReturnValue({
+      contest: liveContest(),
+      problem: { id: 11 },
+      loading: false,
+      notFound: false,
+    });
+    hooks.useProblemSubmissions.mockReturnValue({
+      data: null,
+      loading: true,
+      reload: vi.fn(),
+    });
+
+    render(<ContestProblemPage />);
+    expect(screen.queryByTestId('workspace')).toBeNull();
+    expect(screen.getByText('Loading problem…')).toBeTruthy();
+  });
+
+  it('reports a failed round load instead of waiting on submissions', () => {
+    hooks.useContestProblem.mockReturnValue({
+      contest: null,
+      problem: null,
+      loading: false,
+      notFound: false,
+    });
+    // Without a problem the submissions are never requested.
+    hooks.useProblemSubmissions.mockReturnValue({
+      data: null,
+      loading: true,
+      reload: vi.fn(),
+    });
+
+    render(<ContestProblemPage />);
+    expect(
+      screen.getByText('Could not load the problem. Please try again.')
+    ).toBeTruthy();
   });
 });
