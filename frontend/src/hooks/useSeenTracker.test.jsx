@@ -110,9 +110,14 @@ describe('useSeenTracker', () => {
   });
 
   it('splits a long batch at the backend limit of 1000 ids', () => {
-    const ids = Array.from({ length: 1001 }, (_, i) => i + 1);
-    const { container } = render(<Rows open ids={ids} />);
-    show(container, ids);
+    render(<Rows open ids={[1]} />);
+    // A thousand rendered rows would only slow the test down: the observer
+    // reads nothing from a row but its data-seen-id.
+    const entries = Array.from({ length: 1001 }, (_, i) => ({
+      isIntersecting: true,
+      target: { dataset: { seenId: String(i + 1) } },
+    }));
+    act(() => observer().callback(entries, observer()));
 
     tick();
 
