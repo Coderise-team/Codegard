@@ -4,7 +4,6 @@ import {
   draftSlot,
   readDraft,
   writeDraft,
-  clearDraft,
   readLanguage,
   writeLanguage,
 } from './codeDrafts';
@@ -33,14 +32,12 @@ describe('codeDrafts', () => {
     expect(readDraft(bob, 'python')).toBeNull();
   });
 
-  it('keeps a draft per language and clears only the one asked', () => {
+  it('keeps a draft per language', () => {
     const slot = draftSlot('alice', 5);
     writeDraft(slot, 'python', 'py');
     writeDraft(slot, 'javascript', 'js');
 
-    clearDraft(slot, 'python');
-
-    expect(readDraft(slot, 'python')).toBeNull();
+    expect(readDraft(slot, 'python')).toBe('py');
     expect(readDraft(slot, 'javascript')).toBe('js');
   });
 
@@ -59,12 +56,10 @@ describe('codeDrafts', () => {
     };
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(blocked);
     const slot = draftSlot('alice', 5);
 
     expect(() => writeDraft(slot, 'python', 'code')).not.toThrow();
     expect(() => writeLanguage(slot, 'python')).not.toThrow();
-    expect(() => clearDraft(slot, 'python')).not.toThrow();
     expect(readDraft(slot, 'python')).toBeNull();
     expect(readLanguage(slot)).toBeNull();
   });

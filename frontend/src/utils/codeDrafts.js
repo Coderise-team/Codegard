@@ -32,21 +32,10 @@ function write(key, value) {
   }
 }
 
-function remove(key) {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // Storage unavailable: nothing to remove.
-  }
-}
-
 export const readDraft = (slot, language) => read(`${slot}:code:${language}`);
 
 export const writeDraft = (slot, language, code) =>
   write(`${slot}:code:${language}`, code);
-
-export const clearDraft = (slot, language) =>
-  remove(`${slot}:code:${language}`);
 
 export const readLanguage = (slot) => read(`${slot}:lang`);
 
