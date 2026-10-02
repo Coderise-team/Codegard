@@ -206,8 +206,8 @@
 }
 
 /* ── Tablet: the problem strip drops to its own centered second row ──────
-   The first row keeps (logo +) contest name + timer + toggle + user on one
-   line, sized to its tallest element (the timer), nothing overflowing. */
+   The first row keeps (logo +) contest name + timer + toggle + bell + user on
+   one line, sized to its tallest element (the timer), nothing overflowing. */
 @media (max-width: 1024px) {
   .ct-topbar {
     height: auto;
@@ -224,7 +224,8 @@
     flex: 0 0 100%;
     justify-content: safe center;
   }
-  /* right-align the timer + toggle + user as one cluster on the first row */
+  /* right-align the timer + toggle + bell + user as one cluster on the first
+     row */
   .ct-timer {
     margin-left: auto;
   }
