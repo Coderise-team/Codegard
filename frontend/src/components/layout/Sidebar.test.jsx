@@ -20,6 +20,19 @@ describe('Sidebar', () => {
     );
   });
 
+  it('links a signed-in member to the terms and the privacy policy', () => {
+    const { getByRole } = renderSidebar({ username: 'n3ptune', avatar: null });
+
+    expect(getByRole('link', { name: 'Terms' })).toHaveAttribute(
+      'href',
+      '/terms'
+    );
+    expect(getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+      'href',
+      '/privacy'
+    );
+  });
+
   it('shows the picture of a user who has one', () => {
     const { container } = renderSidebar({
       username: 'n3ptune',

@@ -71,6 +71,17 @@ export default function Sidebar({ user, open = false, onClose }) {
               <div className="h">{user?.username}</div>
             </div>
           </Link>
+          {/* The landing footer is the only other way to these pages, and a
+              signed-in member never sees the landing. */}
+          <div className="side-legal">
+            <Link to="/terms" onClick={onClose}>
+              Terms
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/privacy" onClick={onClose}>
+              Privacy
+            </Link>
+          </div>
         </div>
       </aside>
     </>
