@@ -203,6 +203,9 @@
   color: var(--fg2);
   text-decoration: underline;
   transition: color 0.15s;
+  /* A document's name reads as one unit; "Terms of" / "Service" split across
+     two lines looks like two links. */
+  white-space: nowrap;
 }
 .auth-legal a:hover {
   color: var(--gold);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import Sidebar from './Sidebar';
@@ -17,6 +17,19 @@ describe('Sidebar', () => {
 
     expect(container.querySelector('.nav-mini').getAttribute('href')).toBe(
       '/users/n3ptune'
+    );
+  });
+
+  it('links a signed-in member to the terms and the privacy policy', () => {
+    renderSidebar({ username: 'n3ptune', avatar: null });
+
+    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute(
+      'href',
+      '/terms'
+    );
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+      'href',
+      '/privacy'
     );
   });
 
