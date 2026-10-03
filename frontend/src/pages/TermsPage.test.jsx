@@ -84,10 +84,12 @@ describe('TermsPage', () => {
     renderPage();
 
     // The two documents split the subject between them — these terms cover the
-    // service, the policy covers the data — so one has to reach the other.
-    expect(
-      screen.getByRole('link', { name: 'Privacy Policy' })
-    ).toHaveAttribute('href', '/privacy');
+    // service, the policy covers the data — so one has to reach the other. Two
+    // places do: the acceptance section, and "Your code", which leaves what
+    // happens to submissions on deletion to the policy.
+    const links = screen.getAllByRole('link', { name: 'Privacy Policy' });
+    expect(links).toHaveLength(2);
+    links.forEach((link) => expect(link).toHaveAttribute('href', '/privacy'));
   });
 
   it('links the brand logo back to the home page', () => {

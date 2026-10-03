@@ -8,7 +8,7 @@ import './TermsPage.css';
 // renders standalone (no Sidebar/Navbar app shell).
 
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
-const LAST_UPDATED = 'September 25, 2026';
+const LAST_UPDATED = 'October 4, 2026';
 
 // Section id → table-of-contents label. The order here is the order on the page.
 const SECTIONS = [
@@ -189,7 +189,10 @@ export default function TermsPage() {
           The solutions you submit stay yours. By submitting them you give us
           permission to store them and to run them in our sandbox in order to
           grade them, to show you your own submission history, and to keep the
-          record that contest results and ratings were calculated from.
+          record that contest results and ratings were calculated from. If your
+          account is deleted, the source code goes with it — what is removed and
+          what stays is set out under &quot;Deleting your account&quot; in our{' '}
+          <Link to="/privacy">Privacy Policy</Link>.
         </p>
         <p>
           We do not show the source code of your solutions to other users. Our

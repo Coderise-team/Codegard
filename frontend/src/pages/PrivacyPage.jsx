@@ -7,7 +7,7 @@ import './PrivacyPage.css';
 // while signed out, so it renders standalone (no Sidebar/Navbar app shell).
 
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
-const LAST_UPDATED = 'September 25, 2026';
+const LAST_UPDATED = 'October 4, 2026';
 
 // Section id → table-of-contents label. The order here is the order on the page.
 const SECTIONS = [
@@ -546,8 +546,7 @@ export default function PrivacyPage() {
         <p>
           We may update this Privacy Policy from time to time. We will post the
           new version on this page and update the &quot;Last updated&quot; date
-          above. Continued use of Codegard after a change means you accept the
-          updated policy.
+          above.
         </p>
 
         <h2 id="contact">Contact us</h2>
