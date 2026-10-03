@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 import Sidebar from './Sidebar';
@@ -21,13 +21,13 @@ describe('Sidebar', () => {
   });
 
   it('links a signed-in member to the terms and the privacy policy', () => {
-    const { getByRole } = renderSidebar({ username: 'n3ptune', avatar: null });
+    renderSidebar({ username: 'n3ptune', avatar: null });
 
-    expect(getByRole('link', { name: 'Terms' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute(
       'href',
       '/terms'
     );
-    expect(getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute(
       'href',
       '/privacy'
     );
