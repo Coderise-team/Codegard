@@ -45,6 +45,19 @@ describe('PrivacyPage', () => {
     expect(document.title).toBe('Privacy Policy — Codegard');
   });
 
+  it('puts the previous title back when the reader leaves the page', () => {
+    document.title = 'Codegard';
+
+    const { unmount } = renderPage();
+    expect(document.title).toBe('Privacy Policy — Codegard');
+
+    unmount();
+
+    // Without the restore, the tab would go on advertising the policy across
+    // every page the reader opens next.
+    expect(document.title).toBe('Codegard');
+  });
+
   it('offers a table of contents that jumps to sections', () => {
     renderPage();
 

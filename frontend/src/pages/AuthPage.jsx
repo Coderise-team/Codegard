@@ -1,5 +1,10 @@
 import { useEffect, useId, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import './AuthPage.css';
 import { oauthStart } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
@@ -244,6 +249,19 @@ function LoginForm({
         {loading ? <span className="auth-spin" /> : 'Login'}
       </button>
 
+      {/* Reachable from here too, but no consent is asked a second time — the
+          account already exists. Under the button, not above it: above sits the
+          right-aligned "Forgot your password?", and two lines of different
+          alignment read as a mistake.
+
+          TERMS: this link becomes the same sentence as on the sign-up form —
+          the provider buttons below create an account for a first-time
+          visitor, so the terms are entered into from this screen as well.
+          Delete this note once it is done. */}
+      <p className="auth-legal">
+        <Link to="/privacy">Privacy Policy</Link>
+      </p>
+
       <div className="auth-switch">
         Don't have an account?{' '}
         <button type="button" className="auth-switch-link" onClick={onSwitch}>
@@ -303,6 +321,20 @@ function RegisterForm({
       />
 
       {formError && <div className="auth-error">{formError}</div>}
+
+      {/* "Acknowledge", not a tickbox: the policy is information we owe the
+          reader, not an agreement, so a consent checkbox here would claim
+          consent as the basis for everything — which the policy's own Legal
+          basis section contradicts. Above the button, where the ring is at its
+          widest; a line this long does not fit nearer the edge.
+
+          TERMS: the sentence becomes "By creating an account you agree to the
+          Terms of Service and acknowledge our Privacy Policy." Delete this
+          note once it is done. */}
+      <p className="auth-legal">
+        By creating an account you acknowledge our{' '}
+        <Link to="/privacy">Privacy Policy</Link>.
+      </p>
 
       <button type="submit" className="auth-btn" disabled={loading}>
         {loading ? <span className="auth-spin" /> : 'Create account'}

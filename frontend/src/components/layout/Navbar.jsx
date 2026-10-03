@@ -1,9 +1,10 @@
 import Icons from '../Icons';
+import NotificationBell from './NotificationBell';
 import UserMenu from './UserMenu';
 import SearchField from './SearchField';
 
 /**
- * Navbar — top dashboard bar (breadcrumb, search, user menu).
+ * Navbar — top dashboard bar (breadcrumb, search, notifications, user menu).
  *
  * Search belongs to the page below, not to the bar: every page searches its own
  * thing, and a page with nothing to search declares nothing and gets no field.
@@ -35,6 +36,7 @@ export default function Navbar({
 
       {search && <SearchField {...search} />}
 
+      <NotificationBell />
       <UserMenu user={user} />
     </header>
   );
