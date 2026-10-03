@@ -69,6 +69,16 @@ describe('PrivacyPage', () => {
     ).toHaveAttribute('href', '#google-user-data');
   });
 
+  it('sends the reader on to the terms of service', () => {
+    renderPage();
+
+    // The mirror of the link in the terms: the policy covers the data, the
+    // terms cover the service, so each has to reach the other.
+    expect(
+      screen.getByRole('link', { name: 'Terms of Service' })
+    ).toHaveAttribute('href', '/terms');
+  });
+
   it('links out to the third-party providers privacy policies', () => {
     renderPage();
 

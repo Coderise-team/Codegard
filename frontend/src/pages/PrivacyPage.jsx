@@ -59,7 +59,9 @@ export default function PrivacyPage() {
           Codegard (&quot;Codegard&quot;, &quot;we&quot;, &quot;us&quot;, or
           &quot;our&quot;) is a competitive programming platform. This Privacy
           Policy explains what personal data we collect, why we collect it, how
-          long we keep it, who can see it, and the rights you have over it.
+          long we keep it, who can see it, and the rights you have over it. The
+          rules for using the service itself are a separate matter, set out in
+          our <Link to="/terms">Terms of Service</Link>.
         </p>
         <p>
           If you have any questions about this policy or your data, contact us
