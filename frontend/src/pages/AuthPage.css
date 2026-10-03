@@ -164,7 +164,11 @@
     padding 0.2s;
 }
 
+/* `:-webkit-autofill` alongside the usual two: while Chrome is only previewing
+   a saved value the text is already on screen but not yet in the DOM, so the
+   field still counts as empty and the label would sit across it. */
 .auth-field input:focus ~ label,
+.auth-field input:-webkit-autofill ~ label,
 .auth-field input:not(:placeholder-shown) ~ label {
   top: 0;
   font-size: 0.72em;
@@ -189,12 +193,14 @@
 }
 
 /* ── Legal note ──────────────────────────────────────────────── */
-/* Quieter than the switch line below it: this is a notice to be found when
-   looked for, not a call to action competing with the submit button. */
+/* Secondary text, but no smaller than the switch line: a notice counts as given
+   only if it is legible where the action happens, and the terms of service will
+   live in this same line. The bottom margin keeps it off the submit button it
+   now sits above. */
 .auth-legal {
-  margin: 16px 0 0;
+  margin: 10px 0 14px;
   text-align: center;
-  font-size: 0.75em;
+  font-size: 0.82em;
   color: var(--fg2);
 }
 .auth-legal a {
