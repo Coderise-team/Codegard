@@ -186,6 +186,29 @@ describe('AuthPage', () => {
     expect(navigate).toHaveBeenCalledWith('/register');
   });
 
+  it('links to the privacy policy from the login form', () => {
+    renderInRouter(<AuthPage />);
+
+    expect(
+      screen.getByRole('link', { name: 'Privacy Policy' })
+    ).toHaveAttribute('href', '/privacy');
+  });
+
+  it('points a new account holder at the policy without asking them to consent', () => {
+    renderInRouter(<AuthPage mode="register" />);
+
+    expect(
+      screen.getByText(/by creating an account you acknowledge our/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Privacy Policy' })
+    ).toHaveAttribute('href', '/privacy');
+    // Deliberately no tickbox: the policy is information we owe the reader,
+    // not an agreement, and a consent checkbox would claim a legal basis the
+    // policy itself does not rely on.
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
   it('starts the oauth flow: stashes the origin and redirects to the provider', async () => {
     oauthStart.mockResolvedValue({ authorize_url: 'https://provider/auth' });
     renderInRouter(<AuthPage />);
