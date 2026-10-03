@@ -193,10 +193,6 @@
 }
 
 /* ── Legal note ──────────────────────────────────────────────── */
-/* Secondary text, but no smaller than the switch line: a notice counts as given
-   only if it is legible where the action happens, and the terms of service will
-   live in this same line. The bottom margin keeps it off the submit button it
-   now sits above. */
 .auth-legal {
   margin: 10px 0 14px;
   text-align: center;
