@@ -209,3 +209,15 @@ def test_password_change_anonymous_401():
         format="json",
     )
     assert resp.status_code == 401
+
+
+def test_profile_empty_fields(db, user, user_client):
+    user.refresh_from_db()
+
+    assert user.avatar.name == ""
+    assert user.avatar_thumb.name == ""
+    assert user.bio == ""
+
+    response = user_client.get("/api/users/me/")
+
+    assert response.data["avatar"] is None
