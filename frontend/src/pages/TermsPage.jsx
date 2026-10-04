@@ -128,7 +128,7 @@ export default function TermsPage() {
           </li>
           <li>
             <strong>Your email address must be your own</strong> and must work —
-            it is the only way we can reach you.
+            it is how we reach you outside Codegard.
           </li>
         </ul>
 
@@ -208,9 +208,9 @@ export default function TermsPage() {
         <p>
           Verdicts are produced automatically: your program is run against the
           tests and its output is compared with the expected answer, with no
-          human judgement involved. After a rated contest your rating is
-          recalculated automatically from your placing and the ratings of the
-          people you competed against.
+          human judgement involved. After a rated contest in which you submitted
+          at least once, your rating is recalculated automatically from your
+          placing and the ratings of the people you competed against.
         </p>
         <p>
           We may correct results and recalculate ratings — for example after a

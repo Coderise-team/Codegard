@@ -458,9 +458,9 @@ export default function PrivacyPage() {
         <p>
           Your submission is run automatically and its output is compared with
           the expected answer, ignoring whitespace at the ends of lines; no
-          human judgement goes into the verdict. After a rated contest, your
-          rating is recalculated automatically from your placing and the ratings
-          of the people you competed against.
+          human judgement goes into the verdict. After a rated contest in which
+          you submitted at least once, your rating is recalculated automatically
+          from your placing and the ratings of the people you competed against.
         </p>
         <p>
           These automated steps decide your verdict and your place on the
