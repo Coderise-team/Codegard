@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Every page a signed-out visitor can actually read, and nothing else.
+
+  The list is short because the product is: the catalog, the contests and the
+  profiles all sit behind the login. Nothing behind it may be listed here — a
+  crawler following such a link is redirected to /login, which Search Console
+  reports back as an error against the whole sitemap.
+
+  The host must stay byte-for-byte the one in og:url (https, no www), or Search
+  Console treats these as somebody else's addresses and refuses the file.
+
+  No <lastmod>, <changefreq> or <priority>: Google ignores the last two
+  outright, and a <lastmod> nobody maintains is worse than none at all.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://codegard.dev/</loc>
+  </url>
+  <url>
+    <loc>https://codegard.dev/privacy</loc>
+  </url>
+  <url>
+    <loc>https://codegard.dev/terms</loc>
+  </url>
+</urlset>

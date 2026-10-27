@@ -1,0 +1,13 @@
+# Everything a visitor can open is open to crawlers too. The three paths below
+# are not secrets — a crawler simply gets nothing usable from them: /api/ and
+# /admin/ answer with JSON or a login redirect, and /ws/ is a WebSocket
+# endpoint that a crawler never completes a handshake with. Keeping them out
+# spends the crawl budget on the pages that are worth indexing.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /ws/
+
+Sitemap: https://codegard.dev/sitemap.xml

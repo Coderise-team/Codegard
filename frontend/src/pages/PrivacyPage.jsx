@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BrandMark from '../components/BrandMark';
-import './PrivacyPage.css';
+import './LegalDoc.css';
 
 // Public, auth-free page: a Google verification reviewer must be able to read it
 // while signed out, so it renders standalone (no Sidebar/Navbar app shell).
 
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
-const LAST_UPDATED = 'September 25, 2026';
+const LAST_UPDATED = 'October 4, 2026';
 
 // Section id → table-of-contents label. The order here is the order on the page.
 const SECTIONS = [
@@ -40,8 +40,8 @@ export default function PrivacyPage() {
   }, []);
 
   return (
-    <div className="privacy scroll">
-      <header className="privacy-top">
+    <div className="legal scroll">
+      <header className="legal-top">
         <Link to="/" className="logo">
           <BrandMark className="mark" />
           <span>
@@ -51,22 +51,24 @@ export default function PrivacyPage() {
         </Link>
       </header>
 
-      <main className="privacy-doc">
+      <main className="legal-doc">
         <h1>Privacy Policy</h1>
-        <p className="privacy-updated">Last updated: {LAST_UPDATED}</p>
+        <p className="legal-updated">Last updated: {LAST_UPDATED}</p>
 
         <p>
           Codegard (&quot;Codegard&quot;, &quot;we&quot;, &quot;us&quot;, or
           &quot;our&quot;) is a competitive programming platform. This Privacy
           Policy explains what personal data we collect, why we collect it, how
-          long we keep it, who can see it, and the rights you have over it.
+          long we keep it, who can see it, and the rights you have over it. The
+          rules for using the service itself are a separate matter, set out in
+          our <Link to="/terms">Terms of Service</Link>.
         </p>
         <p>
           If you have any questions about this policy or your data, contact us
           at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
-        <nav className="privacy-toc" aria-label="Table of contents">
+        <nav className="legal-toc" aria-label="Table of contents">
           <ol>
             {SECTIONS.map(([id, label]) => (
               <li key={id}>
@@ -456,9 +458,9 @@ export default function PrivacyPage() {
         <p>
           Your submission is run automatically and its output is compared with
           the expected answer, ignoring whitespace at the ends of lines; no
-          human judgement goes into the verdict. After a rated contest, your
-          rating is recalculated automatically from your placing and the ratings
-          of the people you competed against.
+          human judgement goes into the verdict. After a rated contest in which
+          you submitted at least once, your rating is recalculated automatically
+          from your placing and the ratings of the people you competed against.
         </p>
         <p>
           These automated steps decide your verdict and your place on the
@@ -544,8 +546,7 @@ export default function PrivacyPage() {
         <p>
           We may update this Privacy Policy from time to time. We will post the
           new version on this page and update the &quot;Last updated&quot; date
-          above. Continued use of Codegard after a change means you accept the
-          updated policy.
+          above.
         </p>
 
         <h2 id="contact">Contact us</h2>

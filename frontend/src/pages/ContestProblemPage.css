@@ -37,6 +37,9 @@
 .cpp-app .nav-mini .mid {
   display: block;
 }
+.cpp-app .side-legal {
+  display: flex;
+}
 .cpp-app .side-scrim.show {
   display: block;
   position: fixed;

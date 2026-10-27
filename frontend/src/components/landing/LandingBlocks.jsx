@@ -132,6 +132,7 @@ export function LandingFooter() {
             <div className="foot-col">
               <span className="h">Legal</span>
               <Link to="/privacy">Privacy policy</Link>
+              <Link to="/terms">Terms of service</Link>
             </div>
           </div>
         </div>
@@ -139,6 +140,7 @@ export function LandingFooter() {
           <span>© 2026 Codegard</span>
           <span className="sp">
             <Link to="/privacy">Privacy policy</Link>
+            <Link to="/terms">Terms of service</Link>
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </span>
         </div>

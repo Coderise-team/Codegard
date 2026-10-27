@@ -138,6 +138,24 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Terms · Privacy under the user card: present, but quieter than the nav. */
+.side-legal {
+  margin: 4px 6px 0;
+  padding: 0 12px;
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--fg3);
+}
+.side-legal a {
+  color: var(--fg2);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.side-legal a:hover {
+  color: var(--gold);
+}
+
 /* ============================================================
    TOPBAR (inside main)
    ============================================================ */
@@ -1405,7 +1423,8 @@
   }
   .side .nav-link span,
   .side .logo > span:last-child,
-  .nav-mini .mid {
+  .nav-mini .mid,
+  .side-legal {
     display: none;
   }
 }
@@ -1476,6 +1495,9 @@
   .side .logo > span:last-child,
   .nav-mini .mid {
     display: block;
+  }
+  .side-legal {
+    display: flex;
   }
   .side-scrim.show {
     display: block;

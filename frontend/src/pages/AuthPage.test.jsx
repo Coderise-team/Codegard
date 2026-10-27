@@ -186,20 +186,33 @@ describe('AuthPage', () => {
     expect(navigate).toHaveBeenCalledWith('/register');
   });
 
-  it('links to the privacy policy from the login form', () => {
+  // The provider buttons on the login form create an account for a first-time
+  // visitor, so the terms are entered into from there too.
+  it('shows the login form the same terms sentence as the sign-up form', () => {
     renderInRouter(<AuthPage />);
 
+    expect(
+      screen.getByText(/by creating an account you agree to the/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Terms of Service' })
+    ).toHaveAttribute('href', '/terms');
     expect(
       screen.getByRole('link', { name: 'Privacy Policy' })
     ).toHaveAttribute('href', '/privacy');
   });
 
-  it('points a new account holder at the policy without asking them to consent', () => {
+  it('has a new account holder agree to the terms and acknowledge the policy', () => {
     renderInRouter(<AuthPage mode="register" />);
 
     expect(
-      screen.getByText(/by creating an account you acknowledge our/i)
-    ).toBeInTheDocument();
+      screen.getByText(/by creating an account you agree to the/i)
+    ).toHaveTextContent(
+      'By creating an account you agree to the Terms of Service and acknowledge our Privacy Policy.'
+    );
+    expect(
+      screen.getByRole('link', { name: 'Terms of Service' })
+    ).toHaveAttribute('href', '/terms');
     expect(
       screen.getByRole('link', { name: 'Privacy Policy' })
     ).toHaveAttribute('href', '/privacy');
