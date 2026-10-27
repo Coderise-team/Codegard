@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BrandMark from '../components/BrandMark';
-import './PrivacyPage.css';
+import './LegalDoc.css';
 
 // Public, auth-free page: a Google verification reviewer must be able to read it
 // while signed out, so it renders standalone (no Sidebar/Navbar app shell).
@@ -40,8 +40,8 @@ export default function PrivacyPage() {
   }, []);
 
   return (
-    <div className="privacy scroll">
-      <header className="privacy-top">
+    <div className="legal scroll">
+      <header className="legal-top">
         <Link to="/" className="logo">
           <BrandMark className="mark" />
           <span>
@@ -51,9 +51,9 @@ export default function PrivacyPage() {
         </Link>
       </header>
 
-      <main className="privacy-doc">
+      <main className="legal-doc">
         <h1>Privacy Policy</h1>
-        <p className="privacy-updated">Last updated: {LAST_UPDATED}</p>
+        <p className="legal-updated">Last updated: {LAST_UPDATED}</p>
 
         <p>
           Codegard (&quot;Codegard&quot;, &quot;we&quot;, &quot;us&quot;, or
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
           at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
-        <nav className="privacy-toc" aria-label="Table of contents">
+        <nav className="legal-toc" aria-label="Table of contents">
           <ol>
             {SECTIONS.map(([id, label]) => (
               <li key={id}>

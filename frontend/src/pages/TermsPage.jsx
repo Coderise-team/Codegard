@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BrandMark from '../components/BrandMark';
-import './TermsPage.css';
+import './LegalDoc.css';
 
 // Public, auth-free page, for the same reason the privacy policy is one: terms
 // count as shown only if they can be read before an account exists, so this
@@ -43,8 +43,8 @@ export default function TermsPage() {
   }, []);
 
   return (
-    <div className="terms scroll">
-      <header className="terms-top">
+    <div className="legal scroll">
+      <header className="legal-top">
         <Link to="/" className="logo">
           <BrandMark className="mark" />
           <span>
@@ -54,9 +54,9 @@ export default function TermsPage() {
         </Link>
       </header>
 
-      <main className="terms-doc">
+      <main className="legal-doc">
         <h1>Terms of Service</h1>
-        <p className="terms-updated">Last updated: {LAST_UPDATED}</p>
+        <p className="legal-updated">Last updated: {LAST_UPDATED}</p>
 
         <p>
           These terms govern your use of Codegard. They describe what you can
@@ -68,7 +68,7 @@ export default function TermsPage() {
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
-        <nav className="terms-toc" aria-label="Table of contents">
+        <nav className="legal-toc" aria-label="Table of contents">
           <ol>
             {SECTIONS.map(([id, label]) => (
               <li key={id}>

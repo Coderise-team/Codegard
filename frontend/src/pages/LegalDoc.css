@@ -1,7 +1,8 @@
-/* Standalone legal page — matches the app's dark theme but carries no app shell,
-   so it stays readable for a signed-out reader (e.g. a Google reviewer). */
+/* The look of a standalone legal document: the privacy policy and the terms of
+   service share it. Matches the app's dark theme but carries no app shell, so
+   the page stays readable before an account exists. */
 
-.privacy {
+.legal {
   /* The app shell sets `body { overflow: hidden }` and scrolls inside panels,
      so this standalone page owns its own scroll area instead. */
   height: 100vh;
@@ -12,30 +13,30 @@
   font-family: var(--ui);
 }
 
-.privacy-top {
+.legal-top {
   border-bottom: 1px solid var(--border);
   padding: 16px 20px;
 }
 
-.privacy-doc {
+.legal-doc {
   max-width: 760px;
   margin: 0 auto;
   padding: 40px 20px 80px;
   line-height: 1.7;
 }
 
-.privacy-doc h1 {
+.legal-doc h1 {
   font-size: 32px;
   margin: 0 0 6px;
 }
 
-.privacy-updated {
+.legal-updated {
   color: var(--fg2);
   margin: 0 0 32px;
   font-size: 14px;
 }
 
-.privacy-doc h2 {
+.legal-doc h2 {
   font-size: 20px;
   margin: 36px 0 12px;
   padding-top: 8px;
@@ -45,7 +46,7 @@
 }
 
 /* Table of contents */
-.privacy-toc {
+.legal-toc {
   margin: 8px 0 12px;
   padding: 16px 18px;
   background: var(--card);
@@ -53,57 +54,57 @@
   border-radius: var(--r);
 }
 
-.privacy-toc ol {
+.legal-toc ol {
   margin: 0;
   padding-left: 20px;
   columns: 2;
   column-gap: 28px;
 }
 
-.privacy-toc li {
+.legal-toc li {
   margin: 0 0 6px;
   break-inside: avoid;
 }
 
-.privacy-toc a {
+.legal-toc a {
   color: var(--fg);
   text-decoration: none;
 }
 
-.privacy-toc a:hover {
+.legal-toc a:hover {
   color: var(--gold);
   text-decoration: underline;
 }
 
 @media (max-width: 600px) {
-  .privacy-toc ol {
+  .legal-toc ol {
     columns: 1;
   }
 }
 
-.privacy-doc p {
+.legal-doc p {
   margin: 0 0 14px;
 }
 
-.privacy-doc ul {
+.legal-doc ul {
   margin: 0 0 14px;
   padding-left: 22px;
 }
 
-.privacy-doc li {
+.legal-doc li {
   margin: 0 0 6px;
 }
 
-.privacy-doc a {
+.legal-doc a {
   color: var(--gold);
   text-decoration: underline;
 }
 
-.privacy-doc a:hover {
+.legal-doc a:hover {
   color: var(--gold-hi);
 }
 
-.privacy-doc code {
+.legal-doc code {
   font-family: var(--mono);
   font-size: 0.9em;
   background: var(--card-2);
@@ -113,11 +114,11 @@
 }
 
 @media (max-width: 600px) {
-  .privacy-doc {
+  .legal-doc {
     padding: 28px 16px 60px;
   }
 
-  .privacy-doc h1 {
+  .legal-doc h1 {
     font-size: 26px;
   }
 }
