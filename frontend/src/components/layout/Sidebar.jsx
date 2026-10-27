@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom';
 import Avatar from '../Avatar';
+import BrandMark from '../BrandMark';
 import Icons from '../Icons';
 
 // App navigation — static app sections, not API data.
@@ -33,7 +34,7 @@ export default function Sidebar({ user, open = false, onClose }) {
       <aside className={`side${open ? ' open' : ''}`}>
         <div className="side-top">
           <Link to="/" className="logo" onClick={onClose}>
-            <span className="mark">C</span>
+            <BrandMark className="mark" />
             <span>
               <span className="wm-a">Code</span>
               <span className="wm-b">gard</span>

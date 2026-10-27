@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
   getDifficultyBreakdown: vi.fn(),
   getLanguages: vi.fn(),
   getRecommended: vi.fn(),
+  getReportReasons: vi.fn(),
   getStreak: vi.fn(),
   getTags: vi.fn(),
   getUserActivity: vi.fn(),
@@ -17,6 +18,7 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/problems', () => ({
   getDaily: api.getDaily,
   getRecommended: api.getRecommended,
+  getReportReasons: api.getReportReasons,
   getTags: api.getTags,
 }));
 vi.mock('../api/submissions', () => ({ getLanguages: api.getLanguages }));
@@ -34,6 +36,7 @@ import { useDaily } from './useDaily';
 import { useDifficultyBreakdown } from './useDifficultyBreakdown';
 import { useLanguages } from './useLanguages';
 import { useRecommended } from './useRecommended';
+import { useReportReasons } from './useReportReasons';
 import { useStreak } from './useStreak';
 import { useTags } from './useTags';
 import { useUserActivity } from './useUserActivity';
@@ -66,6 +69,12 @@ const hooks = [
     name: 'useLanguages',
     use: () => useLanguages(),
     call: api.getLanguages,
+    args: [],
+  },
+  {
+    name: 'useReportReasons',
+    use: () => useReportReasons(),
+    call: api.getReportReasons,
     args: [],
   },
   {

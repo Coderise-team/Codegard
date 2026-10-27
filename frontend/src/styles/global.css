@@ -75,18 +75,9 @@ code,
   text-decoration: none;
 }
 .logo .mark {
-  width: 26px;
+  width: auto;
   height: 26px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(150deg, var(--gold-hi), var(--gold));
-  color: #0d0f14;
-  font-weight: 800;
-  font-size: 15px;
-  box-shadow:
-    0 0 0 1px var(--accent-glow),
-    0 4px 14px var(--accent-glow-2);
+  color: var(--gold);
   flex-shrink: 0;
 }
 .logo .wm-a {

@@ -21,6 +21,7 @@ urlpatterns = [
     path("api/problems/", include("apps.problems.urls")),
     path("api/contests/", include("apps.contests.urls")),
     path("api/submissions/", include("apps.submissions.urls")),
+    path("api/notifications/", include("apps.notifications.urls")),
     path("api/languages/", LanguagesView.as_view(), name="languages"),
     path("api/report-reasons/", ReportReasonsView.as_view(), name="report-reasons"),
     path("api/reports/", include(reports_router.urls)),

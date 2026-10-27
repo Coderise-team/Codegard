@@ -1,8 +1,5 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Sidebar from '../components/layout/Sidebar';
-import Navbar from '../components/layout/Navbar';
-import { useCurrentUser } from '../hooks/useCurrentUser';
+import AppShell from '../components/layout/AppShell';
 import './NotFoundPage.css';
 
 /**
@@ -29,36 +26,23 @@ export default function NotFoundPage({
   to = '/',
   cta = 'Go to dashboard',
 }) {
-  const user = useCurrentUser();
-  const [navOpen, setNavOpen] = useState(false);
-
   return (
-    <div className="dash" data-density="compact">
-      <Sidebar user={user} open={navOpen} onClose={() => setNavOpen(false)} />
+    <AppShell title={navTitle}>
+      <div className="canvas scroll">
+        <div className="canvas-in">
+          <section className="nf">
+            {code != null && <div className="nf-code">{code}</div>}
+            <h1 className="nf-t">{title}</h1>
+            <p className="nf-s">{sub}</p>
 
-      <div className="main">
-        <Navbar
-          user={user}
-          title={navTitle}
-          onMenuClick={() => setNavOpen(true)}
-        />
-
-        <div className="canvas scroll">
-          <div className="canvas-in">
-            <section className="nf">
-              {code != null && <div className="nf-code">{code}</div>}
-              <h1 className="nf-t">{title}</h1>
-              <p className="nf-s">{sub}</p>
-
-              <div className="nf-cta">
-                <Link className="btn btn-primary" to={to}>
-                  {cta}
-                </Link>
-              </div>
-            </section>
-          </div>
+            <div className="nf-cta">
+              <Link className="btn btn-primary" to={to}>
+                {cta}
+              </Link>
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

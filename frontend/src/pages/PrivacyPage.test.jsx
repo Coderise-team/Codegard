@@ -33,8 +33,6 @@ describe('PrivacyPage', () => {
   it('links the brand logo back to the home page', () => {
     renderPage();
 
-    // The shared logo renders as C / Code / gard spans, so its accessible name
-    // is "CCodegard" — match it with a regex rather than an exact label.
     expect(screen.getByRole('link', { name: /Codegard/ })).toHaveAttribute(
       'href',
       '/'
@@ -45,6 +43,19 @@ describe('PrivacyPage', () => {
     renderPage();
 
     expect(document.title).toBe('Privacy Policy — Codegard');
+  });
+
+  it('puts the previous title back when the reader leaves the page', () => {
+    document.title = 'Codegard';
+
+    const { unmount } = renderPage();
+    expect(document.title).toBe('Privacy Policy — Codegard');
+
+    unmount();
+
+    // Without the restore, the tab would go on advertising the policy across
+    // every page the reader opens next.
+    expect(document.title).toBe('Codegard');
   });
 
   it('offers a table of contents that jumps to sections', () => {

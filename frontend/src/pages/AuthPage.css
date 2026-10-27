@@ -164,7 +164,11 @@
     padding 0.2s;
 }
 
+/* `:-webkit-autofill` alongside the usual two: while Chrome is only previewing
+   a saved value the text is already on screen but not yet in the DOM, so the
+   field still counts as empty and the label would sit across it. */
 .auth-field input:focus ~ label,
+.auth-field input:-webkit-autofill ~ label,
 .auth-field input:not(:placeholder-shown) ~ label {
   top: 0;
   font-size: 0.72em;
@@ -185,6 +189,22 @@
   transition: color 0.15s;
 }
 .auth-forgot a:hover {
+  color: var(--gold);
+}
+
+/* ── Legal note ──────────────────────────────────────────────── */
+.auth-legal {
+  margin: 10px 0 14px;
+  text-align: center;
+  font-size: 0.82em;
+  color: var(--fg2);
+}
+.auth-legal a {
+  color: var(--fg2);
+  text-decoration: underline;
+  transition: color 0.15s;
+}
+.auth-legal a:hover {
   color: var(--gold);
 }
 

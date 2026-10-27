@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.contests",
     "apps.submissions",
     "apps.realtime",
+    "apps.notifications",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",

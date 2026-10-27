@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import BrandMark from '../BrandMark';
 import Icons from '../Icons';
 import EditorMock from './EditorMock';
 import { useLandingScroll } from '../../hooks/useLandingScroll';
@@ -12,7 +13,7 @@ import { useLandingScroll } from '../../hooks/useLandingScroll';
 export function LandingLogo({ href = '#top' }) {
   return (
     <a href={href} className="logo" style={{ color: 'inherit' }}>
-      <span className="mark">C</span>
+      <BrandMark className="mark" />
       <span>
         <span className="wm-a">Code</span>
         <span className="wm-b">gard</span>

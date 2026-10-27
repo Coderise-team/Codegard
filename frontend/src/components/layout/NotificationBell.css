@@ -1,0 +1,60 @@
+/* NotificationBell.css - owned by the component, so every top bar that mounts
+   <NotificationBell> is styled without importing a page stylesheet. The button
+   itself is the shared .icon-btn. */
+
+.nbell {
+  position: relative;
+}
+
+/* Unread count: red like the mock's dot, ringed in the bar's own background so
+   it reads as sitting on top of the button's corner. */
+.nbell-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--wa);
+  border: 2px solid var(--card);
+  color: #fff;
+  font-family: var(--ui);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A short swing every few seconds while something is unread; the long still
+   tail of the cycle is what keeps it from nagging. */
+@media (prefers-reduced-motion: no-preference) {
+  .nbell.has-unread svg {
+    transform-origin: 50% 2px;
+    animation: nbell-ring 6s ease-in-out infinite;
+  }
+}
+@keyframes nbell-ring {
+  0%,
+  12%,
+  100% {
+    transform: rotate(0);
+  }
+  2% {
+    transform: rotate(14deg);
+  }
+  4% {
+    transform: rotate(-12deg);
+  }
+  6% {
+    transform: rotate(8deg);
+  }
+  8% {
+    transform: rotate(-5deg);
+  }
+  10% {
+    transform: rotate(2deg);
+  }
+}

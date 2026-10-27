@@ -13,14 +13,16 @@ import PrivacyPage from './pages/PrivacyPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import HomeRoute from './components/HomeRoute';
+import NotificationsSync from './components/NotificationsSync';
 import PrivateRoute from './components/PrivateRoute';
 import GuestRoute from './components/GuestRoute';
 
 export const router = createBrowserRouter([
   {
-    // Pathless root: it renders nothing of its own (children go through its
-    // Outlet), it exists so every route below has an errorElement to fall back
-    // to when it crashes while rendering.
+    // Pathless root: every route below has its errorElement to fall back to
+    // when it crashes while rendering, and NotificationsSync keeps the bell's
+    // count current across all of them (children go through its Outlet).
+    element: <NotificationsSync />,
     errorElement: <ErrorBoundary />,
     children: [
       {

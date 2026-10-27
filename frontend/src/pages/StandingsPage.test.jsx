@@ -44,9 +44,9 @@ const result = (items) => ({
 });
 
 const lastParams = () => useStandings.mock.lastCall[0];
-const renderPage = () =>
+const renderPage = (entry = '/standings') =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[entry]}>
       <StandingsPage />
     </MemoryRouter>
   );
@@ -296,5 +296,56 @@ describe('StandingsPage when data is missing', () => {
     const { container } = renderPage();
 
     expect(container.querySelector('.st-youbar')).toBeNull();
+  });
+});
+
+describe('StandingsPage search', () => {
+  it('searches for the name the address arrived with', () => {
+    renderPage('/standings?search=ann');
+
+    expect(lastParams()).toEqual({ ordering: '-elo_rating', search: 'ann' });
+  });
+
+  it('searches inside the tier once one is picked', () => {
+    renderPage('/standings?search=ann');
+
+    fireEvent.click(screen.getByText('Filter by tier'));
+    fireEvent.click(screen.getByText('Expert'));
+
+    expect(lastParams()).toEqual({
+      ordering: '-elo_rating',
+      tier: 'Expert',
+      search: 'ann',
+    });
+  });
+
+  it('drops the podium and the floating bar while searching', () => {
+    // A search is a slice of the board, and the podium only belongs to the
+    // whole world — even though these three hold the top places.
+    useStandings.mockReturnValue({
+      ...result([coder('ann', 1), coder('bob', 2), coder('cid', 3)]),
+      you: coder('me', 9),
+    });
+    const { container } = renderPage('/standings?search=ann');
+
+    expect(container.querySelectorAll('.pod')).toHaveLength(0);
+    expect(container.querySelector('.st-youbar')).toBeNull();
+  });
+
+  it('says the search found nobody, not that the tier is empty', () => {
+    useStandings.mockReturnValue({ ...result([]), total: 400 });
+    renderPage('/standings?search=zzz');
+
+    expect(screen.getByText(/No nickname matches that search/)).toBeTruthy();
+    expect(screen.queryByText(/No one holds this tier yet/)).toBeNull();
+  });
+
+  it('clears the search from the empty board', () => {
+    useStandings.mockReturnValue({ ...result([]), total: 400 });
+    renderPage('/standings?search=zzz');
+
+    fireEvent.click(screen.getByText('Clear search'));
+
+    expect(lastParams()).toEqual({ ordering: '-elo_rating' });
   });
 });

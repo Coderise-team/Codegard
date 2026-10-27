@@ -1,0 +1,55 @@
+import { create } from 'zustand';
+
+import { getUnreadCount, markSeen } from '../api/notifications';
+
+/**
+ * Unread count behind the bell, shared by every top bar that draws one.
+ *
+ * Two kinds of request write the number: a plain refetch and the answer to
+ * "I saw these". They race - a refetch sent before a /seen/ call can come back
+ * after it with the older, higher count. Every request takes a ticket when it
+ * is sent, and an answer is applied only if no later-sent request has been
+ * applied already.
+ */
+let issued = 0;
+let applied = 0;
+
+export const useNotificationsStore = create((set) => {
+  const apply = (ticket, count) => {
+    if (ticket <= applied) return;
+    applied = ticket;
+    set({ count });
+  };
+
+  return {
+    count: 0,
+    // Bumped once per paced ring (and per reconnect), so an open feed knows to
+    // fetch its first page again.
+    rings: 0,
+
+    noteRing: () => set((s) => ({ rings: s.rings + 1 })),
+
+    // Background refetch: a failure keeps the last known number, the next
+    // ring, timer tick or tab return asks again.
+    refreshCount: async () => {
+      const ticket = ++issued;
+      try {
+        apply(ticket, await getUnreadCount());
+      } catch {
+        // Nothing to show for it; the current number stays.
+      }
+    },
+
+    // Rejects on failure so the caller can offer the same ids again.
+    markSeen: async (ids) => {
+      const ticket = ++issued;
+      apply(ticket, await markSeen(ids));
+    },
+
+    // Called when the session ends: answers still in flight belong to it.
+    reset: () => {
+      applied = issued;
+      set({ count: 0 });
+    },
+  };
+});

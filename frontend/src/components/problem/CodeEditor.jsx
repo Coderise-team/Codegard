@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import * as monaco from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import Editor, { loader } from '@monaco-editor/react';
@@ -57,20 +58,73 @@ const OPTIONS = {
 /**
  * CodeEditor — Monaco wrapper for the workspace editor pane.
  *
+ * Each language of each `historyKey` gets its own Monaco model, so each keeps
+ * its own undo history: undo never brings another language's code back, and
+ * coming back to a problem brings its history back too, until the page
+ * reloads. A model is created on its first visit, holding `startCode`; code
+ * then put in from outside (a loaded submission, Reset) is an ordinary edit,
+ * which undo can take back.
+ *
+ * A kept model can fall behind `value` (the draft changed in another tab, or
+ * could not be saved); it is then brought up to `value` with an ordinary edit
+ * when it comes on screen, so what is shown is always what gets submitted.
+ *
  * Props:
- *   value    — current code
- *   language — Monaco language id (matches the backend language id)
- *   onChange — called with the new code
+ *   value      — current code
+ *   language   — Monaco language id (matches the backend language id)
+ *   historyKey — whose models these are (one problem in one place); the same
+ *                key on a later mount picks the same models back up
+ *   startCode  — the code the language started with; seeds its model
+ *   onChange   — called with the new code
+ *   onMount    — called with the Monaco editor instance once it is ready
  */
-export default function CodeEditor({ value, language, onChange }) {
+export default function CodeEditor({
+  value,
+  language,
+  historyKey,
+  startCode,
+  onChange,
+  onMount,
+}) {
+  // The latest code and change handler. Set in a layout effect, so both are
+  // fresh before the wrapper switches models in its effects: its change
+  // listener still belongs to the previous render then, and calling an older
+  // `onChange` would file the code under the language being left.
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  useLayoutEffect(() => {
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+  });
+
+  const catchUp = (editor) => {
+    const model = editor.getModel();
+    const code = valueRef.current;
+    if (!model || model.getValue() === code) return;
+    editor.executeEdits('', [
+      { range: model.getFullModelRange(), text: code, forceMoveMarkers: true },
+    ]);
+    editor.pushUndoStop();
+  };
+
+  const handleMount = (editor) => {
+    catchUp(editor);
+    editor.onDidChangeModel(() => catchUp(editor));
+    onMount(editor);
+  };
+
   return (
     <div className="pp-editor-host">
       <Editor
+        path={`${encodeURIComponent(historyKey)}/${language}`}
+        keepCurrentModel
+        defaultValue={startCode}
         value={value}
         language={language}
         theme={THEME}
         options={OPTIONS}
-        onChange={(v) => onChange(v ?? '')}
+        onChange={(v) => onChangeRef.current(v ?? '')}
+        onMount={handleMount}
       />
     </div>
   );

@@ -798,6 +798,9 @@
   font-size: 12.5px;
   margin-top: 6px;
 }
+.st-empty .btn {
+  margin-top: 16px;
+}
 
 /* ============================================================
    "YOUR STANDING" overlay bar

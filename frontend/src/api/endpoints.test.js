@@ -4,6 +4,7 @@ const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }));
 vi.mock('./client', () => ({ default: { get, post } }));
 
 import * as contests from './contests';
+import * as notifications from './notifications';
 import * as problems from './problems';
 import * as standings from './standings';
 import * as submissions from './submissions';
@@ -124,6 +125,13 @@ const reads = [
     result: { id: 9 },
   },
   {
+    name: 'problems.getReportReasons',
+    run: () => problems.getReportReasons(),
+    calledWith: ['report-reasons/'],
+    answer: [{ id: 'wrong_test', name: 'Wrong test' }],
+    result: [{ id: 'wrong_test', name: 'Wrong test' }],
+  },
+  {
     name: 'submissions.getSubmissions',
     run: () => submissions.getSubmissions({ problem: 42 }),
     calledWith: ['submissions/', { params: { problem: 42 } }],
@@ -194,6 +202,21 @@ const reads = [
     answer: { count: 1, results: [] },
     result: { count: 1, results: [] },
   },
+  {
+    // The feed scrolls page by page, so it needs the envelope with `next`.
+    name: 'notifications.getNotifications',
+    run: () => notifications.getNotifications({ page: 2 }),
+    calledWith: ['notifications/', { params: { page: 2 } }],
+    answer: { count: 21, next: null, results: [{ id: 812 }] },
+    result: { count: 21, next: null, results: [{ id: 812 }] },
+  },
+  {
+    name: 'notifications.getUnreadCount',
+    run: () => notifications.getUnreadCount(),
+    calledWith: ['notifications/unread-count/'],
+    answer: { count: 3 },
+    result: 3,
+  },
 ];
 
 beforeEach(() => {
@@ -244,6 +267,32 @@ describe('submissions.createSubmission', () => {
       code: 'print(1)',
       language: 'python',
       contest: 7,
+    });
+  });
+});
+
+describe('problems.reportProblem', () => {
+  it('posts the complaint to the problem it is about', async () => {
+    post.mockResolvedValue({ data: { detail: 'Report submitted.' } });
+
+    const body = {
+      reason: 'wrong_test',
+      message: 'Sample 3 expects 5, not 4.',
+    };
+    const data = await problems.reportProblem(42, body);
+
+    expect(post).toHaveBeenCalledWith('problems/42/report/', body);
+    expect(data).toEqual({ detail: 'Report submitted.' });
+  });
+});
+
+describe('notifications.markSeen', () => {
+  it('posts the ids that were on screen and returns the unseen count left', async () => {
+    post.mockResolvedValue({ data: { count: 30 } });
+
+    await expect(notifications.markSeen([812, 813])).resolves.toBe(30);
+    expect(post).toHaveBeenCalledWith('notifications/seen/', {
+      ids: [812, 813],
     });
   });
 });

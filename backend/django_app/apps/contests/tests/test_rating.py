@@ -57,7 +57,7 @@ def test_apply_writes_everything(users, problems, finished_contest):
     make_submission(b, problems[0], c)  # b: 1 solved → rank 2
 
     updated = apply_contest_ratings(c)
-    assert updated == 2
+    assert updated.rated == 2
 
     a.refresh_from_db()
     b.refresh_from_db()
@@ -127,7 +127,7 @@ def test_idempotent(users, problems, finished_contest):
     first = a.elo_rating
 
     second = apply_contest_ratings(c)  # already applied
-    assert second == 0
+    assert second.rated == 0
     a.refresh_from_db()
     assert a.elo_rating == first  # unchanged
     assert EloHistory.objects.filter(user=a).count() == 1  # not doubled
@@ -160,7 +160,7 @@ def test_single_submitter_marks_applied_without_change(
 
     updated = apply_contest_ratings(c)
 
-    assert updated == 0  # no opponents → nobody rated
+    assert updated.rated == 0  # no opponents → nobody rated
     a.refresh_from_db()
     assert a.elo_rating == 1200  # untouched
     c.refresh_from_db()

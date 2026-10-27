@@ -80,7 +80,8 @@ function StatementTab({ problem }) {
 
 const fmtMetric = (value, unit) => (value == null ? '—' : `${value} ${unit}`);
 
-function SubmissionsTab({ submissions }) {
+// A row is clickable: it puts that submission's code into the editor.
+function SubmissionsTab({ submissions, onPickSubmission }) {
   if (!submissions.length) {
     return (
       <div className="pp-pane-body">
@@ -101,7 +102,18 @@ function SubmissionsTab({ submissions }) {
         </thead>
         <tbody>
           {submissions.map((s) => (
-            <tr key={s.id}>
+            <tr
+              key={s.id}
+              tabIndex={0}
+              title="Load this code into the editor"
+              onClick={() => onPickSubmission(s)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onPickSubmission(s);
+                }
+              }}
+            >
               <td>
                 {s.verdict ? (
                   <span
@@ -137,12 +149,14 @@ function SubmissionsTab({ submissions }) {
  * Props:
  *   problem     — statement object (title, meta chips, texts, examples)
  *   submissions — rows for the Submissions tab
+ *   onPickSubmission — called with a clicked submission row
  *   tab, onTab  — active tab id ('statement' | 'submissions') + setter
  *   style       — layout style from the splitter (flexBasis %)
  */
 export default function ProblemPanel({
   problem,
   submissions,
+  onPickSubmission,
   tab,
   onTab,
   style,
@@ -167,7 +181,10 @@ export default function ProblemPanel({
       {tab === 'statement' ? (
         <StatementTab problem={problem} />
       ) : (
-        <SubmissionsTab submissions={submissions} />
+        <SubmissionsTab
+          submissions={submissions}
+          onPickSubmission={onPickSubmission}
+        />
       )}
     </section>
   );

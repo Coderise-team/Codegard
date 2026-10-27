@@ -1,3 +1,4 @@
+from apps.contests.models import Contest
 from rest_framework import serializers
 
 from .models import Problem, ProblemReport, Tag, TestCase
@@ -213,14 +214,27 @@ class RecommendedProblemSerializer(serializers.ModelSerializer):
 
 
 class ProblemReportCreateSerializer(serializers.ModelSerializer):
-    """Input for POST /api/problems/{id}/report/ — just the two fields a human
-    fills in. ``problem``, ``user``, ``problem_title`` and ``status`` are all
-    set by the view, never accepted from the request body.
+    """Input for POST /api/problems/{id}/report/ — the reason and message a human
+    fills in, plus the round the report is filed from, if any. ``problem``,
+    ``user``, ``problem_title`` and ``status`` are all set by the view, never
+    accepted from the request body.
     """
+
+    # A plain id, not a related field, and never a reason to refuse the report.
+    # The contest is kept as sent even when the problem is no longer in it: the
+    # page was opened from that round, and an admin may have just pulled the
+    # problem out. An id that matches no contest (the round was deleted) leaves
+    # the field empty, the same as deleting the contest after the report.
+    contest = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         model = ProblemReport
-        fields = ["reason", "message"]
+        fields = ["reason", "message", "contest"]
+
+    def validate_contest(self, contest_id):
+        if contest_id is None:
+            return None
+        return Contest.objects.filter(pk=contest_id).first()
 
     def validate_message(self, value):
         message = value.strip()
@@ -249,6 +263,7 @@ class ProblemReportSerializer(serializers.ModelSerializer):
             "id",
             "problem",
             "problem_title",
+            "contest",
             "user",
             "reason",
             "message",

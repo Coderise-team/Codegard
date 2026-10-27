@@ -34,6 +34,9 @@
 
   /* Text */
   --fg: #e8eaf0;
+  /* Long text meant to be read (problem statements, dialog copy): a notch
+     softer than --fg, which is for headings and single lines. */
+  --fg-read: #c9cdda;
   --fg2: #6b7280;
   --fg3: #444b5c;
 
