@@ -62,3 +62,14 @@ def bust_leaderboard_cache(contest_id: int) -> None:
         cache.incr(key)
     except ValueError:
         cache.set(key, 1, None)
+
+
+def predicted_deltas_cache_key(contest_id: int) -> str:
+    """Cache key for one contest's predicted-delta dict.
+
+    Same generation counter as leaderboard pages (get_generation): a new
+    accepted submission bumps it via bust_leaderboard_cache, which orphans
+    this key exactly like every leaderboard page. No separate invalidation.
+    """
+    generation = get_generation(contest_id)
+    return f"contest:{contest_id}:lb:g{generation}:predictions"

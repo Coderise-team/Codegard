@@ -173,10 +173,19 @@ class LeaderboardEntrySerializer(serializers.Serializer):
     solved_count = serializers.IntegerField(read_only=True)
     last_ac_at = serializers.DateTimeField(read_only=True, allow_null=True)
     rating_delta = serializers.IntegerField(read_only=True, allow_null=True)
+    predicted_delta = serializers.SerializerMethodField()
 
     def get_rank(self, obj):
         # Rank is injected via annotated queryset in the view
         return getattr(obj, "rank", None)
+
+    def get_predicted_delta(self, obj):
+        # Deliberately no `or {}` fallback: a missing context here means
+        # whoever instantiated this serializer forgot to pass
+        # predicted_deltas, and that should raise loudly, not silently
+        # render every row's prediction as empty.
+        deltas = self.context["predicted_deltas"]
+        return deltas.get(obj.pk)
 
 
 # PERSONAL CONTEST DATA SERIALIZERS
