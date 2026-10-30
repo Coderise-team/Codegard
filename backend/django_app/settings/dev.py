@@ -23,8 +23,8 @@ CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
 
 # No real mail locally: emails are printed by whichever process sends them —
 # the celery-worker log, since account emails go out from a task — and the
-# links in them can be opened by hand.
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# links in them can be opened by hand (readably: see core/mail.py).
+EMAIL_BACKEND = "core.mail.ReadableConsoleBackend"
 DEFAULT_FROM_EMAIL = "Codegard <no-reply@codegard.dev>"
 
 INSTALLED_APPS += ["debug_toolbar"]

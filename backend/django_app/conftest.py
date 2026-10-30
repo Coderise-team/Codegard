@@ -16,9 +16,16 @@ shadowing it would break those. ``custom_admin_client`` is a DRF client for
 hitting the REST API as a superuser.
 """
 
+import config  # noqa: F401  (loads the Celery app; see below)
 import pytest
 from fakeredis import FakeStrictRedis
 from rest_framework.test import APIClient
+
+# Importing ``config`` loads the project's Celery app, so shared tasks run on it
+# — eagerly, as settings.test asks — instead of on Celery's unconfigured default
+# app, where .delay() quietly goes nowhere. In production Django loads it on
+# start (config/__init__.py); under pytest nothing imports ``config`` until some
+# test resolves a URL, which would make a task's fate depend on test order.
 
 
 @pytest.fixture
