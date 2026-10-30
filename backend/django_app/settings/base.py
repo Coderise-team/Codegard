@@ -102,6 +102,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# Despite the name, the ceiling for EVERY token in apps/users/tokens.py: Django
+# checks this one limit for all its token generators. Set to the longest
+# lifetime (email verification, 3 days); each generator enforces its own,
+# shorter one on top — password reset links still die after an hour.
+PASSWORD_RESET_TIMEOUT = int(timedelta(days=3).total_seconds())
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
