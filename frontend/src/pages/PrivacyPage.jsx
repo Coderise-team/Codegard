@@ -7,7 +7,7 @@ import './LegalDoc.css';
 // while signed out, so it renders standalone (no Sidebar/Navbar app shell).
 
 const CONTACT_EMAIL = 'codegard.team@gmail.com';
-const LAST_UPDATED = 'October 4, 2026';
+const LAST_UPDATED = 'October 31, 2026';
 
 // Section id → table-of-contents label. The order here is the order on the page.
 const SECTIONS = [
@@ -153,6 +153,7 @@ export default function PrivacyPage() {
           <li>Your daily-challenge streak</li>
           <li>Problem reports you file (the reason and your message)</li>
           <li>Notifications addressed to you</li>
+          <li>Whether you have confirmed that your email address is yours</li>
         </ul>
         <p>
           <strong>Technical data (collected automatically):</strong>
@@ -184,6 +185,16 @@ export default function PrivacyPage() {
             changes, and the problem reports you filed
           </li>
           <li>
+            send you emails about your account: one to confirm your email
+            address when you sign up (and again whenever you ask for it), and
+            one to reset your password when you ask for that. We send no
+            newsletters and no marketing email.
+          </li>
+          <li>
+            check that your email address is really yours before you can submit
+            solutions or register for contests
+          </li>
+          <li>
             limit how often certain requests can be made — counted per account
             when you are signed in, and per address when you are not — to
             prevent abuse
@@ -203,8 +214,8 @@ export default function PrivacyPage() {
         <ul>
           <li>
             <strong>Performance of a service</strong> — to create your account,
-            sign you in, run submissions, and provide the platform&apos;s core
-            features.
+            sign you in, send the emails your account needs, run submissions,
+            and provide the platform&apos;s core features.
           </li>
           <li>
             <strong>Legitimate interests</strong> — to keep the service secure,
@@ -232,13 +243,18 @@ export default function PrivacyPage() {
         <ul>
           <li>
             We use Google user data (your account identifier and email address){' '}
-            <strong>only</strong> to create your account, sign you in, and
-            recognise you when you return.
+            <strong>only</strong> to create your account, sign you in, recognise
+            you when you return, confirm that the email address on your account
+            is yours, and — when you ask for it — send a password reset email to
+            that address, for example to set a password for your account.
           </li>
           <li>
-            We do <strong>not</strong> transfer or sell Google user data to
-            third parties, and we do <strong>not</strong> use it for
-            advertising.
+            We do <strong>not</strong> sell Google user data and do{' '}
+            <strong>not</strong> use it for advertising. We transfer it to
+            nobody except the providers that run the service for us: your email
+            address goes to our email delivery provider, Brevo, only to deliver
+            an email you asked for (see{' '}
+            <a href="#sharing">Who we share data with</a>).
           </li>
           <li>
             Humans do not read your Google user data, except where necessary for
@@ -291,6 +307,20 @@ export default function PrivacyPage() {
           <li>
             <strong>Cloudflare R2</strong> — stores your avatar files and our
             encrypted database backups.
+          </li>
+          <li>
+            <strong>Brevo</strong> — delivers the emails we send about your
+            account (confirming your email address and resetting your password).
+            For each email it receives your email address, your username, and
+            the message itself, which contains a single-use link. See the{' '}
+            <a
+              href="https://www.brevo.com/legal/privacypolicy/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Brevo Privacy Policy
+            </a>
+            .
           </li>
           <li>
             <strong>Our hosting provider</strong> — runs the server that holds
@@ -391,6 +421,13 @@ export default function PrivacyPage() {
           <li>
             <strong>Sign-in tokens</strong> — a refresh token lasts 7 days;
             expired ones are purged nightly.
+          </li>
+          <li>
+            <strong>Links in account emails</strong> — a link to confirm your
+            email address works for 3 days, a password reset link for 1 hour,
+            and each stops working once it has been used. We keep no copy of the
+            emails we send; Brevo keeps its own delivery records under its
+            privacy policy.
           </li>
           <li>
             <strong>Server logs</strong> — rotated by size rather than on a
@@ -523,6 +560,10 @@ export default function PrivacyPage() {
             metadata a camera embeds — including any GPS location.
           </li>
           <li>Database backups are encrypted.</li>
+          <li>
+            Changing your password signs you out of your other sessions, and
+            resetting it through an emailed link signs you out of all of them.
+          </li>
           <li>
             The source code of your solutions is never shown to other users.
           </li>
