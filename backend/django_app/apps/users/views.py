@@ -18,10 +18,6 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -41,7 +37,7 @@ from .serializers import (
     UserRegisterSerializer,
     UserSerializer,
 )
-from .services import RANK_THRESHOLDS
+from .services import RANK_THRESHOLDS, revoke_refresh_tokens
 
 # Difficulty buckets, in the order the breakdown endpoint returns them.
 DIFFICULTIES = ("easy", "medium", "hard")
@@ -393,11 +389,9 @@ class PasswordChangeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Revoke all outstanding refresh tokens FIRST, then mint the new pair —
-        # otherwise the fresh refresh would be blacklisted too. get_or_create
-        # guards against tokens that are already blacklisted.
-        for token in OutstandingToken.objects.filter(user=request.user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        # Revoke FIRST, then mint the new pair — otherwise the fresh refresh
+        # would be blacklisted too.
+        revoke_refresh_tokens(request.user)
 
         refresh = RefreshToken.for_user(request.user)
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})
