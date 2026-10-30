@@ -96,7 +96,7 @@ def redeem_login_ticket(ticket: str | None) -> int | None:
 
 
 def _redirect_uri(provider: str) -> str:
-    return f"{settings.OAUTH_REDIRECT_BASE}/api/users/oauth/{provider}/callback/"
+    return f"{settings.SITE_URL}/api/users/oauth/{provider}/callback/"
 
 
 def build_authorize_url(provider: str, state: str) -> str:

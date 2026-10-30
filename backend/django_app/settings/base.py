@@ -22,8 +22,9 @@ OAUTH_PROVIDERS = {
     },
 }
 
-# Browser-facing origin the OAuth redirect_url is built on.
-OAUTH_REDIRECT_BASE = env("OAUTH_REDIRECT_BASE")
+# Browser-facing origin of the site, no trailing slash. OAuth callback URLs
+# and the links in account emails are built on it.
+SITE_URL = env("SITE_URL")
 
 INSTALLED_APPS = [
     "daphne",
