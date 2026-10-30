@@ -214,6 +214,17 @@ class TokenLinkSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class PasswordResetConfirmSerializer(TokenLinkSerializer):
+    """POST /api/users/password-reset/confirm/ — the link plus the new password.
+
+    The password validators need the user (one of them compares the password
+    with the username and email), and the user is only known once the link
+    checks out, so the view runs them.
+    """
+
+    new_password = serializers.CharField(write_only=True)
+
+
 class PasswordChangeSerializer(serializers.Serializer):
     """POST /api/users/me/password/ — old_password + new_password."""
 

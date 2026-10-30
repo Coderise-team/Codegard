@@ -3,7 +3,10 @@ from datetime import timedelta
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from core.search import MIN_TRIGRAM_LENGTH
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.postgres.search import TrigramWordSimilarity
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
 from django.shortcuts import get_object_or_404, redirect
@@ -31,6 +34,7 @@ from .serializers import (
     EloHistorySerializer,
     EmailOrUsernameTokenObtainSerializer,
     PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     StandingsRowSerializer,
     TokenLinkSerializer,
@@ -41,7 +45,7 @@ from .serializers import (
 )
 from .services import RANK_THRESHOLDS, revoke_refresh_tokens
 from .tasks import queue_password_reset_email, queue_verification_email
-from .tokens import email_verification_token, user_from_uid
+from .tokens import email_verification_token, password_reset_token, user_from_uid
 
 # One answer for every link that cannot be honoured — malformed, someone
 # else's, expired or already used — so the reply tells a prober nothing.
@@ -161,6 +165,60 @@ class PasswordResetRequestView(APIView):
         if user is not None:
             queue_password_reset_email(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetConfirmView(APIView):
+    """POST /api/users/password-reset/confirm/ {uid, token, new_password} — set
+    the new password from a reset link.
+
+    On success:
+    - the password is set (for an OAuth user, their first one);
+    - the address counts as verified — the link reached its inbox;
+    - every session is revoked, as on a password change: whoever knew the old
+      password is out. No new pair is issued; the user simply signs in.
+
+    400 for a link that cannot be honoured, or a password the validators turn
+    down — the link then stays good for another try.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        found = user_from_uid(data["uid"])
+        if found is None:
+            return self._invalid_link()
+
+        with transaction.atomic():
+            # Locked, and the token checked against the locked row: two requests
+            # racing with the same link are served one after the other, and the
+            # second finds the password changed and the link dead.
+            user = User.objects.select_for_update().get(pk=found.pk)
+            if not password_reset_token.check_token(user, data["token"]):
+                return self._invalid_link()
+
+            try:
+                validate_password(data["new_password"], user=user)
+            except DjangoValidationError as exc:
+                return Response(
+                    {"new_password": exc.messages},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.set_password(data["new_password"])
+            user.email_verified = True
+            user.save(update_fields=["password", "email_verified"])
+            revoke_refresh_tokens(user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def _invalid_link():
+        return Response({"detail": INVALID_LINK}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AvatarUploadView(APIView):
