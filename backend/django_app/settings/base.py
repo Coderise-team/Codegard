@@ -147,6 +147,7 @@ REST_FRAMEWORK = {
         "problem_report": "10/hour",
         # Each one sends a real email from our daily sending quota.
         "verify_email_resend": "3/hour",
+        "password_reset": "3/hour",
     },
 }
 
@@ -192,4 +193,5 @@ RESERVED_USERNAMES = {
     "oauth",
     "standings",
     "verify-email",
+    "password-reset",
 }

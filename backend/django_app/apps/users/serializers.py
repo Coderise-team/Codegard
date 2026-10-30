@@ -197,6 +197,12 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ["bio", "first_name", "last_name"]
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """POST /api/users/password-reset/ — the address to send the link to."""
+
+    email = serializers.EmailField()
+
+
 class TokenLinkSerializer(serializers.Serializer):
     """The uid + token pair from a link in an account email.
 

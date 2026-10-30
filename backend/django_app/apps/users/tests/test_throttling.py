@@ -79,6 +79,23 @@ def test_resending_the_verification_email_is_limited_to_three_an_hour(
 
 
 @pytest.mark.django_db
+def test_asking_for_a_password_reset_is_limited_to_three_an_hour(settings, api_client):
+    """Real rate again; counted per requester, so it holds for unknown addresses
+    too and nobody can spray reset emails at strangers."""
+    assert base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["password_reset"] == "3/hour"
+    settings.REST_FRAMEWORK = {
+        **settings.REST_FRAMEWORK,
+        "DEFAULT_THROTTLE_RATES": base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+    }
+    url = reverse("users:password-reset")
+    for i in range(3):
+        resp = api_client.post(url, {"email": f"someone{i}@test.com"})
+        assert resp.status_code == 204
+    resp = api_client.post(url, {"email": "someone9@test.com"})
+    assert resp.status_code == 429
+
+
+@pytest.mark.django_db
 def test_throttling_is_off_for_other_endpoints(user_client, _tight_limits):
     """Only the three declared scopes are limited — normal work is untouched."""
     url = reverse("problems-list")

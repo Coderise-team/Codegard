@@ -31,6 +31,7 @@ from .serializers import (
     EloHistorySerializer,
     EmailOrUsernameTokenObtainSerializer,
     PasswordChangeSerializer,
+    PasswordResetRequestSerializer,
     StandingsRowSerializer,
     TokenLinkSerializer,
     UserMeSerializer,
@@ -39,7 +40,7 @@ from .serializers import (
     UserSerializer,
 )
 from .services import RANK_THRESHOLDS, revoke_refresh_tokens
-from .tasks import queue_verification_email
+from .tasks import queue_password_reset_email, queue_verification_email
 from .tokens import email_verification_token, user_from_uid
 
 # One answer for every link that cannot be honoured — malformed, someone
@@ -129,6 +130,36 @@ class ResendVerificationEmailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         queue_verification_email(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetRequestView(APIView):
+    """POST /api/users/password-reset/ {email} — email a link to set a new
+    password.
+
+    Always 204, whether or not the address belongs to anyone: the answer must
+    not tell a stranger who is registered here, the same way a failed login
+    does not say which half was wrong. Only the inbox learns the difference.
+
+    Any active account gets the link, unverified or passwordless (OAuth) ones
+    included — the link proves the inbox is theirs, and for OAuth users it is
+    the way to a first password. Limited per address of the requester: every
+    call can be a real email out of the daily quota.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "password_reset"
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.filter(
+            email__iexact=serializer.validated_data["email"], is_active=True
+        ).first()
+        if user is not None:
+            queue_password_reset_email(user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
