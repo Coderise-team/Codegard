@@ -38,6 +38,22 @@ MIDDLEWARE = ["core.middleware.RealClientIPMiddleware", *MIDDLEWARE]
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Account emails (address verification, password reset) go out through the
+# Brevo SMTP relay. No defaults: a deploy that cannot send mail must refuse to
+# boot rather than come up healthy and lose every email.
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+# STARTTLS on the submission port. A constant, not a variable: sending the
+# login over a plain connection is never a valid configuration.
+EMAIL_USE_TLS = True
+# Django waits forever by default, and a stalled relay would hold a Celery
+# worker with it. Seconds; the sending task retries a timeout.
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
