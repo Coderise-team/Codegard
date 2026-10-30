@@ -1,3 +1,4 @@
+from apps.users.permissions import HasVerifiedEmail
 from rest_framework import mixins, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -31,6 +32,13 @@ class SubmissionViewSet(
     """
 
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        # Reading your own submissions needs a login only; filing a new one
+        # also needs a verified address.
+        if self.action == "create":
+            return [IsAuthenticated(), HasVerifiedEmail()]
+        return super().get_permissions()
 
     def get_queryset(self):
         qs = (

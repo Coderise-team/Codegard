@@ -109,8 +109,20 @@ def make_notification(
     return notification
 
 
-def make_user(username, elo, *, max_rating=None, is_active=True, is_staff=False):
-    """An active leaderboard user with a set rating (peak defaults to current)."""
+def make_user(
+    username,
+    elo,
+    *,
+    max_rating=None,
+    is_active=True,
+    is_staff=False,
+    email_verified=True,
+):
+    """An active leaderboard user with a set rating (peak defaults to current).
+
+    Verified by default, like the conftest users: submitting and joining
+    contests need it, and most tests are about something else.
+    """
     return get_user_model().objects.create_user(
         username=username,
         email=f"{username}@test.com",
@@ -119,4 +131,5 @@ def make_user(username, elo, *, max_rating=None, is_active=True, is_staff=False)
         max_rating=max_rating if max_rating is not None else elo,
         is_active=is_active,
         is_staff=is_staff,
+        email_verified=email_verified,
     )

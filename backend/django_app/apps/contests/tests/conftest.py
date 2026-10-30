@@ -17,7 +17,7 @@ def users(db, django_user_model):
     """Three users - enough to rank a field and still have a no-show."""
     return [
         django_user_model.objects.create_user(
-            username=f"u{i}", email=f"u{i}@t.com", password="pass"
+            username=f"u{i}", email=f"u{i}@t.com", password="pass", email_verified=True
         )
         for i in range(3)
     ]

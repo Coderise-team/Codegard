@@ -9,7 +9,11 @@ from factories import make_contest
 
 def _make_user(django_user_model, name, elo=1200):
     return django_user_model.objects.create_user(
-        username=name, email=f"{name}@test.com", password="pass", elo_rating=elo
+        username=name,
+        email=f"{name}@test.com",
+        password="pass",
+        elo_rating=elo,
+        email_verified=True,
     )
 
 
