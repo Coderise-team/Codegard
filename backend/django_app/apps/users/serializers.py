@@ -163,7 +163,17 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "avatar", "bio", "first_name", "last_name"]
+        # email + email_verified drive the "confirm your email" banner. Reading
+        # only: PATCH goes through UserProfileUpdateSerializer, which has neither.
+        fields = [
+            "username",
+            "email",
+            "email_verified",
+            "avatar",
+            "bio",
+            "first_name",
+            "last_name",
+        ]
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):

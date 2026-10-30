@@ -27,6 +27,13 @@ def test_register_success(api_client, user_data):
 
 
 @pytest.mark.django_db
+def test_registered_user_starts_with_an_unverified_email(api_client, user_data):
+    api_client.post("/api/users/register/", user_data, format="json")
+
+    assert User.objects.get(username="testuser").email_verified is False
+
+
+@pytest.mark.django_db
 def test_register_weak_password(api_client, user_data):
     user_data["password"] = "123"
 
