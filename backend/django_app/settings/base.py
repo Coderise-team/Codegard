@@ -145,6 +145,8 @@ REST_FRAMEWORK = {
         "register": "5/hour",
         "password_change": "5/hour",
         "problem_report": "10/hour",
+        # Each one sends a real email from our daily sending quota.
+        "verify_email_resend": "3/hour",
     },
 }
 

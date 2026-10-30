@@ -110,6 +110,28 @@ class VerifyEmailView(APIView):
         return Response({"detail": "Email verified."})
 
 
+class ResendVerificationEmailView(APIView):
+    """POST /api/users/me/verify-email/resend/ — send the verification email
+    again.
+
+    The only way to get one after sign-up, and the way in for accounts made
+    before verification existed. Limited per user: every call is a real email
+    out of the daily sending quota.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "verify_email_resend"
+
+    def post(self, request):
+        if request.user.email_verified:
+            return Response(
+                {"detail": "Your email is already verified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        queue_verification_email(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class AvatarUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]

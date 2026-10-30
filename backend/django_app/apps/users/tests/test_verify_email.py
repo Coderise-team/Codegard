@@ -1,4 +1,6 @@
-"""Tests for the verification email at sign-up and POST /api/users/verify-email/."""
+"""Tests for email verification: the email sent at sign-up, the "send again"
+button (POST /api/users/me/verify-email/resend/) and the link itself
+(POST /api/users/verify-email/)."""
 
 import re
 from datetime import datetime, timedelta
@@ -19,6 +21,7 @@ from rest_framework.test import APIClient
 User = get_user_model()
 
 REGISTER = "users:register"
+RESEND = "users:me-verify-email-resend"
 VERIFY = "users:verify-email"
 INVALID_LINK = "This link is invalid or has expired."
 
@@ -176,3 +179,39 @@ def test_works_signed_out_and_ignores_a_stale_token(user):
     resp = _verify(_good_link(user), client)
 
     assert resp.status_code == 200
+
+
+# --- POST me/verify-email/resend/ ------------------------------------------
+
+
+@pytest.mark.django_db
+def test_resend_sends_a_working_link(
+    user, user_client, django_capture_on_commit_callbacks
+):
+    with django_capture_on_commit_callbacks(execute=True):
+        resp = user_client.post(reverse(RESEND))
+
+    assert resp.status_code == 204
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == [user.email]
+    assert _verify(_link_params(mail.outbox[0])).status_code == 200
+
+
+@pytest.mark.django_db
+def test_resend_to_a_verified_user_is_refused(
+    user, user_client, django_capture_on_commit_callbacks
+):
+    user.email_verified = True
+    user.save(update_fields=["email_verified"])
+
+    with django_capture_on_commit_callbacks(execute=True):
+        resp = user_client.post(reverse(RESEND))
+
+    assert resp.status_code == 400
+    assert resp.data == {"detail": "Your email is already verified."}
+    assert mail.outbox == []
+
+
+@pytest.mark.django_db
+def test_resend_needs_a_signed_in_user():
+    assert APIClient().post(reverse(RESEND)).status_code == 401
