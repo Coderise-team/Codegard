@@ -20,6 +20,7 @@ from .views import (
     UserStatsView,
     UserStreakView,
     UserSubmissionsView,
+    VerifyEmailView,
 )
 
 app_name = "users"
@@ -32,6 +33,7 @@ urlpatterns = [
     path("avatar/", AvatarUploadView.as_view(), name="avatar-upload"),
     path("me/", MeView.as_view(), name="me"),
     path("me/password/", PasswordChangeView.as_view(), name="me-password"),
+    path("verify-email/", VerifyEmailView.as_view(), name="verify-email"),
     path("standings/", StandingsView.as_view(), name="standings"),
     path("<str:username>/activity/", UserActivityView.as_view(), name="user-activity"),
     path("<str:username>/stats/", UserStatsView.as_view(), name="user-stats"),

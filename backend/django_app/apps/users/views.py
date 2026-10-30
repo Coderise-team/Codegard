@@ -32,12 +32,19 @@ from .serializers import (
     EmailOrUsernameTokenObtainSerializer,
     PasswordChangeSerializer,
     StandingsRowSerializer,
+    TokenLinkSerializer,
     UserMeSerializer,
     UserProfileUpdateSerializer,
     UserRegisterSerializer,
     UserSerializer,
 )
 from .services import RANK_THRESHOLDS, revoke_refresh_tokens
+from .tasks import queue_verification_email
+from .tokens import email_verification_token, user_from_uid
+
+# One answer for every link that cannot be honoured — malformed, someone
+# else's, expired or already used — so the reply tells a prober nothing.
+INVALID_LINK = "This link is invalid or has expired."
 
 # Difficulty buckets, in the order the breakdown endpoint returns them.
 DIFFICULTIES = ("easy", "medium", "hard")
@@ -47,7 +54,12 @@ ACTIVITY_WINDOW_DAYS = 365
 
 
 class RegisterView(APIView):
-    """Register a new user and immediately issue JWT tokens."""
+    """Register a new user and immediately issue JWT tokens.
+
+    The address is not checked here: the new account starts unverified and is
+    sent a verification email — the only one that goes out on its own; after
+    this it is the "send again" button.
+    """
 
     permission_classes = [AllowAny]
     throttle_scope = "register"
@@ -56,6 +68,7 @@ class RegisterView(APIView):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            queue_verification_email(user)
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
@@ -65,6 +78,36 @@ class RegisterView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(APIView):
+    """POST /api/users/verify-email/ {uid, token} — confirm an address by link.
+
+    Open to anyone: the link may well be opened in another browser, or on a
+    phone where the user is not signed in; the token itself is the proof. No
+    authentication at all, so a stale token sitting in the client cannot turn
+    a good link into a 401.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = TokenLinkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = user_from_uid(serializer.validated_data["uid"])
+        token = serializer.validated_data["token"]
+        # A used link fails here too: confirming the address changes what the
+        # token hashes.
+        if user is None or not email_verification_token.check_token(user, token):
+            return Response(
+                {"detail": INVALID_LINK}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.email_verified = True
+        user.save(update_fields=["email_verified"])
+        return Response({"detail": "Email verified."})
 
 
 class AvatarUploadView(APIView):

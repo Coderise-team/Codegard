@@ -189,4 +189,5 @@ RESERVED_USERNAMES = {
     "token",
     "oauth",
     "standings",
+    "verify-email",
 }

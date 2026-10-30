@@ -197,6 +197,17 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ["bio", "first_name", "last_name"]
 
 
+class TokenLinkSerializer(serializers.Serializer):
+    """The uid + token pair from a link in an account email.
+
+    Only checks the shape (two strings); whether the link is still good is the
+    view's call, so every bad link gets one and the same answer.
+    """
+
+    uid = serializers.CharField()
+    token = serializers.CharField()
+
+
 class PasswordChangeSerializer(serializers.Serializer):
     """POST /api/users/me/password/ — old_password + new_password."""
 
