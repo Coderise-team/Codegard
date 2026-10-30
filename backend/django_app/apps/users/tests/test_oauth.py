@@ -175,6 +175,74 @@ def test_reserved_username_hint_is_not_used(api_client):
     assert created.username != "me"
 
 
+# --- the provider vouching for the address ---
+
+
+def _linked_user(django_user_model, email, uid="google-uid-1"):
+    """An account already linked to Google, address not yet verified."""
+    user = django_user_model.objects.create_user(
+        username="alice", email=email, password="pass"
+    )
+    OAuthAccount.objects.create(user=user, provider="google", provider_uid=uid)
+    return user
+
+
+@pytest.mark.django_db
+def test_a_new_oauth_user_starts_verified(api_client):
+    _callback(api_client, GOOGLE_IDENTITY)
+
+    assert User.objects.get(email="alice@test.com").email_verified is True
+
+
+@pytest.mark.django_db
+def test_a_known_pair_with_the_same_address_verifies_it(api_client, django_user_model):
+    """How accounts that used Google before verification existed get verified."""
+    user = _linked_user(django_user_model, "alice@test.com")
+
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp["Location"].startswith("/oauth/callback?ticket=")
+    user.refresh_from_db()
+    assert user.email_verified is True
+
+
+@pytest.mark.django_db
+def test_the_address_matches_in_any_case(api_client, django_user_model):
+    user = _linked_user(django_user_model, "Alice@Test.COM")
+
+    _callback(api_client, GOOGLE_IDENTITY)
+
+    user.refresh_from_db()
+    assert user.email_verified is True
+
+
+@pytest.mark.django_db
+def test_a_known_pair_with_another_address_leaves_the_flag(
+    api_client, django_user_model
+):
+    """The provider's address proves nothing about a different one on the
+    account; the sign-in itself still works."""
+    user = _linked_user(django_user_model, "alice.work@test.com")
+
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp["Location"].startswith("/oauth/callback?ticket=")
+    user.refresh_from_db()
+    assert user.email_verified is False
+
+
+@pytest.mark.django_db
+def test_an_address_the_provider_has_not_verified_proves_nothing(
+    api_client, django_user_model
+):
+    user = _linked_user(django_user_model, "alice@test.com")
+
+    _callback(api_client, {**GOOGLE_IDENTITY, "email_verified": False})
+
+    user.refresh_from_db()
+    assert user.email_verified is False
+
+
 # --- OAuthAccount model constraint ---
 
 

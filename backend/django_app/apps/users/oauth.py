@@ -184,13 +184,18 @@ def find_or_create_user(provider: str, identity: dict) -> User:
     A known (provider, uid) pair wins outright; otherwise the identity is
     linked by email, and only a provider-verified one — an unverified
     address can be claimed by anyone at the provider.
+
+    The provider vouches for the address, so a new account starts verified,
+    and a known one becomes verified once the provider confirms its address.
     """
-    try:
-        return OAuthAccount.objects.get(
-            provider=provider, provider_uid=identity["uid"]
-        ).user
-    except OAuthAccount.DoesNotExist:
-        pass
+    account = (
+        OAuthAccount.objects.select_related("user")
+        .filter(provider=provider, provider_uid=identity["uid"])
+        .first()
+    )
+    if account is not None:
+        _verify_if_vouched_for(account.user, identity)
+        return account.user
 
     if not identity["email"] or not identity["email_verified"]:
         raise OAuthError("email_not_verified")
@@ -201,11 +206,29 @@ def find_or_create_user(provider: str, identity: dict) -> User:
         user = User.objects.create_user(
             username=_unique_username(identity["username_hint"]),
             email=identity["email"],
+            email_verified=True,
         )
     OAuthAccount.objects.create(
         user=user, provider=provider, provider_uid=identity["uid"]
     )
     return user
+
+
+def _verify_if_vouched_for(user: User, identity: dict) -> None:
+    """Mark ``user``'s address verified if the provider confirms that very one.
+
+    This is how accounts that signed in with Google or GitHub before
+    verification existed get verified, with no email to click. The address a
+    linked provider reports may differ from the account's — one person, two
+    mailboxes — and then it proves nothing about the account's, so the flag
+    is left alone. Compared without case, as everywhere else here.
+    """
+    if user.email_verified or not identity["email_verified"]:
+        return
+    if not identity["email"] or identity["email"].lower() != user.email.lower():
+        return
+    user.email_verified = True
+    user.save(update_fields=["email_verified"])
 
 
 def _unique_username(hint: str) -> str:
