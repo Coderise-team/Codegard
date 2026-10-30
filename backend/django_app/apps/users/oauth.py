@@ -183,7 +183,8 @@ def find_or_create_user(provider: str, identity: dict) -> User:
 
     A known (provider, uid) pair wins outright; otherwise the identity is
     linked by email, and only a provider-verified one — an unverified
-    address can be claimed by anyone at the provider.
+    address can be claimed by anyone at the provider — to an account whose
+    own address is verified too.
 
     The provider vouches for the address, so a new account starts verified,
     and a known one becomes verified once the provider confirms its address.
@@ -208,6 +209,16 @@ def find_or_create_user(provider: str, identity: dict) -> User:
             email=identity["email"],
             email_verified=True,
         )
+    elif not user.email_verified:
+        # Nobody has proved this account's address is theirs: anyone can sign
+        # up with someone else's. Linking the provider here would hand the
+        # address's real owner an account whose password a stranger still
+        # holds. So: no link, no login, nothing touched. The owner signs in
+        # with the password and verifies the address (or resets the password
+        # through it), and the next provider sign-in links as usual.
+        # Not "email_not_verified": that slug already means the provider's
+        # own address is unverified.
+        raise OAuthError("account_not_verified")
     OAuthAccount.objects.create(
         user=user, provider=provider, provider_uid=identity["uid"]
     )

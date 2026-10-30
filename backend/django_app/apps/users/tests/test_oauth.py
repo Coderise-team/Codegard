@@ -126,13 +126,79 @@ def test_callback_creates_user_and_redeem_gives_tokens(api_client):
 
 
 @pytest.mark.django_db
-def test_callback_links_existing_user_by_verified_email(api_client, django_user_model):
+def test_callback_links_a_verified_account_by_email(api_client, django_user_model):
     existing = django_user_model.objects.create_user(
+        username="alice", email="alice@test.com", password="pass", email_verified=True
+    )
+
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp["Location"].startswith("/oauth/callback?ticket=")
+    assert User.objects.count() == 1
+    assert OAuthAccount.objects.get(provider_uid="google-uid-1").user == existing
+    existing.refresh_from_db()
+    assert existing.check_password("pass")  # the password keeps working
+
+
+# --- an account whose own address nobody has verified ---
+
+
+@pytest.mark.django_db
+def test_an_unverified_account_is_neither_linked_nor_signed_in(
+    api_client, django_user_model
+):
+    """The hole this guards: anyone can sign up with someone else's address.
+    Linking the owner's Google to it would leave the stranger's password in."""
+    claimed = django_user_model.objects.create_user(
+        username="squatter", email="alice@test.com", password="pass"
+    )
+
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp.status_code == 302
+    assert resp["Location"] == "/login?oauth_error=account_not_verified"
+    assert "ticket=" not in resp["Location"]
+    assert OAuthAccount.objects.count() == 0
+    assert User.objects.count() == 1
+    claimed.refresh_from_db()
+    assert claimed.email_verified is False
+    assert claimed.check_password("pass")  # untouched: still the way in
+
+
+@pytest.mark.django_db
+def test_once_the_address_is_verified_the_same_sign_in_links(
+    api_client, django_user_model
+):
+    """The way out the login page explains: sign in with the password, verify
+    the address, then the provider button works and links the account."""
+    user = django_user_model.objects.create_user(
         username="alice", email="alice@test.com", password="pass"
     )
     _callback(api_client, GOOGLE_IDENTITY)
-    assert User.objects.count() == 1
-    assert OAuthAccount.objects.get(provider_uid="google-uid-1").user == existing
+    assert OAuthAccount.objects.count() == 0
+
+    user.email_verified = True
+    user.save(update_fields=["email_verified"])
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp["Location"].startswith("/oauth/callback?ticket=")
+    assert OAuthAccount.objects.get(provider_uid="google-uid-1").user == user
+    user.refresh_from_db()
+    assert user.check_password("pass")
+
+
+@pytest.mark.django_db
+def test_the_address_lookup_ignores_case_for_the_refusal_too(
+    api_client, django_user_model
+):
+    django_user_model.objects.create_user(
+        username="squatter", email="ALICE@test.com", password="pass"
+    )
+
+    resp = _callback(api_client, GOOGLE_IDENTITY)
+
+    assert resp["Location"] == "/login?oauth_error=account_not_verified"
+    assert OAuthAccount.objects.count() == 0
 
 
 @pytest.mark.django_db
