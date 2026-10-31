@@ -5,10 +5,13 @@ app's conftest); the verified path is what the submissions and contests suites
 exercise.
 """
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from apps.submissions.models import Submission
+from apps.users.permissions import HasVerifiedEmail
+from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from factories import make_contest, make_problem
 from rest_framework.test import APIClient
@@ -110,3 +113,15 @@ def test_signed_out_joining_is_still_a_401():
     resp = APIClient().post(reverse("contests-join", args=[contest.pk]))
 
     assert resp.status_code == 401
+
+
+# --- the permission on its own ---------------------------------------------
+
+
+def test_the_permission_refuses_a_signed_out_caller_without_raising():
+    """Both views put IsAuthenticated first, so the API never gets here signed
+    out. Should a view ever list this permission alone, a signed-out caller is
+    still refused — with DRF's own 401, not the email 403."""
+    request = SimpleNamespace(user=AnonymousUser())
+
+    assert HasVerifiedEmail().has_permission(request, view=None) is False
