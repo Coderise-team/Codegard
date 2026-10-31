@@ -1,5 +1,10 @@
 from typing import NamedTuple
 
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+
 # ELO swing per contest. Plain in-code constant (a tuning knob, not env config).
 K_FACTOR = 32
 
@@ -89,3 +94,18 @@ def compute_elo_deltas(participants: list[EloParticipant]) -> dict[int, int]:
         deltas[p.user_id] = round(K_FACTOR * (actual - expected) / (n - 1))
 
     return deltas
+
+
+def revoke_refresh_tokens(user) -> None:
+    """Blacklist every outstanding refresh token of ``user``.
+
+    Ends all of the user's sessions at once: no device can mint a new access
+    token after this. An access token already issued keeps working until it
+    expires (minutes), which is how JWT works and why its lifetime is short.
+
+    A caller that keeps the user signed in must mint the new pair AFTER this
+    call, or the fresh refresh token is revoked along with the rest.
+    get_or_create skips tokens that are already blacklisted.
+    """
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)

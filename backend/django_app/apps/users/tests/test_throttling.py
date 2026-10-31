@@ -3,6 +3,7 @@
 import pytest
 from django.core.cache import cache
 from django.urls import reverse
+from settings import base
 
 
 @pytest.fixture(autouse=True)
@@ -55,6 +56,42 @@ def test_register_is_rate_limited(api_client, _tight_limits):
             "password": "Str0ng-pass-42",
         },
     )
+    assert resp.status_code == 429
+
+
+@pytest.mark.django_db
+def test_resending_the_verification_email_is_limited_to_three_an_hour(
+    settings, user_client
+):
+    """Checked against the real rate from base.py, not a test value: each call
+    is an email out of the daily sending quota."""
+    assert base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["verify_email_resend"] == (
+        "3/hour"
+    )
+    settings.REST_FRAMEWORK = {
+        **settings.REST_FRAMEWORK,
+        "DEFAULT_THROTTLE_RATES": base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+    }
+    url = reverse("users:me-verify-email-resend")
+    for _ in range(3):
+        assert user_client.post(url).status_code == 204
+    assert user_client.post(url).status_code == 429
+
+
+@pytest.mark.django_db
+def test_asking_for_a_password_reset_is_limited_to_three_an_hour(settings, api_client):
+    """Real rate again; counted per requester, so it holds for unknown addresses
+    too and nobody can spray reset emails at strangers."""
+    assert base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["password_reset"] == "3/hour"
+    settings.REST_FRAMEWORK = {
+        **settings.REST_FRAMEWORK,
+        "DEFAULT_THROTTLE_RATES": base.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+    }
+    url = reverse("users:password-reset")
+    for i in range(3):
+        resp = api_client.post(url, {"email": f"someone{i}@test.com"})
+        assert resp.status_code == 204
+    resp = api_client.post(url, {"email": "someone9@test.com"})
     assert resp.status_code == 429
 
 

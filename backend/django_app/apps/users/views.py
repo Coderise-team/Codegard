@@ -3,7 +3,10 @@ from datetime import timedelta
 from apps.problems.models import Problem
 from apps.submissions.models import Submission
 from core.search import MIN_TRIGRAM_LENGTH
+from django.contrib.auth.password_validation import validate_password
 from django.contrib.postgres.search import TrigramWordSimilarity
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, TruncDate
 from django.shortcuts import get_object_or_404, redirect
@@ -18,10 +21,6 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -35,13 +34,22 @@ from .serializers import (
     EloHistorySerializer,
     EmailOrUsernameTokenObtainSerializer,
     PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     StandingsRowSerializer,
+    TokenLinkSerializer,
     UserMeSerializer,
     UserProfileUpdateSerializer,
     UserRegisterSerializer,
     UserSerializer,
 )
-from .services import RANK_THRESHOLDS
+from .services import RANK_THRESHOLDS, revoke_refresh_tokens
+from .tasks import queue_password_reset_email, queue_verification_email
+from .tokens import email_verification_token, password_reset_token, user_from_uid
+
+# One answer for every link that cannot be honoured — malformed, someone
+# else's, expired or already used — so the reply tells a prober nothing.
+INVALID_LINK = "This link is invalid or has expired."
 
 # Difficulty buckets, in the order the breakdown endpoint returns them.
 DIFFICULTIES = ("easy", "medium", "hard")
@@ -51,7 +59,12 @@ ACTIVITY_WINDOW_DAYS = 365
 
 
 class RegisterView(APIView):
-    """Register a new user and immediately issue JWT tokens."""
+    """Register a new user and immediately issue JWT tokens.
+
+    The address is not checked here: the new account starts unverified and is
+    sent a verification email — the only one that goes out on its own; after
+    this it is the "send again" button.
+    """
 
     permission_classes = [AllowAny]
     throttle_scope = "register"
@@ -60,6 +73,7 @@ class RegisterView(APIView):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            queue_verification_email(user)
             refresh = RefreshToken.for_user(user)
             return Response(
                 {
@@ -69,6 +83,142 @@ class RegisterView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyEmailView(APIView):
+    """POST /api/users/verify-email/ {uid, token} — confirm an address by link.
+
+    Open to anyone: the link may well be opened in another browser, or on a
+    phone where the user is not signed in; the token itself is the proof. No
+    authentication at all, so a stale token sitting in the client cannot turn
+    a good link into a 401.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = TokenLinkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = user_from_uid(serializer.validated_data["uid"])
+        token = serializer.validated_data["token"]
+        # A used link fails here too: confirming the address changes what the
+        # token hashes.
+        if user is None or not email_verification_token.check_token(user, token):
+            return Response(
+                {"detail": INVALID_LINK}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.email_verified = True
+        user.save(update_fields=["email_verified"])
+        return Response({"detail": "Email verified."})
+
+
+class ResendVerificationEmailView(APIView):
+    """POST /api/users/me/verify-email/resend/ — send the verification email
+    again.
+
+    The only way to get one after sign-up, and the way in for accounts made
+    before verification existed. Limited per user: every call is a real email
+    out of the daily sending quota.
+    """
+
+    permission_classes = [IsAuthenticated]
+    throttle_scope = "verify_email_resend"
+
+    def post(self, request):
+        if request.user.email_verified:
+            return Response(
+                {"detail": "Your email is already verified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        queue_verification_email(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetRequestView(APIView):
+    """POST /api/users/password-reset/ {email} — email a link to set a new
+    password.
+
+    Always 204, whether or not the address belongs to anyone: the answer must
+    not tell a stranger who is registered here, the same way a failed login
+    does not say which half was wrong. Only the inbox learns the difference.
+
+    Any active account gets the link, unverified or passwordless (OAuth) ones
+    included — the link proves the inbox is theirs, and for OAuth users it is
+    the way to a first password. Limited per address of the requester: every
+    call can be a real email out of the daily quota.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "password_reset"
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.filter(
+            email__iexact=serializer.validated_data["email"], is_active=True
+        ).first()
+        if user is not None:
+            queue_password_reset_email(user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetConfirmView(APIView):
+    """POST /api/users/password-reset/confirm/ {uid, token, new_password} — set
+    the new password from a reset link.
+
+    On success:
+    - the password is set (for an OAuth user, their first one);
+    - the address counts as verified — the link reached its inbox;
+    - every session is revoked, as on a password change: whoever knew the old
+      password is out. No new pair is issued; the user simply signs in.
+
+    400 for a link that cannot be honoured, or a password the validators turn
+    down — the link then stays good for another try.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        found = user_from_uid(data["uid"])
+        if found is None:
+            return self._invalid_link()
+
+        with transaction.atomic():
+            # Locked, and the token checked against the locked row: two requests
+            # racing with the same link are served one after the other, and the
+            # second finds the password changed and the link dead.
+            user = User.objects.select_for_update().get(pk=found.pk)
+            if not password_reset_token.check_token(user, data["token"]):
+                return self._invalid_link()
+
+            try:
+                validate_password(data["new_password"], user=user)
+            except DjangoValidationError as exc:
+                return Response(
+                    {"new_password": exc.messages},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.set_password(data["new_password"])
+            user.email_verified = True
+            user.save(update_fields=["password", "email_verified"])
+            revoke_refresh_tokens(user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def _invalid_link():
+        return Response({"detail": INVALID_LINK}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AvatarUploadView(APIView):
@@ -393,11 +543,9 @@ class PasswordChangeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Revoke all outstanding refresh tokens FIRST, then mint the new pair —
-        # otherwise the fresh refresh would be blacklisted too. get_or_create
-        # guards against tokens that are already blacklisted.
-        for token in OutstandingToken.objects.filter(user=request.user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        # Revoke FIRST, then mint the new pair — otherwise the fresh refresh
+        # would be blacklisted too.
+        revoke_refresh_tokens(request.user)
 
         refresh = RefreshToken.for_user(request.user)
         return Response({"access": str(refresh.access_token), "refresh": str(refresh)})

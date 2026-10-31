@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from apps.problems.models import Problem, TestCase
 from apps.submissions.models import Submission
+from apps.users.permissions import HasVerifiedEmail
 from core.pagination import ClientPageSizePagination
 from core.search import MIN_TRIGRAM_LENGTH
 from django.contrib.postgres.search import TrigramWordSimilarity
@@ -74,7 +75,10 @@ class ContestViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
             return [IsAdminUser()]
-        if self.action in ["join", "leave", "my_standing"]:
+        # Registering needs a verified address; leaving and reading do not.
+        if self.action == "join":
+            return [IsAuthenticated(), HasVerifiedEmail()]
+        if self.action in ["leave", "my_standing"]:
             return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly()]
 
@@ -179,7 +183,11 @@ class ContestViewSet(viewsets.ModelViewSet):
         # Ordering is left to OrderingFilter (default -start_time above).
         return queryset
 
-    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[IsAuthenticated, HasVerifiedEmail],
+    )
     def join(self, request, pk=None):
         """POST /api/contests/{id}/join/"""
         contest = self.get_object()

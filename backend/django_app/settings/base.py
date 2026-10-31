@@ -22,8 +22,9 @@ OAUTH_PROVIDERS = {
     },
 }
 
-# Browser-facing origin the OAuth redirect_url is built on.
-OAUTH_REDIRECT_BASE = env("OAUTH_REDIRECT_BASE")
+# Browser-facing origin of the site, no trailing slash. OAuth callback URLs
+# and the links in account emails are built on it.
+SITE_URL = env("SITE_URL")
 
 INSTALLED_APPS = [
     "daphne",
@@ -101,6 +102,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# Despite the name, the ceiling for EVERY token in apps/users/tokens.py: Django
+# checks this one limit for all its token generators. Set to the longest
+# lifetime (email verification, 3 days); each generator enforces its own,
+# shorter one on top — password reset links still die after an hour.
+PASSWORD_RESET_TIMEOUT = int(timedelta(days=3).total_seconds())
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -138,6 +145,9 @@ REST_FRAMEWORK = {
         "register": "5/hour",
         "password_change": "5/hour",
         "problem_report": "10/hour",
+        # Each one sends a real email from our daily sending quota.
+        "verify_email_resend": "3/hour",
+        "password_reset": "3/hour",
     },
 }
 
@@ -182,4 +192,6 @@ RESERVED_USERNAMES = {
     "token",
     "oauth",
     "standings",
+    "verify-email",
+    "password-reset",
 }
