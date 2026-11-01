@@ -42,7 +42,7 @@ def test_catalog_ignores_unchecked_submissions(user_client, other):
     make_submission(other, problem, verdict=Submission.Verdict.WA)
     make_submission(other, problem, verdict=None)
 
-    assert _catalog_acceptance(user_client, problem) == 50.0
+    assert _catalog_acceptance(user_client, problem) == 50
 
 
 @pytest.mark.django_db

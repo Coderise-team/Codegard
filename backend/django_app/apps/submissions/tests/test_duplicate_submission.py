@@ -21,29 +21,17 @@ from rest_framework import status
 SUBMIT_URL = reverse("submissions-list")
 
 
-def _submit(client, problem, code="print(1)"):
-    return client.post(
-        SUBMIT_URL,
-        {"problem": problem.pk, "code": code, "language": "python"},
-        format="json",
-    )
-
-
-def _submit2(client, problem, code="print(1)", active_contest=None):
+def _submit(client, problem, code="print(1)", contest=None):
     data = {
         "problem": problem.pk,
         "code": code,
         "language": "python",
     }
 
-    if active_contest is not None:
-        data["contest"] = active_contest.pk
+    if contest is not None:
+        data["contest"] = contest.pk
 
-    return client.post(
-        SUBMIT_URL,
-        data,
-        format="json",
-    )
+    return client.post(SUBMIT_URL, data, format="json")
 
 
 @pytest.mark.django_db
@@ -76,7 +64,7 @@ def test_same_code_is_accepted_after_window(mock_queue, user_client, problem):
 
 @pytest.mark.django_db
 @patch("apps.submissions.views.push_to_judge_queue", return_value=True)
-def test_same_problem_accepted_immediately(mock_queue, user_client, problem):
+def test_another_piece_code_for_same_task_is_accepted(mock_queue, user_client, problem):
     first = _submit(user_client, problem)
     second = _submit(user_client, problem, "print(2)")
 
@@ -124,8 +112,8 @@ def test_same_code_from_another_user_is_accepted_immediately(
 @pytest.mark.django_db
 @patch("apps.submissions.views.push_to_judge_queue", return_value=True)
 def test_code_differing_only_by_space_or_indentation(mock_queue, user_client, problem):
-    first = _submit(user_client, problem, "print(1) ")
-    second = _submit(user_client, problem, " print(2)")
+    first = _submit(user_client, problem, "print(1)")
+    second = _submit(user_client, problem, "print(1) ")
 
     assert first.status_code == status.HTTP_201_CREATED
     assert second.status_code == status.HTTP_201_CREATED
@@ -134,11 +122,11 @@ def test_code_differing_only_by_space_or_indentation(mock_queue, user_client, pr
 
 @pytest.mark.django_db
 @patch("apps.submissions.views.push_to_judge_queue", return_value=True)
-def test_contest_the_second_submission_doesnt_count_round(
+def test_second_shipment_doesnt_arrive_in_round(
     mock_queue, user_client, problem, active_contest
 ):
-    first = _submit2(user_client, problem, active_contest=active_contest)
-    second = _submit2(user_client, problem, active_contest=active_contest)
+    first = _submit(user_client, problem, contest=active_contest)
+    second = _submit(user_client, problem, contest=active_contest)
 
     assert first.status_code == status.HTTP_201_CREATED
     assert second.status_code == status.HTTP_400_BAD_REQUEST

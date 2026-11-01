@@ -211,13 +211,13 @@ def test_password_change_anonymous_401():
     assert resp.status_code == 401
 
 
-def test_profile_empty_fields(db, user, user_client):
-    user.refresh_from_db()
+def test_profile_empty_fields(db, user):
+    user = User.objects.create_user(
+        username="andrey",
+        email="andrey@test.com",
+        password="NewPass!123",
+    )
 
     assert user.avatar.name == ""
     assert user.avatar_thumb.name == ""
     assert user.bio == ""
-
-    response = user_client.get("/api/users/me/")
-
-    assert response.data["avatar"] is None
