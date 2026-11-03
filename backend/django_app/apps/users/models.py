@@ -24,6 +24,13 @@ class User(AbstractUser):
     current and peak ELO rating)."""
 
     email = models.EmailField(unique=True)
+    email_verified = models.BooleanField(
+        default=False,
+        help_text="Whether the owner has proved the address is theirs: a "
+        "verification link, a password reset, or a provider that vouches for "
+        "it. Nobody checks the address at sign-up, so until then it is only a "
+        "claim.",
+    )
     avatar = models.ImageField(upload_to=user_avatar_upload_to, blank=True, null=True)
     avatar_thumb = models.ImageField(
         upload_to=user_avatar_thumb_upload_to, blank=True, null=True

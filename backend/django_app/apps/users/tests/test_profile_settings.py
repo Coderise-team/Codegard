@@ -112,6 +112,30 @@ def test_get_me_returns_new_fields(user_client):
 
 
 @pytest.mark.django_db
+def test_get_me_returns_email_and_its_verification(user_client, user):
+    data = user_client.get(reverse(ME)).json()
+    assert data["email"] == "yurii@test.com"
+    assert data["email_verified"] is False
+
+    user.email_verified = True
+    user.save(update_fields=["email_verified"])
+
+    assert user_client.get(reverse(ME)).json()["email_verified"] is True
+
+
+@pytest.mark.django_db
+def test_patch_cannot_verify_the_email(user_client, user):
+    # Verification is proved through the inbox, never claimed by the client.
+    resp = user_client.patch(
+        reverse(ME), {"email_verified": True, "bio": "legit"}, format="json"
+    )
+    assert resp.status_code == 200
+    user.refresh_from_db()
+    assert user.email_verified is False
+    assert user.bio == "legit"
+
+
+@pytest.mark.django_db
 def test_me_anonymous_401():
     assert APIClient().get(reverse(ME)).status_code == 401
 

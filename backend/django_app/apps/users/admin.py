@@ -7,10 +7,20 @@ from .models import User
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     fieldsets = DjangoUserAdmin.fieldsets + (
+        # Editable on purpose: staff can vouch for an address by hand, e.g. for
+        # their own accounts, which the migration left unverified like any other.
+        ("Email", {"fields": ("email_verified",)}),
         ("Profile", {"fields": ("avatar", "avatar_thumb")}),
     )
-    list_display = ("username", "email", "elo_rating", "max_rating", "is_staff")
-    list_filter = ("is_staff", "is_active")
+    list_display = (
+        "username",
+        "email",
+        "email_verified",
+        "elo_rating",
+        "max_rating",
+        "is_staff",
+    )
+    list_filter = ("is_staff", "is_active", "email_verified")
     search_fields = ("username", "email")
     ordering = ("-elo_rating",)
     # Avatars are set by users through the API, not uploaded here — view only.

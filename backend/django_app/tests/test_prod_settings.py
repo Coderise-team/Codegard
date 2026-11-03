@@ -26,7 +26,20 @@ PROD_ENV = {
     "REDIS_PASSWORD": "redis-pass",
     "LOG_LEVEL": "INFO",
     "CORS_ALLOWED_ORIGINS": "",
+    "EMAIL_HOST": "smtp-relay.brevo.com",
+    "EMAIL_PORT": "587",
+    "EMAIL_HOST_USER": "smtp-login@example.com",
+    "EMAIL_HOST_PASSWORD": "smtp-key",
+    "DEFAULT_FROM_EMAIL": "Codegard <no-reply@codegard.dev>",
 }
+
+MAIL_VARIABLES = [
+    "EMAIL_HOST",
+    "EMAIL_PORT",
+    "EMAIL_HOST_USER",
+    "EMAIL_HOST_PASSWORD",
+    "DEFAULT_FROM_EMAIL",
+]
 
 
 def load_prod_settings(monkeypatch, r2_enabled=True, **overrides):
@@ -125,6 +138,33 @@ def test_the_health_check_is_exempt_from_the_https_redirect(monkeypatch):
     prod = load_prod_settings(monkeypatch)
 
     assert any(re.match(p, "healthz/") for p in prod.SECURE_REDIRECT_EXEMPT)
+
+
+def test_smtp_settings_read_from_env(monkeypatch):
+    prod = load_prod_settings(monkeypatch)
+
+    assert prod.EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+    assert prod.EMAIL_HOST == "smtp-relay.brevo.com"
+    assert prod.EMAIL_PORT == 587
+    assert prod.EMAIL_HOST_USER == "smtp-login@example.com"
+    assert prod.EMAIL_HOST_PASSWORD == "smtp-key"
+    assert prod.DEFAULT_FROM_EMAIL == "Codegard <no-reply@codegard.dev>"
+
+
+def test_mail_goes_out_over_tls_with_a_timeout(monkeypatch):
+    """Not variables, so a mistyped .env cannot send the SMTP key in clear or
+    let a stalled relay hang a Celery worker for good."""
+    prod = load_prod_settings(monkeypatch)
+
+    assert prod.EMAIL_USE_TLS is True
+    assert prod.EMAIL_TIMEOUT > 0
+
+
+@pytest.mark.parametrize("variable", MAIL_VARIABLES)
+def test_missing_mail_variable_refuses_to_start(monkeypatch, variable):
+    """A deploy that cannot send mail must not boot looking healthy."""
+    with pytest.raises(ImproperlyConfigured):
+        load_prod_settings(monkeypatch, **{variable: None})
 
 
 def test_r2_storage_refuses_to_start_when_unconfigured(monkeypatch):

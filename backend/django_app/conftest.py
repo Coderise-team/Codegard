@@ -10,15 +10,26 @@ Domain fixtures (problems, contests, submissions, ...) belong in each app's
 An app-local fixture with the same name shadows the one defined here, so a test
 that needs a specific username or a richer object just overrides it locally.
 
+The users here have a verified email: submitting and joining contests require
+one, and most tests are about something else. A test about verification starts
+from an unverified user on purpose (see apps/users/tests/conftest.py).
+
 The superuser client is ``custom_admin_client``, not ``admin_client``: the latter
 is a pytest-django builtin (a session-auth Django client for /admin/ tests), and
 shadowing it would break those. ``custom_admin_client`` is a DRF client for
 hitting the REST API as a superuser.
 """
 
+import config  # noqa: F401  (loads the Celery app; see below)
 import pytest
 from fakeredis import FakeStrictRedis
 from rest_framework.test import APIClient
+
+# Importing ``config`` loads the project's Celery app, so shared tasks run on it
+# — eagerly, as settings.test asks — instead of on Celery's unconfigured default
+# app, where .delay() quietly goes nowhere. In production Django loads it on
+# start (config/__init__.py); under pytest nothing imports ``config`` until some
+# test resolves a URL, which would make a task's fate depend on test order.
 
 
 @pytest.fixture
@@ -31,7 +42,7 @@ def api_client():
 def user(db, django_user_model):
     """Plain user for tests that don't care about the exact username."""
     return django_user_model.objects.create_user(
-        username="user", email="user@test.com", password="pass"
+        username="user", email="user@test.com", password="pass", email_verified=True
     )
 
 
@@ -39,7 +50,7 @@ def user(db, django_user_model):
 def other(db, django_user_model):
     """A second user, for "someone else's data" scenarios."""
     return django_user_model.objects.create_user(
-        username="other", email="other@test.com", password="pass"
+        username="other", email="other@test.com", password="pass", email_verified=True
     )
 
 
@@ -47,7 +58,7 @@ def other(db, django_user_model):
 def admin(db, django_user_model):
     """Superuser for admin-only endpoints."""
     return django_user_model.objects.create_superuser(
-        username="admin", email="admin@test.com", password="pass"
+        username="admin", email="admin@test.com", password="pass", email_verified=True
     )
 
 

@@ -40,5 +40,7 @@ REST_FRAMEWORK = {
         "register": None,
         "password_change": None,
         "problem_report": None,
+        "verify_email_resend": None,
+        "password_reset": None,
     },
 }

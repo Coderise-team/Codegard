@@ -10,7 +10,10 @@ from .views import (
     OAuthRedeemView,
     OAuthStartView,
     PasswordChangeView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
     RegisterView,
+    ResendVerificationEmailView,
     StandingsView,
     UserActivityView,
     UserContestHistoryView,
@@ -20,6 +23,7 @@ from .views import (
     UserStatsView,
     UserStreakView,
     UserSubmissionsView,
+    VerifyEmailView,
 )
 
 app_name = "users"
@@ -32,6 +36,22 @@ urlpatterns = [
     path("avatar/", AvatarUploadView.as_view(), name="avatar-upload"),
     path("me/", MeView.as_view(), name="me"),
     path("me/password/", PasswordChangeView.as_view(), name="me-password"),
+    path(
+        "me/verify-email/resend/",
+        ResendVerificationEmailView.as_view(),
+        name="me-verify-email-resend",
+    ),
+    path("verify-email/", VerifyEmailView.as_view(), name="verify-email"),
+    path(
+        "password-reset/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset",
+    ),
+    path(
+        "password-reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="password-reset-confirm",
+    ),
     path("standings/", StandingsView.as_view(), name="standings"),
     path("<str:username>/activity/", UserActivityView.as_view(), name="user-activity"),
     path("<str:username>/stats/", UserStatsView.as_view(), name="user-stats"),

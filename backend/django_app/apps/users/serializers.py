@@ -163,7 +163,17 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "avatar", "bio", "first_name", "last_name"]
+        # email + email_verified drive the "confirm your email" banner. Reading
+        # only: PATCH goes through UserProfileUpdateSerializer, which has neither.
+        fields = [
+            "username",
+            "email",
+            "email_verified",
+            "avatar",
+            "bio",
+            "first_name",
+            "last_name",
+        ]
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
@@ -185,6 +195,34 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["bio", "first_name", "last_name"]
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """POST /api/users/password-reset/ — the address to send the link to."""
+
+    email = serializers.EmailField()
+
+
+class TokenLinkSerializer(serializers.Serializer):
+    """The uid + token pair from a link in an account email.
+
+    Only checks the shape (two strings); whether the link is still good is the
+    view's call, so every bad link gets one and the same answer.
+    """
+
+    uid = serializers.CharField()
+    token = serializers.CharField()
+
+
+class PasswordResetConfirmSerializer(TokenLinkSerializer):
+    """POST /api/users/password-reset/confirm/ — the link plus the new password.
+
+    The password validators need the user (one of them compares the password
+    with the username and email), and the user is only known once the link
+    checks out, so the view runs them.
+    """
+
+    new_password = serializers.CharField(write_only=True)
 
 
 class PasswordChangeSerializer(serializers.Serializer):

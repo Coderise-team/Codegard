@@ -50,7 +50,7 @@ jobs:
           GOOGLE_OAUTH_CLIENT_SECRET: ""
           GITHUB_OAUTH_CLIENT_ID: ""
           GITHUB_OAUTH_CLIENT_SECRET: ""
-          OAUTH_REDIRECT_BASE: http://localhost:5173
+          SITE_URL: http://localhost:5173
         run: uv run python django_app/manage.py makemigrations --check --dry-run
 
   test-backend:
@@ -109,7 +109,7 @@ jobs:
           GOOGLE_OAUTH_CLIENT_SECRET: ""
           GITHUB_OAUTH_CLIENT_ID: ""
           GITHUB_OAUTH_CLIENT_SECRET: ""
-          OAUTH_REDIRECT_BASE: http://localhost:5173
+          SITE_URL: http://localhost:5173
         run: uv run pytest --cov=django_app --cov-report=xml
 
       - name: Upload coverage to Codecov

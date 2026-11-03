@@ -88,5 +88,26 @@ describe('PrivacyPage', () => {
     expect(
       screen.getByRole('link', { name: /Cloudflare Privacy Policy/i })
     ).toHaveAttribute('href', 'https://www.cloudflare.com/privacypolicy/');
+    expect(
+      screen.getByRole('link', { name: /Brevo Privacy Policy/i })
+    ).toHaveAttribute('href', 'https://www.brevo.com/legal/privacypolicy/');
+  });
+
+  it('says that account emails go out, and through whom', () => {
+    renderPage();
+
+    // The backend emails a confirmation link and password reset links through
+    // Brevo; Google's verification reads this page, so it has to say so.
+    expect(
+      screen.getByText(/send you emails about your account/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/delivers the emails we send about your account/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /your email address goes to our email delivery provider/i
+      )
+    ).toBeInTheDocument();
   });
 });

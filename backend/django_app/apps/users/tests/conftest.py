@@ -4,6 +4,29 @@ import pytest
 from rest_framework.test import APIClient
 
 
+def _unverified(person):
+    person.email_verified = False
+    person.save(update_fields=["email_verified"])
+    return person
+
+
+@pytest.fixture
+def user(user):
+    """The project-wide ``user``, but with the address not yet verified.
+
+    Elsewhere the conftest users come verified so that submitting and joining
+    just work; this app tests verification itself, and a fresh sign-up — where
+    every one of those tests starts — is unverified.
+    """
+    return _unverified(user)
+
+
+@pytest.fixture
+def other(other):
+    """The project-wide ``other``, unverified like ``user`` above."""
+    return _unverified(other)
+
+
 @pytest.fixture
 def auth_client():
     """Factory: return an APIClient authenticated as the given user."""
